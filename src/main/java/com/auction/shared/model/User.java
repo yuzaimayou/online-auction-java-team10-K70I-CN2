@@ -1,4 +1,4 @@
-package com.auction.shared;
+package com.auction.shared.model;
 
 public class User {
     private String id;

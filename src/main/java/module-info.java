@@ -7,4 +7,6 @@ module online.auction {
 
     // Xuất package ra để hệ thống có thể chạy được MainClient
     exports com.auction.client;
+    exports com.auction.client.controller;
+    opens com.auction.client.controller to javafx.fxml;
 }

@@ -1,6 +1,6 @@
-package com.auction.server;
+package com.auction.server.service;
 
-import com.auction.shared.User;
+import com.auction.shared.model.User;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class AuthService {
     private List<User> userDatabase;
-    private final String FILE_PATH = "users.txt";
+    private final String FILE_PATH = "dataBase/users.txt";
 
     public AuthService() {
         this.userDatabase = new ArrayList<>();
@@ -47,12 +47,16 @@ public class AuthService {
     // Logic Đăng ký (Cập nhật để lưu file)
     public boolean register(String username, String password, String role) {
         for (User u : userDatabase) {
-            if (u.getUsername().equals(username)) return false; // Tài khoản đã tồn tại
+            if (u.getUsername().equals(username)) {
+                System.out.println("The username already exists!");
+                return false;
+            } // Tài khoản đã tồn tại
         }
 
         User newUser = new User(UUID.randomUUID().toString(), username, password, role);
         userDatabase.add(newUser);
         saveUserToFile(newUser); // Lưu ngay vào file
+        System.out.println("Registered successfully!");
         return true;
     }
 
@@ -60,9 +64,11 @@ public class AuthService {
     public User login(String username, String password) {
         for (User u : userDatabase) {
             if (u.getUsername().equals(username) && u.getPassword().equals(password)) {
+                System.out.println("Log in successfully!");
                 return u;
             }
         }
+        System.out.println("Incorrect username or password");
         return null;
     }
 }

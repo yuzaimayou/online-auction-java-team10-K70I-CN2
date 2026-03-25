@@ -1,7 +1,7 @@
-package com.auction.client;
+package com.auction.client.controller;
 
-import com.auction.server.AuthService;
-import com.auction.shared.User;
+import com.auction.server.service.AuthService;
+import com.auction.shared.model.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
