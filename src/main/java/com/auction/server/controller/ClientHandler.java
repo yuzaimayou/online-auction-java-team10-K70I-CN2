@@ -34,21 +34,43 @@ public class ClientHandler implements Runnable {
                 switch (request.getAction()){
                     case LOGIN -> {
                         String[] credentials= request.getPayload().split(",");
-                        String username=credentials[0];
-                        String password=credentials[1];
+                        if (credentials.length == 2) {
+                            String username = credentials[0];
+                            String password = credentials[1];
 
-                        User loggedInuser=authService.login(username,password);
-                        if(loggedInuser!=null){
-                            response.setStatus("SUCCESS");
-                            response.setMessage("Log in successful");
-                            response.setData(gson.toJson(loggedInuser));
-                        } else{
-                            response.setStatus("FAIL");
-                            response.setMessage("Incorrect username or password");
+                            User loggedInuser = authService.login(username, password);
+                            if (loggedInuser != null) {
+                                response.setStatus("SUCCESS");
+                                response.setMessage("Log in successful");
+                                response.setData(gson.toJson(loggedInuser));
+                            } else {
+                                response.setStatus("FAIL");
+                                response.setMessage("Incorrect username or password");
+                            }
                         }
 
                     }
                     case REGISTER -> {
+                        String[] data = request.getPayload().split(",");
+                        if (data.length == 2) {
+                            String username = data[0];
+                            String password = data[1];
+                            String role = data[2];
+
+                            // Thực hiện đăng ký và ghi file
+                            boolean isSuccess = authService.register(username, password, role);
+
+                            if (isSuccess) {
+                                response.setStatus("SUCCESS");
+                                response.setMessage("Registered successfully!");
+                            } else {
+                                response.setStatus("FAIL");
+                                response.setMessage("Username already exists!");
+                            }
+                        } else {
+                            response.setStatus("ERROR");
+                            response.setMessage("Invalid data format for registration");
+                        }
 
                     }
                     default -> {
@@ -56,6 +78,7 @@ public class ClientHandler implements Runnable {
                         response.setMessage("Invalid action");
                     }
                 }
+                out.println(gson.toJson(response));
             }
 
         } catch (IOException e){

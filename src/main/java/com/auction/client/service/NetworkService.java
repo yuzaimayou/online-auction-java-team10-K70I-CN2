@@ -12,10 +12,21 @@ public class NetworkService {
     private final int serverPort=8000;
     private Gson gson=new Gson();
 
-    public ResponseMessage sendLoginMessage(String username,String password){
-        String payload=username+','+password;
-        RequestMessage req= new RequestMessage(ActionType.LOGIN,payload);
+    public ResponseMessage sendRegisterMessage(String username, String password, String role) {
+        // Tạo payload theo format
+        String payload = username + "," + password + "," + role;
+        RequestMessage req = new RequestMessage(ActionType.REGISTER, payload);
 
+        return executeRequest(req);
+    }
+
+    public ResponseMessage sendLoginMessage(String username,String password) {
+        String payload = username + "," + password;
+        RequestMessage req = new RequestMessage(ActionType.LOGIN, payload);
+        return executeRequest(req);
+    }
+
+    private ResponseMessage executeRequest(RequestMessage req) {
         try (
             Socket socket = new Socket(serverIP, serverPort);
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
