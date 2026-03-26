@@ -1,18 +1,25 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.server.controller.ClientHandler;
-import com.auction.server.service.AuthService;
+import com.auction.shared.constant.ActionType;
+import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.User;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+
+import java.io.IOException;
 
 public class LoginController {
 
@@ -25,7 +32,7 @@ public class LoginController {
     private Label lblMessage;
 
     // Khởi tạo AuthService để dùng chung
-    private AuthService authService = new AuthService();
+    private NetworkService network= NetworkService.getInstance();
     private Gson gson=new Gson();
     // Hàm này chạy khi bấm nút "Đăng nhập"
     @FXML
@@ -40,10 +47,9 @@ public class LoginController {
             return;
         }
 
-        // Gọi logic kiểm tra từ Server (AuthService)
-
-        NetworkService network=new NetworkService();
-        ResponseMessage res=network.sendLoginMessage(username,password);
+        // Gui message den server
+        String payload=username+","+password;
+        ResponseMessage res= network.sendRequest(new RequestMessage(ActionType.LOGIN,payload));
         if (res==null){
             System.out.println("Unable to connect to the server");
         }
@@ -61,7 +67,19 @@ public class LoginController {
     // Hàm này chạy khi bấm nút "Chưa có tài khoản? Đăng ký"
     @FXML
     protected void handleSwitchToRegister(ActionEvent event) {
-        lblMessage.setTextFill(Color.BLUE);
-        lblMessage.setText("Chức năng chuyển sang form Đăng ký sẽ code sau!");
+        try {
+            Parent registerRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/Register.fxml"));
+            Node sourceNode=(Node) event.getSource();
+            StackPane dynamicContentArea=(StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
+            if (dynamicContentArea!=null){
+                dynamicContentArea.getChildren().clear();
+
+                dynamicContentArea.getChildren().add(registerRoot);
+            }else{
+                System.err.println("Error: Không tìm thấy StackPane có ID là dynamicContentArea");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
