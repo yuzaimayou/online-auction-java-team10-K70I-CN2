@@ -4,10 +4,16 @@ import com.auction.server.service.AuthService;
 import com.auction.shared.model.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+
+import java.io.IOException;
 
 public class LoginController {
 
@@ -51,7 +57,13 @@ public class LoginController {
     // Hàm này chạy khi bấm nút "Chưa có tài khoản? Đăng ký"
     @FXML
     protected void handleSwitchToRegister(ActionEvent event) {
-        lblMessage.setTextFill(Color.BLUE);
-        lblMessage.setText("Chức năng chuyển sang form Đăng ký sẽ code sau!");
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com.auction.client/Register.fxml"));
+            Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Đăng ký tài khoản");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
