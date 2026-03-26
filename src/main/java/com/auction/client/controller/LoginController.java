@@ -51,7 +51,9 @@ public class LoginController {
         NetworkService network=new NetworkService();
         ResponseMessage res=network.sendLoginMessage(username,password);
         if (res==null){
+            lblMessage.setTextFill(Color.RED);
             System.out.println("Unable to connect to the server");
+            return;
         }
         System.out.println(res.getStatus());
         if ("SUCCESS".equals(res.getStatus())){
