@@ -14,12 +14,12 @@ public class MainClient extends Application {
     public void start(Stage primaryStage) {
         try {
             // Tải file giao diện FXML.
-            // Lưu ý: Đường dẫn này trỏ tới thư mục src/main/resources/com/auction/client/login.fxml
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/login.fxml"));
+            // Lưu ý: Đường dẫn này trỏ tới thư mục src/main/resources/com/auction/client/Login.fxml
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuthPage.fxml"));
             Parent root = loader.load();
 
-            // Khởi tạo Scene (khung cảnh) với kích thước 400x350
-            Scene scene = new Scene(root, 400, 350);
+            // Khởi tạo Scene (khung cảnh)
+            Scene scene = new Scene(root, 1440, 1024);
 
             // Cấu hình Stage (Cửa sổ ứng dụng)
             primaryStage.setTitle("Hệ thống Đấu giá Trực tuyến - Đăng nhập");

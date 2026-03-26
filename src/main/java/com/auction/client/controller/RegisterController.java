@@ -4,12 +4,13 @@ import com.auction.server.service.AuthService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import java.io.IOException;
@@ -60,10 +61,16 @@ public class RegisterController {
     @FXML
     public void handleSwitchToLogin(ActionEvent event) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/com.auction.client/login.fxml"));
-            Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Đăng nhập");
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/Login.fxml"));
+            Node sourceNode=(Node) event.getSource();
+            StackPane dynamicContentArea=(StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
+            if(dynamicContentArea!=null){
+                dynamicContentArea.getChildren().clear();
+                dynamicContentArea.getChildren().add(loginRoot);
+            }else{
+                System.err.println("Error: Không tìm thấy StackPane có ID là dynamicContentArea");
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
