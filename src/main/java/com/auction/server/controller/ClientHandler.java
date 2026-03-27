@@ -39,6 +39,24 @@ public class ClientHandler implements Runnable {
         }
 
     }
+    private void registerAction(String payload, ResponseMessage response) {
+        System.out.println("REGISTER payload: " + payload);
+        String[] data = payload.split(",");
+
+        String username = data[0];
+        String password = data[1];
+
+
+        boolean created = authService.register(username, password);
+
+        if (created) {
+            response.setStatus("SUCCESS");
+            response.setMessage("Register successful");
+        } else {
+            response.setStatus("FAIL");
+            response.setMessage("Username already exists");
+        }
+    }
     @Override
     public void run(){
         try(BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -50,9 +68,7 @@ public class ClientHandler implements Runnable {
                 ResponseMessage response= new ResponseMessage();
                 switch (request.getAction()){
                     case LOGIN -> loginAction(request.getPayload(),response);
-                    case REGISTER -> {
-
-                    }
+                    case REGISTER -> registerAction(request.getPayload(), response);
                     default -> {
                         System.out.println("Invalid action");
                         response.setStatus("ERROR");
