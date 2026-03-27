@@ -1,7 +1,2 @@
 858ef048-d40e-4dc9-8da2-379670fee464,nguyenvana,password123,Bidder
 67b4b02a-79b3-4738-9f07-9717dfc56eaa,Khanh Van,12345678,USER
-a346973d-99e3-4af9-a175-17f96539ee72,khanhvanpham,12345678,USER
-93f2da14-64dc-40c4-83ea-06fa8046a58b,kvp,123,USER
-33a61f10-c73f-43ba-a52e-b917317525c0,kvp1,12345,USER
-9d4ec355-14e1-4e6a-8dba-3ce5c76ff87e,tranvanb,olala,USER
-33c6c836-ee59-4b80-af61-6d99529b0c61,phamtiendat,8888,USER

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" prefHeight="1024.0" prefWidth="1440.0">
+
+    <center>
+        <ImageView fitWidth="720.0" fitHeight="1024.0" layoutX="50" layoutY="50">
+            <image>
+                <Image url="@../assets/Signin.png"/>
+            </image>
+        </ImageView>
+
+    </center>
+    <right>
+        <VBox spacing="10" style="-fx-padding:0" prefWidth="720.0" alignment="CENTER">
+            <StackPane fx:id="dynamicContentArea">
+                <fx:include fx:id="loginArea" source="Login.fxml"/>
+            </StackPane>
+
+        </VBox>
+    </right>
+</BorderPane>

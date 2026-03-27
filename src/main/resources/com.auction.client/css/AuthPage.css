@@ -1,0 +1,31 @@
+
+#auth-page{
+    -fx-background-color: white;
+    -fx-font-family: "Inter 18pt";
+}
+#main-title{
+    -fx-font-family: "Inter 18pt SemiBold";
+    -fx-font-size:24;
+
+}
+
+.title {
+    -fx-font-family: "Inter 18pt Medium";
+    -fx-font-size:16
+}
+.textBox{
+    -fx-background-color: white; -fx-border-color: #3b82f6; -fx-border-radius: 6; -fx-background-radius: 6; -fx-border-width: 1.5;
+}
+.submitButton{
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.switchButton{
+    -fx-font-family:"Inter 18pt ExtraBold";
+    -fx-font-size: 16;
+    -fx-cursor: hand;
+    -fx-background-color: none;
+}
