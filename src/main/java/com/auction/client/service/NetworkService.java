@@ -52,6 +52,7 @@ public class NetworkService {
             //cho va doc phan hoi
             String jsonRes=in.readLine();
             if (jsonRes==null){
+                System.out.println("Response is null");
                 return new ResponseMessage("ERROR","Server was closed",null);
             }
             System.out.println("Client was received message");
