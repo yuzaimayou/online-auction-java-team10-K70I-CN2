@@ -3,6 +3,7 @@ package com.auction.server.controller;
 import com.auction.server.service.AuthService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
+import com.auction.shared.model.AuthPayload;
 import com.google.gson.Gson;
 import com.auction.shared.model.User;
 
@@ -22,9 +23,10 @@ public class ClientHandler implements Runnable {
         this.authService=authService;
     }
     private void loginAction(String payload,ResponseMessage response){
-        String[] credentials=payload.split(",");
-        String username=credentials[0];
-        String password=credentials[1];
+        AuthPayload authData=gson.fromJson(payload,AuthPayload.class);
+        String username = authData.getUsername();
+        String password = authData.getPassword();
+        System.out.println(username+','+password);
 
         User loggedInuser=authService.login(username,password);
         if(loggedInuser!=null){
@@ -40,11 +42,9 @@ public class ClientHandler implements Runnable {
 
     }
     private void registerAction(String payload, ResponseMessage response) {
-        System.out.println("REGISTER payload: " + payload);
-        String[] data = payload.split(",");
-
-        String username = data[0];
-        String password = data[1];
+        AuthPayload authData=gson.fromJson(payload,AuthPayload.class);
+        String username = authData.getUsername();
+        String password = authData.getPassword();
 
 
         boolean created = authService.register(username, password);

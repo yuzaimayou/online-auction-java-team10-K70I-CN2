@@ -1,6 +1,5 @@
 package com.auction.client.service;
 
-import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.google.gson.Gson;

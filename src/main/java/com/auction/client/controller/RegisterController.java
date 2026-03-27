@@ -5,6 +5,7 @@ import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 
+import com.auction.shared.model.AuthPayload;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,6 +16,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 
@@ -36,6 +38,7 @@ public class RegisterController {
     private Label lblMessage;
 
     private NetworkService network = NetworkService.getInstance();
+    private Gson gson=new Gson();
 
     @FXML
     public void handleRegister(ActionEvent event) {
@@ -55,11 +58,11 @@ public class RegisterController {
             lblMessage.setText("Mật khẩu không khớp!");
             return;
         }
-
-        String payload = username + "," + password;
+        AuthPayload payload=new AuthPayload(username,password);
+        String jsonPayload= gson.toJson(payload);
 
         ResponseMessage res =
-                network.sendRequest(new RequestMessage(ActionType.REGISTER, payload));
+                network.sendRequest(new RequestMessage(ActionType.REGISTER, jsonPayload));
 
         if (res == null) {
             lblMessage.setTextFill(Color.RED);

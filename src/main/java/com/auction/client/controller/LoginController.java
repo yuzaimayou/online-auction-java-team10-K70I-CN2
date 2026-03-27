@@ -4,6 +4,7 @@ import com.auction.client.service.NetworkService;
 import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
+import com.auction.shared.model.AuthPayload;
 import com.auction.shared.model.User;
 import com.google.gson.Gson;
 
@@ -46,10 +47,11 @@ public class LoginController {
             return;
         }
 
-        String payload = username + "," + password;
+        AuthPayload payload=new AuthPayload(username,password);
+        String jsonPayload=gson.toJson(payload);
 
         ResponseMessage res =
-                network.sendRequest(new RequestMessage(ActionType.LOGIN, payload));
+                network.sendRequest(new RequestMessage(ActionType.LOGIN, jsonPayload));
 
         if (res == null) {
             lblMessage.setTextFill(Color.RED);
@@ -80,8 +82,7 @@ public class LoginController {
         try {
 
             Parent registerRoot =
-                    FXMLLoader.load(getClass().getResource(
-                            "/com.auction.client/fxml/Register.fxml"));
+                    FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/Register.fxml"));
 
             Node sourceNode = (Node) event.getSource();
 
