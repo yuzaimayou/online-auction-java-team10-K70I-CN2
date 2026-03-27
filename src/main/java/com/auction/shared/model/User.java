@@ -1,23 +1,18 @@
 package com.auction.shared.model;
 
-public class User {
-    private String id;
-    private String username;
-    private String password;
-    private String role; // Ví dụ: "Bidder", "Seller", "Admin"
+public class User extends Entity {
+    protected String username;
+    protected String password;
+    protected String role;
 
-    // Constructor
     public User(String id, String username, String password, String role) {
-        this.id = id;
+        super(id);
         this.username = username;
         this.password = password;
         this.role = role;
     }
 
-    // Getters và Setters (Tính đóng gói - Encapsulation)
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
+    // --- Getters & Setters ---
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
@@ -29,6 +24,10 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{" + "id='" + id + '\'' + ", username='" + username + '\'' + ", role='" + role + '\'' + '}';
+        return "User{" +
+                "id='" + id + '\'' +
+                ", username='" + username + '\'' +
+                ", role='" + role + '\'' + // Dùng trực tiếp thuộc tính role
+                '}';
     }
 }
