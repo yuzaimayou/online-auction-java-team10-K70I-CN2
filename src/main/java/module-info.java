@@ -2,6 +2,8 @@ module online.auction {
     requires javafx.controls;
     requires javafx.fxml;
     requires com.google.gson;
+    requires java.sql;
+    requires java.desktop;
 
     // Cho phép JavaFX truy cập vào package client để load file giao diện .fxml
     opens com.auction.client to javafx.fxml;
