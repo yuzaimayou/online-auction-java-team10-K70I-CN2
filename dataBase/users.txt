@@ -1,2 +1,0 @@
-858ef048-d40e-4dc9-8da2-379670fee464,nguyenvana,password123,Bidder
-67b4b02a-79b3-4738-9f07-9717dfc56eaa,Khanh Van,12345678,USER
