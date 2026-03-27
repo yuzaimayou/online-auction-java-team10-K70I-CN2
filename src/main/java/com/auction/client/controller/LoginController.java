@@ -31,7 +31,7 @@ public class LoginController {
     @FXML
     private Label lblMessage;
 
-    // Khởi tạo AuthService để dùng chung
+
     private NetworkService network= NetworkService.getInstance();
     private Gson gson=new Gson();
     // Hàm này chạy khi bấm nút "Đăng nhập"
