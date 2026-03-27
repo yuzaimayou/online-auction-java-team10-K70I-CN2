@@ -10,4 +10,7 @@ module online.auction {
     exports com.auction.client;
     exports com.auction.client.controller;
     opens com.auction.client.controller to javafx.fxml;
+    opens com.auction.shared.message to com.google.gson;
+    opens com.auction.shared.model to com.google.gson;
+    opens com.auction.shared.constant to com.google.gson;
 }
