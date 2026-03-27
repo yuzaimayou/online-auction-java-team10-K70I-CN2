@@ -2,6 +2,7 @@ package com.auction.server;
 
 import com.auction.server.controller.ClientHandler;
 import com.auction.server.service.AuthService;
+import com.auction.server.database.DatabaseInit;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -11,9 +12,11 @@ public class MainServer {
     private static final int PORT=8000;
 
     public static void main(String[] agrs){
+        // tao database
+        DatabaseInit.init();
         //Khoi tao cac service cot loi
         AuthService authService=new AuthService();
-
+        authService.register("admin", "admin");
         try (ServerSocket serverSocket=new ServerSocket(PORT)){
             System.out.println("Port has opened!");
             while(true){
