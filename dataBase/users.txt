@@ -1,2 +1,3 @@
 858ef048-d40e-4dc9-8da2-379670fee464,nguyenvana,password123,Bidder
 67b4b02a-79b3-4738-9f07-9717dfc56eaa,Khanh Van,12345678,USER
+d5337084-0bea-4671-a73b-4cb800a4a3ba,ducanh,Duc@nh0401,USER
