@@ -31,7 +31,6 @@ public class MainClient extends Application {
                 continue;
             }
             var f = javafx.scene.text.Font.loadFont(is,12);
-            System.out.printf("Loaded: %s -> %s%n",font, (f==null ? "null":f.getFamily()));
         }
     }
 
@@ -80,7 +79,9 @@ public class MainClient extends Application {
             primaryStage.setResizable(false);
 
             // Hiển thị cửa sổ
+
             primaryStage.show();
+
 
         } catch (IOException e) {
             System.err.println("Lỗi: Không thể tải file FXML. Hãy kiểm tra lại đường dẫn trong resources!");

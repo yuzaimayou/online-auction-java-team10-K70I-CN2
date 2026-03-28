@@ -27,11 +27,9 @@
 
     <Button alignment="CENTER" mnemonicParsing="false"
             prefHeight="45.0" prefWidth="463.0"
-            style="-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #111827; -fx-cursor: hand;"
+            styleClass="linkedButton"
             text="  Continue with Google">
-        <font>
-            <Font size="17.0" />
-        </font>
+
         <graphic>
             <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
                 <image>
@@ -43,15 +41,13 @@
 
     <Button alignment="CENTER" mnemonicParsing="false"
             prefHeight="45.0" prefWidth="463.0"
-            style="-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #111827; -fx-cursor: hand;"
+            styleClass="linkedButton"
             text="  Continue with Apple">
-        <font>
-            <Font size="17.0" />
-        </font>
+
         <graphic>
             <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
                 <image>
-                    <Image url="@../assets/logo-apple.png" />
+                    <Image url="@../assets/logo_apple.png" />
                 </image>
             </ImageView>
         </graphic>
@@ -74,6 +70,12 @@
         </VBox>
 
         <VBox spacing="8.0">
+            <Label text="Username" styleClass="title">
+            </Label>
+            <TextField fx:id="txtUsername" prefHeight="43.0" styleClass="textBox" promptText="" />
+        </VBox>
+
+        <VBox spacing="8.0">
             <Label text="Password" styleClass="title">
 
             </Label>
@@ -81,12 +83,15 @@
         </VBox>
 
         <VBox spacing="8.0">
-            <Label text="Username" styleClass="title">
+            <Label text="Confirm password" styleClass="title">
+
             </Label>
-            <TextField fx:id="txtUsername" prefHeight="43.0" styleClass="textBox" promptText="" />
+            <PasswordField fx:id="txtConfirmPassword" prefHeight="43.0" styleClass="textBox" promptText=""  />
         </VBox>
 
-        <Button onAction="#handleSwitchToLogin" mnemonicParsing="false" styleClass="submitButton" id="registerSubmit" prefHeight="58.0" prefWidth="463.0" text="Creating account >">
+
+
+        <Button onAction="#handleRegister" mnemonicParsing="false" styleClass="submitButton" id="registerSubmit" prefHeight="58.0" prefWidth="463.0" text="Creating account >">
             <VBox.margin>
                 <Insets top="10.0" />
             </VBox.margin>
