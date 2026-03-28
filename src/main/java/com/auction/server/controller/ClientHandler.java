@@ -70,7 +70,6 @@ public class ClientHandler implements Runnable {
                     case LOGIN -> loginAction(request.getPayload(),response);
                     case REGISTER -> registerAction(request.getPayload(), response);
                     default -> {
-                        System.out.println("Invalid action");
                         response.setStatus("ERROR");
                         response.setMessage("Invalid action");
                     }

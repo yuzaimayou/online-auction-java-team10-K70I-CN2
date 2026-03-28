@@ -4,33 +4,109 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.RegisterController">
+<?import java.net.URL?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<VBox id="auth-page" alignment="CENTER" prefHeight="1024.0" prefWidth="720.0" spacing="30.0" fx:controller="com.auction.client.controller.RegisterController" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+    <stylesheets>
+        <URL value="@../css/AuthPage.css"/>
+    </stylesheets>
     <padding>
-        <Insets bottom="30.0" left="40.0" right="40.0" top="30.0" />
+        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
     </padding>
+    <Label fx:id="lblMessage" text=""></Label>
+    <Label text="Sign up" id="main-title">
 
-    <Label text="Sign up">
-        <font>
-            <Font name="System Bold" size="20.0" />
-        </font>
     </Label>
 
-    <TextField fx:id="txtUsername" promptText="Tên đăng nhập" />
+    <Button alignment="CENTER" mnemonicParsing="false"
+            prefHeight="45.0" prefWidth="463.0"
+            style="-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #111827; -fx-cursor: hand;"
+            text="  Continue with Google">
+        <font>
+            <Font size="17.0" />
+        </font>
+        <graphic>
+            <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                <image>
+                    <Image url="@../assets/logo_google.png" />
+                </image>
+            </ImageView>
+        </graphic>
+    </Button>
 
-    <TextField fx:id="txtEmail" promptText="Email address" />
+    <Button alignment="CENTER" mnemonicParsing="false"
+            prefHeight="45.0" prefWidth="463.0"
+            style="-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #111827; -fx-cursor: hand;"
+            text="  Continue with Apple">
+        <font>
+            <Font size="17.0" />
+        </font>
+        <graphic>
+            <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
+                <image>
+                    <Image url="@../assets/logo-apple.png" />
+                </image>
+            </ImageView>
+        </graphic>
+    </Button>
 
-    <PasswordField fx:id="txtPassword" promptText="Mật khẩu" />
+    <HBox alignment="CENTER" spacing="15.0" maxWidth="463.0"> <Separator HBox.hgrow="ALWAYS" />
+        <Label text="or" style="-fx-text-fill: #374151;">
+            <font>
+                <Font size="14.0" />
+            </font>
+        </Label>
+        <Separator HBox.hgrow="ALWAYS" />
+    </HBox>
 
-    <PasswordField fx:id="txtConfirmPassword" promptText="Nhập lại mật khẩu" />
+    <VBox maxWidth="463.0" prefWidth="463.0" spacing="20.0">
+        <VBox spacing="8.0">
+            <Label text="Email address" styleClass="title">
+            </Label>
+            <TextField fx:id="txtEmail" prefHeight="43.0" styleClass="textBox" promptText="" />
+        </VBox>
 
-    <Label fx:id="lblMessage" textFill="RED" wrapText="true" />
+        <VBox spacing="8.0">
+            <Label text="Password" styleClass="title">
 
-    <Button onAction="#handleRegister" prefWidth="200.0" text="Đăng ký" />
+            </Label>
+            <PasswordField fx:id="txtPassword" prefHeight="43.0" styleClass="textBox" promptText=""  />
+        </VBox>
 
-    <Button onAction="#handleSwitchToLogin" style="-fx-background-color: transparent; -fx-text-fill: blue; -fx-underline: true;" text="Đã có tài khoản? Đăng nhập" />
+        <VBox spacing="8.0">
+            <Label text="Username" styleClass="title">
+            </Label>
+            <TextField fx:id="txtUsername" prefHeight="43.0" styleClass="textBox" promptText="" />
+        </VBox>
 
+        <Button onAction="#handleSwitchToLogin" mnemonicParsing="false" styleClass="submitButton" id="registerSubmit" prefHeight="58.0" prefWidth="463.0" text="Creating account >">
+            <VBox.margin>
+                <Insets top="10.0" />
+            </VBox.margin>
+        </Button>
+
+        <HBox alignment="CENTER" spacing="5.0">
+            <VBox.margin>
+                <Insets top="15.0" />
+            </VBox.margin>
+            <Label text="Already have account?" style="-fx-font-size: 16;">
+
+            </Label>
+            <Button onAction="#handleSwitchToLogin" styleClass="switchButton"  text="Sign in">
+            </Button>
+        </HBox>
+
+    </VBox>
 </VBox>
+
+
+
+
+
