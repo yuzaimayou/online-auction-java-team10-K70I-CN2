@@ -40,7 +40,7 @@
 
         <Button onAction="#handleLogin" mnemonicParsing="false" styleClass="submitButton" prefHeight="58.0" prefWidth="463.0" text="Sign in">
             <VBox.margin>
-                <Insets top="10.0" />
+                <Insets top="17.0" />
             </VBox.margin>
         </Button>
 
@@ -56,7 +56,7 @@
 
         <Button alignment="CENTER" mnemonicParsing="false" prefHeight="45.0" prefWidth="550.0" style="-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #111827; -fx-cursor: hand;" text="  Continue with Google">
             <font>
-                <Font size="14.0" />
+                <Font size="17.0" />
             </font>
             <graphic>
             </graphic>
@@ -64,7 +64,7 @@
 
         <Button alignment="CENTER" mnemonicParsing="false" prefHeight="45.0" prefWidth="550.0" style="-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: #111827; -fx-cursor: hand;" text="  Continue with Apple">
             <font>
-                <Font size="14.0" />
+                <Font size="17.0" />
             </font>
             <graphic>
             </graphic>
