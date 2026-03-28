@@ -5,7 +5,7 @@
 }
 #main-title{
     -fx-font-family: "Inter 18pt SemiBold";
-    -fx-font-size:24;
+    -fx-font-size:28;
 
 }
 
@@ -19,7 +19,7 @@
 .submitButton{
     -fx-background-color: #3b82f6;
     -fx-text-fill: white;
-    -fx-font-size: 16px;
+    -fx-font-size: 20px;
     -fx-background-radius: 6;
     -fx-cursor: hand;
 }
@@ -28,4 +28,11 @@
     -fx-font-size: 16;
     -fx-cursor: hand;
     -fx-background-color: none;
+}
+#registerSubmit {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+}
+#registerSubmit:hover {
+    -fx-background-color: #333333;
 }
