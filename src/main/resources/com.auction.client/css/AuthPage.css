@@ -29,6 +29,15 @@
     -fx-cursor: hand;
     -fx-background-color: none;
 }
+.linkedButton{
+    -fx-font-size: 17;
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #111827;
+    -fx-cursor: hand;
+}
 #registerSubmit {
     -fx-background-color: #000000;
     -fx-text-fill: #ffffff;
