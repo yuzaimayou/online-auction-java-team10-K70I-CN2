@@ -13,11 +13,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 
@@ -62,11 +64,8 @@ public class LoginController {
         if ("SUCCESS".equals(res.getStatus())) {
 
             User loggedInUser = gson.fromJson(res.getData(), User.class);
-
-            lblMessage.setTextFill(Color.GREEN);
-            lblMessage.setText(
-                    "Đăng nhập thành công! Vai trò: " + loggedInUser.getRole()
-            );
+            System.out.println("Đăng nhập thành công");
+            handleSwitchToHomePage(event);
 
         } else {
 
@@ -105,4 +104,26 @@ public class LoginController {
             e.printStackTrace();
         }
     }
+    @FXML
+    public void handleSwitchToHomePage(ActionEvent event) {
+            try {
+                // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/homePage.fxml"));
+                Parent root = loader.load();
+
+                // Lấy Stage hiện tại từ sự kiện nút bấm
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+                // Tạo Scene mới và hiển thị
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.setTitle("Hệ thống đấu Trực tuyến - Trang chủ");
+                stage.centerOnScreen();
+                stage.show();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Không tìm thấy file homePage.fxml! Kiểm tra lại đường dẫn.");
+            }
+        }
 }
