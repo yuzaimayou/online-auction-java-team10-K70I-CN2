@@ -24,7 +24,17 @@ import java.io.IOException;
 
 public class HomePageController {
     @FXML
+    private Label labelUsername;
+
+    public HomePageController(){};
+
+    @FXML
     public void initialize() {
         System.out.println("Đã vào trang chủ!");
+    }
+    public void initData(String userName,String role){
+        if(userName!=null){
+            labelUsername.setText(userName);
+        }
     }
 }
