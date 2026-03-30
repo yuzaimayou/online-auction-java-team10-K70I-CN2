@@ -1,0 +1,199 @@
+/* --- Cài đặt chung --- */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-background-color: white;
+}
+
+.main-container {
+    -fx-background-color: white;
+}
+
+/* --- Header Section --- */
+.header-section {
+    -fx-background-color: white;
+    -fx-padding: 20 40 20 40;
+}
+
+.top-bar {
+    -fx-padding: 0 0 20 0;
+}
+
+.logo-container {
+    -fx-padding: 0 30 0 0;
+}
+
+.logo-icon {
+    -fx-font-size: 24px;
+    -fx-text-fill: #0056b3;
+}
+
+.logo-text {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-text-fill: #0056b3;
+}
+
+.categories-dropdown {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-cursor: hand;
+}
+
+/* Thanh tìm kiếm */
+.search-bar {
+    -fx-background-color: #f1f3f5;
+    -fx-background-radius: 20px;
+    -fx-padding: 5 15 5 15;
+    -fx-pref-width: 400px;
+}
+
+.search-icon {
+    -fx-text-fill: #0056b3;
+    -fx-font-size: 14px;
+}
+
+.search-input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-prompt-text-fill: #a0a0a0;
+    -fx-pref-width: 350px;
+}
+
+/* Profile */
+.profile-icon-container {
+    -fx-background-color: #0056b3;
+    -fx-background-radius: 50%;
+    -fx-min-width: 35px;
+    -fx-min-height: 35px;
+    -fx-max-width: 35px;
+    -fx-max-height: 35px;
+}
+
+.profile-icon {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+}
+
+.profile-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* Navigation Menu */
+.nav-menu {
+    -fx-spacing: 40px;
+    -fx-padding: 10 0 10 0;
+}
+
+.nav-item {
+    -fx-font-size: 15px;
+    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-text-fill: #333333;
+}
+
+.nav-item-active {
+    -fx-text-fill: #aaaaaa; /* Dựa theo màu nhạt của nút Home trong ảnh */
+}
+
+/* --- Explore Categories Section --- */
+.categories-section {
+    -fx-background-color: white;
+    -fx-padding: 30 0 40 0;
+}
+
+.section-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111111;
+    -fx-padding: 0 0 30 0;
+}
+
+.categories-list {
+    -fx-spacing: 35px;
+}
+
+.category-item {
+    -fx-alignment: center;
+    -fx-spacing: 10px;
+    -fx-cursor: hand;
+}
+
+.cat-icon-bg {
+    -fx-background-color: #f1f3f5;
+    -fx-background-radius: 50%;
+    -fx-min-width: 60px;
+    -fx-min-height: 60px;
+}
+
+.category-item Label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.category-item .cat-icon-bg Label {
+    -fx-font-size: 24px; /* Icon size */
+}
+
+/* --- Ongoing Auctions Section --- */
+.auctions-section {
+    -fx-background-color: #f8f9fa; /* Màu nền xám nhạt */
+    -fx-padding: 40 0 60 0;
+}
+
+.gray-title {
+    -fx-text-fill: #777777;
+}
+
+.auctions-list {
+    -fx-spacing: 30px;
+}
+
+/* Card Styling */
+.auction-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 5);
+    -fx-pref-width: 280px;
+    -fx-min-height: 400px;
+}
+
+.card-image-placeholder {
+    -fx-background-color: #fdf2f2; /* Màu nền giả lập giống ảnh iPhone */
+    -fx-pref-height: 250px;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.card-content {
+    -fx-padding: 15px;
+    -fx-spacing: 8px;
+}
+
+.card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111111;
+    -fx-pref-height: 40px; /* Cố định chiều cao để thẻ thẳng hàng nếu tên dài */
+}
+
+.live-badge {
+    -fx-background-color: #2ecc71;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 4px;
+    -fx-max-width: 100px; /* Đảm bảo badge không kéo dài toàn chiều rộng */
+}
+
+.card-info {
+    -fx-text-fill: #999999;
+    -fx-font-size: 12px;
+}
