@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.*;
+import com.auction.shared.model.auction.Auction;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;

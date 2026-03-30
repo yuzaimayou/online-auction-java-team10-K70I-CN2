@@ -1,6 +1,10 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.*;
+import com.auction.shared.model.account.Bidder;
+import com.auction.shared.model.auction.Auction;
+import com.auction.shared.model.auction.BidTransaction;
+import com.auction.shared.model.product.Item;
+
 import java.time.LocalDateTime;
 import java.util.*;
 

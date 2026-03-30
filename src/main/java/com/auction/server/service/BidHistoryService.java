@@ -1,9 +1,10 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.*;
+import com.auction.shared.model.auction.Auction;
+import com.auction.shared.model.auction.BidTransaction;
+
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Service quản lý lịch sử bid và dữ liệu cho Price Curve

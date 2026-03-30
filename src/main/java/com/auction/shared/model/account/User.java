@@ -1,4 +1,6 @@
-package com.auction.shared.model;
+package com.auction.shared.model.account;
+
+import com.auction.shared.model.base.Entity;
 
 public class User extends Entity {
     protected String username;

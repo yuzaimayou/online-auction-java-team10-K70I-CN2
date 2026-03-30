@@ -5,7 +5,7 @@ import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.AuthPayload;
-import com.auction.shared.model.User;
+import com.auction.shared.model.account.User;
 import com.google.gson.Gson;
 
 import javafx.event.ActionEvent;

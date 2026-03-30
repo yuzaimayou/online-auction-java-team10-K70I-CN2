@@ -5,7 +5,7 @@ import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.AuthPayload;
 import com.google.gson.Gson;
-import com.auction.shared.model.User;
+import com.auction.shared.model.account.User;
 
 import java.io.BufferedReader;
 import java.io.IOException;

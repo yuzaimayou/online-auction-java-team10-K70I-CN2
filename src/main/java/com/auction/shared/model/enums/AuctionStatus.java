@@ -1,4 +1,4 @@
-package com.auction.shared.model;
+package com.auction.shared.model.enums;
 
 /**
  * Requirement 3.1.4: Chuyển trạng thái phiên đấu giá

@@ -1,6 +1,9 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.*;
+import com.auction.shared.model.account.Bidder;
+import com.auction.shared.model.auction.Auction;
+import com.auction.shared.model.auction.BidTransaction;
+
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.atomic.AtomicLong;
 
