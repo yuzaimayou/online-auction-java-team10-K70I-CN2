@@ -4,8 +4,10 @@ import com.auction.client.service.NetworkService;
 import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
-
 import com.auction.shared.model.AuthPayload;
+import com.google.gson.Gson;
+
+import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,7 +18,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import com.google.gson.Gson;
+import javafx.util.Duration;
 
 import java.io.IOException;
 
@@ -38,7 +40,7 @@ public class RegisterController {
     private Label lblMessage;
 
     private NetworkService network = NetworkService.getInstance();
-    private Gson gson=new Gson();
+    private Gson gson = new Gson();
 
     @FXML
     public void handleRegister(ActionEvent event) {
@@ -49,17 +51,18 @@ public class RegisterController {
 
         if (username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Vui lòng nhập đầy đủ thông tin!");
+            lblMessage.setText("Vui lòng nhập đầy đủ thông tin");
             return;
         }
 
         if (!password.equals(confirm)) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Mật khẩu không khớp!");
+            lblMessage.setText("Mật khẩu không khớp");
             return;
         }
-        AuthPayload payload=new AuthPayload(username,password);
-        String jsonPayload= gson.toJson(payload);
+
+        AuthPayload payload = new AuthPayload(username, password);
+        String jsonPayload = gson.toJson(payload);
 
         ResponseMessage res =
                 network.sendRequest(new RequestMessage(ActionType.REGISTER, jsonPayload));
@@ -71,11 +74,18 @@ public class RegisterController {
         }
 
         if ("SUCCESS".equals(res.getStatus())) {
+
             lblMessage.setTextFill(Color.GREEN);
-            lblMessage.setText("Đăng ký thành công!");
+            lblMessage.setText("Đăng ký thành công");
+            PauseTransition pause = new PauseTransition(Duration.seconds(5));
+            pause.setOnFinished(e -> handleSwitchToLogin(event));
+            pause.play();
+
         } else {
+
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText(res.getMessage());
+
         }
     }
 
@@ -99,7 +109,7 @@ public class RegisterController {
 
             } else {
 
-                System.err.println("Error: Không tìm thấy StackPane dynamicContentArea");
+                System.err.println("Không tìm thấy StackPane dynamicContentArea");
 
             }
 
