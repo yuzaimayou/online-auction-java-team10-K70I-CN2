@@ -108,7 +108,7 @@ public class LoginController {
     public void handleSwitchToHomePage(ActionEvent event) {
             try {
                 // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/homePage.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
                 Parent root = loader.load();
 
                 // Lấy Stage hiện tại từ sự kiện nút bấm
@@ -123,7 +123,7 @@ public class LoginController {
 
             } catch (IOException e) {
                 e.printStackTrace();
-                System.err.println("Không tìm thấy file homePage.fxml! Kiểm tra lại đường dẫn.");
+                System.err.println("Không tìm thấy file HomePage.fxml! Kiểm tra lại đường dẫn.");
             }
         }
 }
