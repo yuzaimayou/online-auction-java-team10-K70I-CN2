@@ -1,7 +1,7 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseConnection;
-import com.auction.shared.model.Item;
+import com.auction.shared.model.product.Item;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

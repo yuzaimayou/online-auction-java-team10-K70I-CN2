@@ -1,4 +1,4 @@
-package com.auction.shared.model;
+package com.auction.shared.model.base;
 
 public abstract class Entity {
     protected String id;

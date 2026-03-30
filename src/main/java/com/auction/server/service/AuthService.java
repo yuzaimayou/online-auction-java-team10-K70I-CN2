@@ -1,6 +1,6 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.User;
+import com.auction.shared.model.account.User;
 import com.auction.server.repository.UserRepository;
 
 public class AuthService {

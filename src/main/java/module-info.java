@@ -16,4 +16,8 @@ module online.auction {
     opens com.auction.shared.model to com.google.gson;
     opens com.auction.shared.message to com.google.gson;
     opens com.auction.shared.constant to com.google.gson;
+    opens com.auction.shared.model.base to com.google.gson;
+    opens com.auction.shared.model.account to com.google.gson;
+    opens com.auction.shared.model.auction to com.google.gson;
+    opens com.auction.shared.model.enums to com.google.gson;
 }
