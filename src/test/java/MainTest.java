@@ -9,7 +9,7 @@ public class MainTest {
 
 
         System.out.println("\n--- TEST ĐĂNG KÝ MỚI ---");
-        authService.register("nguyenvana", "password123", "Bidder");
+//        authService.register("nguyenvana", "password123", "Bidder");
 
         System.out.println("\n--- TEST ĐĂNG NHẬP TÀI KHOẢN VỪA TẠO ---");
         authService.login("nguyenvana", "password123");

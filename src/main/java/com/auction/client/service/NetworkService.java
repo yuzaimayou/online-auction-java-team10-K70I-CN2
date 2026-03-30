@@ -36,6 +36,7 @@ public class NetworkService {
         return instance;
     }
 
+
     public ResponseMessage sendRequest(RequestMessage req){
 
         if (socket==null || socket.isClosed()){
