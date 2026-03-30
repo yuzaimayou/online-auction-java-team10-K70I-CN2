@@ -10,11 +10,11 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-    <content>
+<ScrollPane fx:controller="com.auction.client.controller.HomePageController" prefHeight="1024.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+
         <VBox styleClass="main-container">
 
-            <VBox styleClass="header-section">
+            <VBox styleClass="header-section" prefWidth="1440.0">
                 <HBox styleClass="top-bar" alignment="CENTER_LEFT">
                     <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
                         <Label text="⚖" styleClass="logo-icon"/>
@@ -36,7 +36,7 @@
                         <StackPane styleClass="profile-icon-container">
                             <Label text="👤" styleClass="profile-icon"/>
                         </StackPane>
-                        <Label text="Van" styleClass="profile-name"/>
+                        <Label fx:id="labelUsername" text="Van" styleClass="profile-name"/>
                     </HBox>
                 </HBox>
 
@@ -105,5 +105,4 @@
             </VBox>
 
         </VBox>
-    </content>
 </ScrollPane>
