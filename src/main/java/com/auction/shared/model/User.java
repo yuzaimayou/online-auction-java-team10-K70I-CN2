@@ -1,6 +1,5 @@
 package com.auction.shared.model;
 
-// Đã xóa từ khóa "abstract" ở dòng dưới đây
 public class User extends Entity {
     protected String username;
     protected String password;
