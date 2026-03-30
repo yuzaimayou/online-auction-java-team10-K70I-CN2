@@ -10,7 +10,7 @@
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
 
-            prefHeight="768.0" prefWidth="1366.0">
+            prefHeight="1024.0" prefWidth="1440.0">
     <VBox layoutX="50.0" layoutY="50.0"></VBox>
     <AnchorPane layoutY="150.0" layoutX="400.0">
         <fx:include fx:id="login" source="Login.fxml"/>

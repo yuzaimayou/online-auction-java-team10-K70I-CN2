@@ -14,4 +14,8 @@ public class RequestMessage {
     public void setAction(ActionType action){this.action=action;}
     public String getPayload(){return payload;}
     public void setPayload(String payload){this.payload=payload;}
+
+    public ActionType getActionType() {
+        return  action;
+    }
 }
