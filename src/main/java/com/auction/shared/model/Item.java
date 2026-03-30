@@ -2,39 +2,64 @@ package com.auction.shared.model;
 
 import java.time.LocalDateTime;
 
-public abstract class Item extends Entity {
-    protected String name;
-    protected String description;
-    protected double startingPrice;
-    protected double highestCurrentPrice;
-    protected LocalDateTime startTime;
-    protected LocalDateTime endTime;
-    protected String sellerId;
+public class Item extends Entity {
 
-    public Item(String id, String name, String description, double startingPrice,
-                LocalDateTime startTime, LocalDateTime endTime, String sellerId) {
-        super(id); // Entity class will handle ID validation
+    private String name;
+    private String description;
+    private double startingPrice;
+    private double highestCurrentPrice;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private String sellerId;
 
-        // [ERROR HANDLING] Validate item name
-        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("Error: Item name cannot be null or empty!");
+    // Constructor khi tạo item mới
+    public Item(String id, String name, String description,
+                double startingPrice,
+                LocalDateTime startTime,
+                LocalDateTime endTime,
+                String sellerId) {
 
-        // [ERROR HANDLING] Validate description
-        if (description == null) throw new IllegalArgumentException("Error: Description cannot be null!");
+        super(id);
 
-        // [ERROR HANDLING] Validate starting price
-        if (startingPrice < 0) throw new IllegalArgumentException("Error: Starting price cannot be negative!");
+        if (name == null || name.trim().isEmpty())
+            throw new IllegalArgumentException("Item name cannot be empty");
 
-        // [ERROR HANDLING] Validate time constraints
-        if (startTime == null || endTime == null) throw new IllegalArgumentException("Error: Start time and end time cannot be null!");
-        if (endTime.isBefore(startTime)) throw new IllegalArgumentException("Error: End time must be strictly after the start time!");
+        if (description == null)
+            throw new IllegalArgumentException("Description cannot be null");
 
-        // [ERROR HANDLING] Validate seller ID
-        if (sellerId == null || sellerId.trim().isEmpty()) throw new IllegalArgumentException("Error: Seller ID cannot be null or empty!");
+        if (startingPrice < 0)
+            throw new IllegalArgumentException("Starting price cannot be negative");
+
+        if (startTime == null || endTime == null)
+            throw new IllegalArgumentException("Start time and end time cannot be null");
+
+        if (endTime.isBefore(startTime))
+            throw new IllegalArgumentException("End time must be after start time");
+
+        if (sellerId == null || sellerId.trim().isEmpty())
+            throw new IllegalArgumentException("Seller id cannot be empty");
 
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
-        this.highestCurrentPrice = startingPrice; // Initial highest price is the starting price
+        this.highestCurrentPrice = startingPrice;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.sellerId = sellerId;
+    }
+
+    // Constructor khi load từ database
+    public Item(String id, String name, String description,
+                double startingPrice, double highestCurrentPrice,
+                LocalDateTime startTime, LocalDateTime endTime,
+                String sellerId) {
+
+        super(id);
+
+        this.name = name;
+        this.description = description;
+        this.startingPrice = startingPrice;
+        this.highestCurrentPrice = highestCurrentPrice;
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
@@ -44,25 +69,50 @@ public abstract class Item extends Entity {
         return name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public double getStartingPrice() {
+        return startingPrice;
+    }
+
     public double getHighestCurrentPrice() {
         return highestCurrentPrice;
     }
 
     public void setHighestCurrentPrice(double highestCurrentPrice) {
-        // [ERROR HANDLING] Ensure new price is not lower than the starting price
-        if (highestCurrentPrice < this.startingPrice) throw new IllegalArgumentException("Error: Highest current price cannot be lower than the starting price!");
+        if (highestCurrentPrice < startingPrice)
+            throw new IllegalArgumentException("Current price cannot be lower than starting price");
+
         this.highestCurrentPrice = highestCurrentPrice;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
     }
 
     public String getSellerId() {
         return sellerId;
     }
 
-    // Verify if someone is the product owner (to prevent shill bidding)
     public boolean isOwner(String userId) {
-        return this.sellerId != null && this.sellerId.equals(userId);
+        return sellerId != null && sellerId.equals(userId);
     }
 
-    // Abstract function for printing details (Polymorphism)
-    public abstract void printItemDetails();
+    public void printItemDetails() {
+
+        System.out.println("Item ID: " + getId());
+        System.out.println("Name: " + name);
+        System.out.println("Description: " + description);
+        System.out.println("Starting price: " + startingPrice);
+        System.out.println("Current price: " + highestCurrentPrice);
+        System.out.println("Seller: " + sellerId);
+        System.out.println("Start time: " + startTime);
+        System.out.println("End time: " + endTime);
+    }
 }

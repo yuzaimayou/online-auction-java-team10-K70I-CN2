@@ -25,7 +25,6 @@ public class UserRepository {
             stmt.setString(4, role);
 
             stmt.executeUpdate();
-
             return true;
 
         } catch (Exception e) {
