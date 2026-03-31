@@ -1,9 +1,9 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.account.Bidder;
 import com.auction.shared.model.auction.Auction;
 import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.product.Item;
+import com.auction.shared.model.account.User;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -40,7 +40,7 @@ public class BiddingService {
      * Requirement 3.1.3: Kiểm tra tính hợp lệ của giá đấu
      * Requirement 3.1.5: Xử lý lỗi & ngoại lệ
      */
-    public BidTransaction placeBid(String auctionId, Bidder bidder, double bidAmount) throws Exception {
+    public BidTransaction placeBid(String auctionId, User bidder, double bidAmount) throws Exception {
         // [ERROR HANDLING] 3.1.5: Lỗi dữ liệu - Kiểm tra auction tồn tại
         if (!auctionMap.containsKey(auctionId)) {
             throw new Exception("Error: Auction " + auctionId + " not found!");

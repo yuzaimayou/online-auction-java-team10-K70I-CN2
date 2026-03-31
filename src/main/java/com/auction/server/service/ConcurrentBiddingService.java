@@ -1,8 +1,8 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.account.Bidder;
 import com.auction.shared.model.auction.Auction;
 import com.auction.shared.model.auction.BidTransaction;
+import com.auction.shared.model.account.User;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,7 +24,7 @@ public class ConcurrentBiddingService {
      * Requirement 3.2.2: Thread-safe placeBid
      * Xử lý: Lost update, Giá bị rollback, Hai người cùng thắng
      */
-    public synchronized BidTransaction placeBidSafely(String auctionId, Bidder bidder,
+    public synchronized BidTransaction placeBidSafely(String auctionId, User bidder,
                                                       double bidAmount) throws Exception {
         lock.writeLock().lock();
         try {
