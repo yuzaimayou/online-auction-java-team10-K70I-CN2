@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fx:controller="com.auction.client.controller.HomePageController" prefHeight="1024.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<ScrollPane fx:controller="com.auction.client.controller.HomePageController" prefHeight="1024.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
 
         <VBox styleClass="main-container">
 
@@ -21,14 +21,8 @@
                         <Label text="AUCTION" styleClass="logo-text"/>
                     </HBox>
 
-                    <Label text="Categories ˅" styleClass="categories-dropdown" />
-
                     <Region HBox.hgrow="ALWAYS" />
 
-                    <HBox styleClass="search-bar" alignment="CENTER_LEFT">
-                        <Label text="🔍" styleClass="search-icon"/>
-                        <TextField promptText="Search for anything" styleClass="search-input" />
-                    </HBox>
 
                     <Region HBox.hgrow="ALWAYS" />
 
@@ -39,26 +33,14 @@
                         <Label fx:id="labelUsername" text="Van" styleClass="profile-name"/>
                     </HBox>
                 </HBox>
-
-                <HBox styleClass="nav-menu" alignment="CENTER">
-                    <Label text="Home" styleClass="nav-item, nav-item-active" />
-                    <Label text="About Us" styleClass="nav-item" />
-                    <Label text="Browse Auction" styleClass="nav-item" />
-                    <Label text="How It Works" styleClass="nav-item" />
-                </HBox>
             </VBox>
 
             <VBox styleClass="categories-section" alignment="CENTER">
                 <Label text="Explore Categories" styleClass="section-title"/>
                 <HBox styleClass="categories-list" alignment="CENTER">
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="👜"/></StackPane><Label text="Fashion"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="💻"/></StackPane><Label text="Electronics"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="🏠"/></StackPane><Label text="Home &amp; Garden"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="🖼️"/></StackPane><Label text="Art"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="📚"/></StackPane><Label text="Books"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="💎"/></StackPane><Label text="Jewelry"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="⚽"/></StackPane><Label text="Sports"/></VBox>
-                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="⭐"/></StackPane><Label text="My Collection"/></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text=""/></StackPane><Label text="Electronics"/></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text=""/></StackPane><Label text="Art"/></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text=""/></StackPane><Label text="Vehicle"/></VBox>
                 </HBox>
             </VBox>
 
