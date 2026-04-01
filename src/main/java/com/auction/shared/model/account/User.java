@@ -11,9 +11,9 @@ public class User extends Person {
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
     protected List<Double> reviewScores; // Keep track of all reviews
 
-    public User(String id, String username, String password) {
+    public User(String id, String username, String password ) {
         super(id, username, password);
-        this.role = "Bidder/Seller"; // Set specific role
+        this.role = "User"; // Set specific role
         this.balance = 0.0;
         this.rating = 5.0; // New users start with perfect rating
         this.reviewScores = new ArrayList<>();
