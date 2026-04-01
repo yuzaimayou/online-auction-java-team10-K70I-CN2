@@ -50,8 +50,7 @@ public class UserRepository {
                 return new User(
                         rs.getString("id"),
                         rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("role")
+                        rs.getString("password")
                 );
             }
 
