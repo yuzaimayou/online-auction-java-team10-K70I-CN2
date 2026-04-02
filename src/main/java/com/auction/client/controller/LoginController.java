@@ -107,14 +107,11 @@ public class LoginController {
     @FXML
     public void handleSwitchToHomePage(ActionEvent event) {
             try {
-                // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
                 Parent root = loader.load();
 
-                // Lấy Stage hiện tại từ sự kiện nút bấm
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
 
-                // Tạo Scene mới và hiển thị
                 Scene scene = new Scene(root);
                 stage.setScene(scene);
                 stage.setTitle("Hệ thống đấu Trực tuyến - Trang chủ");
