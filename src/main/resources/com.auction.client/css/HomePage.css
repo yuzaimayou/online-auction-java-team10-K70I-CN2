@@ -132,6 +132,26 @@
     -fx-min-height: 60px;
 }
 
+.add-auction-button {
+    -fx-background-color: #3b82f6;
+    -fx-background-radius: 50%;
+    -fx-min-width: 60px;
+    -fx-min-height: 60px;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+.add-auction-button .label {
+    -fx-text-fill: white !important;
+    -fx-font-weight: bold;
+    -fx-font-size: 30px;          /* Chỉnh cỡ dấu cộng cho vừa vặn */
+    -fx-alignment: center;
+}
+
+.add-auction-button:hover {
+    -fx-background-color: #2563eb;
+}
+
+
 .category-item Label {
     -fx-text-fill: #888888;
     -fx-font-size: 13px;

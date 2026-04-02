@@ -1,0 +1,226 @@
+.root-container {
+    -fx-background-color: #F8FAFC; /* Màu nền cực sạch */
+}
+
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-background-color: white;
+}
+
+.main-container {
+    -fx-background-color: white;
+}
+
+/* --- Header Section --- */
+.header-section {
+    -fx-background-color: white;
+    -fx-padding: 20 40 20 40;
+}
+
+.top-bar {
+    -fx-padding: 0 0 20 0;
+}
+
+.logo-container {
+    -fx-padding: 0 30 0 0;
+}
+
+.logo-icon {
+    -fx-font-size: 24px;
+    -fx-text-fill: #0056b3;
+}
+
+.logo-text {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-text-fill: #0056b3;
+}
+
+.categories-dropdown {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-cursor: hand;
+}
+
+/* Thanh tìm kiếm */
+.search-bar {
+    -fx-background-color: #f1f3f5;
+    -fx-background-radius: 20px;
+    -fx-padding: 5 15 5 15;
+    -fx-pref-width: 400px;
+}
+
+.search-icon {
+    -fx-text-fill: #0056b3;
+    -fx-font-size: 14px;
+}
+
+.search-input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-prompt-text-fill: #a0a0a0;
+    -fx-pref-width: 350px;
+}
+
+/* Profile */
+.profile-icon-container {
+    -fx-background-color: #0056b3;
+    -fx-background-radius: 50%;
+    -fx-min-width: 35px;
+    -fx-min-height: 35px;
+    -fx-max-width: 35px;
+    -fx-max-height: 35px;
+}
+
+.profile-icon {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+}
+
+.profile-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* Navigation Menu */
+.nav-menu {
+    -fx-spacing: 40px;
+    -fx-padding: 10 0 10 0;
+}
+
+.nav-item {
+    -fx-font-size: 15px;
+    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-text-fill: #333333;
+}
+
+.nav-item-active {
+    -fx-text-fill: #aaaaaa; /* Dựa theo màu nhạt của nút Home trong ảnh */
+}
+
+.header {
+    -fx-background-color: white;
+    -fx-border-color: #F1F5F9;
+    -fx-border-width: 0 0 2 0;
+}
+
+.nav-link {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #64748B;
+}
+
+.username {
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #1E293B;
+}
+
+/* Card chính - Cố định kích thước để không bị tràn màn hình */
+.form-card {
+    -fx-background-color: white;
+    -fx-background-radius: 40;
+    -fx-border-radius: 40;
+    -fx-border-color: #E2E8F0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 30, 0, 0, 15);
+}
+
+.field-label {
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #0F172A;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-font-size: 30px;
+}
+
+.input-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 0 20 0 20;
+    -fx-font-size: 18px;
+}
+
+.input-field:focused {
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 2;
+}
+
+/* Category Buttons lớn hơn */
+.category-btn {
+    -fx-min-width: 85;
+    -fx-min-height: 85;
+    -fx-background-radius: 45;
+    -fx-background-color: #F1F5F9;
+    -fx-cursor: hand;
+}
+
+.category-btn:selected {
+    -fx-background-color: #DBEAFE;
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 2;
+}
+
+.category-text {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 16px;
+    -fx-text-fill: #475569;
+}
+
+/* Container chính của DatePicker */
+.date-picker {
+    -fx-background-color: transparent;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-border-width: 1;
+    -fx-background-insets: 0; /* Ép về 0 để không có khoảng hở */
+}
+
+/* Ô nhập văn bản bên trong */
+.date-picker > .text-field {
+    -fx-background-color: white;
+    -fx-background-insets: 0; /* Xóa khoảng trắng bao quanh ô nhập */
+    -fx-background-radius: 15 0 0 15; /* Bo góc trái khớp với cha */
+    -fx-padding: 0 15 0 15;
+    -fx-font-size: 18px;
+    -fx-border-width: 0;
+}
+
+/* Nút lịch bên phải */
+.date-picker > .arrow-button {
+    -fx-background-color: #F1F5F9;
+    -fx-background-insets: 0; /* Ép nút sát vào mép phải */
+    -fx-background-radius: 0 15 15 0; /* Bo góc phải khớp với cha */
+    -fx-padding: 0 15 0 15;
+}
+
+/* Trạng thái khi focus (để không hiện lại viền trắng mặc định) */
+.date-picker:focused, .date-picker > .text-field:focused {
+    -fx-background-insets: 0;
+    -fx-border-color: #3B82F6;
+}
+
+.submit-button {
+    -fx-background-color: #10B981;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 22px;
+    -fx-background-radius: 30;
+    -fx-cursor: hand;
+}
+
+.submit-button:hover {
+    -fx-background-color: #059669;
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
