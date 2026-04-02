@@ -3,65 +3,104 @@ package com.auction.client.service;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.google.gson.Gson;
-import java.io.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 public class NetworkService {
     private static NetworkService instance;
-    private final String serverIP="127.0.0.1";
-    private final int serverPort=8000;
+    private final String serverIP = "127.0.0.1";
+    private final int serverPort = 8000;
 
-    private Gson gson=new Gson();
+    private Gson gson = new Gson();
 
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
 
-    private NetworkService(){
-        try{
-            socket=new Socket(serverIP,serverPort);
-            out=new PrintWriter(socket.getOutputStream(),true);
-            in=new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        }
-        catch(IOException e){
+    private NetworkService() {
+        try {
+            socket = new Socket(serverIP, serverPort);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Unable to connect to the server");
         }
     }
 
-    public static NetworkService getInstance(){
-        if(instance==null){
-            instance=new NetworkService();
+    public boolean connectToServer() {
+        try {
+            if (socket == null || socket.isClosed()) {
+
+                socket = new Socket(serverIP, serverPort);
+                out = new PrintWriter(socket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            }
+            return true;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Unable to connect to the server");
+            return false;
+        }
+
+
+    }
+
+    public void closeConnection() {
+        try {
+            if (in != null) in.close();
+            if (out != null) out.close();
+            if (socket != null && !socket.isClosed()) socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket = null;
+        }
+    }
+
+    public static NetworkService getInstance() {
+        if (instance == null) {
+            instance = new NetworkService();
         }
         return instance;
     }
 
 
-    public ResponseMessage sendRequest(RequestMessage req){
+    public ResponseMessage sendRequest(RequestMessage req) {
 
-        if (socket==null || socket.isClosed()){
-            return new ResponseMessage("ERROR","Unable to connect to the server",null);
+        if (!connectToServer()) {
+            return new ResponseMessage("ERROR", "Unable to connect to the server", null);
         }
 
         try {
             //Convert request thanh json va gui di
-            String jsonRequest=gson.toJson(req);
+            String jsonRequest = gson.toJson(req);
             out.println(jsonRequest);
-            System.out.println("Client was sent message: "+jsonRequest);
+            System.out.println("Client was sent message: " + jsonRequest);
 
             //cho va doc phan hoi
-            String jsonRes=in.readLine();
-            if (jsonRes==null){
+            String jsonRes = in.readLine();
+            if (jsonRes == null) {
                 System.out.println("Response is null");
-                return new ResponseMessage("ERROR","Server was closed",null);
+                return new ResponseMessage("ERROR", "Server was closed", null);
             }
             System.out.println("Client was received message");
+            System.out.println("Close connection");
+            closeConnection();
 
-            return gson.fromJson(jsonRes,ResponseMessage.class);
-        }
-        catch (IOException e){
+            return gson.fromJson(jsonRes, ResponseMessage.class);
+        } catch (IOException e) {
             e.printStackTrace();
-            return new ResponseMessage("ERROR","Unable to connect to the server",null);
+            closeConnection();
+            return new ResponseMessage("ERROR", "Unable to connect to the server", null);
+        } finally {
+
         }
     }
 
