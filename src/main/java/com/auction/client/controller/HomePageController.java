@@ -17,6 +17,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -29,6 +30,7 @@ public class HomePageController {
     public void initialize() {
         System.out.println("Đã vào trang chủ!");
     }
+
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
         try {
@@ -46,6 +48,26 @@ public class HomePageController {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Không tìm thấy file AuctionFormPage.fxml! Kiểm tra lại đường dẫn.");
+        }
+    }
+
+    @FXML
+    public void handleSwitchToProductPage(MouseEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ProductPage.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle("Hệ thống đấu Trực tuyến ");
+            stage.centerOnScreen();
+            stage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Không tìm thấy file ProductPage.fxml! Kiểm tra lại đường dẫn.");
         }
     }
 }

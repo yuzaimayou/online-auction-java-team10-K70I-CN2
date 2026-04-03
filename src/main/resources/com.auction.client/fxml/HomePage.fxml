@@ -9,11 +9,11 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" stylesheets="@../css/HomePage.css" fx:controller="com.auction.client.controller.HomePageController" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<ScrollPane prefHeight="850.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
     <content>
         <VBox styleClass="main-container">
 
-            <VBox styleClass="header-section">
+            <VBox prefHeight="137.0" prefWidth="1418.0" styleClass="header-section">
                 <HBox alignment="CENTER_LEFT" styleClass="top-bar">
                     <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
                         <Label styleClass="logo-icon" text="⚖" />
@@ -40,7 +40,7 @@
                 </HBox>
 
                 <HBox alignment="CENTER" styleClass="nav-menu">
-                    <Label styleClass="nav-item, nav-item-active" text="Home" />
+                    <Label  styleClass="nav-item, nav-item-active" text="Home" />
                     <Label styleClass="nav-item" text="About Us" />
                     <Label styleClass="nav-item" text="Browse Auction" />
                     <Label styleClass="nav-item" text="How It Works" />
@@ -58,7 +58,7 @@
                     <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="💎" /></StackPane><Label text="Jewelry" /></VBox>
                     <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="⚽" /></StackPane><Label text="Sports" /></VBox>
                     <VBox styleClass="category-item">
-                        <Button onAction= "#handleSwitchToAuctionFormPage" mnemonicParsing="false" styleClass="add-auction-button">
+                        <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage" styleClass="add-auction-button">
                             <graphic>
                                 <Label styleClass="add-icon" text="+" />
                             </graphic>
@@ -72,7 +72,7 @@
                 <Label styleClass="section-title, gray-title" text="Ongoing Auctions" />
 
                 <HBox alignment="CENTER" styleClass="auctions-list">
-                    <VBox styleClass="auction-card">
+                    <VBox styleClass="auction-card" onMouseClicked="#handleSwitchToProductPage" style="-fx-cursor: hand;">
                         <StackPane styleClass="card-image-placeholder">
                             <Label text="Image: iPhone 17" textFill="#999999" />
                         </StackPane>

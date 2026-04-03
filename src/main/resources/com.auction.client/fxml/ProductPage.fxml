@@ -15,13 +15,13 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<ScrollPane fitToWidth="true" stylesheets="@../css/ProductPage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<ScrollPane fitToWidth="true" stylesheets="@../css/ProductPage.css" fx:controller="com.auction.client.controller.ProductPageController" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" >
     <content>
         <VBox styleClass="main-container">
 
             <VBox styleClass="header-section">
                 <HBox alignment="CENTER_LEFT" styleClass="top-bar">
-                    <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
+                    <HBox onMouseClicked="#handleBackToHome" alignment="CENTER_LEFT" spacing="5" styleClass="logo-container" style="-fx-cursor: hand;">
                         <Label styleClass="logo-icon" text="⚖" />
                         <Label styleClass="logo-text" text="AUCTION" />
                     </HBox>
@@ -46,7 +46,7 @@
                 </HBox>
 
                 <HBox alignment="CENTER" styleClass="nav-menu">
-                    <Label graphicTextGap="5.0" styleClass="nav-item, nav-item-active" text="Home" />
+                    <Label fx:id="homeNav" onMouseClicked="#handleBackToHome" graphicTextGap="5.0" styleClass="nav-item, nav-item-active" text="Home" style="-fx-cursor: hand;" />
                     <Label styleClass="nav-item" text="About Us" />
                     <Label styleClass="nav-item" text="Browse Auction" />
                     <Label styleClass="nav-item" text="How It Works" />
