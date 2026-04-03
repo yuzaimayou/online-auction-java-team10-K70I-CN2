@@ -102,7 +102,7 @@
 }
 
 .nav-item-active {
-    -fx-text-fill: #aaaaaa; /* Dựa theo màu nhạt của nút Home trong ảnh */
+    -fx-text-fill: #aaaaaa;
 }
 
 .header {
@@ -123,7 +123,6 @@
     -fx-text-fill: #1E293B;
 }
 
-/* Card chính - Cố định kích thước để không bị tràn màn hình */
 .form-card {
     -fx-background-color: white;
     -fx-background-radius: 40;
@@ -155,7 +154,6 @@
     -fx-border-width: 2;
 }
 
-/* Category Buttons lớn hơn */
 .category-btn {
     -fx-min-width: 85;
     -fx-min-height: 85;
@@ -176,21 +174,19 @@
     -fx-text-fill: #475569;
 }
 
-/* Container chính của DatePicker */
 .date-picker {
     -fx-background-color: transparent;
     -fx-border-color: #CBD5E1;
     -fx-border-radius: 15;
     -fx-background-radius: 15;
     -fx-border-width: 1;
-    -fx-background-insets: 0; /* Ép về 0 để không có khoảng hở */
+    -fx-background-insets: 0;
 }
 
-/* Ô nhập văn bản bên trong */
 .date-picker > .text-field {
     -fx-background-color: white;
-    -fx-background-insets: 0; /* Xóa khoảng trắng bao quanh ô nhập */
-    -fx-background-radius: 15 0 0 15; /* Bo góc trái khớp với cha */
+    -fx-background-insets: 0;
+    -fx-background-radius: 15 0 0 15;
     -fx-padding: 0 15 0 15;
     -fx-font-size: 18px;
     -fx-border-width: 0;
@@ -199,12 +195,11 @@
 /* Nút lịch bên phải */
 .date-picker > .arrow-button {
     -fx-background-color: #F1F5F9;
-    -fx-background-insets: 0; /* Ép nút sát vào mép phải */
-    -fx-background-radius: 0 15 15 0; /* Bo góc phải khớp với cha */
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 15 15 0;
     -fx-padding: 0 15 0 15;
 }
 
-/* Trạng thái khi focus (để không hiện lại viền trắng mặc định) */
 .date-picker:focused, .date-picker > .text-field:focused {
     -fx-background-insets: 0;
     -fx-border-color: #3B82F6;
