@@ -66,11 +66,12 @@ public class LoginController {
 
             if ("SUCCESS".equals(res.getStatus())) {
                 Platform.runLater(() -> {
+                    lblMessage.setTextFill(Color.GREEN);
                     lblMessage.setText("Đăng nhập thành công");
                 });
 
                 User loggedInUser = gson.fromJson(res.getData(), User.class);
-                PauseTransition pause = new PauseTransition(Duration.seconds(2));
+                PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
                 pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
                 pause.play();
 

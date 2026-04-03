@@ -160,7 +160,7 @@
 .auction-card {
     -fx-background-color: white;
     -fx-background-radius: 8px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 10, 0, 0, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 10, 0, 0, 5);
     -fx-pref-width: 280px;
     -fx-min-height: 400px;
 }
@@ -196,4 +196,16 @@
 .card-info {
     -fx-text-fill: #999999;
     -fx-font-size: 12px;
+}
+
+.addButton {
+    -fx-background-color: #2196F3;
+    -fx-min-height: 50px;
+    -fx-min-width: 50px;
+    -fx-max-height: 50px;
+    -fx-max-width: 50px;
+    -fx-background-radius: 25px;
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 10, 0, 0, 5);
 }
