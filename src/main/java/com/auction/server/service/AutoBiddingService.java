@@ -1,18 +1,13 @@
 package com.auction.server.service;
 
-import com.auction.shared.model.account.Bidder;
 import com.auction.shared.model.auction.Auction;
 import com.auction.shared.model.auction.AutoBid;
 import com.auction.shared.model.auction.BidTransaction;
+import com.auction.shared.model.account.User;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Service quản lý auto-bidding
- * Requirement 3.2.1: Auto-Bidding (Đấu giá tự động)
- * Requirement 3.2.2: Xử lý đấu giá đồng thời
- */
 public class AutoBiddingService {
     private Map<String, AutoBid> autoBidMap;
     private Map<String, List<AutoBid>> auctionAutoBidsMap;
@@ -26,12 +21,7 @@ public class AutoBiddingService {
         this.lock = new ReentrantReadWriteLock();
     }
 
-    /**
-     * Requirement 3.2.1: Người dùng đặt auto-bid
-     * Requirement 3.2.2: Thread-safe registration
-     */
-    public String registerAutoBid(String auctionId, Bidder bidder,
-                                  double maxBid, double increment) throws Exception {
+    public String registerAutoBid(String auctionId, User bidder, double maxBid, double increment) throws Exception {
         if (bidder == null) {
             throw new IllegalArgumentException("Error: Bidder cannot be null!");
         }
@@ -62,10 +52,6 @@ public class AutoBiddingService {
         return autoBid.getAutoBidId();
     }
 
-    /**
-     * Requirement 3.2.1: Xử lý auto-bid khi có bid mới
-     * Requirement 3.2.2: Xử lý xung đột bid đồng thời
-     */
     public void triggerAutoBids(String auctionId, BiddingService biddingService) throws Exception {
         lock.readLock().lock();
         try {
@@ -77,10 +63,8 @@ public class AutoBiddingService {
             Auction auction = biddingService.getAuction(auctionId);
             double currentPrice = auction.getItem().getHighestCurrentPrice();
 
-            // Requirement 3.2.1: Ưu tiên theo thời điểm đăng ký auto-bid
             autoBids.sort(Comparator.comparing(AutoBid::getRegisteredAt));
 
-            // Requirement 3.2.1: So sánh nhiều auto-bid cùng lúc
             for (AutoBid autoBid : autoBids) {
                 if (!autoBid.isActive()) {
                     continue;
@@ -95,7 +79,7 @@ public class AutoBiddingService {
                         continue;
                     }
 
-                    Bidder bidder = new Bidder(autoBid.getBidderId(), "bidder", "pass");
+                    User bidder = new User(autoBid.getBidderId(), "bidder", "pass");
                     bidder.setBalance(autoBid.getMaxBid());
 
                     BidTransaction bid = biddingService.placeBid(
@@ -117,9 +101,6 @@ public class AutoBiddingService {
         }
     }
 
-    /**
-     * Hủy auto-bid
-     */
     public void cancelAutoBid(String autoBidId) throws Exception {
         lock.writeLock().lock();
         try {
@@ -137,9 +118,6 @@ public class AutoBiddingService {
         }
     }
 
-    /**
-     * Lấy tất cả auto-bids cho một auction
-     */
     public List<AutoBid> getAutoBidsForAuction(String auctionId) {
         lock.readLock().lock();
         try {
