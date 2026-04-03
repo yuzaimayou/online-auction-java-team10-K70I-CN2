@@ -1,87 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<StackPane fx:controller="com.auction.client.controller.HomePageController" prefHeight="1024.0" prefWidth="1440.0"
-           stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-    <VBox styleClass="main-container">
+<ScrollPane prefHeight="850.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
+    <content>
+        <VBox styleClass="main-container">
 
-        <VBox styleClass="header-section" prefWidth="1440.0">
-            <HBox styleClass="top-bar" alignment="CENTER_LEFT">
-                <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
-                    <Label text="⚖" styleClass="logo-icon"/>
-                    <Label text="AUCTION" styleClass="logo-text"/>
+            <VBox prefHeight="137.0" prefWidth="1418.0" styleClass="header-section">
+                <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+                    <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
+                        <Label styleClass="logo-icon" text="⚖" />
+                        <Label styleClass="logo-text" text="AUCTION" />
+                    </HBox>
+
+                    <Label styleClass="categories-dropdown" text="Categories ˅" />
+
+                    <Region HBox.hgrow="ALWAYS" />
+
+                    <HBox alignment="CENTER_LEFT" styleClass="search-bar">
+                        <Label styleClass="search-icon" text="🔍" />
+                        <TextField promptText="Search for anything" styleClass="search-input" />
+                    </HBox>
+
+                    <Region HBox.hgrow="ALWAYS" />
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <StackPane styleClass="profile-icon-container">
+                            <Label styleClass="profile-icon" text="👤" />
+                        </StackPane>
+                        <Label styleClass="profile-name" text="Van" />
+                    </HBox>
                 </HBox>
 
-                <Region HBox.hgrow="ALWAYS"/>
-
-
-                <Region HBox.hgrow="ALWAYS"/>
-
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <StackPane styleClass="profile-icon-container">
-                        <Label text="👤" styleClass="profile-icon"/>
-                    </StackPane>
-                    <Label fx:id="labelUsername" text="Van" styleClass="profile-name"/>
+                <HBox alignment="CENTER" styleClass="nav-menu">
+                    <Label  styleClass="nav-item, nav-item-active" text="Home" />
+                    <Label styleClass="nav-item" text="About Us" />
+                    <Label styleClass="nav-item" text="Browse Auction" />
+                    <Label styleClass="nav-item" text="How It Works" />
                 </HBox>
-            </HBox>
-        </VBox>
+            </VBox>
 
-        <VBox styleClass="categories-section" alignment="CENTER">
-            <Label text="Explore Categories" styleClass="section-title"/>
-            <HBox styleClass="categories-list" alignment="CENTER">
-                <VBox styleClass="category-item">
-                    <StackPane styleClass="cat-icon-bg">
-                        <Label text=""/>
-                    </StackPane>
-                    <Label text="Electronics"/>
-                </VBox>
-                <VBox styleClass="category-item">
-                    <StackPane styleClass="cat-icon-bg">
-                        <Label text=""/>
-                    </StackPane>
-                    <Label text="Art"/>
-                </VBox>
-                <VBox styleClass="category-item">
-                    <StackPane styleClass="cat-icon-bg">
-                        <Label text=""/>
-                    </StackPane>
-                    <Label text="Vehicle"/>
-                </VBox>
-            </HBox>
-        </VBox>
-
-        <VBox styleClass="auctions-section" alignment="CENTER" VBox.vgrow="ALWAYS">
-            <StackPane>
-                <Label StackPane.alignment="CENTER" text="Ongoing Auctions" styleClass="section-title, gray-title"/>
-                <Button StackPane.alignment="CENTER_RIGHT" styleClass="addButton" onAction="#addAuction" text="+">
-                    <StackPane.margin>
-                        <Insets right="20.0"/>
-                    </StackPane.margin>
-
-                </Button>
-            </StackPane>
-
-
-            <HBox styleClass="auctions-list" alignment="CENTER">
-                <VBox styleClass="auction-card">
-                    <StackPane styleClass="card-image-placeholder">
-                        <Label text="Image: iPhone 17" textFill="#999999"/>
-                    </StackPane>
-                    <VBox styleClass="card-content">
-                        <Label text="IPhone 17 Pro Max 2025" styleClass="card-title"/>
-                        <Label text="Auction is live" styleClass="live-badge"/>
-                        <Label text="Ends at: 28/03/2026 18:00PM" styleClass="card-info"/>
-                        <Label text="Starting Price: 20.000.000 VNĐ" styleClass="card-info"/>
+            <VBox alignment="CENTER" styleClass="categories-section">
+                <Label styleClass="section-title" text="Explore Categories" />
+                <HBox alignment="CENTER" styleClass="categories-list">
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="👜" /></StackPane><Label text="Fashion" /></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="💻" /></StackPane><Label text="Electronics" /></VBox>
+                    <VBox styleClass="category-item"><StackPane prefHeight="60.0" prefWidth="74.0" styleClass="cat-icon-bg"><Label text="🏠" /></StackPane><Label text="Home &amp; Garden" /></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="🖼️" /></StackPane><Label text="Art" /></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="📚" /></StackPane><Label text="Books" /></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="💎" /></StackPane><Label text="Jewelry" /></VBox>
+                    <VBox styleClass="category-item"><StackPane styleClass="cat-icon-bg"><Label text="⚽" /></StackPane><Label text="Sports" /></VBox>
+                    <VBox styleClass="category-item">
+                        <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage" styleClass="add-auction-button">
+                            <graphic>
+                                <Label styleClass="add-icon" text="+" />
+                            </graphic>
+                        </Button>
+                        <Label text="Add an Auction" />
                     </VBox>
-                </VBox>
-            </HBox>
+                </HBox>
+            </VBox>
+
+            <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+                <Label styleClass="section-title, gray-title" text="Ongoing Auctions" />
+
+                <HBox alignment="CENTER" styleClass="auctions-list">
+                    <VBox styleClass="auction-card" onMouseClicked="#handleSwitchToProductPage" style="-fx-cursor: hand;">
+                        <StackPane styleClass="card-image-placeholder">
+                            <Label text="Image: iPhone 17" textFill="#999999" />
+                        </StackPane>
+                        <VBox styleClass="card-content">
+                            <Label styleClass="card-title" text="IPhone 17 Pro Max 2025" />
+                            <Label styleClass="live-badge" text="Auction is live" />
+                            <Label styleClass="card-info" text="Ends at: 28/03/2026 18:00PM" />
+                            <Label styleClass="card-info" text="Starting Price: 20.000.000 VNĐ" />
+                        </VBox>
+                    </VBox>
+
+                    <VBox styleClass="auction-card">
+                        <StackPane style="-fx-background-color: #d1e7dd;" styleClass="card-image-placeholder">
+                            <Label text="Image: Pokemon Card" textFill="#999999" />
+                        </StackPane>
+                        <VBox styleClass="card-content">
+                            <Label styleClass="card-title" text="Rare Pokémon Trading Card" wrapText="true" />
+                            <Label styleClass="live-badge" text="Auction is live" />
+                            <Label styleClass="card-info" text="Ends at: 28/03/2026 18:00PM" />
+                            <Label styleClass="card-info" text="Starting Price: 20.000.000 VNĐ" />
+                        </VBox>
+                    </VBox>
+
+                    <VBox styleClass="auction-card">
+                        <StackPane styleClass="card-image-placeholder">
+                            <Label text="Image: iPhone 17" textFill="#999999" />
+                        </StackPane>
+                        <VBox styleClass="card-content">
+                            <Label styleClass="card-title" text="IPhone 17 Pro Max 2025" />
+                            <Label styleClass="live-badge" text="Auction is live" />
+                            <Label styleClass="card-info" text="Ends at: 28/03/2026 18:00PM" />
+                            <Label styleClass="card-info" text="Starting Price: 20.000.000 VNĐ" />
+                        </VBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+
         </VBox>
-
-    </VBox>
-    <StackPane fx:id="formAddAuction" prefWidth="1024.0" prefHeight="720.0" mouseTransparent="true">
-
-    </StackPane>
-</StackPane>
+    </content>
+</ScrollPane>

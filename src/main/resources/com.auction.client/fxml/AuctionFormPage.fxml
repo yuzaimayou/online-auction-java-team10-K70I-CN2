@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox prefHeight="850.0" prefWidth="1440.0" styleClass="root-container" stylesheets="@../css/AuctionFormPage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+
+    <VBox styleClass="header-section">
+        <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+            <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
+                <Label styleClass="logo-icon" text="⚖" />
+                <Label styleClass="logo-text" text="AUCTION" />
+            </HBox>
+            <Label styleClass="categories-dropdown" text="Categories ˅" />
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox alignment="CENTER_LEFT" styleClass="search-bar">
+                <Label styleClass="search-icon" text="🔍" />
+                <TextField promptText="Search for anything" styleClass="search-input" />
+            </HBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <StackPane styleClass="profile-icon-container">
+                    <Label styleClass="profile-icon" text="👤" />
+                </StackPane>
+                <Label styleClass="profile-name" text="Van" />
+            </HBox>
+        </HBox>
+        <HBox alignment="CENTER" styleClass="nav-menu">
+            <Label styleClass="nav-item, nav-item-active" text="Home" />
+            <Label styleClass="nav-item" text="About Us" />
+            <Label styleClass="nav-item" text="Browse Auction" />
+            <Label styleClass="nav-item" text="How It Works" />
+        </HBox>
+    </VBox>
+
+    <StackPane VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets bottom="40.0" top="40.0" />
+        </padding>
+
+        <VBox alignment="CENTER" maxHeight="800.0" maxWidth="1100.0" spacing="35.0" styleClass="form-card">
+            <padding>
+                <Insets bottom="50.0" left="60.0" right="60.0" top="40.0" />
+            </padding>
+
+            <VBox spacing="12.0">
+                <Label styleClass="field-label" text="Auction Title" />
+                <TextField maxWidth="Infinity" prefHeight="60.0" promptText="What is the auction title?" styleClass="input-field" />
+            </VBox>
+
+            <VBox spacing="20.0">
+                <Label styleClass="field-label" text="Category" />
+                <HBox alignment="CENTER" spacing="35.0">
+                    <fx:define>
+                        <ToggleGroup fx:id="categoryGroup" />
+                    </fx:define>
+
+                    <VBox alignment="CENTER" spacing="10.0">
+                        <ToggleButton styleClass="category-btn" toggleGroup="$categoryGroup">
+                            <graphic><Region styleClass="icon-fashion" /></graphic>
+                        </ToggleButton>
+                        <Label styleClass="category-text" text="Fashion" />
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="10.0">
+                        <ToggleButton styleClass="category-btn" toggleGroup="$categoryGroup">
+                            <graphic><Region styleClass="icon-electronics" /></graphic>
+                        </ToggleButton>
+                        <Label styleClass="category-text" text="Electronics" />
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="10.0">
+                        <ToggleButton styleClass="category-btn" toggleGroup="$categoryGroup">
+                            <graphic><Region styleClass="icon-home" /></graphic>
+                        </ToggleButton>
+                        <Label styleClass="category-text" text="Home" />
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="10.0">
+                        <ToggleButton styleClass="category-btn" toggleGroup="$categoryGroup">
+                            <graphic><Region styleClass="icon-art" /></graphic>
+                        </ToggleButton>
+                        <Label styleClass="category-text" text="Art" />
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="10.0">
+                        <ToggleButton styleClass="category-btn" toggleGroup="$categoryGroup">
+                            <graphic><Region styleClass="icon-jewelry" /></graphic>
+                        </ToggleButton>
+                        <Label styleClass="category-text" text="Jewelry" />
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <HBox spacing="40.0">
+                <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                    <Label styleClass="field-label" text="Start Time" />
+                    <DatePicker maxWidth="Infinity" prefHeight="55.0" styleClass="date-picker" />
+                </VBox>
+                <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                    <Label styleClass="field-label" text="End Time" />
+                    <DatePicker maxWidth="Infinity" prefHeight="55.0" styleClass="date-picker" />
+                </VBox>
+            </HBox>
+
+            <Button maxWidth="Infinity" prefHeight="65.0" styleClass="submit-button" text="Create an Auction" />
+        </VBox>
+    </StackPane>
+</VBox>

@@ -132,6 +132,26 @@
     -fx-min-height: 60px;
 }
 
+.add-auction-button {
+    -fx-background-color: #3b82f6;
+    -fx-background-radius: 50%;
+    -fx-min-width: 60px;
+    -fx-min-height: 60px;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+.add-auction-button .label {
+    -fx-text-fill: white !important;
+    -fx-font-weight: bold;
+    -fx-font-size: 30px;          /* Chỉnh cỡ dấu cộng cho vừa vặn */
+    -fx-alignment: center;
+}
+
+.add-auction-button:hover {
+    -fx-background-color: #2563eb;
+}
+
+
 .category-item Label {
     -fx-text-fill: #888888;
     -fx-font-size: 13px;
@@ -197,15 +217,7 @@
     -fx-text-fill: #999999;
     -fx-font-size: 12px;
 }
-
-.addButton {
-    -fx-background-color: #2196F3;
-    -fx-min-height: 50px;
-    -fx-min-width: 50px;
-    -fx-max-height: 50px;
-    -fx-max-width: 50px;
-    -fx-background-radius: 25px;
-    -fx-font-size: 24px;
-    -fx-text-fill: white;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 10, 0, 0, 5);
+.auction-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
+    -fx-translate-y: -5px;
 }
