@@ -217,3 +217,7 @@
     -fx-text-fill: #999999;
     -fx-font-size: 12px;
 }
+.auction-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
+    -fx-translate-y: -5px;
+}
