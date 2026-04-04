@@ -1,10 +1,13 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.util.UserSession;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.model.enums.ActionType;
 import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -31,6 +34,8 @@ import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 public class AuctionFormController {
+    @FXML
+    private Label txtUser;
     @FXML
     private Label lblMessage;
     @FXML
@@ -64,7 +69,9 @@ public class AuctionFormController {
     // Biến này sẽ lưu trữ file ảnh mà client chọn
     private File selectedImageFile;
     private NetworkService network = NetworkService.getInstance();
-    private Gson gson = new Gson();
+    private Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
 
     @FXML
     public void initialize() {
@@ -80,6 +87,8 @@ public class AuctionFormController {
         }
         cbStartTime.setValue("06:50");
         cbEndTime.setValue("10:37");
+
+        txtUser.setText(UserSession.getInstance().getLoggedInUser().getUsername());
     }
 
 
@@ -125,6 +134,7 @@ public class AuctionFormController {
 
     @FXML
     public void handleAddProduct(ActionEvent event) {
+
         String productName = txtProductName.getText().trim();
         String productDesc = txtProductDesc.getText().trim();
         Toggle selectedToggle = categoryGroup.getSelectedToggle();
@@ -140,12 +150,20 @@ public class AuctionFormController {
         Double bidStep = convertNumeric(txtBidStep.getText().trim());
         Double maxPrice = convertNumeric(txtMaxPrice.getText().trim());
         Double minPrice = convertNumeric(txtMinPrice.getText().trim());
+        //User id
+        String userId = UserSession.getInstance().getLoggedInUser().getId();
 
         //Kiem tra
         if (isAnyNull(productName, productDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep, selectedImageFile)) {
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText("Please fill in all required fields.");
             return;
+        }
+        if (maxPrice == null) {
+            maxPrice = 0.0;
+        }
+        if (minPrice == null) {
+            minPrice = 0.0;
         }
         if (initPrice == -2 || bidStep == -2 || maxPrice == -2 || minPrice == -2) {
             lblMessage.setTextFill(Color.RED);
@@ -174,7 +192,7 @@ public class AuctionFormController {
         selectedCategory = selectedToggle.getUserData().toString();
 
 
-        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageBase64, startDateTime, endDateTime, initPrice, bidStep, maxPrice, minPrice);
+        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageBase64, startDateTime, endDateTime, initPrice, bidStep, maxPrice, minPrice, userId);
         String jsonPayload = gson.toJson(payload);
         CompletableFuture.supplyAsync(() -> {
             return network.sendRequest(new RequestMessage(ActionType.ADDPRODUCT, jsonPayload));

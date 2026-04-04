@@ -25,7 +25,7 @@
                 <StackPane styleClass="profile-icon-container">
                     <Label styleClass="profile-icon" text="👤"/>
                 </StackPane>
-                <Label styleClass="profile-name" text="Van"/>
+                <Label fx:id="txtUser" styleClass="profile-name" text="Van"/>
             </HBox>
         </HBox>
         <HBox alignment="CENTER" styleClass="nav-menu">

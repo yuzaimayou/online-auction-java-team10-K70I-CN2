@@ -6,8 +6,9 @@ public class ProductPayload {
     private String productName, category, productDesc, productImg;
     private LocalDateTime startDateTime, endDateTime;
     private Double initPrice, bidStep, maxPrice, minPrice;
+    private String userId;
 
-    public ProductPayload(String productName, String category, String productDesc, String productImg, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, Double maxPrice, Double minPrice) {
+    public ProductPayload(String productName, String category, String productDesc, String productImg, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, Double maxPrice, Double minPrice, String userId) {
         this.productName = productName;
         this.category = category;
         this.startDateTime = startTime;
@@ -18,6 +19,7 @@ public class ProductPayload {
         this.bidStep = bidStep;
         this.maxPrice = maxPrice;
         this.minPrice = minPrice;
+        this.userId = userId;
     }
 
     public LocalDateTime getStartDateTime() {
@@ -58,6 +60,10 @@ public class ProductPayload {
 
     public Double getMinPrice() {
         return minPrice;
+    }
+
+    public String getUserId() {
+        return userId;
     }
 
 }

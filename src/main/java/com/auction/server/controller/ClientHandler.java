@@ -6,7 +6,9 @@ import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +20,9 @@ import java.time.LocalDateTime;
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private AuthService authService;
-    private Gson gson = new Gson();
+    private Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
 
     public ClientHandler(Socket socket, AuthService authService) {
         this.clientSocket = socket;
@@ -77,12 +81,13 @@ public class ClientHandler implements Runnable {
         Double bidStep = productData.getBidStep();
         Double maxPrice = productData.getMaxPrice();
         Double minPrice = productData.getMinPrice();
+        String userId = productData.getUserId();
         //goi class tao product
-        boolean created = false;
+        boolean created = true;
 
         if (created) {
             response.setStatus("SUCCESS");
-            response.setMessage("Product added successfully!");
+            response.setMessage("Product added successfully!" + userId);
         } else {
             response.setStatus("FAIL");
             response.setMessage("Failed to add product. Please try again.");

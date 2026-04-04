@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.util.UserSession;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.ActionType;
@@ -71,6 +72,7 @@ public class LoginController {
                 });
 
                 User loggedInUser = gson.fromJson(res.getData(), User.class);
+                UserSession.getInstance().setLoggedInUser(loggedInUser);
                 PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
                 pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
                 pause.play();
@@ -120,16 +122,13 @@ public class LoginController {
     public void handleSwitchToHomePage(User loggedInUser) {
         try {
             System.out.println("Da chuyen sang trang chu");
-            String username = loggedInUser.getUsername();
-            String role = loggedInUser.getRole();
-
             // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
             Parent root = loader.load();
 
             //Lay Controller
             HomePageController homePageController = loader.getController();
-            homePageController.initData(username, role);
+
 
             //Lay scene hien tai
             Scene currentScene = lblMessage.getScene();

@@ -1,5 +1,6 @@
 package com.auction.client.controller;
 
+import com.auction.client.util.UserSession;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -18,13 +19,11 @@ public class HomePageController {
 
     @FXML
     public void initialize() {
+
         System.out.println("Đã vào trang chủ!");
+        userName.setText(UserSession.getInstance().getLoggedInUser().getUsername());
     }
 
-    @FXML
-    public void initData(String username, String role) {
-        userName.setText(username);
-    }
 
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
