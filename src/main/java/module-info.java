@@ -12,12 +12,11 @@ module online.auction {
     exports com.auction.client;
     exports com.auction.client.controller;
     opens com.auction.client.controller to javafx.fxml;
-
-    opens com.auction.shared.model to com.google.gson;
+    
     opens com.auction.shared.message to com.google.gson;
-    opens com.auction.shared.constant to com.google.gson;
     opens com.auction.shared.model.base to com.google.gson;
     opens com.auction.shared.model.account to com.google.gson;
     opens com.auction.shared.model.auction to com.google.gson;
     opens com.auction.shared.model.enums to com.google.gson;
+    opens com.auction.shared.model.payloads to com.google.gson;
 }

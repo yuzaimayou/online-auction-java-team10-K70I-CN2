@@ -1,0 +1,63 @@
+package com.auction.shared.model.payloads;
+
+import java.time.LocalDateTime;
+
+public class ProductPayload {
+    private String productName, category, productDesc, productImg;
+    private LocalDateTime startDateTime, endDateTime;
+    private Double initPrice, bidStep, maxPrice, minPrice;
+
+    public ProductPayload(String productName, String category, String productDesc, String productImg, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, Double maxPrice, Double minPrice) {
+        this.productName = productName;
+        this.category = category;
+        this.startDateTime = startTime;
+        this.endDateTime = endTime;
+        this.productDesc = productDesc;
+        this.productImg = productImg;
+        this.initPrice = initPrice;
+        this.bidStep = bidStep;
+        this.maxPrice = maxPrice;
+        this.minPrice = minPrice;
+    }
+
+    public LocalDateTime getStartDateTime() {
+        return startDateTime;
+    }
+
+    public LocalDateTime getEndDateTime() {
+        return endDateTime;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public String getProductDesc() {
+        return productDesc;
+    }
+
+    public String getProductImg() {
+        return productImg;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public Double getInitPrice() {
+        return initPrice;
+    }
+
+    public Double getBidStep() {
+        return bidStep;
+    }
+
+    public Double getMaxPrice() {
+        return maxPrice;
+    }
+
+    public Double getMinPrice() {
+        return minPrice;
+    }
+
+}

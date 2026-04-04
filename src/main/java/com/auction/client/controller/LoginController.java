@@ -1,10 +1,10 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
-import com.auction.shared.model.AuthPayload;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;

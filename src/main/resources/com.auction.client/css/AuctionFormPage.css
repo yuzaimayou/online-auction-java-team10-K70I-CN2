@@ -128,7 +128,7 @@
     -fx-background-radius: 40;
     -fx-border-radius: 40;
     -fx-border-color: #E2E8F0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 30, 0, 0, 15);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 30, 0, 0, 15);
 }
 
 .field-label {
@@ -145,13 +145,29 @@
     -fx-border-color: #CBD5E1;
     -fx-border-radius: 15;
     -fx-background-radius: 15;
-    -fx-padding: 0 20 0 20;
+    -fx-padding: 20 20 20 20;
     -fx-font-size: 18px;
 }
 
 .input-field:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
     -fx-border-color: #3B82F6;
     -fx-border-width: 2;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+/* Làm trong suốt khung nhìn (viewport) của thanh cuộn ẩn bên trong */
+.text-area .viewport {
+    -fx-background-color: transparent;
+}
+
+/* (Tùy chọn) Đảm bảo khi bạn click chuột vào nhập liệu, cái nét gạch đó không hiện lại */
+.text-area:focused .content {
+    -fx-background-color: transparent;
 }
 
 .category-btn {
@@ -205,6 +221,38 @@
     -fx-border-color: #3B82F6;
 }
 
+.time-picker {
+    -fx-background-color: #F1F5F9; /* Màu xám nhạt (gần giống nút lịch) */
+    -fx-border-color: #CBD5E1; /* Màu viền đồng bộ với các ô TextField */
+    -fx-border-radius: 4px; /* Bo góc nhẹ */
+    -fx-background-radius: 4px;
+    -fx-pref-height: 38px;
+}
+
+.time-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.time-picker .arrow {
+    -fx-background-color: #4a5568;
+}
+
+.close-button {
+    -fx-background-color: #ffc6c6;
+    -fx-border-color: #CBD5E1;
+    -fx-padding: 0;
+    -fx-background-radius: 45em;
+    -fx-border-radius: 45em;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+
+}
+
+.choose-button {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: #CBD5E1;
+}
+
 .submit-button {
     -fx-background-color: #10B981;
     -fx-text-fill: white;
@@ -218,4 +266,42 @@
     -fx-background-color: #059669;
     -fx-scale-x: 1.03;
     -fx-scale-y: 1.03;
+}
+
+/* 1. Chỉnh độ rộng của toàn bộ thanh cuộn dọc */
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 12px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
+    -fx-background-color: transparent;
+}
+
+/* 2. Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+/* 3. Chỉnh cục lăn (Thumb - phần bạn dùng chuột cầm để kéo) */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
+    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
+}
+
+/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
+}
+
+/* 4. (Tùy chọn) Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn để form trông hiện đại hơn */
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " "; /* Xóa hình mũi tên */
+    -fx-padding: 0;
 }
