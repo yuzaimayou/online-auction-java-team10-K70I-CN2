@@ -1,6 +1,7 @@
 package com.auction.server.controller;
 
 import com.auction.server.service.AuthService;
+import com.auction.server.service.ProductService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
@@ -20,13 +21,15 @@ import java.time.LocalDateTime;
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private AuthService authService;
+    private ProductService productService;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
-    public ClientHandler(Socket socket, AuthService authService) {
+    public ClientHandler(Socket socket, AuthService authService, ProductService productService) {
         this.clientSocket = socket;
         this.authService = authService;
+        this.productService = productService;
     }
 
     private boolean loginAction(String payload, ResponseMessage response) {
@@ -71,19 +74,9 @@ public class ClientHandler implements Runnable {
 
     private boolean addProductAction(String payload, ResponseMessage response) {
         ProductPayload productData = gson.fromJson(payload, ProductPayload.class);
-        String productName = productData.getProductName();
-        String category = productData.getCategory();
-        LocalDateTime startTime = productData.getStartDateTime();
-        LocalDateTime endTime = productData.getEndDateTime();
-        String productDesc = productData.getProductDesc();
-        String productImg = productData.getProductImg();
-        Double initPrice = productData.getInitPrice();
-        Double bidStep = productData.getBidStep();
-        Double maxPrice = productData.getMaxPrice();
-        Double minPrice = productData.getMinPrice();
         String userId = productData.getUserId();
         //goi class tao product
-        boolean created = true;
+        boolean created = productService.addProduct(payload);
 
         if (created) {
             response.setStatus("SUCCESS");
