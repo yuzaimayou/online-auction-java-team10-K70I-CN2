@@ -1,6 +1,6 @@
 package com.auction.shared.message;
 
-import com.auction.shared.constant.ActionType;
+import com.auction.shared.model.enums.ActionType;
 
 public class RequestMessage {
     private String payload;

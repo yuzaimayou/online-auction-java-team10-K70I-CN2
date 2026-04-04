@@ -32,13 +32,13 @@ public class HomePageController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
             Parent root = loader.load();
 
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            AuctionFormController auctionFormController = loader.getController();
 
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Hệ thống đấu Trực tuyến - Tạo phiên đấu giá");
-            stage.centerOnScreen();
-            stage.show();
+            Scene currentScene = userName.getScene();
+            Stage stage = (Stage) currentScene.getWindow();
+
+            currentScene.setRoot(root);
+            stage.setTitle("Online Auction System - Add Product");
 
         } catch (IOException e) {
             e.printStackTrace();

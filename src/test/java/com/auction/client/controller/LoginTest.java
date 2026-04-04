@@ -1,8 +1,8 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
+import com.auction.shared.model.enums.ActionType;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;

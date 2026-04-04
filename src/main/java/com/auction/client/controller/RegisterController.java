@@ -1,12 +1,10 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.shared.constant.ActionType;
 import com.auction.shared.message.RequestMessage;
-import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.AuthPayload;
+import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
-
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -41,7 +39,7 @@ public class RegisterController {
     @FXML
     private Label lblMessage;
 
-    private NetworkService network=NetworkService.getInstance();
+    private NetworkService network = NetworkService.getInstance();
     private Gson gson = new Gson();
 
     @FXML
@@ -65,11 +63,11 @@ public class RegisterController {
 
         AuthPayload payload = new AuthPayload(username, password);
         String jsonPayload = gson.toJson(payload);
-        CompletableFuture.supplyAsync(()->{
-            return network.sendRequest(new RequestMessage(ActionType.REGISTER,jsonPayload));
-        }).thenAccept(res->{
+        CompletableFuture.supplyAsync(() -> {
+            return network.sendRequest(new RequestMessage(ActionType.REGISTER, jsonPayload));
+        }).thenAccept(res -> {
             if (res == null) {
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     lblMessage.setTextFill(Color.RED);
                     lblMessage.setText("Không thể kết nối server");
                 });
@@ -79,7 +77,7 @@ public class RegisterController {
 
             if ("SUCCESS".equals(res.getStatus())) {
                 System.out.println(res.getMessage());
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     lblMessage.setTextFill(Color.GREEN);
                     lblMessage.setText("Đăng ký thành công");
                     PauseTransition pause = new PauseTransition(Duration.seconds(2));
@@ -89,7 +87,7 @@ public class RegisterController {
 
 
             } else {
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
 
                     lblMessage.setTextFill(Color.RED);
                     lblMessage.setText(res.getMessage());
