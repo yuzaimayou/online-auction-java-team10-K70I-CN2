@@ -5,6 +5,7 @@ import com.auction.client.util.UserSession;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.model.enums.ActionType;
 import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.util.ImageUtil;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -184,15 +185,15 @@ public class AuctionFormController {
             return;
         }
         //Xu ly hinh anh
-        String imageBase64 = convertImageToBase64(selectedImageFile);
-        if (imageBase64 == null) {
+        String[] imageConverted = ImageUtil.convertImgToBase64(selectedImageFile, lblMessage);
+        if (imageConverted == null) {
             return;
         }
         //Xu ly phan loai san pham
         selectedCategory = selectedToggle.getUserData().toString();
 
 
-        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageBase64, startDateTime, endDateTime, initPrice, bidStep, maxPrice, minPrice, userId);
+        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageConverted, startDateTime, endDateTime, initPrice, bidStep, maxPrice, minPrice, userId);
         String jsonPayload = gson.toJson(payload);
         CompletableFuture.supplyAsync(() -> {
             return network.sendRequest(new RequestMessage(ActionType.ADDPRODUCT, jsonPayload));
