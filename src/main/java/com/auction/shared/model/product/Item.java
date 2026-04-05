@@ -3,6 +3,7 @@ package com.auction.shared.model.product;
 import com.auction.shared.model.base.Entity;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class Item extends Entity {
 
@@ -13,15 +14,25 @@ public class Item extends Entity {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String sellerId;
+    private String category;
+    private double bidStep;
+    private double maxPrice;
+    private double minPrice;
+    private String imagePath;
 
     // Constructor khi tạo item mới
-    public Item(String id, String name, String description,
+    public Item(String name, String description,
                 double startingPrice,
                 LocalDateTime startTime,
                 LocalDateTime endTime,
-                String sellerId) {
+                String sellerId,
+                String category,
+                double bidStep,
+                double maxPrice,
+                double minPrice,
+                String imagePath) {
 
-        super(id);
+        super(UUID.randomUUID().toString());
         //Validate item name
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Error: Item name cannot be null or empty!");
@@ -46,6 +57,22 @@ public class Item extends Entity {
         if (sellerId == null || sellerId.trim().isEmpty()) {
             throw new IllegalArgumentException("Error: Seller ID cannot be null or empty!");
         }
+        if (category == null || category.trim().isEmpty()) {
+            throw new IllegalArgumentException("Error: Category cannot be null or empty!");
+        }
+        if (bidStep <= 0) {
+            throw new IllegalArgumentException("Error: Bid step must be greater than 0!");
+        }
+        if (maxPrice < 0 || minPrice < 0) {
+            throw new IllegalArgumentException("Error: Max price and min price cannot be negative!");
+        }
+        if (maxPrice > 0 && minPrice > 0 && maxPrice < minPrice) {
+            throw new IllegalArgumentException("Error: Max price cannot be lower than min price!");
+        }
+        if (imagePath == null || imagePath.trim().isEmpty()) {
+            throw new IllegalArgumentException("Error: Image path cannot be null or empty!");
+        }
+
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
@@ -53,14 +80,24 @@ public class Item extends Entity {
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
+        this.category = category;
+        this.bidStep = bidStep;
+        this.maxPrice = maxPrice;
+        this.minPrice = minPrice;
+        this.imagePath = imagePath;
     }
     // Constructor khi load từ database
-    public Item(String id, String name, String description,
+    public Item(String name, String description,
                 double startingPrice, double highestCurrentPrice,
                 LocalDateTime startTime, LocalDateTime endTime,
-                String sellerId) {
+                String sellerId,
+                String category,
+                double bidStep,
+                double maxPrice,
+                double minPrice,
+                String imagePath) {
 
-        super(id);
+        super(UUID.randomUUID().toString());
 
         this.name = name;
         this.description = description;
@@ -69,6 +106,11 @@ public class Item extends Entity {
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
+        this.category = category;
+        this.bidStep = bidStep;
+        this.maxPrice = maxPrice;
+        this.minPrice = minPrice;
+        this.imagePath = imagePath;
     }
     public String getName() {
         return name;
@@ -89,6 +131,26 @@ public class Item extends Entity {
 
     public String getSellerId() {
         return sellerId;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public double getBidStep() {
+        return bidStep;
+    }
+
+    public double getMaxPrice() {
+        return maxPrice;
+    }
+
+    public double getMinPrice() {
+        return minPrice;
+    }
+
+    public String getImagePath() {
+        return imagePath;
     }
 
     // Getters for time (needed for auction time validation)
@@ -121,6 +183,11 @@ public class Item extends Entity {
         System.out.println("Starting price: " + startingPrice);
         System.out.println("Current price: " + highestCurrentPrice);
         System.out.println("Seller: " + sellerId);
+        System.out.println("Category: " + category);
+        System.out.println("Bid step: " + bidStep);
+        System.out.println("Max price: " + maxPrice);
+        System.out.println("Min price: " + minPrice);
+        System.out.println("Image path: " + imagePath);
         System.out.println("Start time: " + startTime);
         System.out.println("End time: " + endTime);
     }

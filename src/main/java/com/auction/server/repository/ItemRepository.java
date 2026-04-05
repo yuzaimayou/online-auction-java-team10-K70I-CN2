@@ -23,8 +23,13 @@ public class ItemRepository {
             current_price,
             seller_id,
             start_time,
-            end_time
-        ) VALUES(?,?,?,?,?,?,?,?)
+            end_time,
+            category,
+            bid_step,
+            max_price,
+            min_price,
+            image_path
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
         """;
 
         try (
@@ -40,6 +45,11 @@ public class ItemRepository {
             stmt.setString(6, item.getSellerId());
             stmt.setString(7, item.getStartTime().toString());
             stmt.setString(8, item.getEndTime().toString());
+            stmt.setString(9, item.getCategory());
+            stmt.setDouble(10, item.getBidStep());
+            stmt.setDouble(11, item.getMaxPrice());
+            stmt.setDouble(12, item.getMinPrice());
+            stmt.setString(13, item.getImagePath());
 
             stmt.executeUpdate();
             return true;
@@ -65,16 +75,22 @@ public class ItemRepository {
 
                 if (rs.next()) {
 
-                    return new Item(
-                            rs.getString("id"),
+                    Item item = new Item(
                             rs.getString("name"),
                             rs.getString("description"),
                             rs.getDouble("start_price"),
                             rs.getDouble("current_price"),
                             LocalDateTime.parse(rs.getString("start_time")),
                             LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id")
+                            rs.getString("seller_id"),
+                            rs.getString("category"),
+                            rs.getDouble("bid_step"),
+                            rs.getDouble("max_price"),
+                            rs.getDouble("min_price"),
+                            rs.getString("image_path")
                     );
+                    item.setId(rs.getString("id"));
+                    return item;
                 }
             }
 
@@ -100,15 +116,20 @@ public class ItemRepository {
             while (rs.next()) {
 
                 Item item = new Item(
-                        rs.getString("id"),
                         rs.getString("name"),
                         rs.getString("description"),
                         rs.getDouble("start_price"),
                         rs.getDouble("current_price"),
                         LocalDateTime.parse(rs.getString("start_time")),
                         LocalDateTime.parse(rs.getString("end_time")),
-                        rs.getString("seller_id")
+                        rs.getString("seller_id"),
+                        rs.getString("category"),
+                        rs.getDouble("bid_step"),
+                        rs.getDouble("max_price"),
+                        rs.getDouble("min_price"),
+                        rs.getString("image_path")
                 );
+                item.setId(rs.getString("id"));
 
                 items.add(item);
             }
