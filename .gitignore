@@ -37,3 +37,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### images###
+/dataBase/images/*
+!/dataBase/images/.gitkeep
