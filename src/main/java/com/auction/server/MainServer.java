@@ -20,6 +20,10 @@ public class MainServer {
         ProductService productService = new ProductService();
         authService.register("admin", "admin");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            //server load image
+            StaticFileServer fileServer = new StaticFileServer();
+            fileServer.startServer();
+
             System.out.println("Port has opened!");
             while (true) {
                 Socket clientSocket = serverSocket.accept();

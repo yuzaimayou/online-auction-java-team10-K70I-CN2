@@ -8,6 +8,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
@@ -16,14 +18,25 @@ import java.io.IOException;
 public class HomePageController {
     @FXML
     public Label userName;
+    @FXML
+    private ImageView imageViewProduct;
 
     @FXML
     public void initialize() {
 
         System.out.println("Đã vào trang chủ!");
+        testImage();
         userName.setText(UserSession.getInstance().getLoggedInUser().getUsername());
     }
 
+    public void testImage() {
+        String imageUrl = "http://localhost:1401/images/" + "test.jpeg";
+        Image fxImage = new Image(imageUrl, true);
+
+        imageViewProduct.setImage(fxImage);
+        System.out.println("loaded image");
+
+    }
 
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
