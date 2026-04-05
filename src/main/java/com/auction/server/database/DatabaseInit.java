@@ -26,6 +26,11 @@ public class DatabaseInit {
             seller_id TEXT NOT NULL,
             start_time TEXT,
             end_time TEXT,
+            category TEXT NOT NULL DEFAULT 'other',
+            bid_step REAL NOT NULL DEFAULT 1,
+            max_price REAL NOT NULL DEFAULT 0,
+            min_price REAL NOT NULL DEFAULT 0,
+            image_path TEXT NOT NULL DEFAULT '',
             FOREIGN KEY (seller_id) REFERENCES users(id)
         );
         """;
@@ -50,9 +55,34 @@ public class DatabaseInit {
             stmt.execute(usersTable);
             stmt.execute(itemsTable);
             stmt.execute(bidsTable);
+            migrateItemsTable(stmt);
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void migrateItemsTable(Statement stmt) {
+        // Keep backward compatibility with databases created before new item columns existed.
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN category TEXT NOT NULL DEFAULT 'other'");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN bid_step REAL NOT NULL DEFAULT 1");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN max_price REAL NOT NULL DEFAULT 0");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN min_price REAL NOT NULL DEFAULT 0");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN image_path TEXT NOT NULL DEFAULT ''");
+        } catch (Exception ignored) {
         }
     }
 }

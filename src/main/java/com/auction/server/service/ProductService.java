@@ -2,6 +2,7 @@ package com.auction.server.service;
 
 import com.auction.server.repository.ItemRepository;
 import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
@@ -31,11 +32,20 @@ public class ProductService {
         String userId = productData.getUserId();
 
         String imagePath = ImageUtil.convertBase64ToImg(productImg[0], productImg[1]);
-//        Item newItem = new Item();
-//        boolean result = itemRepository.createItem(newItem);
-//        if (result) {
-//            System.out.println("Created product successfully!");
-//        }
-        return true;
+        Item newItem = new Item(
+                productName,
+                productDesc,
+                initPrice,
+                startTime,
+                endTime,
+                userId,
+                category,
+                bidStep,
+                maxPrice,
+                minPrice,
+                imagePath
+        );
+
+        return itemRepository.createItem(newItem);
     }
 }

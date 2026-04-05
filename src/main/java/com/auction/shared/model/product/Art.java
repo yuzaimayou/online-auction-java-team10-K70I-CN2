@@ -11,21 +11,31 @@ import java.time.LocalDateTime;
 public class Art extends Item {
 
 	// Constructor for creating a new art listing.
-	public Art(String id, String name, String description,
+	public Art(String name, String description,
 			   double startingPrice,
 			   LocalDateTime startTime,
 			   LocalDateTime endTime,
-			   String sellerId) {
-		super(id, name, description, startingPrice, startTime, endTime, sellerId);
+			   String sellerId,
+			   String category,
+			   double bidStep,
+			   double maxPrice,
+			   double minPrice,
+			   String imagePath) {
+		super(name, description, startingPrice, startTime, endTime, sellerId, category, bidStep, maxPrice, minPrice, imagePath);
 	}
 
 	// Constructor for loading an existing art listing from database.
-	public Art(String id, String name, String description,
+	public Art(String name, String description,
 			   double startingPrice,
 			   double highestCurrentPrice,
 			   LocalDateTime startTime,
 			   LocalDateTime endTime,
-			   String sellerId) {
-		super(id, name, description, startingPrice, highestCurrentPrice, startTime, endTime, sellerId);
+			   String sellerId,
+			   String category,
+			   double bidStep,
+			   double maxPrice,
+			   double minPrice,
+			   String imagePath) {
+		super(name, description, startingPrice, highestCurrentPrice, startTime, endTime, sellerId, category, bidStep, maxPrice, minPrice, imagePath);
 	}
 }
