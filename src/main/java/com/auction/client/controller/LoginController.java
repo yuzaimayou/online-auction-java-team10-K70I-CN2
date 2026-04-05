@@ -1,13 +1,14 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.shared.constant.ActionType;
+import com.auction.client.util.UserSession;
 import com.auction.shared.message.RequestMessage;
-import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.AuthPayload;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
-
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,8 +21,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public class LoginController {
 
@@ -49,30 +52,40 @@ public class LoginController {
             return;
         }
 
-        AuthPayload payload=new AuthPayload(username,password);
-        String jsonPayload=gson.toJson(payload);
+        AuthPayload payload = new AuthPayload(username, password);
+        String jsonPayload = gson.toJson(payload);
+        CompletableFuture.supplyAsync(() -> {
+            return network.sendRequest(new RequestMessage(ActionType.LOGIN, jsonPayload));
+        }).thenAccept(res -> {
+            if (res == null) {
+                Platform.runLater(() -> {
+                    lblMessage.setTextFill(Color.RED);
+                    lblMessage.setText("Không thể kết nối server");
+                });
+                return;
+            }
 
-        ResponseMessage res =
-                network.sendRequest(new RequestMessage(ActionType.LOGIN, jsonPayload));
+            if ("SUCCESS".equals(res.getStatus())) {
+                Platform.runLater(() -> {
+                    lblMessage.setTextFill(Color.GREEN);
+                    lblMessage.setText("Đăng nhập thành công");
+                });
 
-        if (res == null) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Không thể kết nối server");
-            return;
-        }
+                User loggedInUser = gson.fromJson(res.getData(), User.class);
+                UserSession.getInstance().setLoggedInUser(loggedInUser);
+                PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
+                pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
+                pause.play();
 
-        if ("SUCCESS".equals(res.getStatus())) {
+            } else {
+                Platform.runLater(() -> {
+                    lblMessage.setTextFill(Color.RED);
+                    lblMessage.setText(res.getMessage());
+                });
+            }
+        });
 
-            User loggedInUser = gson.fromJson(res.getData(), User.class);
-            System.out.println("Đăng nhập thành công");
-            handleSwitchToHomePage(event);
 
-        } else {
-
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText(res.getMessage());
-
-        }
     }
 
     @FXML
@@ -104,26 +117,28 @@ public class LoginController {
             e.printStackTrace();
         }
     }
+
     @FXML
-    public void handleSwitchToHomePage(ActionEvent event) {
-            try {
-                // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
-                Parent root = loader.load();
+    public void handleSwitchToHomePage(User loggedInUser) {
+        try {
+            System.out.println("Da chuyen sang trang chu");
+            // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
+            Parent root = loader.load();
 
-                // Lấy Stage hiện tại từ sự kiện nút bấm
-                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            //Lay Controller
+            HomePageController homePageController = loader.getController();
 
-                // Tạo Scene mới và hiển thị
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                stage.setTitle("Hệ thống đấu Trực tuyến - Trang chủ");
-                stage.centerOnScreen();
-                stage.show();
 
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.err.println("Không tìm thấy file HomePage.fxml! Kiểm tra lại đường dẫn.");
-            }
+            //Lay scene hien tai
+            Scene currentScene = lblMessage.getScene();
+            Stage stage = (Stage) currentScene.getWindow();
+
+            currentScene.setRoot(root);
+            stage.setTitle("Hệ thống Đấu giá Trực tuyến - Home");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Không tìm thấy file HomePage.fxml! Kiểm tra lại đường dẫn.");
         }
+    }
 }
