@@ -4,4 +4,5 @@ public enum ActionType {
     LOGIN,
     REGISTER,
     ADDPRODUCT,
+    GETDATAPRODUCT,
 }

@@ -41,3 +41,6 @@ build/
 ### images###
 /dataBase/images/*
 !/dataBase/images/.gitkeep
+
+/dataBase/*
+!/dataBase/.gitkeep

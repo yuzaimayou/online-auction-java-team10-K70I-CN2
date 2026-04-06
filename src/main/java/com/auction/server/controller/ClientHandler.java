@@ -1,5 +1,6 @@
 package com.auction.server.controller;
 
+import com.auction.server.repository.ItemRepository;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.ProductService;
 import com.auction.shared.message.RequestMessage;
@@ -7,6 +8,7 @@ import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.model.product.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
@@ -88,6 +91,24 @@ public class ClientHandler implements Runnable {
         return true;
     }
 
+    private boolean getDataItems(ResponseMessage response) {
+        System.out.println("Dang goi den database");
+        try {
+
+            ItemRepository itemRepository = new ItemRepository();
+            List<Item> payload = itemRepository.findAllItems();
+            String jsonPayload = gson.toJson(payload);
+            response.setStatus("SUCCESS");
+            response.setMessage("Get data items succeed!");
+            response.setData(jsonPayload);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus("FAIL");
+            response.setMessage("Get data items failed!");
+        }
+        return true;
+    }
+
     @Override
     public void run() {
         try {
@@ -108,6 +129,7 @@ public class ClientHandler implements Runnable {
                     case LOGIN -> keepConnectionAlive = loginAction(request.getPayload(), response);
                     case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
                     case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
+                    case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
                     default -> {
                         response.setStatus("ERROR");
                         response.setMessage("Invalid action");

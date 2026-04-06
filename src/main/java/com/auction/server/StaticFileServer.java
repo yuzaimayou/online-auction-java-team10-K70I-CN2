@@ -38,7 +38,7 @@ public class StaticFileServer {
 
                 System.out.println("Client yêu cầu ảnh. Đang tìm tại: " + imageFile.getAbsolutePath());
                 if (imageFile.exists() && !imageFile.isDirectory()) {
-                    String mimeType = "image/jpeg";
+                    String mimeType;
                     if (fileName.endsWith(".png")) {
                         mimeType = "image/png";
                     } else if (fileName.endsWith(".gif")) {
@@ -47,8 +47,12 @@ public class StaticFileServer {
                         mimeType = "image/jpg";
                     } else if (fileName.endsWith(".heic")) {
                         mimeType = "image/heic";
+
+                    } else if (fileName.endsWith(".jpeg")) {
+                        mimeType = "image/jpeg";
                     } else {
                         System.out.println("filetype is invalid");
+                        System.out.println(fileName);
                         return;
                     }
                     exchange.getResponseHeaders().set("Content-Type", mimeType);

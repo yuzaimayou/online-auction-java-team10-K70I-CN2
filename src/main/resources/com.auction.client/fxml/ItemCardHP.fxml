@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.ItemCardHPController"
+      styleClass="auction-card" onMouseClicked="#handleSwitchToProductPage"
+      style="-fx-cursor: hand;">
+    <StackPane styleClass="card-image-placeholder">
+        <ImageView fx:id="productImage" fitWidth="280.0" fitHeight="250.0"
+                   preserveRatio="true"/>
+    </StackPane>
+    <VBox styleClass="card-content">
+        <Label fx:id="productNameLabel" styleClass="card-title" text="IPhone 17 Pro Max 2025"/>
+        <Label fx:id="statusLabel" styleClass="live-badge" text="Auction is live"/>
+        <Label fx:id="endTimeLabel" styleClass="card-info" text="Ends at: 28/03/2026 18:00PM"/>
+        <Label fx:id="priceLabel" styleClass="card-info" text="Starting Price: 20.000.000 VNĐ"/>
+    </VBox>
+</VBox>
+
+
+

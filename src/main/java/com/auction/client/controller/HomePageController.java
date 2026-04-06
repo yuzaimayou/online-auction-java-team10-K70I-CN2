@@ -1,41 +1,93 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.NetworkService;
 import com.auction.client.util.UserSession;
+import com.auction.shared.message.RequestMessage;
+import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.model.product.Item;
+import com.auction.shared.util.GsonUtil;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class HomePageController {
+
+    //network
+    private NetworkService network = NetworkService.getInstance();
+    private Gson gson = new GsonUtil().getInstance();
     @FXML
     public Label userName;
     @FXML
-    private ImageView imageViewProduct;
+    private HBox auctionsListContainer;
+
 
     @FXML
     public void initialize() {
 
         System.out.println("Đã vào trang chủ!");
-        testImage();
         userName.setText(UserSession.getInstance().getLoggedInUser().getUsername());
+        getDataItemsAndDisplay();
     }
 
-    public void testImage() {
-        String imageUrl = "http://localhost:1401/images/" + "test.jpeg";
-        Image fxImage = new Image(imageUrl, true);
+    @FXML
+    private void getDataItemsAndDisplay() {
+        System.out.println("Dang tien hanh lay du lieu");
 
-        imageViewProduct.setImage(fxImage);
-        System.out.println("loaded image");
+        CompletableFuture.supplyAsync(() -> {
+            return network.sendRequest(new RequestMessage(ActionType.GETDATAPRODUCT));
+        }).thenAccept(res -> {
+            if (res == null) {
+                System.err.println("Unable to connect to the server");
+                return;
+            }
+            if ("SUCCESS".equals(res.getStatus())) {
+                System.out.println(res.getMessage());
+                Type listType = new TypeToken<List<Item>>() {
+                }.getType();
+                List<Item> dataItems = gson.fromJson(res.getData(), listType);
+                Platform.runLater(() -> {
+                    loadItemsToUI(dataItems);
+                });
+            } else {
+                System.out.println(res.getMessage());
+            }
+        });
+    }
 
+    @FXML
+    public void loadItemsToUI(List<Item> itemsFromServer) {
+        auctionsListContainer.getChildren().clear();
+        for (Item item : itemsFromServer) {
+            try {
+                System.out.printf("Load item: %s", item.getName());
+                FXMLLoader fxmlLoader = new FXMLLoader();
+
+                fxmlLoader.setLocation(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
+                VBox cardBox = fxmlLoader.load();
+
+                ItemCardHPController cardHPController = fxmlLoader.getController();
+                cardHPController.setData(item);
+
+                auctionsListContainer.getChildren().add(cardBox);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Error while loading data item!");
+            }
+        }
     }
 
     @FXML
@@ -58,24 +110,6 @@ public class HomePageController {
         }
     }
 
-    @FXML
-    public void handleSwitchToProductPage(MouseEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ProductPage.fxml"));
-            Parent root = loader.load();
 
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Hệ thống đấu Trực tuyến ");
-            stage.centerOnScreen();
-            stage.show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Không tìm thấy file ProductPage.fxml! Kiểm tra lại đường dẫn.");
-        }
-    }
 }
 
