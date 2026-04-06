@@ -1,6 +1,8 @@
 package com.auction.shared.util;
 
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 
 import java.io.File;
@@ -36,7 +38,7 @@ public class ImageUtil {
             Path imagePath = Paths.get(uploadDir + uniqueFileName);
 
             Files.write(imagePath, decodedBytes);
-            return imagePath.toString();
+            return uniqueFileName;
         } catch (IOException e) {
             System.out.println("Error when decoding and saving images");
             e.printStackTrace();
@@ -47,7 +49,6 @@ public class ImageUtil {
     public static String[] convertImgToBase64(File selectedImageFile, Label lblMessage) {
         String base64Image = "";
         String imageExtension = "";
-        String[] file = {"asdasd", "sdsd"};
         try {
             String fileName = selectedImageFile.getName();
             imageExtension = fileName.substring(fileName.lastIndexOf("."));
@@ -60,5 +61,14 @@ public class ImageUtil {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static void displayImage(String imageName, String source, ImageView imageId) {
+        String imageUrl = String.format("http://localhost:1401/%s/%s", source, imageName);
+        Image fxImage = new Image(imageUrl, true);
+
+        imageId.setImage(fxImage);
+        System.out.println("loaded image" + imageName);
+
     }
 }

@@ -9,6 +9,10 @@ public class RequestMessage {
     public RequestMessage() {
     }
 
+    public RequestMessage(ActionType action) {
+        this.action = action;
+    }
+
     public RequestMessage(ActionType action, String payload) {
         this.action = action;
         this.payload = payload;
@@ -29,5 +33,5 @@ public class RequestMessage {
     public void setPayload(String payload) {
         this.payload = payload;
     }
-    
+
 }

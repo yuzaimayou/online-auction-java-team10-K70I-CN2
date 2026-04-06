@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <ScrollPane prefHeight="850.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
@@ -101,23 +100,8 @@
 
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="Ongoing Auctions"/>
-
-                <HBox alignment="CENTER" styleClass="auctions-list">
-                    <VBox styleClass="auction-card" onMouseClicked="#handleSwitchToProductPage"
-                          style="-fx-cursor: hand;">
-                        <StackPane styleClass="card-image-placeholder">
-                            <ImageView fx:id="imageViewProduct" fitWidth="280.0" fitHeight="250.0"
-                                       preserveRatio="true"/>
-                        </StackPane>
-                        <VBox styleClass="card-content">
-                            <Label styleClass="card-title" text="IPhone 17 Pro Max 2025"/>
-                            <Label styleClass="live-badge" text="Auction is live"/>
-                            <Label styleClass="card-info" text="Ends at: 28/03/2026 18:00PM"/>
-                            <Label styleClass="card-info" text="Starting Price: 20.000.000 VNĐ"/>
-                        </VBox>
-                    </VBox>
-
-
+                <!--Card Item-->
+                <HBox fx:id="auctionsListContainer" alignment="CENTER" styleClass="auctions-list">
                 </HBox>
             </VBox>
 
