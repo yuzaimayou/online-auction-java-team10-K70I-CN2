@@ -1,7 +1,6 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.client.util.UserSession;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.model.enums.ActionType;
 import com.auction.shared.model.product.Item;
@@ -12,10 +11,10 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -30,16 +29,14 @@ public class HomePageController {
     private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
     @FXML
-    public Label userName;
-    @FXML
-    private HBox auctionsListContainer;
+    private FlowPane auctionsListContainer;
 
 
     @FXML
     public void initialize() {
 
         System.out.println("Đã vào trang chủ!");
-        userName.setText(UserSession.getInstance().getLoggedInUser().getUsername());
+
         getDataItemsAndDisplay();
     }
 
@@ -95,10 +92,11 @@ public class HomePageController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
             Parent root = loader.load();
+            Node sourceNode = (Node) event.getSource();
 
             AuctionFormController auctionFormController = loader.getController();
 
-            Scene currentScene = userName.getScene();
+            Scene currentScene = sourceNode.getScene();
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
