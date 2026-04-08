@@ -2,11 +2,13 @@ package com.auction.server.controller;
 
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.service.AuthService;
+import com.auction.server.service.BidService;
 import com.auction.server.service.ProductService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.AuthPayload;
+import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.payloads.ProductPayload;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
@@ -25,14 +27,16 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private AuthService authService;
     private ProductService productService;
+    private BidService bidService;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
-    public ClientHandler(Socket socket, AuthService authService, ProductService productService) {
+    public ClientHandler(Socket socket, AuthService authService, ProductService productService, BidService bidService) {
         this.clientSocket = socket;
         this.authService = authService;
         this.productService = productService;
+        this.bidService = bidService;
     }
 
     private boolean loginAction(String payload, ResponseMessage response) {
@@ -109,6 +113,33 @@ public class ClientHandler implements Runnable {
         return true;
     }
 
+    private boolean bidAction(String payload, ResponseMessage response) {
+        BidPayload bidData = gson.fromJson(payload, BidPayload.class);
+
+        if (bidData == null || bidData.getItemId() == null || bidData.getUserId() == null || bidData.getBidPrice() == null) {
+            response.setStatus("FAIL");
+            response.setMessage("Invalid bid payload");
+            return true;
+        }
+
+        boolean created = bidService.placeBid(
+                bidData.getItemId(),
+                bidData.getUserId(),
+                bidData.getBidPrice(),
+                bidData.getBidTime()
+        );
+
+        if (created) {
+            response.setStatus("SUCCESS");
+            response.setMessage("Bid placed successfully");
+        } else {
+            response.setStatus("FAIL");
+            response.setMessage("Failed to place bid");
+        }
+
+        return true;
+    }
+
     @Override
     public void run() {
         try {
@@ -130,6 +161,7 @@ public class ClientHandler implements Runnable {
                     case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
                     case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
                     case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
+                    case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
                     default -> {
                         response.setStatus("ERROR");
                         response.setMessage("Invalid action");
