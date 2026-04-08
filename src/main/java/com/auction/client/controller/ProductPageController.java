@@ -1,5 +1,6 @@
 package com.auction.client.controller;
 
+import com.auction.shared.model.product.Item;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -11,6 +12,12 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class ProductPageController {
+    private Item item;
+
+    public void initData(Item item) {
+        this.item = item;
+    }
+
     @FXML
     private void handleBackToHome(MouseEvent event) {
         try {

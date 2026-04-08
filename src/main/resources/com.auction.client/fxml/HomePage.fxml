@@ -7,39 +7,7 @@
     <content>
         <VBox styleClass="main-container">
 
-            <VBox prefHeight="137.0" prefWidth="1418.0" styleClass="header-section">
-                <HBox alignment="CENTER_LEFT" styleClass="top-bar">
-                    <HBox alignment="CENTER_LEFT" spacing="5" styleClass="logo-container">
-                        <Label styleClass="logo-icon" text="⚖"/>
-                        <Label styleClass="logo-text" text="AUCTION"/>
-                    </HBox>
-
-                    <Label styleClass="categories-dropdown" text="Categories ˅"/>
-
-                    <Region HBox.hgrow="ALWAYS"/>
-
-                    <HBox alignment="CENTER_LEFT" styleClass="search-bar">
-                        <Label styleClass="search-icon" text="🔍"/>
-                        <TextField promptText="Search for anything" styleClass="search-input"/>
-                    </HBox>
-
-                    <Region HBox.hgrow="ALWAYS"/>
-
-                    <HBox alignment="CENTER_LEFT" spacing="10">
-                        <StackPane styleClass="profile-icon-container">
-                            <Label styleClass="profile-icon" text="👤"/>
-                        </StackPane>
-                        <Label fx:id="userName" styleClass="profile-name" text="Van"/>
-                    </HBox>
-                </HBox>
-
-                <HBox alignment="CENTER" styleClass="nav-menu">
-                    <Label styleClass="nav-item, nav-item-active" text="Home"/>
-                    <Label styleClass="nav-item" text="About Us"/>
-                    <Label styleClass="nav-item" text="Browse Auction"/>
-                    <Label styleClass="nav-item" text="How It Works"/>
-                </HBox>
-            </VBox>
+            <fx:include fx:id="navBar" source="NavBar.fxml"/>
 
             <VBox alignment="CENTER" styleClass="categories-section">
                 <Label styleClass="section-title" text="Explore Categories"/>
@@ -101,8 +69,13 @@
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="Ongoing Auctions"/>
                 <!--Card Item-->
-                <HBox fx:id="auctionsListContainer" alignment="CENTER" styleClass="auctions-list">
-                </HBox>
+                <FlowPane
+                        fx:id="auctionsListContainer"
+                        alignment="CENTER"
+                        styleClass="auctions-list"
+                        hgap="15.0" vgap="15.0"
+                >
+                </FlowPane>
             </VBox>
 
         </VBox>

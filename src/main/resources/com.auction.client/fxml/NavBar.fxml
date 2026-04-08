@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      stylesheets="@../css/NavBar.css"
+      fx:controller="com.auction.client.controller.NavBarController"
+      prefHeight="137.0" prefWidth="1418.0" styleClass="header-section">
+    <HBox alignment="CENTER_LEFT" styleClass="top-bar">
+        <HBox onMouseClicked="#handleSwitchToHome" style="-fx-cursor: hand" alignment="CENTER_LEFT" spacing="5"
+              styleClass="logo-container">
+            <Label styleClass="logo-icon" text="⚖"/>
+            <Label styleClass="logo-text" text="AUCTION"/>
+        </HBox>
+
+        <Label styleClass="categories-dropdown" text="Categories ˅"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="search-bar">
+            <Label styleClass="search-icon" text="🔍"/>
+            <TextField promptText="Search for anything" styleClass="search-input"/>
+        </HBox>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <StackPane styleClass="profile-icon">
+                <StackPane fx:id="profileAvatar" styleClass="profile-icon"/>
+
+            </StackPane>
+            <Label fx:id="userName" styleClass="profile-name" text="Van"/>
+        </HBox>
+    </HBox>
+
+    <HBox alignment="CENTER" styleClass="nav-menu">
+        <Label onMouseClicked="#handleSwitchToHome" styleClass="nav-item, nav-item-active" text="Home"/>
+        <Label styleClass="nav-item" text="About Us"/>
+        <Label styleClass="nav-item" text="Browse Auction"/>
+        <Label styleClass="nav-item" text="How It Works"/>
+    </HBox>
+</VBox>
+
