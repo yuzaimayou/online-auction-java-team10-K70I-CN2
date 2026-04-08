@@ -1,16 +1,63 @@
 package com.auction.client.controller;
 
+import com.auction.shared.model.product.Item;
+import com.auction.shared.util.ImageUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class ProductPageController {
+    private Item item;
+    @FXML
+    private Label productNameLabel;
+    @FXML
+    private Label productDesLabel;
+    @FXML
+    private ImageView productImage;
+    @FXML
+    private Label sellerLabel;
+    @FXML
+    private Label currentPriceLabel;
+    @FXML
+    private Label startPriceLabel;
+    @FXML
+    private Label bidStepLabel;
+    @FXML
+    private Label startTimeLabel;
+    @FXML
+    private Label endTimeLabel;
+
+    public void initData(Item item) {
+        this.item = item;
+        displayDataProduct(item);
+    }
+
+    public void initialize() {
+
+
+    }
+
+    private void displayDataProduct(Item item) {
+        ImageUtil.displayImage(item.getImagePath(), "images", productImage);
+        productDesLabel.setText(item.getDescription());
+        productNameLabel.setText(item.getName());
+        sellerLabel.setText(item.getSellerId());
+        currentPriceLabel.setText(String.format("Current bid: %.0f", item.getStartingPrice()));
+        startPriceLabel.setText(String.valueOf(item.getStartingPrice()));
+        bidStepLabel.setText(String.valueOf(item.getBidStep()));
+        startTimeLabel.setText(String.valueOf(item.getStartTime()));
+        endTimeLabel.setText(String.valueOf(item.getEndTime()));
+
+    }
+
     @FXML
     private void handleBackToHome(MouseEvent event) {
         try {

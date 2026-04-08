@@ -36,8 +36,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class AuctionFormController {
     @FXML
-    private Label txtUser;
-    @FXML
     private Label lblMessage;
     @FXML
     private TextField txtProductName;
@@ -89,7 +87,6 @@ public class AuctionFormController {
         cbStartTime.setValue("06:50");
         cbEndTime.setValue("10:37");
 
-        txtUser.setText(UserSession.getInstance().getLoggedInUser().getUsername());
     }
 
 
