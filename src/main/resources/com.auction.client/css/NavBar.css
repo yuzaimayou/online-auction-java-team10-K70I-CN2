@@ -1,0 +1,14 @@
+.profile-icon {
+    -fx-pref-width: 32px;
+    -fx-pref-height: 32px;
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+
+    /* 1. Đặt ảnh làm nền và dùng cover để không bị méo */
+    -fx-background-image: url("../assets/avatar.jpeg");
+    -fx-background-size: cover;
+    -fx-background-position: center;
+
+    /* 2. Cắt nguyên khối StackPane thành hình tròn (bán kính 16) */
+    -fx-shape: "M 16 0 a 16 16 0 1 0 0 32 a 16 16 0 1 0 0 -32";
+}

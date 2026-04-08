@@ -1,188 +1,161 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
-
-<ScrollPane fitToWidth="true" stylesheets="@../css/ProductPage.css" fx:controller="com.auction.client.controller.ProductPageController" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" >
+<ScrollPane fitToWidth="true" stylesheets="@../css/ProductPage.css"
+            fx:controller="com.auction.client.controller.ProductPageController" xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1">
     <content>
         <VBox styleClass="main-container">
 
-            <VBox styleClass="header-section">
-                <HBox alignment="CENTER_LEFT" styleClass="top-bar">
-                    <HBox onMouseClicked="#handleBackToHome" alignment="CENTER_LEFT" spacing="5" styleClass="logo-container" style="-fx-cursor: hand;">
-                        <Label styleClass="logo-icon" text="⚖" />
-                        <Label styleClass="logo-text" text="AUCTION" />
-                    </HBox>
-
-                    <Label styleClass="categories-dropdown" text="Categories ˅" />
-
-                    <Region HBox.hgrow="ALWAYS" />
-
-                    <HBox alignment="CENTER_LEFT" styleClass="search-bar">
-                        <Label styleClass="search-icon" text="🔍" />
-                        <TextField promptText="Search for anything" styleClass="search-input" />
-                    </HBox>
-
-                    <Region HBox.hgrow="ALWAYS" />
-
-                    <HBox alignment="CENTER_LEFT" spacing="10">
-                        <StackPane styleClass="profile-icon-container">
-                            <Label styleClass="profile-icon" text="👤" />
-                        </StackPane>
-                        <Label styleClass="profile-name" text="Van" />
-                    </HBox>
-                </HBox>
-
-                <HBox alignment="CENTER" styleClass="nav-menu">
-                    <Label fx:id="homeNav" onMouseClicked="#handleBackToHome" graphicTextGap="5.0" styleClass="nav-item, nav-item-active" text="Home" style="-fx-cursor: hand;" />
-                    <Label styleClass="nav-item" text="About Us" />
-                    <Label styleClass="nav-item" text="Browse Auction" />
-                    <Label styleClass="nav-item" text="How It Works" />
-                </HBox>
-            </VBox>
+            <fx:include source="NavBar.fxml"/>
 
             <HBox alignment="TOP_CENTER" spacing="40" style="-fx-padding: 40 60 40 60;">
 
                 <VBox maxWidth="700" spacing="25" HBox.hgrow="ALWAYS">
                     <StackPane prefHeight="450" styleClass="image-placeholder-large">
-                        <Label styleClass="placeholder-text-gray" text="ẢNH SẢN PHẨM" />
+                        <Label styleClass="placeholder-text-gray" text="ẢNH SẢN PHẨM"/>
                     </StackPane>
 
                     <VBox spacing="17.0" styleClass="description-container">
-   
-                                 <Label prefWidth="645.0" styleClass="product-title" text="Kyrgyzstan. - 20, 50, 100, 200, 500 and 1000 Som - Pick 17, 18, 22, 24, 25, 26 (No reserve price) - NAME PRODUCT" wrapText="true" />
-                        <Label styleClass="sub-section-title" text="Description" />
-                        <Separator />
-                        <Label styleClass="description-body" text="tự động chỉnh dài ngắn theo độ dài miêu tả" wrapText="true" />
+
+                        <Label prefWidth="645.0" styleClass="product-title"
+                               text="Kyrgyzstan. - 20, 50, 100, 200, 500 and 1000 Som - Pick 17, 18, 22, 24, 25, 26 (No reserve price) - NAME PRODUCT"
+                               wrapText="true"/>
+                        <Label styleClass="sub-section-title" text="Description"/>
+                        <Separator/>
+                        <Label styleClass="description-body" text="tự động chỉnh dài ngắn theo độ dài miêu tả"
+                               wrapText="true"/>
                     </VBox>
                 </VBox>
 
                 <VBox maxWidth="380" minWidth="380" prefHeight="394.0" prefWidth="380.0" spacing="20">
-                     <Label alignment="CENTER" maxWidth="Infinity" prefHeight="29.0" prefWidth="380.0" styleClass="info-label-gray" text="Time Left:" />
-   
+                    <Label alignment="CENTER" maxWidth="Infinity" prefHeight="29.0" prefWidth="380.0"
+                           styleClass="info-label-gray" text="Time Left:"/>
+
                     <VBox prefHeight="20.0" prefWidth="200.0" spacing="15" styleClass="auction-info-card">
                         <HBox alignment="CENTER" spacing="15">
                             <VBox alignment="CENTER" prefHeight="51.0" prefWidth="30.0">
-                        <Label styleClass="timer-num" text="04" />
-                        <Label styleClass="timer-unit" text="DAYS" />
-                     </VBox>
+                                <Label styleClass="timer-num" text="04"/>
+                                <Label styleClass="timer-unit" text="DAYS"/>
+                            </VBox>
                             <VBox alignment="CENTER">
-                        <Label styleClass="timer-num" text="04" />
-                        <Label styleClass="timer-unit" text="HOURS" />
-                     </VBox>
+                                <Label styleClass="timer-num" text="04"/>
+                                <Label styleClass="timer-unit" text="HOURS"/>
+                            </VBox>
                             <VBox alignment="CENTER">
-                        <Label styleClass="timer-num" text="04" />
-                        <Label styleClass="timer-unit" text="MINUTES" />
-                     </VBox>
+                                <Label styleClass="timer-num" text="04"/>
+                                <Label styleClass="timer-unit" text="MINUTES"/>
+                            </VBox>
                             <VBox alignment="CENTER">
-                        <Label styleClass="timer-num" text="04" />
-                        <Label styleClass="timer-unit" text="SECONDS" />
-                     </VBox>
+                                <Label styleClass="timer-num" text="04"/>
+                                <Label styleClass="timer-unit" text="SECONDS"/>
+                            </VBox>
                         </HBox>
-   
+
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
-                            <Circle fill="#2D55FF" radius="12" />
-                            <Label styleClass="profile-name-small" text="Seller: Huu Nhat" />
+                            <Circle fill="#2D55FF" radius="12"/>
+                            <Label styleClass="profile-name-small" text="Seller: Huu Nhat"/>
                         </HBox>
-                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0">
-                     <children>
-      
-                                             <Label prefWidth="100.0" styleClass="sub-section-title" text="Current Bid:" />
-                              <GridPane hgap="10" vgap="10">
-                                  <Label styleClass="info-label-gray" text="Starting Price:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                  <Label prefHeight="17.0" prefWidth="268.0" styleClass="info-value-bold" text="20.000.000 VNĐ" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-      
-                                     <Label styleClass="info-label-gray" text="Starts at:" textAlignment="RIGHT" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                  <Label prefHeight="17.0" prefWidth="266.0" styleClass="info-value-bold" text="28/03/2026 18:00PM" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-      
-                                     <Label styleClass="info-label-gray" text="Ends at:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                  <Label styleClass="info-value-bold" text="28/03/2026 18:00PM" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-      
-                                     <Label prefHeight="17.0" prefWidth="138.0" styleClass="info-label-gray" text="Increment Amount:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                  <Label ellipsisString="" prefHeight="17.0" prefWidth="111.0" styleClass="info-value-bold" text="100.000VNĐ" textAlignment="RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                           <columnConstraints>
-                              <ColumnConstraints />
-                              <ColumnConstraints />
-                           </columnConstraints>
-                           <rowConstraints>
-                              <RowConstraints />
-                              <RowConstraints />
-                              <RowConstraints />
-                              <RowConstraints />
-                           </rowConstraints>
-                              </GridPane>
-                     </children>
-                  </VBox>
-   
-                              <Button maxWidth="Infinity" styleClass="btn-join-live" text="JOIN AUCTION LIVE" />
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0">
+                            <children>
+
+                                <Label prefWidth="100.0" styleClass="sub-section-title" text="Current Bid:"/>
+                                <GridPane hgap="10" vgap="10">
+                                    <Label styleClass="info-label-gray" text="Starting Price:" GridPane.columnIndex="0"
+                                           GridPane.rowIndex="0"/>
+                                    <Label prefHeight="17.0" prefWidth="268.0" styleClass="info-value-bold"
+                                           text="20.000.000 VNĐ" textAlignment="RIGHT" GridPane.columnIndex="1"
+                                           GridPane.rowIndex="0"/>
+
+                                    <Label styleClass="info-label-gray" text="Starts at:" textAlignment="RIGHT"
+                                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                    <Label prefHeight="17.0" prefWidth="266.0" styleClass="info-value-bold"
+                                           text="28/03/2026 18:00PM" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                                    <Label styleClass="info-label-gray" text="Ends at:" GridPane.columnIndex="0"
+                                           GridPane.rowIndex="2"/>
+                                    <Label styleClass="info-value-bold" text="28/03/2026 18:00PM" textAlignment="RIGHT"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                                    <Label prefHeight="17.0" prefWidth="138.0" styleClass="info-label-gray"
+                                           text="Increment Amount:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                    <Label ellipsisString="" prefHeight="17.0" prefWidth="111.0"
+                                           styleClass="info-value-bold" text="100.000VNĐ" textAlignment="RIGHT"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                    <columnConstraints>
+                                        <ColumnConstraints/>
+                                        <ColumnConstraints/>
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints/>
+                                        <RowConstraints/>
+                                        <RowConstraints/>
+                                        <RowConstraints/>
+                                    </rowConstraints>
+                                </GridPane>
+                            </children>
+                        </VBox>
+
+                        <Button maxWidth="Infinity" styleClass="btn-join-live" text="JOIN AUCTION LIVE"/>
                     </VBox>
 
                     <VBox spacing="15" styleClass="auction-info-card">
-                        <Label styleClass="sub-section-title" text="History Bids:" />
+                        <Label styleClass="sub-section-title" text="History Bids:"/>
                         <VBox spacing="12">
                             <HBox styleClass="history-header">
-                                <Label maxWidth="Infinity" text="Tên Bidder/ ID" HBox.hgrow="ALWAYS" />
-                                <Label text="Giá Bid" />
+                                <Label maxWidth="Infinity" text="Tên Bidder/ ID" HBox.hgrow="ALWAYS"/>
+                                <Label text="Giá Bid"/>
                             </HBox>
                             <HBox alignment="CENTER_LEFT">
                                 <VBox HBox.hgrow="ALWAYS">
-                                    <Label styleClass="bidder-name-text" text="Khanh Van" />
-                                    <Label styleClass="info-label-gray-small" text="20:00:40 01/04/2026" />
+                                    <Label styleClass="bidder-name-text" text="Khanh Van"/>
+                                    <Label styleClass="info-label-gray-small" text="20:00:40 01/04/2026"/>
                                 </VBox>
-                                <Label styleClass="price-green" text="20.500.000" />
+                                <Label styleClass="price-green" text="20.500.000"/>
                             </HBox>
                             <HBox alignment="CENTER_LEFT">
                                 <VBox HBox.hgrow="ALWAYS">
-                                    <Label styleClass="bidder-name-text" text="Kieu Anh" />
-                                    <Label styleClass="info-label-gray-small" text="19:45:30 01/04/2026" />
+                                    <Label styleClass="bidder-name-text" text="Kieu Anh"/>
+                                    <Label styleClass="info-label-gray-small" text="19:45:30 01/04/2026"/>
                                 </VBox>
-                                <Label styleClass="price-green" text="20.300.000" />
+                                <Label styleClass="price-green" text="20.300.000"/>
                             </HBox>
                         </VBox>
-                        <Hyperlink alignment="CENTER" maxWidth="Infinity" styleClass="see-more-link" text="See All Bids (13) ⌄" />
+                        <Hyperlink alignment="CENTER" maxWidth="Infinity" styleClass="see-more-link"
+                                   text="See All Bids (13) ⌄"/>
                     </VBox>
                 </VBox>
             </HBox>
 
             <HBox spacing="60" styleClass="footer-dark">
                 <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="HELP" />
-                    <Label styleClass="footer-link" text="FQA" />
-                    <Label styleClass="footer-link" text="How to buy" />
-                    <Label styleClass="footer-link" text="How to sell" />
-                    <Label styleClass="footer-link" text="Selling Guides" />
-                    <Label styleClass="footer-link" text="Payment and shipping" />
+                    <Label styleClass="footer-header" text="HELP"/>
+                    <Label styleClass="footer-link" text="FQA"/>
+                    <Label styleClass="footer-link" text="How to buy"/>
+                    <Label styleClass="footer-link" text="How to sell"/>
+                    <Label styleClass="footer-link" text="Selling Guides"/>
+                    <Label styleClass="footer-link" text="Payment and shipping"/>
                 </VBox>
                 <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="ABOUT US" />
-                    <Label styleClass="footer-link" text="About AUCTION" />
-                    <Label styleClass="footer-link" text="Locations" />
-                    <Label styleClass="footer-link" text="Careers" />
-                    <Label styleClass="footer-link" text="Press" />
+                    <Label styleClass="footer-header" text="ABOUT US"/>
+                    <Label styleClass="footer-link" text="About AUCTION"/>
+                    <Label styleClass="footer-link" text="Locations"/>
+                    <Label styleClass="footer-link" text="Careers"/>
+                    <Label styleClass="footer-link" text="Press"/>
                 </VBox>
                 <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="SERVICES" />
-                    <Label styleClass="footer-link" text="Private Sales" />
-                    <Label styleClass="footer-link" text="Client Advisory" />
+                    <Label styleClass="footer-header" text="SERVICES"/>
+                    <Label styleClass="footer-link" text="Private Sales"/>
+                    <Label styleClass="footer-link" text="Client Advisory"/>
                 </VBox>
                 <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="MORE INFO" />
-                    <Label styleClass="footer-link" text="Terms and conditions" />
-                    <Label styleClass="footer-link" text="Privacy" />
-                    <Label styleClass="footer-link" text="Security" />
-                    <Label styleClass="footer-link" text="Cooking Settings" />
+                    <Label styleClass="footer-header" text="MORE INFO"/>
+                    <Label styleClass="footer-link" text="Terms and conditions"/>
+                    <Label styleClass="footer-link" text="Privacy"/>
+                    <Label styleClass="footer-link" text="Security"/>
+                    <Label styleClass="footer-link" text="Cooking Settings"/>
                 </VBox>
             </HBox>
         </VBox>
