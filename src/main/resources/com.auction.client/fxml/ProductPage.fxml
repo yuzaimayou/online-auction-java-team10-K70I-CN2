@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 <ScrollPane fitToWidth="true" stylesheets="@../css/ProductPage.css"
@@ -15,75 +16,64 @@
 
                 <VBox maxWidth="700" spacing="25" HBox.hgrow="ALWAYS">
                     <StackPane prefHeight="450" styleClass="image-placeholder-large">
-                        <Label styleClass="placeholder-text-gray" text="ẢNH SẢN PHẨM"/>
+                        <ImageView fx:id="productImage" fitWidth="700.0" fitHeight="450.0" preserveRatio="true"/>
                     </StackPane>
 
                     <VBox spacing="17.0" styleClass="description-container">
 
-                        <Label prefWidth="645.0" styleClass="product-title"
-                               text="Kyrgyzstan. - 20, 50, 100, 200, 500 and 1000 Som - Pick 17, 18, 22, 24, 25, 26 (No reserve price) - NAME PRODUCT"
+                        <Label fx:id="productNameLabel" prefWidth="645.0" styleClass="product-title"
+                               text="NAME PRODUCT"
                                wrapText="true"/>
                         <Label styleClass="sub-section-title" text="Description"/>
                         <Separator/>
-                        <Label styleClass="description-body" text="tự động chỉnh dài ngắn theo độ dài miêu tả"
+                        <Label fx:id="productDesLabel" styleClass="description-body"
+                               text="description product"
                                wrapText="true"/>
                     </VBox>
                 </VBox>
 
                 <VBox maxWidth="380" minWidth="380" prefHeight="394.0" prefWidth="380.0" spacing="20">
-                    <Label alignment="CENTER" maxWidth="Infinity" prefHeight="29.0" prefWidth="380.0"
-                           styleClass="info-label-gray" text="Time Left:"/>
-
                     <VBox prefHeight="20.0" prefWidth="200.0" spacing="15" styleClass="auction-info-card">
-                        <HBox alignment="CENTER" spacing="15">
-                            <VBox alignment="CENTER" prefHeight="51.0" prefWidth="30.0">
-                                <Label styleClass="timer-num" text="04"/>
-                                <Label styleClass="timer-unit" text="DAYS"/>
-                            </VBox>
-                            <VBox alignment="CENTER">
-                                <Label styleClass="timer-num" text="04"/>
-                                <Label styleClass="timer-unit" text="HOURS"/>
-                            </VBox>
-                            <VBox alignment="CENTER">
-                                <Label styleClass="timer-num" text="04"/>
-                                <Label styleClass="timer-unit" text="MINUTES"/>
-                            </VBox>
-                            <VBox alignment="CENTER">
-                                <Label styleClass="timer-num" text="04"/>
-                                <Label styleClass="timer-unit" text="SECONDS"/>
-                            </VBox>
-                        </HBox>
+
 
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
                             <Circle fill="#2D55FF" radius="12"/>
-                            <Label styleClass="profile-name-small" text="Seller: Huu Nhat"/>
+                            <Label fx:id="sellerLabel" styleClass="profile-name-small" text="Seller: Huu Nhat"/>
                         </HBox>
                         <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0">
                             <children>
 
-                                <Label prefWidth="100.0" styleClass="sub-section-title" text="Current Bid:"/>
+                                <Label fx:id="currentPriceLabel" prefWidth="300.0" wrapText="true"
+                                       styleClass="sub-section-title"
+                                       text="Current Bid: 000"/>
                                 <GridPane hgap="10" vgap="10">
-                                    <Label styleClass="info-label-gray" text="Starting Price:" GridPane.columnIndex="0"
+                                    <Label styleClass="info-label-gray" text="Starting Price:"
+                                           GridPane.columnIndex="0"
                                            GridPane.rowIndex="0"/>
-                                    <Label prefHeight="17.0" prefWidth="268.0" styleClass="info-value-bold"
+                                    <Label fx:id="startPriceLabel" prefHeight="17.0" prefWidth="268.0"
+                                           styleClass="info-value-bold"
                                            text="20.000.000 VNĐ" textAlignment="RIGHT" GridPane.columnIndex="1"
                                            GridPane.rowIndex="0"/>
 
+                                    <Label prefHeight="17.0" prefWidth="138.0" styleClass="info-label-gray"
+                                           text="Increment Amount:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                    <Label fx:id="bidStepLabel" ellipsisString="" prefHeight="17.0" prefWidth="111.0"
+                                           styleClass="info-value-bold" text="100.000VNĐ" textAlignment="RIGHT"
+                                           GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
                                     <Label styleClass="info-label-gray" text="Starts at:" textAlignment="RIGHT"
-                                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                                    <Label prefHeight="17.0" prefWidth="266.0" styleClass="info-value-bold"
-                                           text="28/03/2026 18:00PM" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                           GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                    <Label fx:id="startTimeLabel" prefHeight="17.0" prefWidth="266.0"
+                                           styleClass="info-value-bold"
+                                           text="28/03/2026 18:00PM" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
                                     <Label styleClass="info-label-gray" text="Ends at:" GridPane.columnIndex="0"
-                                           GridPane.rowIndex="2"/>
-                                    <Label styleClass="info-value-bold" text="28/03/2026 18:00PM" textAlignment="RIGHT"
-                                           GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-
-                                    <Label prefHeight="17.0" prefWidth="138.0" styleClass="info-label-gray"
-                                           text="Increment Amount:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                                    <Label ellipsisString="" prefHeight="17.0" prefWidth="111.0"
-                                           styleClass="info-value-bold" text="100.000VNĐ" textAlignment="RIGHT"
+                                           GridPane.rowIndex="3"/>
+                                    <Label fx:id="endTimeLabel" styleClass="info-value-bold" text="28/03/2026 18:00PM"
+                                           textAlignment="RIGHT"
                                            GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+
                                     <columnConstraints>
                                         <ColumnConstraints/>
                                         <ColumnConstraints/>
@@ -97,67 +87,20 @@
                                 </GridPane>
                             </children>
                         </VBox>
+                        <HBox>
+                            <TextField fx:id="bidProduct" prefWidth="250.0" prefHeight="60.0"
+                                       promptText="Enter bid"/>
+                            <Button fx:id="submitBid" prefWidth="50.0" text="Bid"/>
+                        </HBox>
 
-                        <Button maxWidth="Infinity" styleClass="btn-join-live" text="JOIN AUCTION LIVE"/>
+
                     </VBox>
 
-                    <VBox spacing="15" styleClass="auction-info-card">
-                        <Label styleClass="sub-section-title" text="History Bids:"/>
-                        <VBox spacing="12">
-                            <HBox styleClass="history-header">
-                                <Label maxWidth="Infinity" text="Tên Bidder/ ID" HBox.hgrow="ALWAYS"/>
-                                <Label text="Giá Bid"/>
-                            </HBox>
-                            <HBox alignment="CENTER_LEFT">
-                                <VBox HBox.hgrow="ALWAYS">
-                                    <Label styleClass="bidder-name-text" text="Khanh Van"/>
-                                    <Label styleClass="info-label-gray-small" text="20:00:40 01/04/2026"/>
-                                </VBox>
-                                <Label styleClass="price-green" text="20.500.000"/>
-                            </HBox>
-                            <HBox alignment="CENTER_LEFT">
-                                <VBox HBox.hgrow="ALWAYS">
-                                    <Label styleClass="bidder-name-text" text="Kieu Anh"/>
-                                    <Label styleClass="info-label-gray-small" text="19:45:30 01/04/2026"/>
-                                </VBox>
-                                <Label styleClass="price-green" text="20.300.000"/>
-                            </HBox>
-                        </VBox>
-                        <Hyperlink alignment="CENTER" maxWidth="Infinity" styleClass="see-more-link"
-                                   text="See All Bids (13) ⌄"/>
-                    </VBox>
+                    
                 </VBox>
             </HBox>
 
-            <HBox spacing="60" styleClass="footer-dark">
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="HELP"/>
-                    <Label styleClass="footer-link" text="FQA"/>
-                    <Label styleClass="footer-link" text="How to buy"/>
-                    <Label styleClass="footer-link" text="How to sell"/>
-                    <Label styleClass="footer-link" text="Selling Guides"/>
-                    <Label styleClass="footer-link" text="Payment and shipping"/>
-                </VBox>
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="ABOUT US"/>
-                    <Label styleClass="footer-link" text="About AUCTION"/>
-                    <Label styleClass="footer-link" text="Locations"/>
-                    <Label styleClass="footer-link" text="Careers"/>
-                    <Label styleClass="footer-link" text="Press"/>
-                </VBox>
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="SERVICES"/>
-                    <Label styleClass="footer-link" text="Private Sales"/>
-                    <Label styleClass="footer-link" text="Client Advisory"/>
-                </VBox>
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label styleClass="footer-header" text="MORE INFO"/>
-                    <Label styleClass="footer-link" text="Terms and conditions"/>
-                    <Label styleClass="footer-link" text="Privacy"/>
-                    <Label styleClass="footer-link" text="Security"/>
-                    <Label styleClass="footer-link" text="Cooking Settings"/>
-                </VBox>
-            </HBox>
+
         </VBox>
     </content>
 </ScrollPane>

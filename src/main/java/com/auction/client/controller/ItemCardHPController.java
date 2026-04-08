@@ -42,6 +42,7 @@ public class ItemCardHPController {
 
             ProductPageController productPageController = loader.getController();
             productPageController.initData(this.currentItem);
+
             Scene currentScene = productNameLabel.getScene();
             Stage stage = (Stage) currentScene.getWindow();
             currentScene.setRoot(root);
