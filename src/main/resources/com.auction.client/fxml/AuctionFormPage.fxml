@@ -37,7 +37,6 @@
                                     <Insets right="0"/>
                                 </StackPane.margin>
                             </Button>
-
                         </StackPane>
                         <!--Product Name-->
                         <VBox spacing="15.0">
