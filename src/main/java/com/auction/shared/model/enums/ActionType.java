@@ -5,4 +5,5 @@ public enum ActionType {
     REGISTER,
     ADDPRODUCT,
     GETDATAPRODUCT,
+    PLACEBID;
 }

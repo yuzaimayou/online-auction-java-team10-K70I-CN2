@@ -5,6 +5,7 @@ module online.auction {
     requires java.sql;
     requires java.desktop;
     requires jdk.httpserver;
+    requires jdk.compiler;
 
     // Cho phép JavaFX truy cập vào package client để load file giao diện .fxml
     opens com.auction.client to javafx.fxml;

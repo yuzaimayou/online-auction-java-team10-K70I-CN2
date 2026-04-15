@@ -1,5 +1,6 @@
 package com.auction.server.controller;
 
+import com.auction.server.MainServer;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.ProductService;
@@ -29,10 +30,76 @@ public class ClientHandler implements Runnable {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
+    private PrintWriter out;
+
     public ClientHandler(Socket socket, AuthService authService, ProductService productService) {
         this.clientSocket = socket;
         this.authService = authService;
         this.productService = productService;
+        try {
+            this.out = new PrintWriter(clientSocket.getOutputStream(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMessage(String jsonMessage) {
+        if (out != null) {
+            out.println(jsonMessage);
+        }
+    }
+
+
+    @Override
+    public void run() {
+        try {
+            clientSocket.setSoTimeout(15000);
+        } catch (Exception e) {
+            System.err.println("Loi set timeout");
+        }
+        try (
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        ) {
+            String jsonRequest;
+            while ((jsonRequest = in.readLine()) != null) {
+                RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
+                ResponseMessage response = new ResponseMessage();
+                boolean keepConnectionAlive = true;
+                System.out.println("Kiem tra action");
+                switch (request.getAction()) {
+                    case LOGIN -> keepConnectionAlive = loginAction(request.getPayload(), response);
+                    case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
+                    case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
+                    case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
+                    default -> {
+                        response.setStatus("ERROR");
+                        response.setMessage("Invalid action");
+                        keepConnectionAlive = false;
+                    }
+                }
+                String jsonResponse = gson.toJson(response);
+
+                out.println(jsonResponse);
+                System.out.println("Server was sent: " + jsonResponse);
+                if (!keepConnectionAlive) {
+                    System.out.println("Ngắt kết nối với client.");
+
+                    break;
+                } else {
+                    clientSocket.setSoTimeout(0);
+                }
+            }
+
+        } catch (IOException e) {
+            System.out.println("Client disconnected/Error: " + e.getMessage());
+        } finally {
+            MainServer.activeClients.remove(this);
+            try {
+                if (!clientSocket.isClosed()) clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean loginAction(String payload, ResponseMessage response) {
@@ -107,56 +174,5 @@ public class ClientHandler implements Runnable {
             response.setMessage("Get data items failed!");
         }
         return true;
-    }
-
-    @Override
-    public void run() {
-        try {
-            clientSocket.setSoTimeout(15000);
-        } catch (Exception e) {
-            System.err.println("Loi set timeout");
-        }
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)
-        ) {
-            String jsonRequest;
-            while ((jsonRequest = in.readLine()) != null) {
-                RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
-                ResponseMessage response = new ResponseMessage();
-                boolean keepConnectionAlive = true;
-                System.out.println("Kiem tra action");
-                switch (request.getAction()) {
-                    case LOGIN -> keepConnectionAlive = loginAction(request.getPayload(), response);
-                    case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
-                    case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
-                    case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
-                    default -> {
-                        response.setStatus("ERROR");
-                        response.setMessage("Invalid action");
-                        keepConnectionAlive = false;
-                    }
-                }
-                String jsonResponse = gson.toJson(response);
-
-                out.println(jsonResponse);
-                System.out.println("Server was sent: " + jsonResponse);
-                if (!keepConnectionAlive) {
-                    System.out.println("Ngắt kết nối với client.");
-
-                    break;
-                } else {
-                    clientSocket.setSoTimeout(0);
-                }
-            }
-
-        } catch (IOException e) {
-            System.out.println("Failed to connect to server: " + e.getMessage());
-        } finally {
-            try {
-                if (!clientSocket.isClosed()) clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
