@@ -20,6 +20,11 @@ public class User extends Person {
     }
 
     // --- Specific Getters & Setters ---
+    @Override
+    public String getUsername() {
+        return super.getUsername();
+    }
+
     public double getBalance() {
         return balance;
     }

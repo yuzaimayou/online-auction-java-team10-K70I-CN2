@@ -50,7 +50,7 @@ public class ProductPageController {
         productDesLabel.setText(item.getDescription());
         productNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
-        currentPriceLabel.setText(String.format("Current bid: %.0f", item.getStartingPrice()));
+        currentPriceLabel.setText(String.format("Current bid: %.0f", item.getCurrentPrice()));
         startPriceLabel.setText(String.valueOf(item.getStartingPrice()));
         bidStepLabel.setText(String.valueOf(item.getBidStep()));
         startTimeLabel.setText(String.valueOf(item.getStartTime()));
@@ -74,7 +74,7 @@ public class ProductPageController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Không tìm thấy file AuctionFormPage.fxml! Kiểm tra lại đường dẫn.");
+            System.err.println("Cannot find file AuctionFormPage.fxml! Check link again.");
         }
     }
 }
