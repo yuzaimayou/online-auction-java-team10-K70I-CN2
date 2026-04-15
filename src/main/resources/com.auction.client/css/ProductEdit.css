@@ -1,0 +1,460 @@
+.root-container {
+    -fx-background-color: #F8FAFC; /* Màu nền cực sạch */
+}
+
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-background-color: white;
+}
+
+.main-container {
+    -fx-background-color: white;
+}
+
+/* --- Header Section --- */
+.header-section {
+    -fx-background-color: white;
+    -fx-padding: 20 40 20 40;
+}
+
+.top-bar {
+    -fx-padding: 0 0 20 0;
+}
+
+.logo-container {
+    -fx-padding: 0 30 0 0;
+}
+
+.logo-icon {
+    -fx-font-size: 24px;
+    -fx-text-fill: #0056b3;
+}
+
+.logo-text {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-text-fill: #0056b3;
+}
+
+.categories-dropdown {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-cursor: hand;
+}
+
+/* Thanh tìm kiếm */
+.search-bar {
+    -fx-background-color: #f1f3f5;
+    -fx-background-radius: 20px;
+    -fx-padding: 5 15 5 15;
+    -fx-pref-width: 400px;
+}
+
+.search-icon {
+    -fx-text-fill: #0056b3;
+    -fx-font-size: 14px;
+}
+
+.search-input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-prompt-text-fill: #a0a0a0;
+    -fx-pref-width: 350px;
+}
+
+/* Profile */
+.profile-icon-container {
+    -fx-background-color: #0056b3;
+    -fx-background-radius: 50%;
+    -fx-min-width: 35px;
+    -fx-min-height: 35px;
+    -fx-max-width: 35px;
+    -fx-max-height: 35px;
+}
+
+.profile-icon {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+}
+
+.profile-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* Navigation Menu */
+.nav-menu {
+    -fx-spacing: 40px;
+    -fx-padding: 10 0 10 0;
+}
+
+.nav-item {
+    -fx-font-size: 15px;
+    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-text-fill: #333333;
+}
+
+.nav-item-active {
+    -fx-text-fill: #aaaaaa;
+}
+
+.header {
+    -fx-background-color: white;
+    -fx-border-color: #F1F5F9;
+    -fx-border-width: 0 0 2 0;
+}
+
+.nav-link {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #64748B;
+}
+
+.username {
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #1E293B;
+}
+
+.form-card {
+    -fx-background-color: white;
+    -fx-background-radius: 40;
+    -fx-border-radius: 40;
+    -fx-border-color: #E2E8F0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 30, 0, 0, 15);
+}
+
+.field-label {
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #0F172A;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-font-size: 30px;
+}
+
+.input-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 20 20 20 20;
+    -fx-font-size: 18px;
+}
+
+.input-field:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 2;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+/* Làm trong suốt khung nhìn (viewport) của thanh cuộn ẩn bên trong */
+.text-area .viewport {
+    -fx-background-color: transparent;
+}
+
+/* (Tùy chọn) Đảm bảo khi bạn click chuột vào nhập liệu, cái nét gạch đó không hiện lại */
+.text-area:focused .content {
+    -fx-background-color: transparent;
+}
+
+.category-btn {
+    -fx-min-width: 85;
+    -fx-min-height: 85;
+    -fx-background-radius: 45;
+    -fx-background-color: #F1F5F9;
+    -fx-cursor: hand;
+}
+
+.category-btn:selected {
+    -fx-background-color: #DBEAFE;
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 2;
+}
+
+.category-text {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 16px;
+    -fx-text-fill: #475569;
+}
+
+.date-picker {
+    -fx-background-color: transparent;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-border-width: 1;
+    -fx-background-insets: 0;
+}
+
+.date-picker > .text-field {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 15 0 0 15;
+    -fx-padding: 0 15 0 15;
+    -fx-font-size: 18px;
+    -fx-border-width: 0;
+}
+
+/* Nút lịch bên phải */
+.date-picker > .arrow-button {
+    -fx-background-color: #F1F5F9;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 15 15 0;
+    -fx-padding: 0 15 0 15;
+}
+
+.date-picker:focused, .date-picker > .text-field:focused {
+    -fx-background-insets: 0;
+    -fx-border-color: #3B82F6;
+}
+
+.time-picker {
+    -fx-background-color: #F1F5F9; /* Màu xám nhạt (gần giống nút lịch) */
+    -fx-border-color: #CBD5E1; /* Màu viền đồng bộ với các ô TextField */
+    -fx-border-radius: 4px; /* Bo góc nhẹ */
+    -fx-background-radius: 4px;
+    -fx-pref-height: 38px;
+}
+
+.time-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.time-picker .arrow {
+    -fx-background-color: #4a5568;
+}
+
+.close-button {
+    -fx-background-color: #ffc6c6;
+    -fx-border-color: #CBD5E1;
+    -fx-padding: 0;
+    -fx-background-radius: 45em;
+    -fx-border-radius: 45em;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+
+}
+
+.choose-button {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: #CBD5E1;
+}
+
+.submit-button {
+    -fx-background-color: #10B981;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 22px;
+    -fx-background-radius: 30;
+    -fx-cursor: hand;
+}
+
+.submit-button:hover {
+    -fx-background-color: #059669;
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+/* 1. Chỉnh độ rộng của toàn bộ thanh cuộn dọc */
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 12px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
+    -fx-background-color: transparent;
+}
+
+/* 2. Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+/* 3. Chỉnh cục lăn (Thumb - phần bạn dùng chuột cầm để kéo) */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
+    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
+}
+
+/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
+}
+
+/* 4. (Tùy chọn) Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn để form trông hiện đại hơn */
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " "; /* Xóa hình mũi tên */
+    -fx-padding: 0;
+}
+
+/* Trạng thái 'Chưa bắt đầu' */
+.upcoming-auction {
+    -fx-background-color: #d4fcd7; /* Màu nền xanh nhạt */
+    -fx-text-fill: #4CAF50;         /* Màu văn bản xanh lá cây */
+    -fx-font-weight: bold;         /* Chữ đậm */
+    -fx-padding: 5 15 5 15;        /* Padding xung quanh chữ */
+    -fx-font-size: 14px;           /* Kích thước chữ */
+    -fx-border-radius: 20px;      /* Bo góc */
+    -fx-background-radius: 20px;  /* Bo góc nền */
+}
+
+/* Trạng thái 'Đã bắt đầu' */
+.started-auction {
+    -fx-background-color: #fff9c4; /* Màu nền vàng nhạt */
+    -fx-text-fill: #2196F3;         /* Màu văn bản xanh dương */
+    -fx-font-weight: bold;         /* Chữ đậm */
+    -fx-padding: 5 15 5 15;        /* Padding xung quanh chữ */
+    -fx-font-size: 14px;           /* Kích thước chữ */
+    -fx-border-radius: 20px;      /* Bo góc */
+    -fx-background-radius: 20px;  /* Bo góc nền */
+}
+
+.auction-time {
+    -fx-text-fill: #333333;    /* Màu văn bản xanh dương */
+    -fx-font-weight: bold;     /* Chữ đậm */
+    -fx-font-size: 16px;       /* Kích thước chữ */
+}
+
+.category-label {
+    -fx-text-fill: #333333;    /* Màu văn bản xám */
+    -fx-font-size: 14px;       /* Kích thước chữ */
+    -fx-font-weight: normal;   /* Chữ bình thường */
+}
+.notification-bar {
+    -fx-background-color: #d0e7ff;  /* Màu nền xanh nhạt */
+    -fx-text-fill: #1E90FF;          /* Màu văn bản xanh dương */
+    -fx-font-weight: bold;           /* Chữ đậm */
+    -fx-font-size: 14px;             /* Kích thước chữ */
+    -fx-padding: 10 20 10 20;        /* Padding cho thanh */
+    -fx-border-radius: 5px;         /* Bo góc thanh */
+    -fx-background-radius: 15px;
+}
+
+/* Container cho mỗi ảnh */
+.image-container {
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-overflow: hidden;
+}
+
+/* Ảnh đang được chọn làm Main */
+.image-main {
+    -fx-border-color: #3b82f6; /* Màu xanh giống hình */
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+}
+
+/* Label chữ Main */
+.main-badge {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-padding: 2 5 2 5;
+    -fx-background-radius: 0 0 0 5; /* Bo góc khớp với khung ảnh */
+}
+
+/* Nút xóa (X) */
+.delete-button {
+    -fx-background-color: white;
+    -fx-shape: "M 0 0 L 10 10 M 10 0 L 0 10"; /* Hình dấu X */
+    -fx-border-color: #3b82f6;
+    -fx-border-radius: 50%;
+    -fx-min-width: 15px;
+    -fx-min-height: 15px;
+}
+
+/* Khung nút Add Photos */
+.add-photo-button {
+    -fx-border-color: #ccc;
+    -fx-border-style: dashed;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.add-photo-button:hover {
+    -fx-background-color: #f4f4f4;
+}
+
+/* Image Management */
+.image-wrapper {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-overflow: hidden;
+}
+
+.main-image {
+    -fx-border-color: #3b82f6;
+    -fx-border-width: 2;
+}
+
+.main-badge {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 0 5 0 8;
+}
+
+.delete-btn {
+    -fx-background-color: white;
+    -fx-text-fill: #3b82f6;
+    -fx-border-color: #3b82f6;
+    -fx-border-radius: 50;
+    -fx-min-width: 24px;
+    -fx-min-height: 24px;
+    -fx-cursor: hand;
+}
+
+.add-photo-btn {
+    -fx-border-color: #CCCCCC;
+    -fx-border-style: dashed;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.add-text {
+    -fx-text-fill: #3b82f6;
+    -fx-font-weight: bold;
+}
+
+/* Action Buttons */
+.btn-save {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.btn-cancel {
+    -fx-background-color: transparent;
+    -fx-text-fill: #666;
+    -fx-border-color: #DDD;
+    -fx-border-radius: 10;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}

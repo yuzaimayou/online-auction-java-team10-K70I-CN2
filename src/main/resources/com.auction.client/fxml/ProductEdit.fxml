@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.control.TextArea?>
+<VBox prefHeight="850.0" prefWidth="1440.0" styleClass="main-bg" stylesheets="@../css/ProductEdit.css"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.ProductEditController">
+
+    <fx:include source="NavBar.fxml"/>
+
+    <StackPane VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets bottom="40.0" top="40.0"/>
+        </padding>
+
+        <VBox alignment="CENTER" maxHeight="800.0" maxWidth="1100.0" spacing="20.0" styleClass="form-card">
+            <StackPane.margin>
+                <Insets/>
+            </StackPane.margin>
+            <padding>
+                <Insets bottom="20.0" right="20.0" top="20.0"/>
+            </padding>
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                        style="-fx-background: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                <content>
+                    <VBox prefHeight="1350.0" prefWidth="1064.0" spacing="35.0" styleClass="ba">
+                        <padding>
+                            <Insets bottom="50.0" left="60.0" right="40.0" top="40.0"/>
+                        </padding>
+                        <StackPane>
+                            <Label fx:id="lblMessage" text=""/>
+                            <Button fx:id="btnClose" onAction="#handleSwitchToHomePage" prefHeight="39.0"
+                                    prefWidth="54.0" styleClass="close-button" text="✕"
+                                    StackPane.alignment="CENTER_RIGHT">
+                                <StackPane.margin>
+                                    <Insets right="0"/>
+                                </StackPane.margin>
+                            </Button>
+                        </StackPane>
+                        <HBox prefHeight="100.0" prefWidth="987.0">
+                            <ImageView fitHeight="184.0" fitWidth="340.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/macbook.jpg"/>
+                                </image>
+                            </ImageView>
+                            <VBox prefHeight="184.0" prefWidth="689.0" spacing="12.0">
+                                <Label styleClass="field-label" text="Macbook Pro 13inch">
+                                    <VBox.margin>
+                                        <Insets/>
+                                    </VBox.margin>
+                                </Label>
+                                <Label styleClass="upcoming-auction" text="Upcoming Auction"/>
+                                <Label styleClass="auction-time" text="Auction starts in: 2d 16h 45m "/>
+                                <Label styleClass="auction-time" text="Electronics"/>
+                                <Label styleClass="notification-bar"
+                                       text="!  You just can edit this item before the auction starts"/>
+                                <HBox.margin>
+                                    <Insets left="50.0"/>
+                                </HBox.margin>
+                            </VBox>
+                        </HBox>
+                        <VBox prefHeight="117.0" prefWidth="964.0" spacing="15.0">
+                            <Label styleClass="field-label" text="Item Title"/>
+                            <TextField styleClass="input-field"/>
+                        </VBox>
+                        <VBox prefHeight="168.0" prefWidth="964.0">
+                            <Label styleClass="field-label" text="Category"/>
+                            <HBox alignment="CENTER" spacing="35.0">
+
+                                <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnFashion" styleClass="category-btn" userData="Fashion">
+                                        <graphic>
+                                            <Region styleClass="icon-fashion"/>
+                                        </graphic>
+                                        <toggleGroup>
+                                            <ToggleGroup fx:id="categoryGroup"/>
+                                        </toggleGroup>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Home"/>
+                                </VBox>
+
+                                <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnElectronics" styleClass="category-btn"
+                                                  toggleGroup="$categoryGroup" userData="Electronics">
+                                        <graphic>
+                                            <Region styleClass="icon-electronics"/>
+                                        </graphic>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Home"/>
+                                </VBox>
+
+                                <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnHome" styleClass="category-btn" toggleGroup="$categoryGroup"
+                                                  userData="Home">
+                                        <graphic>
+                                            <Region styleClass="icon-home"/>
+                                        </graphic>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Home"/>
+                                </VBox>
+
+                                <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnArt" styleClass="category-btn" toggleGroup="$categoryGroup"
+                                                  userData="Art">
+                                        <graphic>
+                                            <Region styleClass="icon-art"/>
+                                        </graphic>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Art"/>
+                                </VBox>
+
+                                <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnJewelry" styleClass="category-btn"
+                                                  toggleGroup="$categoryGroup" userData="Jewelry">
+                                        <graphic>
+                                            <Region styleClass="icon-jewelry"/>
+                                        </graphic>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Jewelry"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                        <VBox spacing="15.0">
+                            <Label styleClass="field-label" text="Product Description"/>
+                            <TextArea fx:id="txtProductDesc" maxWidth="Infinity" minHeight="60.0"
+                                      promptText="Enter product description"
+                                      styleClass="input-field"/>
+                        </VBox>
+                        <HBox spacing="30.0">
+                            <VBox prefHeight="115.0" prefWidth="467.0" spacing="12.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text="Initial Price"/>
+                                <TextField prefHeight="60.0" promptText="Initial Price Update"
+                                           styleClass="input-field"/>
+                            </VBox>
+                            <VBox prefHeight="115.0" prefWidth="467.0" spacing="12.0">
+                                <Label styleClass="field-label" text="Bid Increment"/>
+                                <TextField promptText="Bid Increment Update" styleClass="input-field"/>
+                            </VBox>
+                        </HBox>
+                        <HBox spacing="30.0">
+                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text="Buy It Now (Optional)"/>
+                                <TextField fx:id="txtMaxPrice" prefHeight="60.0" promptText="Enter buy now price"
+                                           styleClass="input-field"/>
+                            </VBox>
+                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text="Reserve Price (Optional)"/>
+                                <TextField fx:id="txtMinPrice" prefHeight="60.0"
+                                           promptText="Enter minimum accepted price" styleClass="input-field"/>
+                            </VBox>
+                        </HBox>
+                        <!--Product Time-->
+                        <HBox spacing="40.0">
+                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text="Start Time"/>
+                                <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="55.0"
+                                            styleClass="date-picker"/>
+                                <ComboBox fx:id="cbStartTime" prefHeight="55.0" prefWidth="100.0" promptText="Set Time"
+                                          styleClass="time-picker"/>
+                            </VBox>
+                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text="End Time"/>
+                                <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="55.0"
+                                            styleClass="date-picker"/>
+                                <ComboBox fx:id="cbEndTime" prefHeight="55.0" prefWidth="100.0" promptText="Set Time"
+                                          styleClass="time-picker"/>
+                            </VBox>
+                        </HBox>
+                        <VBox spacing="15.0">
+                            <children>
+                                <Label styleClass="field-label" text="Images"/>
+                                <HBox fx:id="imageContainer" alignment="CENTER_LEFT" spacing="20.0">
+                                    <children>
+                                        <StackPane styleClass="image-wrapper, main-image">
+                                            <children>
+                                                <ImageView fitHeight="120.0" fitWidth="180.0" pickOnBounds="true">
+                                                    <image>
+                                                        <Image url="@../assets/macbook.jpg"/>
+                                                    </image>
+                                                </ImageView>
+                                                <Label styleClass="main-badge" text="★ Main"
+                                                       StackPane.alignment="BOTTOM_LEFT"/>
+                                                <ToggleButton mnemonicParsing="false" styleClass="delete-btn" text="×"
+                                                              StackPane.alignment="TOP_RIGHT">
+                                                    <StackPane.margin>
+                                                        <Insets right="-8.0" top="-8.0"/>
+                                                    </StackPane.margin>
+                                                </ToggleButton>
+                                            </children>
+                                        </StackPane>
+
+                                        <VBox alignment="CENTER" minHeight="120.0" minWidth="180.0" spacing="8.0"
+                                              styleClass="add-photo-btn">
+                                            <children>
+                                                <Label style="-fx-font-size: 28; -fx-text-fill: #999;" text="+"/>
+                                                <Label styleClass="add-text" text="Add Photos"/>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                    <padding>
+                                        <Insets bottom="10.0" top="10.0"/>
+                                    </padding>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <HBox alignment="CENTER_RIGHT" spacing="20.0">
+                            <children>
+                                <ToggleButton mnemonicParsing="false" prefHeight="55.0" prefWidth="180.0"
+                                              styleClass="btn-cancel" text="Cancel"/>
+                                <ToggleButton mnemonicParsing="false" prefHeight="55.0" prefWidth="220.0"
+                                              styleClass="btn-save" text="Save Changes"/>
+                            </children>
+                            <padding>
+                                <Insets top="20.0"/>
+                            </padding>
+                        </HBox>
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </VBox>
+    </StackPane>
+</VBox>
