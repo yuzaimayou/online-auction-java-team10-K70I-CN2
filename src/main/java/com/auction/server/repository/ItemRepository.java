@@ -101,6 +101,44 @@ public class ItemRepository {
         return null;
     }
 
+    public Item findById(Connection conn, String itemId) {
+
+        String sql = "SELECT * FROM items WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, itemId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+
+                    Item item = new Item(
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getDouble("start_price"),
+                            rs.getDouble("current_price"),
+                            LocalDateTime.parse(rs.getString("start_time")),
+                            LocalDateTime.parse(rs.getString("end_time")),
+                            rs.getString("seller_id"),
+                            rs.getString("category"),
+                            rs.getDouble("bid_step"),
+                            rs.getDouble("max_price"),
+                            rs.getDouble("min_price"),
+                            rs.getString("image_path")
+                    );
+                    item.setId(rs.getString("id"));
+                    return item;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     public List<Item> findAllItems() {
 
         List<Item> items = new ArrayList<>();
@@ -157,6 +195,23 @@ public class ItemRepository {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public boolean updateCurrentPrice(Connection conn, String itemId, double newPrice) {
+
+        String sql = "UPDATE items SET current_price = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, newPrice);
+            stmt.setString(2, itemId);
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }
