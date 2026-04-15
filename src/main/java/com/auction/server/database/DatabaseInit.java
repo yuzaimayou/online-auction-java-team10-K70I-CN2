@@ -47,6 +47,21 @@ public class DatabaseInit {
         );
         """;
 
+        String autoBidsTable = """
+        CREATE TABLE IF NOT EXISTS auto_bids (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            max_bid REAL NOT NULL,
+            increment REAL NOT NULL,
+            registered_at TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            UNIQUE (item_id, user_id),
+            FOREIGN KEY (item_id) REFERENCES items(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        """;
+
         try (
                 Connection conn = DatabaseConnection.connect();
                 Statement stmt = conn.createStatement()
@@ -55,7 +70,9 @@ public class DatabaseInit {
             stmt.execute(usersTable);
             stmt.execute(itemsTable);
             stmt.execute(bidsTable);
+            stmt.execute(autoBidsTable);
             migrateItemsTable(stmt);
+            migrateAutoBidsTable(stmt);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,6 +99,18 @@ public class DatabaseInit {
         }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN image_path TEXT NOT NULL DEFAULT ''");
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void migrateAutoBidsTable(Statement stmt) {
+        // Keep backward compatibility for DBs that had partial auto-bid schema.
+        try {
+            stmt.execute("ALTER TABLE auto_bids ADD COLUMN registered_at TEXT NOT NULL DEFAULT ''");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE auto_bids ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
         } catch (Exception ignored) {
         }
     }

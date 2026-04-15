@@ -7,6 +7,7 @@ import com.auction.server.service.ProductService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.payloads.ProductPayload;
@@ -140,6 +141,37 @@ public class ClientHandler implements Runnable {
         return true;
     }
 
+    private boolean autoBidRegisterAction(String payload, ResponseMessage response) {
+        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+
+        if (autoBidData == null
+                || autoBidData.getItemId() == null
+                || autoBidData.getUserId() == null
+                || autoBidData.getMaxBid() == null
+                || autoBidData.getIncrement() == null) {
+            response.setStatus("FAIL");
+            response.setMessage("Invalid auto bid payload");
+            return true;
+        }
+
+        boolean created = bidService.registerAutoBid(
+                autoBidData.getItemId(),
+                autoBidData.getUserId(),
+                autoBidData.getMaxBid(),
+                autoBidData.getIncrement()
+        );
+
+        if (created) {
+            response.setStatus("SUCCESS");
+            response.setMessage("Auto-bid registered successfully");
+        } else {
+            response.setStatus("FAIL");
+            response.setMessage("Failed to register auto-bid");
+        }
+
+        return true;
+    }
+
     @Override
     public void run() {
         try {
@@ -162,6 +194,7 @@ public class ClientHandler implements Runnable {
                     case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
                     case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
                     case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
+                    case AUTO_BID_REGISTER -> keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
                     default -> {
                         response.setStatus("ERROR");
                         response.setMessage("Invalid action");
