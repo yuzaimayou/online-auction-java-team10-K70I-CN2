@@ -10,7 +10,7 @@ public class Item extends Entity {
     private String name;
     private String description;
     private double startingPrice;
-    private double highestCurrentPrice;
+    private double currentPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String sellerId;
@@ -76,7 +76,7 @@ public class Item extends Entity {
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
-        this.highestCurrentPrice = startingPrice; // Initial highest price is the starting price
+        this.currentPrice = startingPrice; // Current price starts from starting price
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
@@ -86,9 +86,9 @@ public class Item extends Entity {
         this.minPrice = minPrice;
         this.imagePath = imagePath;
     }
-    // Constructor khi load từ database
+    // Constructor khi load tu database
     public Item(String name, String description,
-                double startingPrice, double highestCurrentPrice,
+                double startingPrice, double currentPrice,
                 LocalDateTime startTime, LocalDateTime endTime,
                 String sellerId,
                 String category,
@@ -102,7 +102,7 @@ public class Item extends Entity {
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
-        this.highestCurrentPrice = highestCurrentPrice;
+        this.currentPrice = currentPrice;
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
@@ -116,16 +116,25 @@ public class Item extends Entity {
         return name;
     }
 
+    public double getCurrentPrice() {
+        return currentPrice;
+    }
+
+    public void setCurrentPrice(double currentPrice) {
+        // [ERROR HANDLING] Ensure new price is not lower than the starting price
+        if (currentPrice < this.startingPrice) {
+            throw new IllegalArgumentException("Error: Current price cannot be lower than the starting price!");
+        }
+        this.currentPrice = currentPrice;
+    }
+
+    // Backward-compatible wrappers used by existing bidding/services code.
     public double getHighestCurrentPrice() {
-        return highestCurrentPrice;
+        return getCurrentPrice();
     }
 
     public void setHighestCurrentPrice(double highestCurrentPrice) {
-        // [ERROR HANDLING] Ensure new price is not lower than the starting price
-        if (highestCurrentPrice < this.startingPrice) {
-            throw new IllegalArgumentException("Error: Highest current price cannot be lower than the starting price!");
-        }
-        this.highestCurrentPrice = highestCurrentPrice;
+        setCurrentPrice(highestCurrentPrice);
     }
 
 
@@ -181,7 +190,7 @@ public class Item extends Entity {
         System.out.println("Name: " + name);
         System.out.println("Description: " + description);
         System.out.println("Starting price: " + startingPrice);
-        System.out.println("Current price: " + highestCurrentPrice);
+        System.out.println("Current price: " + currentPrice);
         System.out.println("Seller: " + sellerId);
         System.out.println("Category: " + category);
         System.out.println("Bid step: " + bidStep);
@@ -192,3 +201,4 @@ public class Item extends Entity {
         System.out.println("End time: " + endTime);
     }
 }
+

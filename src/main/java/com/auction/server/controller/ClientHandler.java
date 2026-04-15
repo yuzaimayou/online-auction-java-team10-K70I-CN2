@@ -3,11 +3,14 @@ package com.auction.server.controller;
 import com.auction.server.MainServer;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.service.AuthService;
+import com.auction.server.service.BidService;
 import com.auction.server.service.ProductService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.AuthPayload;
+import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.payloads.ProductPayload;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
@@ -26,16 +29,18 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private AuthService authService;
     private ProductService productService;
+    private BidService bidService;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
     private PrintWriter out;
 
-    public ClientHandler(Socket socket, AuthService authService, ProductService productService) {
+    public ClientHandler(Socket socket, AuthService authService, ProductService productService, BidService bidService) {
         this.clientSocket = socket;
         this.authService = authService;
         this.productService = productService;
+        this.bidService = bidService;
         try {
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
         } catch (IOException e) {
@@ -47,8 +52,8 @@ public class ClientHandler implements Runnable {
         if (out != null) {
             out.println(jsonMessage);
         }
-    }
 
+    }
 
     @Override
     public void run() {
@@ -71,6 +76,8 @@ public class ClientHandler implements Runnable {
                     case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
                     case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
                     case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
+                    case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
+                    case AUTO_BID_REGISTER -> keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
                     default -> {
                         response.setStatus("ERROR");
                         response.setMessage("Invalid action");
@@ -175,4 +182,63 @@ public class ClientHandler implements Runnable {
         }
         return true;
     }
-}
+
+    private boolean bidAction(String payload, ResponseMessage response) {
+        BidPayload bidData = gson.fromJson(payload, BidPayload.class);
+
+        if (bidData == null || bidData.getItemId() == null || bidData.getUserId() == null || bidData.getBidPrice() == null) {
+            response.setStatus("FAIL");
+            response.setMessage("Invalid bid payload");
+            return true;
+        }
+
+        boolean created = bidService.placeBid(
+                bidData.getItemId(),
+                bidData.getUserId(),
+                bidData.getBidPrice(),
+                bidData.getBidTime()
+        );
+
+        if (created) {
+            response.setStatus("SUCCESS");
+            response.setMessage("Bid placed successfully");
+        } else {
+            response.setStatus("FAIL");
+            response.setMessage("Failed to place bid");
+        }
+
+        return true;
+    }
+
+    private boolean autoBidRegisterAction(String payload, ResponseMessage response) {
+        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+
+        if (autoBidData == null
+                || autoBidData.getItemId() == null
+                || autoBidData.getUserId() == null
+                || autoBidData.getMaxBid() == null
+                || autoBidData.getIncrement() == null) {
+            response.setStatus("FAIL");
+            response.setMessage("Invalid auto bid payload");
+            return true;
+        }
+
+        boolean created = bidService.registerAutoBid(
+                autoBidData.getItemId(),
+                autoBidData.getUserId(),
+                autoBidData.getMaxBid(),
+                autoBidData.getIncrement()
+        );
+
+        if (created) {
+            response.setStatus("SUCCESS");
+            response.setMessage("Auto-bid registered successfully");
+        } else {
+            response.setStatus("FAIL");
+            response.setMessage("Failed to register auto-bid");
+        }
+
+        return true;
+    }
+
+

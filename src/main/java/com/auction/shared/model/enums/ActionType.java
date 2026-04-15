@@ -5,5 +5,7 @@ public enum ActionType {
     REGISTER,
     ADDPRODUCT,
     GETDATAPRODUCT,
-    PLACEBID;
+    PLACEBID,
+    BID,
+    AUTO_BID_REGISTER,
 }
