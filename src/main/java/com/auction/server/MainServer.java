@@ -8,9 +8,13 @@ import com.auction.server.service.ProductService;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MainServer {
     private static final int PORT = 8000;
+
+    public static final List<ClientHandler> activeClients = new CopyOnWriteArrayList<>();
 
     public static void main(String[] agrs) {
         // tao database
@@ -30,6 +34,8 @@ public class MainServer {
                 System.out.printf("Client has connected with IP: %s%n", clientSocket.getInetAddress().getHostAddress());
 
                 ClientHandler handler = new ClientHandler(clientSocket, authService, productService);
+                activeClients.add(handler);
+                
                 Thread clientThread = new Thread(handler);
 
                 clientThread.start();
