@@ -77,7 +77,8 @@ public class ClientHandler implements Runnable {
                     case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
                     case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
                     case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
-                    case AUTO_BID_REGISTER -> keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
+                    case AUTO_BID_REGISTER ->
+                            keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
                     default -> {
                         response.setStatus("ERROR");
                         response.setMessage("Invalid action");
@@ -240,5 +241,6 @@ public class ClientHandler implements Runnable {
 
         return true;
     }
+}
 
 
