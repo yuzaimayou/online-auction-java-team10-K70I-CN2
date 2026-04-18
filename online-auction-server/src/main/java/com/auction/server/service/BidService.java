@@ -3,6 +3,7 @@ package com.auction.server.service;
 import com.auction.server.database.DatabaseConnection;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
+import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.product.Item;
 
 import java.sql.Connection;
@@ -109,6 +110,15 @@ public class BidService {
 
                 runAutoBiddingRounds(conn, itemId, userId, bidPrice);
                 conn.commit();
+                try {
+                    BidPayload newBidData = new BidPayload(itemId, userId, bidPrice, resolvedBidTime);
+                    String jsonPayload = new com.google.gson.Gson().toJson(newBidData);
+
+                    AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", jsonPayload);
+                    System.out.println("Broadcasted new bid for item " + itemId + ": " + jsonPayload);
+                } catch (Exception e) {
+                    System.err.println("Failed to broadcast new bid for item " + itemId + ": " + e.getMessage());
+                }
                 return true;
 
             } catch (Exception e) {

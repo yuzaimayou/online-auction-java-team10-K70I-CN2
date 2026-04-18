@@ -1,9 +1,9 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.shared.message.RequestMessage;
-import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.ProductPayload;
 import com.auction.shared.util.ImageUtil;
 import com.auction.shared.util.LocalDateTimeAdapter;
@@ -26,13 +26,16 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.concurrent.CompletableFuture;
 
 public class AuctionFormController {
     @FXML
@@ -57,11 +60,6 @@ public class AuctionFormController {
     private TextField txtInitPrice;
     @FXML
     private TextField txtBidStep;
-    @FXML
-    private TextField txtMaxPrice;
-    @FXML
-    private TextField txtMinPrice;
-
     @FXML
     private Button btnChooseImage;
 
@@ -146,8 +144,6 @@ public class AuctionFormController {
         //price
         Double initPrice = convertNumeric(txtInitPrice.getText().trim());
         Double bidStep = convertNumeric(txtBidStep.getText().trim());
-        Double maxPrice = convertNumeric(txtMaxPrice.getText().trim());
-        Double minPrice = convertNumeric(txtMinPrice.getText().trim());
         //User id
         String userId = UserSession.getInstance().getLoggedInUser().getId();
 
@@ -157,13 +153,7 @@ public class AuctionFormController {
             lblMessage.setText("Please fill in all required fields.");
             return;
         }
-        if (maxPrice == null) {
-            maxPrice = 0.0;
-        }
-        if (minPrice == null) {
-            minPrice = 0.0;
-        }
-        if (initPrice == -2 || bidStep == -2 || maxPrice == -2 || minPrice == -2) {
+        if (initPrice == -2 || bidStep == -2) {
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText("Price must be a positive number.");
             return;
@@ -188,44 +178,57 @@ public class AuctionFormController {
                 return;
             }
 
-
             //Xu ly phan loai san pham
             selectedCategory = selectedToggle.getUserData().toString();
 
 
-            ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageConverted, startDateTime, endDateTime, initPrice, bidStep, maxPrice, minPrice, userId);
+            ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
             String jsonPayload = gson.toJson(payload);
-            CompletableFuture.supplyAsync(() -> {
-                return network.sendRequest(new RequestMessage(ActionType.ADDPRODUCT, jsonPayload));
-            }).thenAccept(res -> {
-                if (res == null) {
-                    Platform.runLater(() -> {
-                        lblMessage.setTextFill(Color.RED);
-                        lblMessage.setText("Unable to connect to the server. Please try again later.");
-                    });
-                    return;
-                }
-                if ("SUCCESS".equals(res.getStatus())) {
-                    Platform.runLater(() -> {
-                        lblMessage.setTextFill(Color.GREEN);
-                        lblMessage.setText(res.getMessage());
-                    });
-                    PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-                    pause.setOnFinished(e -> handleSwitchToHomePage());
-                    pause.play();
-                } else {
-                    Platform.runLater(() -> {
-                        lblMessage.setTextFill(Color.RED);
-                        lblMessage.setText(res.getMessage());
-                    });
-                }
+            String httpUrl = String.format("%s/api/add-product", AppConfig.getHttpUrl());
+            System.out.println("Debug: Sending POST request to " + httpUrl);
+            HttpClient httpClient = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(String.format("%s/api/add-product", AppConfig.getHttpUrl())))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
 
-            });
+            httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(HttpResponse::body)
+                    .thenAccept(responseBody -> {
+                        ResponseMessage responseMessage = gson.fromJson(responseBody, ResponseMessage.class);
+
+                        if ("success".equals(responseMessage.getStatus())) {
+                            Platform.runLater(() -> {
+                                lblMessage.setTextFill(Color.GREEN);
+                                lblMessage.setText(responseMessage.getMessage());
+                            });
+                            PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
+                            pause.setOnFinished(e -> handleSwitchToHomePage());
+                            pause.play();
+                        } else {
+                            Platform.runLater(() -> {
+                                lblMessage.setTextFill(Color.RED);
+                                lblMessage.setText(responseMessage.getMessage());
+                            });
+                        }
+                    })
+                    .exceptionally(e -> {
+                        e.printStackTrace();
+                        javafx.application.Platform.runLater(() -> {
+                            ;
+                            lblMessage.setTextFill(Color.RED);
+                            lblMessage.setText("Failed to connect to server");
+                        });
+                        return null;
+                    });
+
+
         } catch (IOException e) {
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText("Error reading image file!");
             e.printStackTrace();
-            return;
+
         }
 
     }

@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 public class ProductPayload {
     private String productName, category, productDesc;
     private LocalDateTime startDateTime, endDateTime;
-    private Double initPrice, bidStep, maxPrice, minPrice;
+    private Double initPrice, bidStep;
     private String userId;
     private String[] productImg;
 
     public ProductPayload() {
     }
 
-    public ProductPayload(String productName, String category, String productDesc, String[] productImg, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, Double maxPrice, Double minPrice, String userId) {
+    public ProductPayload(String productName, String category, String productDesc, String[] productImg, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, String userId) {
         this.productName = productName;
         this.category = category;
         this.startDateTime = startTime;
@@ -21,8 +21,7 @@ public class ProductPayload {
         this.productImg = productImg;
         this.initPrice = initPrice;
         this.bidStep = bidStep;
-        this.maxPrice = maxPrice;
-        this.minPrice = minPrice;
+
         this.userId = userId;
     }
 
@@ -56,14 +55,6 @@ public class ProductPayload {
 
     public Double getBidStep() {
         return bidStep;
-    }
-
-    public Double getMaxPrice() {
-        return maxPrice;
-    }
-
-    public Double getMinPrice() {
-        return minPrice;
     }
 
     public String getUserId() {
