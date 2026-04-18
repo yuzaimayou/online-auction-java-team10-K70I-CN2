@@ -16,8 +16,6 @@ public class Item extends Entity {
     private String sellerId;
     private String category;
     private double bidStep;
-    private double maxPrice;
-    private double minPrice;
     private String imagePath;
 
     // Constructor khi tạo item mới
@@ -28,8 +26,6 @@ public class Item extends Entity {
                 String sellerId,
                 String category,
                 double bidStep,
-                double maxPrice,
-                double minPrice,
                 String imagePath) {
 
         super(UUID.randomUUID().toString());
@@ -63,12 +59,7 @@ public class Item extends Entity {
         if (bidStep <= 0) {
             throw new IllegalArgumentException("Error: Bid step must be greater than 0!");
         }
-        if (maxPrice < 0 || minPrice < 0) {
-            throw new IllegalArgumentException("Error: Max price and min price cannot be negative!");
-        }
-        if (maxPrice > 0 && minPrice > 0 && maxPrice < minPrice) {
-            throw new IllegalArgumentException("Error: Max price cannot be lower than min price!");
-        }
+
         if (imagePath == null || imagePath.trim().isEmpty()) {
             throw new IllegalArgumentException("Error: Image path cannot be null or empty!");
         }
@@ -82,8 +73,6 @@ public class Item extends Entity {
         this.sellerId = sellerId;
         this.category = category;
         this.bidStep = bidStep;
-        this.maxPrice = maxPrice;
-        this.minPrice = minPrice;
         this.imagePath = imagePath;
     }
 
@@ -94,8 +83,6 @@ public class Item extends Entity {
                 String sellerId,
                 String category,
                 double bidStep,
-                double maxPrice,
-                double minPrice,
                 String imagePath) {
 
         super(UUID.randomUUID().toString());
@@ -109,8 +96,6 @@ public class Item extends Entity {
         this.sellerId = sellerId;
         this.category = category;
         this.bidStep = bidStep;
-        this.maxPrice = maxPrice;
-        this.minPrice = minPrice;
         this.imagePath = imagePath;
     }
 
@@ -152,14 +137,6 @@ public class Item extends Entity {
         return bidStep;
     }
 
-    public double getMaxPrice() {
-        return maxPrice;
-    }
-
-    public double getMinPrice() {
-        return minPrice;
-    }
-
     public String getImagePath() {
         return imagePath;
     }
@@ -196,8 +173,6 @@ public class Item extends Entity {
         System.out.println("Seller: " + sellerId);
         System.out.println("Category: " + category);
         System.out.println("Bid step: " + bidStep);
-        System.out.println("Max price: " + maxPrice);
-        System.out.println("Min price: " + minPrice);
         System.out.println("Image path: " + imagePath);
         System.out.println("Start time: " + startTime);
         System.out.println("End time: " + endTime);

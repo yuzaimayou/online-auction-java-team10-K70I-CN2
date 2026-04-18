@@ -8,6 +8,7 @@ module online.auction.client {
 
     requires javafx.base;
     requires javafx.graphics;
+    requires java.net.http;
 
     exports com.auction.client;
     exports com.auction.client.controller;

@@ -1,12 +1,13 @@
 package com.auction.server;
 
 import com.auction.server.controller.ClientHandler;
+import com.auction.server.controller.api.AddProduct;
+import com.auction.server.controller.api.LoginHandler;
+import com.auction.server.controller.api.RegisterHandler;
 import com.auction.server.database.DatabaseInit;
-import com.auction.server.service.AuthService;
-import com.auction.server.service.BidService;
-import com.auction.server.service.ProductService;
+import com.sun.net.httpserver.HttpServer;
 
-import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
@@ -20,30 +21,46 @@ public class MainServer {
     public static void main(String[] agrs) {
         // tao database
         DatabaseInit.init();
-        //Khoi tao cac service cot loi
-        AuthService authService = new AuthService();
-        ProductService productService = new ProductService();
-        BidService bidService = new BidService();
-        authService.register("admin", "admin");
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            //server load image
-            StaticFileServer fileServer = new StaticFileServer();
-            fileServer.startServer();
+        //start http server
+        try {
+            System.out.println("Starting HTTP server...");
+            HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
+            httpServer.createContext("/api/login", new LoginHandler());
+            httpServer.createContext("/api/register", new RegisterHandler());
+            httpServer.createContext("/api/add-product", new AddProduct());
+            httpServer.createContext("/images", new StaticFileServer.ImageHandler());
 
-            System.out.println("Port has opened!");
+            httpServer.setExecutor(null);
+            httpServer.start();
+            System.out.println("HTTP server started on port 8080");
+        } catch (Exception e) {
+            System.err.println("Failed to start HTTP server: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
+
+        //start socket server
+        try {
+            System.out.println("Starting Socket server...");
+
+            ServerSocket serverSocket = new ServerSocket(9090);
+            System.out.println("Socket server started on port 9090");
+
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.printf("Client has connected with IP: %s%n", clientSocket.getInetAddress().getHostAddress());
 
-                ClientHandler handler = new ClientHandler(clientSocket, authService, productService,bidService);
+                ClientHandler handler = new ClientHandler(clientSocket);
                 activeClients.add(handler);
 
                 Thread clientThread = new Thread(handler);
 
                 clientThread.start();
             }
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Failed to start Socket server: " + e.getMessage());
+            e.printStackTrace();
+
         }
 
     }

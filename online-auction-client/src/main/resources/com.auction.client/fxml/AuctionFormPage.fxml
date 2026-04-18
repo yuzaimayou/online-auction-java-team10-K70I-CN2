@@ -130,18 +130,7 @@
                                            promptText="Enter bid step"/>
                             </VBox>
                         </HBox>
-                        <HBox spacing="30.0">
-                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="field-label" text="Buy It Now (Optional)"/>
-                                <TextField fx:id="txtMaxPrice" prefHeight="60.0" styleClass="input-field"
-                                           promptText="Enter buy now price"/>
-                            </VBox>
-                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="field-label" text="Reserve Price (Optional)"/>
-                                <TextField fx:id="txtMinPrice" prefHeight="60.0" styleClass="input-field"
-                                           promptText="Enter minimum accepted price"/>
-                            </VBox>
-                        </HBox>
+
                         <!--Product Time-->
                         <HBox spacing="40.0">
                             <VBox spacing="12.0" HBox.hgrow="ALWAYS">

@@ -5,13 +5,13 @@ public class AppConfig {
     //local server: 127.0.0.1
     public static final String ServerIp = "127.0.0.1";
 
-    public static final int ServerPort = 8000;
-    public static final int ImagePort = 1401;
+    public static final int SocketPort = 9090;
+    public static final int HttpPort = 8080;
 
     private AppConfig() {
     }
 
-    public static String getImageUrl() {
-        return String.format("http://%s:%d/images/", ServerIp, ImagePort);
+    public static String getHttpUrl() {
+        return String.format("http://%s:%d", ServerIp, HttpPort);
     }
 }

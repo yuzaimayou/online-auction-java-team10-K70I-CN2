@@ -1,14 +1,13 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.shared.message.RequestMessage;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.enums.ActionType;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,10 +20,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 public class LoginController {
 
@@ -51,40 +51,46 @@ public class LoginController {
             lblMessage.setText("Vui lòng nhập đủ tài khoản và mật khẩu!");
             return;
         }
-
+        //create payload
         AuthPayload payload = new AuthPayload(username, password);
         String jsonPayload = gson.toJson(payload);
-        CompletableFuture.supplyAsync(() -> {
-            return network.sendRequest(new RequestMessage(ActionType.LOGIN, jsonPayload));
-        }).thenAccept(res -> {
-            if (res == null) {
-                Platform.runLater(() -> {
-                    lblMessage.setTextFill(Color.RED);
-                    lblMessage.setText("Không thể kết nối server");
+        String httpUrl = String.format("%s/api/login", AppConfig.getHttpUrl());
+        System.out.println("Sending login request to: " + httpUrl);
+
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(java.net.URI.create(String.format("%s/api/login", AppConfig.getHttpUrl())))
+                .header("Content-Type", "application/json; utf-8")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(responseBody -> {
+                    ResponseMessage responseMessage = gson.fromJson(responseBody, ResponseMessage.class);
+
+                    if ("success".equals(responseMessage.getStatus())) {
+                        User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+                        UserSession.getInstance().setLoggedInUser(loggedInUser);
+
+                        PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(0.5));
+                        pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
+                        pause.play();
+                    } else {
+                        javafx.application.Platform.runLater(() -> {
+                            lblMessage.setTextFill(Color.RED);
+                            lblMessage.setText(responseMessage.getMessage());
+                        });
+                    }
+                })
+                .exceptionally(e -> {
+
+                    e.printStackTrace();
+                    javafx.application.Platform.runLater(() -> {
+                        lblMessage.setTextFill(Color.RED);
+                        lblMessage.setText("Failed to connect to server");
+                    });
+                    return null;
                 });
-                return;
-            }
-
-            if ("SUCCESS".equals(res.getStatus())) {
-                Platform.runLater(() -> {
-                    lblMessage.setTextFill(Color.GREEN);
-                    lblMessage.setText("Đăng nhập thành công");
-                });
-
-                User loggedInUser = gson.fromJson(res.getData(), User.class);
-                UserSession.getInstance().setLoggedInUser(loggedInUser);
-                PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-                pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
-                pause.play();
-
-            } else {
-                Platform.runLater(() -> {
-                    lblMessage.setTextFill(Color.RED);
-                    lblMessage.setText(res.getMessage());
-                });
-            }
-        });
-
 
     }
 

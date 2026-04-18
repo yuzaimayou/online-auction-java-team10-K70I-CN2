@@ -1,13 +1,12 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.shared.message.RequestMessage;
-import com.auction.shared.model.enums.ActionType;
+import com.auction.client.util.AppConfig;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,8 +19,10 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class HomePageController {
 
@@ -44,25 +45,47 @@ public class HomePageController {
     private void getDataItemsAndDisplay() {
         System.out.println("Dang tien hanh lay du lieu");
 
-        CompletableFuture.supplyAsync(() -> {
-            return network.sendRequest(new RequestMessage(ActionType.GETDATAPRODUCT));
-        }).thenAccept(res -> {
-            if (res == null) {
-                System.err.println("Unable to connect to the server");
-                return;
-            }
-            if ("SUCCESS".equals(res.getStatus())) {
-                System.out.println(res.getMessage());
-                Type listType = new TypeToken<List<Item>>() {
-                }.getType();
-                List<Item> dataItems = gson.fromJson(res.getData(), listType);
-                Platform.runLater(() -> {
-                    loadItemsToUI(dataItems);
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/products", AppConfig.getHttpUrl())))
+                .GET()
+                .build();
+        httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+                .thenApply(java.net.http.HttpResponse::body)
+                .thenAccept(responseBody -> {
+                    ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
+                    if ("success".equals(res.getStatus())) {
+                        System.out.println(res.getMessage());
+
+                        Type listType = new TypeToken<List<Item>>() {
+                        }.getType();
+                        List<Item> dataItems = gson.fromJson(res.getData(), listType);
+                        javafx.application.Platform.runLater(() -> {
+                            loadItemsToUI(dataItems);
+                        });
+                    } else {
+                        System.out.println(res.getMessage());
+                    }
                 });
-            } else {
-                System.out.println(res.getMessage());
-            }
-        });
+//        CompletableFuture.supplyAsync(() -> {
+//            return network.sendRequest(new RequestMessage(ActionType.GETDATAPRODUCT));
+//        }).thenAccept(res -> {
+//            if (res == null) {
+//                System.err.println("Unable to connect to the server");
+//                return;
+//            }
+//            if ("SUCCESS".equals(res.getStatus())) {
+//                System.out.println(res.getMessage());
+//                Type listType = new TypeToken<List<Item>>() {
+//                }.getType();
+//                List<Item> dataItems = gson.fromJson(res.getData(), listType);
+//                Platform.runLater(() -> {
+//                    loadItemsToUI(dataItems);
+//                });
+//            } else {
+//                System.out.println(res.getMessage());
+//            }
+//        });
     }
 
     @FXML

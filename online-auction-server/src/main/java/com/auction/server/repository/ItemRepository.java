@@ -15,22 +15,20 @@ public class ItemRepository {
     public boolean createItem(Item item) {
 
         String sql = """
-        INSERT INTO items(
-            id,
-            name,
-            description,
-            start_price,
-            current_price,
-            seller_id,
-            start_time,
-            end_time,
-            category,
-            bid_step,
-            max_price,
-            min_price,
-            image_path
-        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """;
+                INSERT INTO items(
+                    id,
+                    name,
+                    description,
+                    start_price,
+                    current_price,
+                    seller_id,
+                    start_time,
+                    end_time,
+                    category,
+                    bid_step,
+                    image_path
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?)
+                """;
 
         try (
                 Connection conn = DatabaseConnection.connect();
@@ -47,9 +45,7 @@ public class ItemRepository {
             stmt.setString(8, item.getEndTime().toString());
             stmt.setString(9, item.getCategory());
             stmt.setDouble(10, item.getBidStep());
-            stmt.setDouble(11, item.getMaxPrice());
-            stmt.setDouble(12, item.getMinPrice());
-            stmt.setString(13, item.getImagePath());
+            stmt.setString(11, item.getImagePath());
 
             stmt.executeUpdate();
             return true;
@@ -85,8 +81,6 @@ public class ItemRepository {
                             rs.getString("seller_id"),
                             rs.getString("category"),
                             rs.getDouble("bid_step"),
-                            rs.getDouble("max_price"),
-                            rs.getDouble("min_price"),
                             rs.getString("image_path")
                     );
                     item.setId(rs.getString("id"));
@@ -123,8 +117,6 @@ public class ItemRepository {
                             rs.getString("seller_id"),
                             rs.getString("category"),
                             rs.getDouble("bid_step"),
-                            rs.getDouble("max_price"),
-                            rs.getDouble("min_price"),
                             rs.getString("image_path")
                     );
                     item.setId(rs.getString("id"));
@@ -163,8 +155,6 @@ public class ItemRepository {
                         rs.getString("seller_id"),
                         rs.getString("category"),
                         rs.getDouble("bid_step"),
-                        rs.getDouble("max_price"),
-                        rs.getDouble("min_price"),
                         rs.getString("image_path")
                 );
                 item.setId(rs.getString("id"));

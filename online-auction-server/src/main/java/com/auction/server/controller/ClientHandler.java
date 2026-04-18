@@ -7,11 +7,8 @@ import com.auction.server.service.BidService;
 import com.auction.server.service.ProductService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.account.User;
-import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
-import com.auction.shared.model.payloads.ProductPayload;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
@@ -29,18 +26,20 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private AuthService authService;
     private ProductService productService;
-    private BidService bidService;
+    private BidService bidService = new BidService();
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
     private PrintWriter out;
 
-    public ClientHandler(Socket socket, AuthService authService, ProductService productService, BidService bidService) {
+    public ClientHandler() {
+    }
+
+    ;
+
+    public ClientHandler(Socket socket) {
         this.clientSocket = socket;
-        this.authService = authService;
-        this.productService = productService;
-        this.bidService = bidService;
         try {
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
         } catch (IOException e) {
@@ -72,10 +71,6 @@ public class ClientHandler implements Runnable {
                 boolean keepConnectionAlive = true;
                 System.out.println("Kiem tra action");
                 switch (request.getAction()) {
-                    case LOGIN -> keepConnectionAlive = loginAction(request.getPayload(), response);
-                    case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
-                    case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
-                    case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
                     case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
                     case AUTO_BID_REGISTER ->
                             keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
@@ -108,62 +103,6 @@ public class ClientHandler implements Runnable {
                 e.printStackTrace();
             }
         }
-    }
-
-    private boolean loginAction(String payload, ResponseMessage response) {
-        AuthPayload authData = gson.fromJson(payload, AuthPayload.class);
-        String username = authData.getUsername();
-        String password = authData.getPassword();
-        System.out.println(username + ',' + password);
-
-        User loggedInuser = authService.login(username, password);
-        if (loggedInuser != null) {
-            response.setStatus("SUCCESS");
-            response.setMessage("Log in successful");
-            response.setData(gson.toJson(loggedInuser));
-            System.out.println("success");
-            return true;
-        } else {
-            System.out.println("Incorrect");
-            response.setStatus("FAIL");
-            response.setMessage("Incorrect username or password");
-            return false;
-        }
-
-    }
-
-    private boolean registerAction(String payload, ResponseMessage response) {
-        AuthPayload authData = gson.fromJson(payload, AuthPayload.class);
-        String username = authData.getUsername();
-        String password = authData.getPassword();
-
-
-        boolean created = authService.register(username, password);
-
-        if (created) {
-            response.setStatus("SUCCESS");
-            response.setMessage("Register successful");
-        } else {
-            response.setStatus("FAIL");
-            response.setMessage("Username already exists");
-        }
-        return false;
-    }
-
-    private boolean addProductAction(String payload, ResponseMessage response) {
-        ProductPayload productData = gson.fromJson(payload, ProductPayload.class);
-        String userId = productData.getUserId();
-        //goi class tao product
-        boolean created = productService.addProduct(payload);
-
-        if (created) {
-            response.setStatus("SUCCESS");
-            response.setMessage("Product added successfully!" + userId);
-        } else {
-            response.setStatus("FAIL");
-            response.setMessage("Failed to add product. Please try again.");
-        }
-        return true;
     }
 
     private boolean getDataItems(ResponseMessage response) {
@@ -240,6 +179,10 @@ public class ClientHandler implements Runnable {
         }
 
         return true;
+    }
+
+    public String getUsername() {
+        return "username";
     }
 }
 

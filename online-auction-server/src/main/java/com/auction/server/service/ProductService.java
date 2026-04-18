@@ -17,8 +17,7 @@ public class ProductService {
         this.itemRepository = new ItemRepository();
     }
 
-    public boolean addProduct(String payload) {
-        ProductPayload productData = gson.fromJson(payload, ProductPayload.class);
+    public boolean addProduct(ProductPayload productData) {
         String productName = productData.getProductName();
         String category = productData.getCategory();
         LocalDateTime startTime = productData.getStartDateTime();
@@ -27,8 +26,8 @@ public class ProductService {
         String[] productImg = productData.getProductImg();
         Double initPrice = productData.getInitPrice();
         Double bidStep = productData.getBidStep();
-        Double maxPrice = productData.getMaxPrice();
-        Double minPrice = productData.getMinPrice();
+
+
         String userId = productData.getUserId();
 
         String imagePath = ImageUtil.convertBase64ToImg(productImg[0], productImg[1]);
@@ -41,8 +40,6 @@ public class ProductService {
                 userId,
                 category,
                 bidStep,
-                maxPrice,
-                minPrice,
                 imagePath
         );
 

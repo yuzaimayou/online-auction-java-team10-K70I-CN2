@@ -18,10 +18,8 @@ public class Vehicle extends Item {
                    String sellerId,
                    String category,
                    double bidStep,
-                   double maxPrice,
-                   double minPrice,
                    String imagePath) {
-        super(name, description, startingPrice, startTime, endTime, sellerId, category, bidStep, maxPrice, minPrice, imagePath);
+        super(name, description, startingPrice, startTime, endTime, sellerId, category, bidStep, imagePath);
     }
 
     // Constructor for loading an existing vehicle listing from database.
@@ -33,9 +31,8 @@ public class Vehicle extends Item {
                    String sellerId,
                    String category,
                    double bidStep,
-                   double maxPrice,
-                   double minPrice,
+
                    String imagePath) {
-        super(name, description, startingPrice, highestCurrentPrice, startTime, endTime, sellerId, category, bidStep, maxPrice, minPrice, imagePath);
+        super(name, description, startingPrice, highestCurrentPrice, startTime, endTime, sellerId, category, bidStep, imagePath);
     }
 }

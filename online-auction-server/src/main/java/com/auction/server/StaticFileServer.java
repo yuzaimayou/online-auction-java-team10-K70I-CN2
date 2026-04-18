@@ -19,7 +19,6 @@ public class StaticFileServer {
             server.createContext("/images", new ImageHandler());
             server.setExecutor(null);
             server.start();
-            System.out.println("HTTP File Server đang chạy tại: http://localhost:1401/images/");
         } catch (IOException e) {
             e.printStackTrace();
 

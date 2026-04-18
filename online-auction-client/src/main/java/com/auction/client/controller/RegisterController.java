@@ -1,8 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
-import com.auction.shared.message.RequestMessage;
-import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
@@ -20,7 +19,11 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+import static com.auction.client.util.AppConfig.getHttpUrl;
 
 public class RegisterController {
 
@@ -63,41 +66,39 @@ public class RegisterController {
 
         AuthPayload payload = new AuthPayload(username, password);
         String jsonPayload = gson.toJson(payload);
-        CompletableFuture.supplyAsync(() -> {
-            return network.sendRequest(new RequestMessage(ActionType.REGISTER, jsonPayload));
-        }).thenAccept(res -> {
-            if (res == null) {
-                Platform.runLater(() -> {
-                    lblMessage.setTextFill(Color.RED);
-                    lblMessage.setText("Không thể kết nối server");
+
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(java.net.URI.create(String.format("%s/api/register", getHttpUrl())))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(responseBody -> {
+                    ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
+                    if ("success".equalsIgnoreCase(res.getStatus())) {
+                        Platform.runLater(() -> {
+                            lblMessage.setTextFill(Color.GREEN);
+                            lblMessage.setText(res.getMessage());
+                            PauseTransition pause = new PauseTransition(Duration.seconds(2));
+                            pause.setOnFinished(e -> handleSwitchToLogin(event));
+                            pause.play();
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            lblMessage.setTextFill(Color.RED);
+                            lblMessage.setText(res.getMessage());
+                        });
+                    }
+                })
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        lblMessage.setTextFill(Color.RED);
+                        lblMessage.setText("Unable to connect to server");
+                    });
+                    return null;
                 });
-
-                return;
-            }
-
-            if ("SUCCESS".equals(res.getStatus())) {
-                System.out.println(res.getMessage());
-                Platform.runLater(() -> {
-                    lblMessage.setTextFill(Color.GREEN);
-                    lblMessage.setText("Đăng ký thành công");
-                    PauseTransition pause = new PauseTransition(Duration.seconds(2));
-                    pause.setOnFinished(e -> handleSwitchToLogin(event));
-                    pause.play();
-                });
-
-
-            } else {
-                Platform.runLater(() -> {
-
-                    lblMessage.setTextFill(Color.RED);
-                    lblMessage.setText(res.getMessage());
-                });
-
-
-            }
-        });
-
-
     }
 
     @FXML
