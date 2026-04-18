@@ -10,10 +10,12 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import static com.auction.client.util.AppConfig.ServerIp;
+import static com.auction.client.util.AppConfig.ServerPort;
+
 public class NetworkService {
     private static NetworkService instance;
-    private final String serverIP = "127.0.0.1";
-    private final int serverPort = 8000;
+
 
     private Gson gson = new Gson();
 
@@ -23,7 +25,7 @@ public class NetworkService {
 
     private NetworkService() {
         try {
-            socket = new Socket(serverIP, serverPort);
+            socket = new Socket(ServerIp, ServerPort);
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
@@ -36,7 +38,7 @@ public class NetworkService {
         try {
             if (socket == null || socket.isClosed()) {
 
-                socket = new Socket(serverIP, serverPort);
+                socket = new Socket(ServerIp, ServerPort);
                 out = new PrintWriter(socket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
