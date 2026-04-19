@@ -24,7 +24,7 @@ public class AuctionRoomManager {
     public void joinRoom(String productId, ClientHandler client) {
         rooms.computeIfAbsent(productId, k -> new CopyOnWriteArrayList<>()).add(client);
         System.out.println("Client " + client.getUsername() + " joined room for product " + productId);
-//        broadcastRoomInfo(productId);
+        //broadcastRoomInfo(productId);
     }
 
     public void broadcastToRoom(String productId, String message, String dataPayload) {
