@@ -2,6 +2,7 @@ package com.auction.server.controller;
 
 import com.auction.server.MainServer;
 import com.auction.server.repository.ItemRepository;
+import com.auction.server.service.AuctionRoomManager;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.BidService;
 import com.auction.server.service.ProductService;
@@ -24,22 +25,31 @@ import java.util.List;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
-    private AuthService authService;
-    private ProductService productService;
-    private BidService bidService = new BidService();
+    private PrintWriter out;
+    private BufferedReader in;
+
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
-    private PrintWriter out;
+    private String currentRoomId = null;
+    private String username = "unknown";
+
+    private AuctionRoomManager roomManager = AuctionRoomManager.getInstance();
+    private BidService bidService = new BidService();
+
 
     public ClientHandler() {
-    };
+    }
+
+    ;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         try {
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,52 +65,68 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            clientSocket.setSoTimeout(15000);
-        } catch (Exception e) {
-            System.err.println("Loi set timeout");
-        }
-        try (
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        ) {
             String jsonRequest;
             while ((jsonRequest = in.readLine()) != null) {
-                RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
-                ResponseMessage response = new ResponseMessage();
-                boolean keepConnectionAlive = true;
-                System.out.println("Kiem tra action");
-                switch (request.getAction()) {
-                    case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
-                    case AUTO_BID_REGISTER ->
-                            keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
+                RequestMessage request=gson.fromJson(jsonRequest,RequestMessage.class);
+                switch (request.getAction()){
+                    case BID -> {}
+                    case JOIN_ROOM -> {}
                     default -> {
-                        response.setStatus("ERROR");
-                        response.setMessage("Invalid action");
-                        keepConnectionAlive = false;
+
                     }
                 }
-                String jsonResponse = gson.toJson(response);
 
-                out.println(jsonResponse);
-                System.out.println("Server was sent: " + jsonResponse);
-                if (!keepConnectionAlive) {
-                    System.out.println("Ngắt kết nối với client.");
-
-                    break;
-                } else {
-                    clientSocket.setSoTimeout(0);
-                }
             }
-
-        } catch (IOException e) {
-            System.out.println("Client disconnected/Error: " + e.getMessage());
-        } finally {
-            MainServer.activeClients.remove(this);
-            try {
-                if (!clientSocket.isClosed()) clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e){
+            e.printStackTrace();
         }
+//        try {
+//            clientSocket.setSoTimeout(15000);
+//        } catch (Exception e) {
+//            System.err.println("Loi set timeout");
+//        }
+//        try (
+//                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+//        ) {
+//            String jsonRequest;
+//            while ((jsonRequest = in.readLine()) != null) {
+//                RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
+//                ResponseMessage response = new ResponseMessage();
+//                boolean keepConnectionAlive = true;
+//                System.out.println("Kiem tra action");
+//                switch (request.getAction()) {
+//                    case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
+//                    case AUTO_BID_REGISTER ->
+//                            keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
+//                    default -> {
+//                        response.setStatus("ERROR");
+//                        response.setMessage("Invalid action");
+//                        keepConnectionAlive = false;
+//                    }
+//                }
+//                String jsonResponse = gson.toJson(response);
+//
+//                out.println(jsonResponse);
+//                System.out.println("Server was sent: " + jsonResponse);
+//                if (!keepConnectionAlive) {
+//                    System.out.println("Ngắt kết nối với client.");
+//
+//                    break;
+//                } else {
+//                    clientSocket.setSoTimeout(0);
+//                }
+//            }
+//
+//        } catch (IOException e) {
+//            System.out.println("Client disconnected/Error: " + e.getMessage());
+//        } finally {
+//            MainServer.activeClients.remove(this);
+//            try {
+//                if (!clientSocket.isClosed()) clientSocket.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     private boolean getDataItems(ResponseMessage response) {
