@@ -34,8 +34,6 @@ public class StaticFileServer {
 
                 String fileName = requestURI.substring(requestURI.lastIndexOf("/") + 1);
                 File imageFile = new File(imageDir + fileName);
-
-                System.out.println("Client yêu cầu ảnh. Đang tìm tại: " + imageFile.getAbsolutePath());
                 if (imageFile.exists() && !imageFile.isDirectory()) {
                     String mimeType;
                     if (fileName.endsWith(".png")) {
@@ -71,17 +69,16 @@ public class StaticFileServer {
                             Files.copy(imageFile.toPath(), os);
                         }
                     }
-                    System.out.println("-> Đã gửi ảnh thành công!");
                 } else {
                     String response = "404 (Not found)\n";
                     exchange.sendResponseHeaders(404, response.length());
                     OutputStream os = exchange.getResponseBody();
                     os.write(response.length());
                     os.close();
-                    System.out.println("-> Đã gửi ảnh that bai!");
+                    System.out.println("Not found: " + imageFile.getAbsolutePath());
                 }
             } catch (Exception e) {
-                System.err.println("Lỗi nghiêm trọng trong lúc xử lý ảnh:");
+                System.err.println("Error while handling image request: " + e.getMessage());
                 e.printStackTrace();
             } finally {
                 exchange.close();
