@@ -34,9 +34,7 @@ public class ClientHandler implements Runnable {
     private PrintWriter out;
 
     public ClientHandler() {
-    }
-
-    ;
+    };
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;

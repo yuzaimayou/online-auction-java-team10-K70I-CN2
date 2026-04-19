@@ -2,6 +2,7 @@ package com.auction.server;
 
 import com.auction.server.controller.ClientHandler;
 import com.auction.server.controller.api.AddProduct;
+import com.auction.server.controller.api.GetDataProducts;
 import com.auction.server.controller.api.LoginHandler;
 import com.auction.server.controller.api.RegisterHandler;
 import com.auction.server.database.DatabaseInit;
@@ -28,6 +29,7 @@ public class MainServer {
             httpServer.createContext("/api/login", new LoginHandler());
             httpServer.createContext("/api/register", new RegisterHandler());
             httpServer.createContext("/api/add-product", new AddProduct());
+            httpServer.createContext("/api/products", new GetDataProducts());
             httpServer.createContext("/images", new StaticFileServer.ImageHandler());
 
             httpServer.setExecutor(null);

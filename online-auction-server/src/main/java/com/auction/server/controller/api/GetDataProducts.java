@@ -11,11 +11,10 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class GetDataItems implements HttpHandler {
+public class GetDataProducts implements HttpHandler {
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
@@ -42,8 +41,8 @@ public class GetDataItems implements HttpHandler {
 
             }
 
-        } else{
-            HttpResponseUtil.sendMessage(exchange,405, new ResponseMessage("error","Method Not Allowed",null));
+        } else {
+            HttpResponseUtil.sendMessage(exchange, 405, new ResponseMessage("error", "Method Not Allowed", null));
         }
     }
 }
