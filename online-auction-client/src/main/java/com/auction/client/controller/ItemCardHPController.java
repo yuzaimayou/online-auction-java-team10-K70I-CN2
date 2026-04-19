@@ -32,6 +32,7 @@ public class ItemCardHPController {
         priceLabel.setText(String.valueOf(item.getStartingPrice()));
         endTimeLabel.setText(String.valueOf(item.getEndTime()));
         ClientImageUtil.displayImage(item.getImagePath(), "images", productImage);
+        
     }
 
     @FXML

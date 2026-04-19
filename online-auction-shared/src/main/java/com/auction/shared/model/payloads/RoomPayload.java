@@ -3,6 +3,9 @@ package com.auction.shared.model.payloads;
 public class RoomPayload {
     private String productId, token;
 
+    public RoomPayload() {
+    }
+
     public RoomPayload(String productId, String token) {
         this.productId = productId;
         this.token = token;

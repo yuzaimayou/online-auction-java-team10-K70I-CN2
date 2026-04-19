@@ -1,6 +1,9 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.NetworkService;
 import com.auction.client.util.ClientImageUtil;
+import com.auction.client.util.UserSession;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.product.Item;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,7 +17,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class ProductPageController {
+public class ProductPageController implements NetworkService.MessageListener {
     private Item item;
     @FXML
     private Label productNameLabel;
@@ -35,13 +38,34 @@ public class ProductPageController {
     @FXML
     private Label endTimeLabel;
 
+    private NetworkService network = NetworkService.getInstance();
+
     public void initData(Item item) {
         this.item = item;
         displayDataProduct(item);
+        connectToRealTimeBidding();
+    }
+
+    private void connectToRealTimeBidding() {
+        network.setListener(this);
+
+        String userId = UserSession.getInstance().getLoggedInUser().getId();
+        String itemId = item.getId();
+
+        boolean connected = network.connectToAuctionRoom(userId, itemId);
+        if (connected) {
+            System.out.println("Connected to auction room for item: " + itemId);
+        } else {
+            System.err.println("Failed to connect to auction room for item: " + itemId);
+        }
     }
 
     public void initialize() {
 
+    }
+
+    @Override
+    public void onMessageReceived(ResponseMessage response) {
 
     }
 
