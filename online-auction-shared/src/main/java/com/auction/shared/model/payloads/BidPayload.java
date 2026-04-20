@@ -22,7 +22,7 @@ public class BidPayload {
         this.itemId = itemId;
         this.userId = userId;
         this.bidPrice = bidPrice;
-        this.bidTime = new Timer().toString();
+        this.bidTime = java.time.LocalDateTime.now().toString();
     }
 
     public String getItemId() {
