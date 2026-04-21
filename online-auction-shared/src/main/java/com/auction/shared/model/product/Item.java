@@ -17,6 +17,7 @@ public class Item extends Entity {
     private String category;
     private double bidStep;
     private String imagePath;
+    private String currentTopPLayerId;
 
     // Constructor khi tạo item mới
     public Item(String name, String description,
@@ -161,6 +162,14 @@ public class Item extends Entity {
     // Verify if someone is the product owner (to prevent shill bidding)
     public boolean isOwner(String userId) {
         return sellerId != null && sellerId.equals(userId);
+    }
+
+    public String getCurrentTopPLayerId() {
+        return currentTopPLayerId;
+    }
+
+    public void setCurrentTopPLayerId(String playerId) {
+        currentTopPLayerId = playerId;
     }
 
     public void printItemDetails() {

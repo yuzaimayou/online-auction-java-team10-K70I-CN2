@@ -1,5 +1,6 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.NetworkService;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import javafx.fxml.FXML;
@@ -23,6 +24,7 @@ public class NavBarController {
 
     public void handleSwitchToHome() {
         try {
+            NetworkService.getInstance().leaveRoom();
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
             Parent root = loader.load();
             Scene currentScene = userName.getScene();

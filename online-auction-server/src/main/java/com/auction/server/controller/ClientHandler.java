@@ -63,12 +63,13 @@ public class ClientHandler implements Runnable {
             String jsonRequest;
             while ((jsonRequest = in.readLine()) != null) {
                 RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
+                ResponseMessage responseMessage = new ResponseMessage();
                 String jsonPayload = request.getPayload();
 
                 switch (request.getAction()) {
-                    case BID -> {
-                    }
-                    case JOIN_ROOM -> joinRoomAction(jsonPayload);
+                    case BID -> bidAction(jsonPayload, responseMessage);
+                    case JOIN_ROOM -> joinRoomAction(jsonPayload, responseMessage);
+                    case LEAVE_ROOM -> leaveRoomAction();
                     default -> {
 
                     }
@@ -80,18 +81,38 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void joinRoomAction(String jsonPayload) {
-        RoomPayload roomPayload = gson.fromJson(jsonPayload, RoomPayload.class);
-        String userId = roomPayload.getToken();
+    private void joinRoomAction(String jsonPayload, ResponseMessage responseMessage) {
+        try {
+            RoomPayload roomPayload = gson.fromJson(jsonPayload, RoomPayload.class);
+            this.username = roomPayload.getToken();
 
-        currentRoomId = roomPayload.getProductId();
-        roomManager.joinRoom(currentRoomId, this);
-        System.out.println("Client " + userId + " joined room for product " + currentRoomId);
+            currentRoomId = roomPayload.getProductId();
+            roomManager.joinRoom(currentRoomId, this);
+            responseMessage.setStatus("join_room_success");
+            responseMessage.setMessage("Joined room successfully");
+            sendMessage(gson.toJson(responseMessage));
+        } catch (Exception e) {
+            e.printStackTrace();
+            responseMessage.setStatus("join_room_fail");
+            responseMessage.setMessage("Failed to join room: " + e.getMessage());
+            sendMessage(gson.toJson(responseMessage));
+        }
 
+
+    }
+
+    private void leaveRoomAction() {
+
+
+        if (currentRoomId != null) {
+            roomManager.leaveRoom(currentRoomId, this);
+            currentRoomId = null;
+        }
     }
 
     private boolean bidAction(String payload, ResponseMessage response) {
         BidPayload bidData = gson.fromJson(payload, BidPayload.class);
+        System.out.println("Received bid action: " + payload);
 
         if (bidData == null || bidData.getItemId() == null || bidData.getUserId() == null || bidData.getBidPrice() == null) {
             response.setStatus("FAIL");
@@ -107,9 +128,10 @@ public class ClientHandler implements Runnable {
         );
 
         if (created) {
-            response.setStatus("SUCCESS");
-            response.setMessage("Bid placed successfully");
+            System.out.println("Bid placed successfully for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
+
         } else {
+            System.out.println("Failed to place bid for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
             response.setStatus("FAIL");
             response.setMessage("Failed to place bid");
         }
@@ -149,7 +171,7 @@ public class ClientHandler implements Runnable {
     }
 
     public String getUsername() {
-        return "username";
+        return username;
     }
 }
 

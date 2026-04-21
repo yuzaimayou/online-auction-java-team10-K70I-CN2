@@ -1,6 +1,5 @@
 package com.auction.client.controller;
 
-import com.auction.client.service.NetworkService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
@@ -30,12 +29,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 
 public class AuctionFormController {
     @FXML
@@ -65,7 +62,6 @@ public class AuctionFormController {
 
     // Biến này sẽ lưu trữ file ảnh mà client chọn
     private File selectedImageFile;
-    private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
@@ -111,22 +107,6 @@ public class AuctionFormController {
         }
     }
 
-    private String convertImageToBase64(File selectedImageFile) {
-        String base64Image = "";
-        String imageExtension = "";
-        try {
-            String fileName = selectedImageFile.getName();
-            imageExtension = fileName.substring(fileName.lastIndexOf("."));
-            byte[] fileContent = Files.readAllBytes(selectedImageFile.toPath());
-            base64Image = Base64.getEncoder().encodeToString(fileContent);
-            return base64Image;
-        } catch (IOException e) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Error reading image file!");
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     @FXML
     public void handleAddProduct(ActionEvent event) {
@@ -186,6 +166,7 @@ public class AuctionFormController {
             String jsonPayload = gson.toJson(payload);
             String httpUrl = String.format("%s/api/add-product", AppConfig.getHttpUrl());
             System.out.println("Debug: Sending POST request to " + httpUrl);
+
             HttpClient httpClient = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(String.format("%s/api/add-product", AppConfig.getHttpUrl())))
