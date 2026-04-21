@@ -8,7 +8,6 @@ import com.auction.shared.model.product.Item;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -19,11 +18,13 @@ public class BidService {
 
     private final BidRepository bidRepository;
     private final ItemRepository itemRepository;
+    private final AutoBidResolver autoBidResolver;
     private final ConcurrentMap<String, Object> itemLocks;
 
     public BidService() {
         this.bidRepository = new BidRepository();
         this.itemRepository = new ItemRepository();
+        this.autoBidResolver = new AutoBidResolver(PRICE_EPSILON);
         this.itemLocks = new ConcurrentHashMap<>();
     }
 
@@ -137,8 +138,7 @@ public class BidService {
                 return;
             }
 
-            BidRepository.AutoBidConfig leaderAutoBid = findAutoBidConfig(autoBids, currentLeader);
-            AutoBidCandidate candidate = chooseNextAutoBid(autoBids, currentLeader, livePrice, leaderAutoBid);
+            AutoBidResolver.ResolvedAutoBid candidate = autoBidResolver.selectNextBid(autoBids, currentLeader, livePrice);
             if (candidate == null) {
                 return;
             }
@@ -156,45 +156,9 @@ public class BidService {
         }
     }
 
-    private AutoBidCandidate chooseNextAutoBid(List<BidRepository.AutoBidConfig> autoBids,
-                                               String currentLeader,
-                                               double currentPrice,
-                                               BidRepository.AutoBidConfig leaderAutoBid) {
-        return autoBids.stream()
-                .filter(config -> !config.getUserId().equals(currentLeader))
-                .filter(config -> leaderAutoBid == null || config.getMaxBid() > leaderAutoBid.getMaxBid() + PRICE_EPSILON)
-                .map(config -> toCandidate(config, currentPrice))
-                .filter(candidate -> candidate.bidPrice() > currentPrice + PRICE_EPSILON)
-                .max(Comparator
-                        .comparingDouble(AutoBidCandidate::bidPrice)
-                        .thenComparing(AutoBidCandidate::registeredAt, Comparator.reverseOrder()))
-                .orElse(null);
-    }
-
-    private BidRepository.AutoBidConfig findAutoBidConfig(List<BidRepository.AutoBidConfig> autoBids, String userId) {
-        if (userId == null || userId.isBlank()) {
-            return null;
-        }
-
-        for (BidRepository.AutoBidConfig autoBid : autoBids) {
-            if (userId.equals(autoBid.getUserId())) {
-                return autoBid;
-            }
-        }
-
-        return null;
-    }
-
-    private AutoBidCandidate toCandidate(BidRepository.AutoBidConfig config, double currentPrice) {
-        double nextBid = Math.min(config.getMaxBid(), currentPrice + config.getIncrement());
-        return new AutoBidCandidate(config.getUserId(), nextBid, config.getRegisteredAt());
-    }
-
     private Object getItemLock(String itemId) {
         return itemLocks.computeIfAbsent(itemId, ignored -> new Object());
     }
 
-    private record AutoBidCandidate(String userId, double bidPrice, LocalDateTime registeredAt) {
-    }
 }
 

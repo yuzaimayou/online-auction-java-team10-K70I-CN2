@@ -1,7 +1,7 @@
 package com.auction.shared.model.payloads;
 
 public class AuthPayload {
-    public String username, password;
+    protected String username, password;
 
     public AuthPayload() {
     }
