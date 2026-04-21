@@ -1,8 +1,8 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.AuthService;
 import com.auction.client.service.NetworkService;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -19,11 +19,6 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-
-import static com.auction.client.util.AppConfig.getHttpUrl;
 
 public class RegisterController {
 
@@ -42,12 +37,11 @@ public class RegisterController {
     @FXML
     private Label lblMessage;
 
-    private NetworkService network = NetworkService.getInstance();
+    private AuthService authService = AuthService.getInstance();
     private Gson gson = new Gson();
 
     @FXML
     public void handleRegister(ActionEvent event) {
-
         String username = txtUsername.getText().trim();
         String password = txtPassword.getText();
         String confirm = txtConfirmPassword.getText();
@@ -64,19 +58,8 @@ public class RegisterController {
             return;
         }
 
-        AuthPayload payload = new AuthPayload(username, password);
-        String jsonPayload = gson.toJson(payload);
-
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(java.net.URI.create(String.format("%s/api/register", getHttpUrl())))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
+        authService.register(username, password)
+                .thenAccept(res -> {
                     if ("success".equalsIgnoreCase(res.getStatus())) {
                         Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.GREEN);

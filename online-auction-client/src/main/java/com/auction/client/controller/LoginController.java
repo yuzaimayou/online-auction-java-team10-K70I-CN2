@@ -1,11 +1,11 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.AuthService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
@@ -22,9 +22,6 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 public class LoginController {
 
@@ -37,12 +34,11 @@ public class LoginController {
     @FXML
     private Label lblMessage;
 
-    private NetworkService network = NetworkService.getInstance();
+    private AuthService authService = AuthService.getInstance();
     private Gson gson = new Gson();
 
     @FXML
     protected void handleLogin(ActionEvent event) {
-
         String username = txtUsername.getText().trim();
         String password = txtPassword.getText();
 
@@ -51,23 +47,11 @@ public class LoginController {
             lblMessage.setText("Vui lòng nhập đủ tài khoản và mật khẩu!");
             return;
         }
-        //create payload
-        AuthPayload payload = new AuthPayload(username, password);
-        String jsonPayload = gson.toJson(payload);
-        String httpUrl = String.format("%s/api/login", AppConfig.getHttpUrl());
-        System.out.println("Sending login request to: " + httpUrl);
 
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(java.net.URI.create(String.format("%s/api/login", AppConfig.getHttpUrl())))
-                .header("Content-Type", "application/json; utf-8")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    ResponseMessage responseMessage = gson.fromJson(responseBody, ResponseMessage.class);
+        System.out.println("Sending login request for: " + username);
 
+        authService.login(username, password)
+                .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
@@ -83,7 +67,6 @@ public class LoginController {
                     }
                 })
                 .exceptionally(e -> {
-
                     e.printStackTrace();
                     javafx.application.Platform.runLater(() -> {
                         lblMessage.setTextFill(Color.RED);
@@ -91,7 +74,6 @@ public class LoginController {
                     });
                     return null;
                 });
-
     }
 
     @FXML
