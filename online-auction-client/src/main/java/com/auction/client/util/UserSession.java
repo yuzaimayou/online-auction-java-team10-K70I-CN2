@@ -28,4 +28,6 @@ public class UserSession {
     public void cleanUserSession() {
         loggedInUser = null;
     }
+
+
 }

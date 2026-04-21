@@ -7,5 +7,6 @@ public enum ActionType {
     GETDATAPRODUCT,
     BID,
     JOIN_ROOM,
+    LEAVE_ROOM,
     AUTO_BID_REGISTER,
 }

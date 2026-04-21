@@ -88,15 +88,15 @@
                             </children>
                         </VBox>
                         <HBox>
-                            <TextField fx:id="bidProduct" prefWidth="250.0" prefHeight="60.0"
+                            <TextField fx:id="bidAmountField" prefWidth="250.0" prefHeight="60.0"
                                        promptText="Enter bid"/>
-                            <Button fx:id="submitBid" prefWidth="50.0" text="Bid"/>
+                            <Button onAction="#bidHandle" fx:id="submitBid" prefWidth="50.0" text="Bid"/>
                         </HBox>
 
 
                     </VBox>
 
-                    
+
                 </VBox>
             </HBox>
 

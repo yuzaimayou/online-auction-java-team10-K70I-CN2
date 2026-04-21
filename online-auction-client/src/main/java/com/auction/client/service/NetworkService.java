@@ -59,14 +59,13 @@ public class NetworkService {
                 out = new PrintWriter(socket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
 
-                String jsonPayload = gson.toJson(new RoomPayload(roomId, token));
-                RequestMessage reqest = new RequestMessage(ActionType.JOIN_ROOM, jsonPayload);
 
-                out.println(gson.toJson(reqest));
-                System.out.println("Client was sent message: " + gson.toJson(reqest));
-
-                startListeningThread();
             }
+            String jsonPayload = gson.toJson(new RoomPayload(roomId, token));
+            RequestMessage reqest = new RequestMessage(ActionType.JOIN_ROOM, jsonPayload);
+
+            out.println(gson.toJson(reqest));
+            startListeningThread();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -75,26 +74,6 @@ public class NetworkService {
         }
     }
 
-//    public boolean connectToServer() {
-//        try {
-//            if (socket == null || socket.isClosed()) {
-//
-//                socket = new Socket(ServerIp, ServerPort);
-//                out = new PrintWriter(socket.getOutputStream(), true);
-//                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//
-//
-//            }
-//            return true;
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            System.err.println("Unable to connect to the server");
-//            return false;
-//        }
-//
-//
-//    }
 
     private void startListeningThread() {
         listenerThread = new Thread(() -> {
@@ -104,7 +83,13 @@ public class NetworkService {
                 while ((jsonRes = in.readLine()) != null) {
                     System.out.println("Client was received message: " + jsonRes);
 
+
                     ResponseMessage response = gson.fromJson(jsonRes, ResponseMessage.class);
+                    if ("join_room_success".equals(response.getStatus())) {
+                        System.out.println("Successfully joined the auction room");
+                    } else if ("join_room_fail".equals(response.getStatus())) {
+                        throw new IOException("Failed to join the auction room: " + response.getMessage());
+                    }
 
                     if (currentListener != null) {
                         currentListener.onMessageReceived(response);
@@ -129,6 +114,16 @@ public class NetworkService {
             System.out.println("Client was sent message: " + bidMessage);
         } else {
             System.out.println("Cannot send bid, not connected to server");
+        }
+    }
+
+    public void leaveRoom() {
+        if (out != null && socket != null && !socket.isClosed()) {
+            RequestMessage requestMessage = new RequestMessage(ActionType.LEAVE_ROOM, null);
+            out.println(gson.toJson(requestMessage));
+            System.out.println("Client was sent message: " + gson.toJson(requestMessage));
+        } else {
+            System.out.println("Cannot leave room, not connected to server");
         }
     }
 

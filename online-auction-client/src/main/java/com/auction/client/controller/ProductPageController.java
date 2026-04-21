@@ -4,18 +4,14 @@ import com.auction.client.service.NetworkService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.product.Item;
+import com.google.gson.Gson;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.stage.Stage;
 
-import java.io.IOException;
 
 public class ProductPageController implements NetworkService.MessageListener {
     private Item item;
@@ -37,8 +33,13 @@ public class ProductPageController implements NetworkService.MessageListener {
     private Label startTimeLabel;
     @FXML
     private Label endTimeLabel;
+    @FXML
+    private TextField bidAmountField;
+
+    private final User user = UserSession.getInstance().getLoggedInUser();
 
     private NetworkService network = NetworkService.getInstance();
+    private Gson gson = new Gson();
 
     public void initData(Item item) {
         this.item = item;
@@ -66,6 +67,40 @@ public class ProductPageController implements NetworkService.MessageListener {
 
     @Override
     public void onMessageReceived(ResponseMessage response) {
+        System.out.println(response);
+        javafx.application.Platform.runLater(() -> {
+            if ("success".equals(response.getStatus()) && "NEW_BID".equals(response.getMessage())) {
+                String jsonPayload = response.getData();
+                Item updatedItem = gson.fromJson(jsonPayload, Item.class);
+                if (updatedItem != null) {
+                    displayDataProduct(updatedItem);
+                } else {
+                    System.err.println("Failed to parse updated item from response: " + jsonPayload);
+                }
+            } else {
+
+                System.out.println("Received message: " + response.getMessage());
+            }
+        });
+
+    }
+
+    public void bidHandle() {
+        String inputAmount = bidAmountField.getText().trim();
+
+        if (inputAmount.isEmpty()) {
+            System.out.println("Please enter a bid amount.");
+            return;
+        }
+        try {
+            double bidAmount = Double.parseDouble(inputAmount);
+            String roomId = item.getId();
+
+            network.sendBid(roomId, user.getId(), bidAmount, "");
+            System.out.println("Bid sent: " + bidAmount);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid bid amount. Please enter a numeric value.");
+        }
 
     }
 
@@ -82,23 +117,5 @@ public class ProductPageController implements NetworkService.MessageListener {
 
     }
 
-    @FXML
-    private void handleBackToHome(MouseEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
-            Parent root = loader.load();
 
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Hệ thống đấu Trực tuyến");
-            stage.centerOnScreen();
-            stage.show();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Cannot find file AuctionFormPage.fxml! Check link again.");
-        }
-    }
 }

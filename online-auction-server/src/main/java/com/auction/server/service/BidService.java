@@ -86,12 +86,14 @@ public class BidService {
                 Item item = itemRepository.findById(conn, itemId);
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
+                    System.out.println("Bid rejected: item not found or user is the seller");
                     return false;
                 }
 
                 double minAllowedPrice = item.getHighestCurrentPrice() + item.getBidStep();
                 if (bidPrice + PRICE_EPSILON < minAllowedPrice) {
                     conn.rollback();
+                    System.out.println("Bid rejected: bid price " + bidPrice + " is less than minimum allowed " + minAllowedPrice);
                     return false;
                 }
 
@@ -101,11 +103,13 @@ public class BidService {
                 boolean created = bidRepository.createBid(conn, itemId, userId, bidPrice, resolvedBidTime);
                 if (!created) {
                     conn.rollback();
+                    System.out.println("Bid rejected: failed to create bid record in database");
                     return false;
                 }
 
                 if (!itemRepository.updateCurrentPrice(conn, itemId, bidPrice)) {
                     conn.rollback();
+                    System.out.println("Bid rejected: failed to update current price in database");
                     return false;
                 }
 
@@ -123,6 +127,8 @@ public class BidService {
                 return true;
 
             } catch (Exception e) {
+                e.printStackTrace();
+
                 return false;
             }
         }
