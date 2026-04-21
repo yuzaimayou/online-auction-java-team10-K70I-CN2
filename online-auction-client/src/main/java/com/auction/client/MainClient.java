@@ -36,16 +36,17 @@ public class MainClient extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            //Load fonts
+            // Load fonts
             loadInterFonts();
-            //Base size
+            // Base size
             double baseW = 1440;
             double baseH = 1024;
             // Tải file giao diện FXML.
-            // Lưu ý: Đường dẫn này trỏ tới thư mục src/main/resources/com/auction/client/Login.fxml
+            // Lưu ý: Đường dẫn này trỏ tới thư mục
+            // src/main/resources/com/auction/client/Login.fxml
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuthPage.fxml"));
             Parent content = loader.load();
-            //Group scale UI
+            // Group scale UI
             Group scaleGroup = new Group(content);
 
             StackPane root = new StackPane(scaleGroup);
@@ -54,7 +55,7 @@ public class MainClient extends Application {
             // Khởi tạo Scene (khung cảnh)
             Scene scene = new Scene(root, baseW, baseH);
 
-            //Scale demo(dang loi), dang khoa kich thuoc
+            // Scale demo(dang loi), dang khoa kich thuoc
             Scale scale = new Scale(1, 1, 0, 0);
             scaleGroup.getTransforms().add(scale);
             Runnable updateScale = () -> {
@@ -65,10 +66,9 @@ public class MainClient extends Application {
                 scale.setY(s);
             };
             scene.widthProperty().addListener((obs, oldV, newV) -> updateScale.run());
-            scene.widthProperty().addListener((obs, oldV, newV) -> updateScale.run());
+            scene.heightProperty().addListener((obs, oldV, newV) -> updateScale.run());
 
             updateScale.run();
-
 
             // Cấu hình Stage (Cửa sổ ứng dụng)
             primaryStage.setTitle("Hệ thống Đấu giá Trực tuyến - Đăng nhập");
@@ -80,7 +80,6 @@ public class MainClient extends Application {
             // Hiển thị cửa sổ
 
             primaryStage.show();
-
 
         } catch (IOException e) {
             System.err.println("Lỗi: Không thể tải file FXML. Hãy kiểm tra lại đường dẫn trong resources!");
