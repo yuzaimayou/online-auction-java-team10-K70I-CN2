@@ -34,12 +34,15 @@ public class AuctionRoomManager {
             response.setStatus("success");
             response.setMessage(message);
             response.setData(dataPayload);
+            System.out.println("Broadcasting message to room " + productId + ": " + message);
 
             String jsonMessage = new Gson().toJson(response);
 
             for (ClientHandler client : currentRoom) {
                 client.sendMessage(jsonMessage);
             }
+        } else {
+            System.out.println("No clients in room " + productId + " to broadcast message: " + message);
         }
     }
 
