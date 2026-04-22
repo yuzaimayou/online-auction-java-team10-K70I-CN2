@@ -1,4 +1,4 @@
-package com.auction.client.controller;
+package com.auction.client.controller.setting;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,7 +31,7 @@ public class MyAuctionsPageController {
 
     @FXML
     private void handleProfileInfo(ActionEvent event) {
-        switchScene("/com.auction.client/fxml/ProfilePage.fxml");
+        switchScene("/com.auction.client/fxml/setting/ProfilePage.fxml");
     }
 
     @FXML
@@ -43,6 +43,7 @@ public class MyAuctionsPageController {
     private void handleHistoryBid(ActionEvent event) {
         switchScene("/com.auction.client/fxml/HistoryBidPage.fxml");
     }
+
 
     private void switchScene(String fxmlPath) {
         try {
@@ -58,6 +59,7 @@ public class MyAuctionsPageController {
             e.printStackTrace();
         }
     }
+
     @FXML
     public void handleSwitchToProductEdit(ActionEvent event) {
         try {
@@ -78,5 +80,6 @@ public class MyAuctionsPageController {
             System.err.println("Không tìm thấy file ProductEdit.fxml! Kiểm tra lại đường dẫn.");
         }
     }
+
 
 }
