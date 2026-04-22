@@ -1,18 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.geometry.Pos?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Priority?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-
+<?import javafx.scene.layout.*?>
 <VBox prefHeight="850.0" prefWidth="1440.0"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -21,7 +12,7 @@
       styleClass="page-root">
 
     <children>
-        <fx:include fx:id="navBar" source="NavBar.fxml"/>
+        <fx:include source="NavBar.fxml"/>
 
         <HBox prefHeight="760.0" prefWidth="1440.0" styleClass="page-background">
             <children>
@@ -146,15 +137,18 @@
                                                                            pickOnBounds="true"
                                                                            preserveRatio="true"/>
 
-                                                                <Label text="iPhone 17 Pro Max 2025" styleClass="product-name"/>
+                                                                <Label text="iPhone 17 Pro Max 2025"
+                                                                       styleClass="product-name"/>
                                                             </children>
                                                         </VBox>
 
                                                         <VBox spacing="3.0">
                                                             <children>
-                                                                <Label text="Ends at: 21/04/2026 10:00 PM" styleClass="product-meta"/>
+                                                                <Label text="Ends at: 21/04/2026 10:00 PM"
+                                                                       styleClass="product-meta"/>
                                                                 <Label text="Bid: $2,340" styleClass="product-meta"/>
-                                                                <Label text="Starting Price: $2,000.00" styleClass="product-meta"/>
+                                                                <Label text="Starting Price: $2,000.00"
+                                                                       styleClass="product-meta"/>
                                                             </children>
                                                         </VBox>
 

@@ -25,8 +25,8 @@
 
         <Region HBox.hgrow="ALWAYS"/>
 
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <StackPane styleClass="profile-icon" onMouseClicked="#handleSwitchToProfilePage">
+        <HBox alignment="CENTER_LEFT" spacing="10" onMouseClicked="#handleSwitchToProfilePage">
+            <StackPane styleClass="profile-icon">
                 <StackPane fx:id="profileAvatar" styleClass="profile-icon"/>
 
             </StackPane>
