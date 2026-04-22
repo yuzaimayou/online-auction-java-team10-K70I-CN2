@@ -14,93 +14,6 @@
     -fx-padding: 20 40 20 40;
 }
 
-.top-bar {
-    -fx-padding: 0 0 20 0;
-}
-
-.logo-container {
-    -fx-padding: 0 30 0 0;
-}
-
-.logo-icon {
-    -fx-font-size: 24px;
-    -fx-text-fill: #0056b3;
-}
-
-.logo-text {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
-    -fx-font-style: italic;
-    -fx-text-fill: #0056b3;
-}
-
-.categories-dropdown {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #333333;
-    -fx-cursor: hand;
-}
-
-/* Thanh tìm kiếm */
-.search-bar {
-    -fx-background-color: #f1f3f5;
-    -fx-background-radius: 20px;
-    -fx-padding: 5 15 5 15;
-    -fx-pref-width: 400px;
-}
-
-.search-icon {
-    -fx-text-fill: #0056b3;
-    -fx-font-size: 14px;
-}
-
-.search-input {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-prompt-text-fill: #a0a0a0;
-    -fx-pref-width: 350px;
-}
-
-/* Profile */
-.profile-icon-container {
-    -fx-background-color: #0056b3;
-    -fx-background-radius: 50%;
-    -fx-min-width: 35px;
-    -fx-min-height: 35px;
-    -fx-max-width: 35px;
-    -fx-max-height: 35px;
-}
-
-.profile-icon {
-    -fx-text-fill: white;
-    -fx-font-size: 18px;
-}
-
-.profile-name {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-}
-
-/* Navigation Menu */
-.nav-menu {
-    -fx-spacing: 40px;
-    -fx-padding: 10 0 10 0;
-}
-
-.nav-item {
-    -fx-font-size: 15px;
-    -fx-text-fill: #888888;
-    -fx-font-weight: bold;
-    -fx-cursor: hand;
-}
-
-.nav-item:hover {
-    -fx-text-fill: #333333;
-}
-
-.nav-item-active {
-    -fx-text-fill: #aaaaaa; /* Dựa theo màu nhạt của nút Home trong ảnh */
-}
 
 /* --- Explore Categories Section --- */
 .categories-section {
@@ -140,10 +53,11 @@
     -fx-cursor: hand;
     -fx-padding: 0;
 }
+
 .add-auction-button .label {
     -fx-text-fill: white !important;
     -fx-font-weight: bold;
-    -fx-font-size: 30px;          /* Chỉnh cỡ dấu cộng cho vừa vặn */
+    -fx-font-size: 30px; /* Chỉnh cỡ dấu cộng cho vừa vặn */
     -fx-alignment: center;
 }
 
@@ -217,7 +131,8 @@
     -fx-text-fill: #999999;
     -fx-font-size: 12px;
 }
+
 .auction-card:hover {
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, 0, 8);
     -fx-translate-y: -5px;
 }

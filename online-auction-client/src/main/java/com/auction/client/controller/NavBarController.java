@@ -32,7 +32,7 @@ public class NavBarController {
             currentScene.setRoot(root);
             stage.setTitle("Online Auction System - HomePage");
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
     }
 
