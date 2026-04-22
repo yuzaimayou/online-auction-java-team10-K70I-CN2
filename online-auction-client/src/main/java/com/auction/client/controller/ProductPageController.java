@@ -5,6 +5,7 @@ import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.product.Item;
 import com.google.gson.Gson;
 import javafx.fxml.FXML;
@@ -53,7 +54,7 @@ public class ProductPageController implements NetworkService.MessageListener {
         String userId = UserSession.getInstance().getLoggedInUser().getId();
         String itemId = item.getId();
 
-        boolean connected = network.connectToAuctionRoom(userId, itemId);
+        boolean connected = network.connectToAuctionRoom(itemId, userId);
         if (connected) {
             System.out.println("Connected to auction room for item: " + itemId);
         } else {
@@ -71,9 +72,12 @@ public class ProductPageController implements NetworkService.MessageListener {
         javafx.application.Platform.runLater(() -> {
             if ("success".equals(response.getStatus()) && "NEW_BID".equals(response.getMessage())) {
                 String jsonPayload = response.getData();
-                Item updatedItem = gson.fromJson(jsonPayload, Item.class);
-                if (updatedItem != null) {
-                    displayDataProduct(updatedItem);
+                BidPayload bidPayload = gson.fromJson(jsonPayload, BidPayload.class);
+                if (bidPayload != null) {
+                    System.out.println("Received new bid update: " + jsonPayload);
+                    item.setCurrentPrice(bidPayload.getBidPrice());
+                    currentPriceLabel.setText(String.format("Current bid: %.0f", item.getCurrentPrice()));
+
                 } else {
                     System.err.println("Failed to parse updated item from response: " + jsonPayload);
                 }
