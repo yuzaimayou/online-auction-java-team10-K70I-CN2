@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
@@ -25,9 +27,13 @@
 
         <Region HBox.hgrow="ALWAYS"/>
 
-        <HBox alignment="CENTER_LEFT" spacing="10" onMouseClicked="#handleSwitchToProfilePage">
+        <HBox alignment="CENTER_LEFT" spacing="10" onMouseClicked="#handleSwitchToSetting">
             <StackPane styleClass="profile-icon">
-                <StackPane fx:id="profileAvatar" styleClass="profile-icon"/>
+                <ImageView fx:id="profileImage" fitWidth="40.0" fitHeight="40.0" preserveRatio="true">
+                    <image>
+                        <Image url="@../assets/default_avatar.png"/>
+                    </image>
+                </ImageView>
 
             </StackPane>
             <Label fx:id="userName" styleClass="profile-name" text="Van"/>

@@ -53,6 +53,23 @@
     -fx-border-color: transparent;
 }
 
+.logout-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #121212;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 26;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.logout-toggle-btn:hover {
+    -fx-text-fill: #ff0000;
+}
+
 .menu-toggle-btn:hover {
     -fx-text-fill: #2f63e0;
 }

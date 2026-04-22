@@ -1,4 +1,4 @@
-package com.auction.client.controller;
+package com.auction.client.controller.setting;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,7 +35,7 @@ public class ProfilePageController {
 
     @FXML
     private void handleMyAuctions(ActionEvent event) {
-        switchScene("/com.auction.client/fxml/MyAuctionsPage.fxml");
+        switchScene("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
     }
 
     @FXML

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!-- Right content card -->
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox prefWidth="820.0"
+      prefHeight="760.0"
+      spacing="28.0"
+      styleClass="content-card"
+      HBox.hgrow="ALWAYS"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.setting.ProfilePageController"
+>
+    <padding>
+        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+    </padding>
+
+    <children>
+        <Label text="Personal Information" styleClass="content-title"/>
+
+        <GridPane hgap="24.0" vgap="18.0">
+            <columnConstraints>
+                <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+                <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+            </columnConstraints>
+
+            <children>
+                <!-- Email -->
+                <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <children>
+                        <Label text="Email" styleClass="field-label"/>
+                        <TextField styleClass="info-field"/>
+                    </children>
+                </VBox>
+
+                <!-- First Name -->
+                <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <children>
+                        <Label text="First Name" styleClass="field-label"/>
+                        <TextField styleClass="info-field"/>
+                    </children>
+                </VBox>
+
+                <!-- Last Name -->
+                <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                    <children>
+                        <Label text="Last Name" styleClass="field-label"/>
+                        <TextField styleClass="info-field"/>
+                    </children>
+                </VBox>
+
+                <!-- Phone Number -->
+                <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <children>
+                        <Label text="Phone Number" styleClass="field-label"/>
+                        <TextField styleClass="info-field"/>
+                    </children>
+                </VBox>
+            </children>
+        </GridPane>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <HBox alignment="CENTER_RIGHT">
+            <children>
+                <Label text="Edit Profile" styleClass="edit-profile-btn"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>
+

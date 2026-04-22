@@ -36,9 +36,9 @@ public class NavBarController {
         }
     }
 
-    public void handleSwitchToProfilePage() {
+    public void handleSwitchToSetting() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ProfilePage.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/Setting.fxml"));
             Parent root = loader.load();
 
             Scene currentScene = userName.getScene();
