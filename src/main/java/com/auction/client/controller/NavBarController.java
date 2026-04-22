@@ -33,4 +33,18 @@ public class NavBarController {
 
         }
     }
+
+    public void handleSwitchToProfilePage() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ProfilePage.fxml"));
+            Parent root = loader.load();
+
+            Scene currentScene = userName.getScene();
+            Stage stage = (Stage) currentScene.getWindow();
+            currentScene.setRoot(root);
+            stage.setTitle("Online Auction System - Profile Page");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

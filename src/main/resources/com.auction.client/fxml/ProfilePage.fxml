@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.TextArea?>
+
+<VBox prefHeight="850.0" prefWidth="1440.0"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.ProfilePageController"
+      stylesheets="@../css/ProfilePage.css"
+      styleClass="page-root">
+
+    <children>
+        <!-- Navbar -->
+        <fx:include fx:id="navBar" source="NavBar.fxml"/>
+
+        <!-- Main content area -->
+        <HBox prefHeight="760.0" prefWidth="1440.0" styleClass="page-background">
+            <children>
+
+                <!-- Left spacing -->
+                <Region prefWidth="90.0" minWidth="90.0" maxWidth="90.0"/>
+
+                <!-- Main center block -->
+                <VBox spacing="0.0" alignment="TOP_CENTER" HBox.hgrow="ALWAYS">
+                    <children>
+
+                        <!-- Top spacing -->
+                        <Region prefHeight="60.0" minHeight="60.0" maxHeight="60.0"/>
+
+                        <!-- Content row -->
+                        <HBox spacing="32.0" alignment="TOP_LEFT">
+                            <children>
+
+                                <!-- Sidebar -->
+                                <VBox prefWidth="300.0"
+                                      minWidth="300.0"
+                                      maxWidth="300.0"
+                                      prefHeight="430.0"
+                                      spacing="18.0"
+                                      styleClass="sidebar-card">
+                                    <padding>
+                                        <Insets top="28.0" right="24.0" bottom="28.0" left="24.0"/>
+                                    </padding>
+
+                                    <children>
+                                        <!-- Avatar -->
+                                        <VBox alignment="CENTER" spacing="12.0">
+                                            <children>
+                                                <StackPane prefHeight="92.0"
+                                                           prefWidth="92.0"
+                                                           minHeight="92.0"
+                                                           minWidth="92.0"
+                                                           maxHeight="92.0"
+                                                           maxWidth="92.0"
+                                                           styleClass="avatar-outer">
+                                                    <children>
+                                                        <StackPane prefHeight="64.0"
+                                                                   prefWidth="64.0"
+                                                                   minHeight="64.0"
+                                                                   minWidth="64.0"
+                                                                   maxHeight="64.0"
+                                                                   maxWidth="64.0"
+                                                                   styleClass="avatar-inner"/>
+                                                    </children>
+                                                </StackPane>
+
+                                                <Label text="Duc Anh" styleClass="user-name"/>
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Menu -->
+                                        <VBox spacing="12.0">
+                                            <children>
+                                                <ToggleButton fx:id="profileInfoBtn"
+                                                              mnemonicParsing="false"
+                                                              prefHeight="46.0"
+                                                              prefWidth="252.0"
+                                                              selected="true"
+                                                              styleClass="menu-toggle-btn"
+                                                              text="Profile Info"
+                                                              onAction="#handleProfileInfo">
+                                                    <toggleGroup>
+                                                        <ToggleGroup fx:id="menuGroup"/>
+                                                    </toggleGroup>
+                                                </ToggleButton>
+
+                                                <ToggleButton fx:id="myAuctionsBtn"
+                                                              mnemonicParsing="false"
+                                                              prefHeight="42.0"
+                                                              prefWidth="252.0"
+                                                              styleClass="menu-toggle-btn"
+                                                              text="My Auctions"
+                                                              toggleGroup="$menuGroup"
+                                                              onAction="#handleMyAuctions"/>
+
+                                                <ToggleButton fx:id="historyBidBtn"
+                                                              mnemonicParsing="false"
+                                                              prefHeight="42.0"
+                                                              prefWidth="252.0"
+                                                              styleClass="menu-toggle-btn"
+                                                              text="History Bid"
+                                                              toggleGroup="$menuGroup"
+                                                              onAction="#handleHistoryBid"/>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+
+                                <!-- Right content card -->
+                                <VBox prefWidth="820.0"
+                                      minWidth="820.0"
+                                      maxWidth="820.0"
+                                      prefHeight="520.0"
+                                      minHeight="520.0"
+                                      maxHeight="520.0"
+                                      spacing="28.0"
+                                      styleClass="content-card"
+                                      HBox.hgrow="ALWAYS">
+                                    <padding>
+                                        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+                                    </padding>
+
+                                    <children>
+                                        <Label text="Personal Information" styleClass="content-title"/>
+
+                                        <GridPane hgap="24.0" vgap="18.0">
+                                            <columnConstraints>
+                                                <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+                                                <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+                                            </columnConstraints>
+
+                                            <children>
+                                                <!-- Email -->
+                                                <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                                    <children>
+                                                        <Label text="Email" styleClass="field-label"/>
+                                                        <TextField styleClass="info-field"/>
+                                                    </children>
+                                                </VBox>
+
+                                                <!-- First Name -->
+                                                <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                                    <children>
+                                                        <Label text="First Name" styleClass="field-label"/>
+                                                        <TextField styleClass="info-field"/>
+                                                    </children>
+                                                </VBox>
+
+                                                <!-- Last Name -->
+                                                <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                                    <children>
+                                                        <Label text="Last Name" styleClass="field-label"/>
+                                                        <TextField styleClass="info-field"/>
+                                                    </children>
+                                                </VBox>
+
+                                                <!-- Phone Number -->
+                                                <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                    <children>
+                                                        <Label text="Phone Number" styleClass="field-label"/>
+                                                        <TextField styleClass="info-field"/>
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </GridPane>
+
+                                        <Region VBox.vgrow="ALWAYS"/>
+
+                                        <HBox alignment="CENTER_RIGHT">
+                                            <children>
+                                                <Label text="Edit Profile" styleClass="edit-profile-btn"/>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                            </children>
+                        </HBox>
+
+                        <Region VBox.vgrow="ALWAYS"/>
+                    </children>
+                </VBox>
+
+                <!-- Right spacing -->
+                <Region prefWidth="90.0" minWidth="90.0" maxWidth="90.0"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>
