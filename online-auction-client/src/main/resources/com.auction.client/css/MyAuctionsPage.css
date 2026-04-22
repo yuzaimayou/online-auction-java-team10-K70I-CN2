@@ -1,0 +1,119 @@
+.page-root {
+    -fx-font-family: "Arial";
+}
+
+.page-background {
+    -fx-background-color: #f3f4f7;
+}
+
+.sidebar-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.avatar-outer {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cfd5df;
+    -fx-border-width: 1.2;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-alignment: center;
+}
+
+.avatar-inner {
+    -fx-background-color: #2f80ed;
+    -fx-background-radius: 999;
+}
+
+.user-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #111111;
+}
+
+.menu-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #121212;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 26;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.menu-toggle-btn:hover {
+    -fx-text-fill: #2f63e0;
+}
+
+.menu-toggle-btn:selected {
+    -fx-background-color: linear-gradient(to right, #3d65d8, #3f5fcc);
+    -fx-text-fill: white;
+}
+
+.menu-toggle-btn:selected:hover {
+    -fx-background-color: linear-gradient(to right, #355bcc, #3856c2);
+    -fx-text-fill: white;
+}
+
+.content-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1976f3;
+}
+
+.auction-item-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d9d9d9;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.product-name {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #222222;
+    -fx-wrap-text: true;
+}
+
+.product-meta {
+    -fx-font-size: 10px;
+    -fx-text-fill: #8a8f98;
+}
+
+.action-btn {
+    -fx-background-color: white;
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-cursor: hand;
+}
+
+.action-btn-edit {
+    -fx-text-fill: #d4a400;
+    -fx-border-color: #d4a400;
+    -fx-border-width: 1;
+}
+
+.action-btn-view {
+    -fx-text-fill: #2f63e0;
+    -fx-border-color: #2f63e0;
+    -fx-border-width: 1;
+}
+
+.action-btn-delete {
+    -fx-text-fill: #e53935;
+    -fx-border-color: #e53935;
+    -fx-border-width: 1;
+}

@@ -1,0 +1,103 @@
+.page-root {
+    -fx-font-family: "Arial";
+}
+
+.page-background {
+    -fx-background-color: #f3f4f7;
+}
+
+.sidebar-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0.15, 0, 2);
+}
+
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0.15, 0, 2);
+}
+
+.avatar-outer {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cfd5df;
+    -fx-border-width: 1.2;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-alignment: center;
+}
+
+.avatar-inner {
+    -fx-background-color: #2f80ed;
+    -fx-background-radius: 999;
+}
+
+.user-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #111111;
+}
+
+.menu-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #121212;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 26;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.menu-toggle-btn:hover {
+    -fx-text-fill: #2f63e0;
+}
+
+.menu-toggle-btn:selected {
+    -fx-background-color: linear-gradient(to right, #3d65d8, #3f5fcc);
+    -fx-text-fill: white;
+}
+
+.menu-toggle-btn:selected:hover {
+    -fx-background-color: linear-gradient(to right, #355bcc, #3856c2);
+    -fx-text-fill: white;
+}
+
+.content-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1976f3;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #666b75;
+}
+
+.info-field {
+    -fx-pref-height: 38;
+    -fx-background-color: #eef1f5;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+    -fx-border-radius: 5;
+    -fx-font-size: 14px;
+    -fx-text-fill: #222222;
+    -fx-padding: 0 12 0 12;
+}
+
+.info-field:focused {
+    -fx-background-color: #eef1f5;
+    -fx-border-color: #4a7df0;
+    -fx-border-width: 1.2;
+}
+
+.edit-profile-btn {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1f73ff;
+}
