@@ -9,6 +9,7 @@ import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.product.Item;
 import com.google.gson.Gson;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
@@ -36,6 +37,8 @@ public class ProductPageController implements NetworkService.MessageListener {
     private Label endTimeLabel;
     @FXML
     private TextField bidAmountField;
+    @FXML
+    private Button submitBid;
 
     private final User user = UserSession.getInstance().getLoggedInUser();
 
@@ -46,6 +49,10 @@ public class ProductPageController implements NetworkService.MessageListener {
         this.item = item;
         displayDataProduct(item);
         connectToRealTimeBidding();
+        if (item.getSellerId().equals(user.getId())) {
+            bidAmountField.setDisable(true);
+            submitBid.setDisable(true);
+        }
     }
 
     private void connectToRealTimeBidding() {
