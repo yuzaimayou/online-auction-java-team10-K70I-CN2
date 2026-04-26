@@ -35,6 +35,7 @@ public class HomePageController {
 
     @FXML
     public void initialize() {
+        NetworkService.getInstance().leaveRoom();
 
         System.out.println("Đã vào trang chủ!");
 
