@@ -10,6 +10,9 @@ public class User extends Person {
     protected double balance;
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
     protected List<Double> reviewScores; // Keep track of all reviews
+    protected String email;
+    protected String otp;
+    protected boolean isEnable;
 
     public User(String id, String username, String password) {
         super(id, username, password);
@@ -17,6 +20,16 @@ public class User extends Person {
         this.balance = 0.0;
         this.rating = 5.0; // New users start with perfect rating
         this.reviewScores = new ArrayList<>();
+        this.email = null;
+        this.otp = null;
+        this.isEnable = true;
+    }
+
+    public User(String id, String username, String password, String email, String otp, boolean isEnable) {
+        this(id, username, password);
+        this.email = email;
+        this.otp = otp;
+        this.isEnable = isEnable;
     }
 
     // --- Specific Getters & Setters ---
@@ -51,6 +64,30 @@ public class User extends Person {
 
     public List<Double> getReviewScores() {
         return new ArrayList<>(reviewScores);
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = (email == null) ? null : email.trim();
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+
+    public boolean isEnable() {
+        return isEnable;
+    }
+
+    public void setEnable(boolean enable) {
+        isEnable = enable;
     }
 
     public int getReviewCount() {
@@ -145,6 +182,8 @@ public class User extends Person {
         return "BidderandSeller{" +
                 "id='" + id + '\'' +
                 ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", isEnable=" + isEnable +
                 ", balance=" + balance +
                 ", rating=" + String.format("%.2f", rating) +
                 ", reviews=" + reviewScores.size() +
