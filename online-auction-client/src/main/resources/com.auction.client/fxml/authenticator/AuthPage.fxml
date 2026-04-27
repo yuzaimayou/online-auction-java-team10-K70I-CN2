@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <BorderPane xmlns:fx="http://javafx.com/fxml" prefHeight="1024.0" prefWidth="1440.0">
 
     <center>
         <ImageView fitWidth="720.0" fitHeight="1024.0" layoutX="50" layoutY="50">
             <image>
-                <Image url="@../assets/Signin.png"/>
+                <Image url="@../../assets/Signin.png"/>
             </image>
         </ImageView>
 

@@ -1,6 +1,6 @@
 package com.auction.server.controller.api;
 
-import com.auction.server.service.AuthService;
+import com.auction.server.service.user.AuthService;
 import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;

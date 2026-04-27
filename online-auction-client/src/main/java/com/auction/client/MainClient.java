@@ -44,7 +44,7 @@ public class MainClient extends Application {
             // Tải file giao diện FXML.
             // Lưu ý: Đường dẫn này trỏ tới thư mục
             // src/main/resources/com/auction/client/Login.fxml
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuthPage.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/AuthPage.fxml"));
             Parent content = loader.load();
             // Group scale UI
             Group scaleGroup = new Group(content);

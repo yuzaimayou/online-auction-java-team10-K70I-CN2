@@ -42,8 +42,8 @@ public class AuthService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
 
-    public CompletableFuture<ResponseMessage> register(String username, String password) {
-        AuthPayload payload = new AuthPayload(username, password);
+    public CompletableFuture<ResponseMessage> register(String username, String password, String email) {
+        AuthPayload payload = new AuthPayload(username, password, email);
         String jsonPayload = gson.toJson(payload);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -55,4 +55,5 @@ public class AuthService {
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
+
 }

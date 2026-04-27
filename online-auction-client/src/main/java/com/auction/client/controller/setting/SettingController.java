@@ -61,7 +61,7 @@ public class SettingController {
     public void handleSwitchToAuthenPage(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/AuthPage.fxml")
+                    getClass().getResource("/com.auction.client/fxml/authenticator/AuthPage.fxml")
             );
             Parent root = loader.load();
 
