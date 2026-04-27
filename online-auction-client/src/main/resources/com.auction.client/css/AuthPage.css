@@ -1,35 +1,44 @@
 
-#auth-page{
+#auth-page {
     -fx-background-color: white;
     -fx-font-family: "Inter 18pt";
 }
-#main-title{
+
+#main-title {
     -fx-font-family: "Inter 18pt SemiBold";
-    -fx-font-size:28;
+    -fx-font-size: 28;
 
 }
 
 .title {
     -fx-font-family: "Inter 18pt Medium";
-    -fx-font-size:16
+    -fx-font-size: 16
 }
-.textBox{
-    -fx-background-color: white; -fx-border-color: #3b82f6; -fx-border-radius: 6; -fx-background-radius: 6; -fx-border-width: 1.5;
+
+.textBox {
+    -fx-background-color: white;
+    -fx-border-color: #3b82f6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-width: 1.5;
 }
-.submitButton{
+
+.submitButton {
     -fx-background-color: #3b82f6;
     -fx-text-fill: white;
     -fx-font-size: 20px;
     -fx-background-radius: 6;
     -fx-cursor: hand;
 }
-.switchButton{
-    -fx-font-family:"Inter 18pt ExtraBold";
+
+.switchButton {
+    -fx-font-family: "Inter 18pt ExtraBold";
     -fx-font-size: 16;
     -fx-cursor: hand;
     -fx-background-color: none;
 }
-.linkedButton{
+
+.linkedButton {
     -fx-font-size: 17;
     -fx-background-color: #f9fafb;
     -fx-border-color: #e5e7eb;
@@ -38,10 +47,31 @@
     -fx-text-fill: #111827;
     -fx-cursor: hand;
 }
+
 #registerSubmit {
     -fx-background-color: #000000;
     -fx-text-fill: #ffffff;
 }
+
 #registerSubmit:hover {
     -fx-background-color: #333333;
+}
+
+.otp-box {
+    -fx-pref-width: 45px;
+    -fx-pref-height: 55px;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-alignment: center; /* Căn giữa chữ số */
+    -fx-background-color: #f3f4f6;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Khi người dùng click vào ô (Focus) */
+.otp-box:focused {
+    -fx-border-color: #2563eb; /* Đổi viền thành màu xanh */
+    -fx-border-width: 2px;
+    -fx-background-color: #ffffff;
 }

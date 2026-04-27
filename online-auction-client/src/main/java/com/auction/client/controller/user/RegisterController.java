@@ -1,4 +1,4 @@
-package com.auction.client.controller;
+package com.auction.client.controller.user;
 
 import com.auction.client.service.AuthService;
 import com.google.gson.Gson;
@@ -121,7 +121,7 @@ public class RegisterController {
     @FXML
     private void switchToOtpScreen(ActionEvent event, String registeredEmail) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/OtpVerification.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
             Node sourceNode = (Node) event.getSource();
 
             StackPane dynamicContentArea = (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");

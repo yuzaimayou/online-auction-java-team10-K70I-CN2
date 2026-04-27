@@ -17,4 +17,6 @@ module online.auction.client {
     opens com.auction.client.controller to javafx.fxml;
     exports com.auction.client.controller.setting;
     opens com.auction.client.controller.setting to javafx.fxml;
+    exports com.auction.client.controller.user;
+    opens com.auction.client.controller.user to javafx.fxml;
 }
