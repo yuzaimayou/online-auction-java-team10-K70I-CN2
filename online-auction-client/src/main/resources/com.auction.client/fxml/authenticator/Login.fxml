@@ -8,7 +8,7 @@
 <?import javafx.scene.text.Font?>
 <?import java.net.URL?>
 <VBox id="auth-page" alignment="CENTER" prefHeight="1024.0" prefWidth="720.0" spacing="30.0"
-      fx:controller="com.auction.client.controller.LoginController" xmlns="http://javafx.com/javafx/25"
+      fx:controller="com.auction.client.controller.user.LoginController" xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1">
     <stylesheets>
         <URL value="@../../css/AuthPage.css"/>
