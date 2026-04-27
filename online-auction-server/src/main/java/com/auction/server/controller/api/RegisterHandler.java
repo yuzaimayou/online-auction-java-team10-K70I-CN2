@@ -1,6 +1,6 @@
 package com.auction.server.controller.api;
 
-import com.auction.server.service.AuthService;
+import com.auction.server.service.user.AuthService;
 import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.AuthPayload;
@@ -23,8 +23,9 @@ public class RegisterHandler implements HttpHandler {
 
             String username = authData.getUsername();
             String password = authData.getPassword();
+            String email = authData.getEmail();
 
-            boolean created = authService.register(username, password);
+            boolean created = authService.register(username, password, email);
 
             ResponseMessage response = new ResponseMessage();
             if (created) {

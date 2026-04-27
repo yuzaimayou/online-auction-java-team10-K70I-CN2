@@ -1,10 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.AuthService;
-import com.auction.client.service.NetworkService;
-import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
@@ -82,7 +79,7 @@ public class LoginController {
         try {
 
             Parent registerRoot =
-                    FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/Register.fxml"));
+                    FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Register.fxml"));
 
             Node sourceNode = (Node) event.getSource();
 

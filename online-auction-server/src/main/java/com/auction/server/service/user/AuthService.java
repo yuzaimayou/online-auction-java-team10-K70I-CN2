@@ -1,17 +1,19 @@
-package com.auction.server.service;
+package com.auction.server.service.user;
 
-import com.auction.shared.model.account.User;
 import com.auction.server.repository.UserRepository;
+import com.auction.shared.model.account.User;
 
 public class AuthService {
 
     private final UserRepository userRepository;
+    private VerifyService verifyService = VerifyService.getInstance();
 
     public AuthService() {
         this.userRepository = new UserRepository();
     }
 
-    public boolean register(String username, String password) {
+
+    public boolean register(String username, String password, String email) {
 
         User existingUser = userRepository.findByUsername(username);
 
@@ -19,8 +21,12 @@ public class AuthService {
             System.out.println("The username already exists!");
             return false;
         }
+        new Thread(() -> {
+            verifyService.sendEmail(email);
+            System.out.println("Da gui email");
+        }).start();
 
-        boolean result = userRepository.createUser(username, password, "USER");
+        boolean result = userRepository.createUser(username, password, "USER", email);
 
         if (result) {
             System.out.println("Registered successfully!");
@@ -28,6 +34,7 @@ public class AuthService {
 
         return result;
     }
+
 
     public User login(String username, String password) {
 

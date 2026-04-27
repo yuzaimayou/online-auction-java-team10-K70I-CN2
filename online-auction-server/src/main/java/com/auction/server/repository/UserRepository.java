@@ -10,9 +10,9 @@ import java.util.UUID;
 
 public class UserRepository {
 
-    public boolean createUser(String username, String password, String role) {
+    public boolean createUser(String username, String password, String role, String email) {
 
-        String sql = "INSERT INTO users(id,username,password,role) VALUES(?,?,?,?)";
+        String sql = "INSERT INTO users(id,username,password,role,email) VALUES(?,?,?,?,?)";
 
         try (
                 Connection conn = DatabaseConnection.connect();
@@ -23,6 +23,7 @@ public class UserRepository {
             stmt.setString(2, username);
             stmt.setString(3, password);
             stmt.setString(4, role);
+            stmt.setString(5, email);
 
             stmt.executeUpdate();
             return true;
