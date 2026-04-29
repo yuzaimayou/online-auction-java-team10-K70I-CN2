@@ -111,12 +111,25 @@
                         </VBox>
                         <!--Product Image-->
                         <VBox spacing="15.0">
-                            <Label styleClass="field-label" text="Product Image"/>
-                            <Button fx:id="btnChooseImage" text="Choose Image" onAction="#handleChooseImage"
-                                    styleClass="choose-button"/>
-
-                            <ImageView fx:id="imageViewProduct" fitWidth="200.0" fitHeight="200.0"
-                                       preserveRatio="true"/>
+                            <Label styleClass="field-label" text="Images Upload"/>
+                            <StackPane>
+                                <VBox fx:id="dragDropArea" alignment="CENTER" spacing="15.0"
+                                      styleClass="image-upload-container"
+                                      onMouseClicked="#handleChooseImage">
+                                    <VBox alignment="CENTER" spacing="10.0">
+                                        <Label styleClass="drag-drop-title" text="Drag &amp; Drop"/>
+                                        <Label styleClass="drag-drop-subtitle" text="Multiple product photos(Max 5 images)"/>
+                                    </VBox>
+                                </VBox>
+                                <HBox fx:id="imagesPreviewContainer" spacing="15.0" alignment="CENTER_LEFT"
+                                      visible="false" managed="false">
+                                    <VBox fx:id="smallAddBtn" alignment="CENTER" spacing="5.0"
+                                          styleClass="small-add-card" onMouseClicked="#handleChooseImage">
+                                        <Label text="+" style="-fx-font-size: 25; -fx-text-fill: #94A3B8;"/>
+                                        <Label text="Add Photos" style="-fx-font-size: 14; -fx-text-fill: #3B82F6; -fx-font-weight: bold;"/>
+                                    </VBox>
+                                </HBox>
+                            </StackPane>
                         </VBox>
                         <!--Product Price-->
                         <HBox spacing="30.0">

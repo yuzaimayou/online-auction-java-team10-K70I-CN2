@@ -13,12 +13,17 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -33,6 +38,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AuctionFormController {
     @FXML
@@ -59,8 +66,12 @@ public class AuctionFormController {
     private TextField txtBidStep;
     @FXML
     private Button btnChooseImage;
-
-    // Biến này sẽ lưu trữ file ảnh mà client chọn
+    @FXML
+    private VBox dragDropArea;
+    @FXML
+    private HBox imagesPreviewContainer;
+    @FXML
+    private VBox smallAddBtn;
     private File selectedImageFile;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -105,7 +116,6 @@ public class AuctionFormController {
         }
         return false;
     }
-
 
     private Double convertNumeric(String str) {
         if (str == null || str.isEmpty()) {
@@ -246,20 +256,101 @@ public class AuctionFormController {
         }
     }
 
-    public void handleChooseImage(ActionEvent event) {
+    private List<File> selectedFiles = new ArrayList<>();
+    private final int MAX_IMAGES = 5;
+
+    public void handleChooseImage() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Add image product");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.webp"));
 
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.heic", "*.webp")
-        );
-        Stage stage = (Stage) btnChooseImage.getScene().getWindow();
-        selectedImageFile = fileChooser.showOpenDialog(stage);
+        List<File> files = fileChooser.showOpenMultipleDialog(dragDropArea.getScene().getWindow());
 
-        if (selectedImageFile != null) {
-            Image image = new Image(selectedImageFile.toURI().toString());
-            imageViewProduct.setImage(image);
-            String localPath = selectedImageFile.getAbsolutePath();
+        if (files != null) {
+            if (selectedFiles.size() + files.size() > MAX_IMAGES) {
+                Platform.runLater(() -> {
+                    lblMessage.setTextFill(Color.RED);
+                    lblMessage.setText("Only upload max " + MAX_IMAGES + " images");
+                });
+                return;
+            }
+
+            selectedFiles.addAll(files);
+
+            lblMessage.setText("");
+            updateUI();
         }
+    }
+    private void updateUI() {
+        if (selectedFiles.isEmpty()) {
+            dragDropArea.setVisible(true);
+            dragDropArea.setManaged(true);
+            imagesPreviewContainer.setVisible(false);
+            imagesPreviewContainer.setManaged(false);
+        } else {
+            dragDropArea.setVisible(false);
+            dragDropArea.setManaged(false);
+            imagesPreviewContainer.setVisible(true);
+            imagesPreviewContainer.setManaged(true);
+
+            imagesPreviewContainer.getChildren().removeIf(node -> node != smallAddBtn);
+
+            for (File file : selectedFiles) {
+                imagesPreviewContainer.getChildren().add(imagesPreviewContainer.getChildren().indexOf(smallAddBtn), createImageCard(file));
+            }
+
+            smallAddBtn.setVisible(selectedFiles.size() < MAX_IMAGES);
+        }
+    }
+
+    private StackPane createImageCard(File file) {
+        StackPane card = new StackPane();
+        card.setPickOnBounds(false);
+
+        double fixedWidth = 150;
+        double fixedHeight = 120;
+
+        VBox imageContainer = new VBox();
+        imageContainer.getStyleClass().add("image-border-container");
+        imageContainer.setAlignment(Pos.CENTER);
+        imageContainer.setMinWidth(fixedWidth);
+        imageContainer.setMaxWidth(fixedWidth);
+        imageContainer.setMinHeight(fixedHeight);
+        imageContainer.setMaxHeight(fixedHeight);
+
+        ImageView iv = new ImageView();
+        Image img = new Image(file.toURI().toString());
+
+        iv.setImage(img);
+        iv.setPreserveRatio(true);
+
+        double imgRatio = img.getWidth() / img.getHeight();
+        double containerRatio = fixedWidth / fixedHeight;
+
+        if (imgRatio > containerRatio) {
+            iv.setFitHeight(fixedHeight);
+        } else {
+            iv.setFitWidth(fixedWidth);
+        }
+
+        Rectangle clip = new Rectangle(fixedWidth, fixedHeight);
+        clip.setArcWidth(20);
+        clip.setArcHeight(20);
+        imageContainer.setClip(clip);
+
+        imageContainer.getChildren().add(iv);
+
+        Button btnDelete = new Button("✕");
+        btnDelete.getStyleClass().add("delete-photo-btn");
+
+        StackPane.setAlignment(btnDelete, Pos.TOP_RIGHT);
+
+        btnDelete.setOnAction(e -> {
+            selectedFiles.remove(file);
+            updateUI();
+        });
+
+        card.getChildren().addAll(imageContainer, btnDelete);
+
+        return card;
     }
 }
