@@ -1,80 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<ScrollPane prefHeight="850.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane prefHeight="850.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
     <content>
         <VBox styleClass="main-container">
 
-            <fx:include fx:id="navBar" source="NavBar.fxml"/>
+            <fx:include fx:id="navBar" source="NavBar.fxml" />
 
             <VBox alignment="CENTER" styleClass="categories-section">
-                <Label styleClass="section-title" text="Explore Categories"/>
+                <Label styleClass="section-title" text="Explore Categories" />
                 <HBox alignment="CENTER" styleClass="categories-list">
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="👜"/>
+                            <Label text="👜" />
                         </StackPane>
-                        <Label text="Fashion"/>
+                        <Label text="Fashion" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="💻"/>
+                            <Label text="💻" />
                         </StackPane>
-                        <Label text="Electronics"/>
+                        <Label text="Electronics" />
                     </VBox>
                     <VBox styleClass="category-item">
-                        <StackPane prefHeight="60.0" prefWidth="74.0" styleClass="cat-icon-bg">
-                            <Label text="🏠"/>
+                        <StackPane maxHeight="60.0" maxWidth="60.0" styleClass="cat-icon-bg">
+                            <Label text="🏠" />
                         </StackPane>
-                        <Label text="Home &amp; Garden"/>
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <Label text="🖼️"/>
-                        </StackPane>
-                        <Label text="Art"/>
+                        <Label text="Home &amp; Garden" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="📚"/>
+                            <Label text="🖼️" />
                         </StackPane>
-                        <Label text="Books"/>
+                        <Label text="Art" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="💎"/>
+                            <Label text="📚" />
                         </StackPane>
-                        <Label text="Jewelry"/>
+                        <Label text="Books" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="⚽"/>
+                            <Label text="💎" />
                         </StackPane>
-                        <Label text="Sports"/>
+                        <Label text="Jewelry" />
                     </VBox>
                     <VBox styleClass="category-item">
-                        <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage"
-                                styleClass="add-auction-button">
+                        <StackPane styleClass="cat-icon-bg">
+                            <Label text="⚽" />
+                        </StackPane>
+                        <Label text="Sports" />
+                    </VBox>
+                    <VBox styleClass="category-item">
+                        <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage" styleClass="add-auction-button">
                             <graphic>
-                                <Label styleClass="add-icon" text="+"/>
+                                <Label styleClass="add-icon" text="+" />
                             </graphic>
                         </Button>
-                        <Label text="Add an Auction"/>
+                        <Label text="Add an Auction" />
                     </VBox>
                 </HBox>
             </VBox>
 
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
-                <Label styleClass="section-title, gray-title" text="Ongoing Auctions"/>
+                <Label styleClass="section-title, gray-title" text="Ongoing Auctions" />
                 <!--Card Item-->
-                <FlowPane
-                        fx:id="auctionsListContainer"
-                        alignment="CENTER"
-                        styleClass="auctions-list"
-                        hgap="15.0" vgap="15.0"
-                >
+                <FlowPane fx:id="auctionsListContainer" alignment="CENTER" hgap="15.0" styleClass="auctions-list" vgap="15.0">
                 </FlowPane>
             </VBox>
 

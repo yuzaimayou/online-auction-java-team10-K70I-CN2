@@ -78,7 +78,7 @@
 
 .nav-item {
     -fx-font-size: 15px;
-    -fx-text-fill: #888888;
+    -fx-text-fill: #777777;
     -fx-font-weight: bold;
     -fx-cursor: hand;
 }
@@ -88,5 +88,5 @@
 }
 
 .nav-item-active {
-    -fx-text-fill: #aaaaaa; /* Dựa theo màu nhạt của nút Home trong ảnh */
+    -fx-text-fill: #777777; /* Dựa theo màu nhạt của nút Home trong ảnh */
 }
