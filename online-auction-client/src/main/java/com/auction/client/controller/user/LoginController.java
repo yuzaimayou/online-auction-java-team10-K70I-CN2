@@ -2,6 +2,7 @@ package com.auction.client.controller.user;
 
 import com.auction.client.controller.HomePageController;
 import com.auction.client.service.AuthService;
+import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import com.google.gson.Gson;
@@ -53,8 +54,18 @@ public class LoginController {
                     if ("success".equals(responseMessage.getStatus())) {
                         User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
+                        PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
 
-                        PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(0.5));
+                        if (loggedInUser.isVerify() == false) {
+                            javafx.application.Platform.runLater(() -> {
+                                lblMessage.setTextFill(Color.RED);
+                                lblMessage.setText("Tài khoản của bạn đang chờ được xác thực.");
+                            });
+                            pause.setOnFinished(e -> NavigationUtil.switchToOtpScreen(event, loggedInUser.getEmail()));
+                            pause.play();
+                            return;
+                        }
+
                         pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
                         pause.play();
                     } else {

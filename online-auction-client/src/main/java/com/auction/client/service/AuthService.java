@@ -3,6 +3,7 @@ package com.auction.client.service;
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.AuthPayload;
+import com.auction.shared.model.payloads.VerifyPayload;
 import com.google.gson.Gson;
 
 import java.net.URI;
@@ -52,6 +53,29 @@ public class AuthService {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    }
+
+    public CompletableFuture<ResponseMessage> verify(String email, String otp) {
+        VerifyPayload payload = new VerifyPayload(email, otp);
+        String jsonPayload = gson.toJson(payload);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/verify-account", AppConfig.getHttpUrl())))
+                .header("Content-Type", "application/json; utf-8")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+
+    }
+    
+    public CompletableFuture<ResponseMessage> sendOtp(String email) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/send-otp?email=%s", AppConfig.getHttpUrl(), email)))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }

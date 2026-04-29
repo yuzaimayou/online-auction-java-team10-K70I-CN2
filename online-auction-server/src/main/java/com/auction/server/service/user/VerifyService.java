@@ -1,5 +1,6 @@
 package com.auction.server.service.user;
 
+import com.auction.server.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
@@ -18,6 +19,7 @@ public class VerifyService {
     private final String username = dotenv.get("MAIL_USERNAME");
     private final String password = dotenv.get("MAIL_PASSWORD");
     private final Session session;
+    private UserRepository userRepository = new UserRepository();
 
     private static class OtpInfo {
         private String otp;
@@ -76,10 +78,12 @@ public class VerifyService {
         OtpInfo info = otpStorage.get(email);
 
         if (info == null || info.isExpired() || !info.getOtp().equals(otp)) {
+
             return false;
         }
 
         otpStorage.remove(email); // Remove OTP after successful verification
+        userRepository.enableUser(email); // Enable user account after successful verification
         return true;
     }
 
@@ -88,6 +92,7 @@ public class VerifyService {
         //Generate Otp
         OtpInfo info = generateOtp();
         otpStorage.put(email, info);
+        System.out.println(otpStorage);
 
         try {
             Message message = new MimeMessage(session);
