@@ -107,6 +107,7 @@ public class AuctionFormController {
 
             txtProductDesc.setPrefHeight(Math.max(80, newHeight));
         });
+
     }
 
 
