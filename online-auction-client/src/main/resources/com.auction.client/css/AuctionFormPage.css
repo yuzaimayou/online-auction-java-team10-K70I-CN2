@@ -230,9 +230,9 @@
 }
 
 .time-picker {
-    -fx-background-color: #F1F5F9; /* Màu xám nhạt (gần giống nút lịch) */
-    -fx-border-color: #CBD5E1; /* Màu viền đồng bộ với các ô TextField */
-    -fx-border-radius: 4px; /* Bo góc nhẹ */
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 4px;
     -fx-background-radius: 4px;
     -fx-pref-height: 38px;
 }
@@ -256,9 +256,88 @@
 
 }
 
-.choose-button {
-    -fx-background-color: #F1F5F9;
+/* Drag & Drop Image Area*/
+.image-upload-container {
+    -fx-background-color: #F8F9FA;
     -fx-border-color: #CBD5E1;
+    -fx-border-width: 2;
+    -fx-border-style: segments(10, 10) dashed;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-min-height: 250;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s;
+}
+
+.image-upload-container:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: #3B82F6;
+}
+
+.drag-drop-title {
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 32px;
+    -fx-text-fill: #000000;
+}
+
+.drag-drop-subtitle {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 20px;
+    -fx-text-fill: #94A3B8;
+}
+
+.image-border-container {
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-min-width: 150;
+    -fx-max-width: 150;
+    -fx-min-height: 120;
+    -fx-max-height: 120;
+}
+
+.image-preview-node {
+    -fx-background-radius: 10;
+}
+
+.small-add-card {
+    -fx-min-width: 150;
+    -fx-min-height: 120;
+    -fx-border-color: #CBD5E1;
+    -fx-border-width: 2;
+    -fx-border-style: segments(8, 8) dashed;
+    -fx-border-radius: 12;
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.small-add-card:hover {
+    -fx-background-color: #F1F5F9;
+}
+
+.delete-photo-btn {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+    -fx-background-radius: 50%;
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 2;
+    -fx-border-radius: 50%;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-min-width: 24;
+    -fx-max-width: 24;
+    -fx-min-height: 24;
+    -fx-max-height: 24;
+    -fx-translate-x: 10;
+    -fx-translate-y: -10;
+    -fx-cursor: hand;
+}
+
+.delete-photo-btn:hover {
+    -fx-background-color: #F1F5F9;
 }
 
 .submit-button {
