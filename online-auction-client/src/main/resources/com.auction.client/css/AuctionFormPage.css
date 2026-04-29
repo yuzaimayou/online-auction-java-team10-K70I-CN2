@@ -392,3 +392,94 @@
     -fx-shape: " "; /* Xóa hình mũi tên */
     -fx-padding: 0;
 }
+
+/* Tùy chỉnh toàn bộ khung cửa sổ lịch */
+.date-picker-popup {
+    -fx-background-color: white;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 5);
+    -fx-padding: 10px;
+}
+
+/* Thanh Header (Chứa Tháng và Năm) */
+.date-picker-popup > .month-year-pane {
+    -fx-background-color: white;
+    -fx-padding: 10px 0;
+}
+
+/* Tùy chỉnh các nút mũi tên chuyển tháng */
+.date-picker-popup > .month-year-pane > .left-arrow-button,
+.date-picker-popup > .month-year-pane > .right-arrow-button {
+    -fx-background-color: #f5f5f5;
+    -fx-background-radius: 50%;
+    -fx-padding: 8px;
+}
+
+.date-picker-popup > .month-year-pane > .left-arrow-button:hover,
+.date-picker-popup > .month-year-pane > .right-arrow-button:hover {
+    -fx-background-color: #eeeeee;
+}
+
+/* Chữ hiển thị Tháng và Năm */
+.date-picker-popup .label {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-font-size: 14px;
+}
+
+/* Lưới các ngày trong tuần (Mon, Tue...) */
+.date-picker-popup > .calendar-grid {
+    -fx-background-color: white;
+    -fx-vgap: 5px;
+    -fx-hgap: 5px;
+}
+
+/* Tùy chỉnh các ô ngày nói chung */
+.date-picker-popup .day-cell {
+    -fx-background-color: transparent;
+    -fx-font-family: "Segoe UI";
+    -fx-text-fill: #555555;
+    -fx-padding: 10px;
+    -fx-alignment: CENTER;
+    -fx-background-radius: 8px;
+}
+
+/* Hiệu ứng khi di chuột qua ngày */
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #e3f2fd;
+    -fx-text-fill: #1976d2;
+    -fx-cursor: hand;
+}
+
+/* Ngày đang được chọn (Highlight) */
+.date-picker-popup .selected {
+    -fx-background-color: #1976d2; /* Màu xanh đậm hiện đại */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Ngày hôm nay */
+.date-picker-popup .today {
+    -fx-border-color: #1976d2;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-text-fill: #1976d2;
+}
+
+/* Các ngày của tháng trước/tháng sau (làm mờ đi) */
+.date-picker-popup .previous-month,
+.date-picker-popup .next-month {
+    -fx-text-fill: #bbbbbb;
+}
+
+/* Thanh hiển thị các chữ cái đầu của thứ (Mon, Tue...) */
+.date-picker-popup .day-name-cell {
+    -fx-font-weight: bold;
+    -fx-text-fill: #999999;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 10px 0;
+}
