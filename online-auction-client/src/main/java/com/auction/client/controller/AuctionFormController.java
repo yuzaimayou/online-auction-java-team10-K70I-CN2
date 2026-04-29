@@ -66,6 +66,7 @@ public class AuctionFormController {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
 
+
     @FXML
     public void initialize() {
         cbStartTime.getItems().clear();
@@ -81,6 +82,20 @@ public class AuctionFormController {
         cbStartTime.setValue("06:50");
         cbEndTime.setValue("10:37");
 
+        // xuống dòng cho product desciption
+        txtProductDesc.setWrapText(true);
+        txtProductDesc.textProperty().addListener((observable, oldValue, newValue) -> {
+            javafx.scene.text.Text helper = new javafx.scene.text.Text();
+            helper.setText(newValue);
+            helper.setFont(txtProductDesc.getFont());
+
+            helper.setWrappingWidth(txtProductDesc.getWidth() - 40);
+
+            double textHeight = helper.getLayoutBounds().getHeight();
+            double newHeight = textHeight + 40;
+
+            txtProductDesc.setPrefHeight(Math.max(80, newHeight));
+        });
     }
 
 

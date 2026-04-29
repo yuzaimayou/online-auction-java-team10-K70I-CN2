@@ -105,8 +105,9 @@
                         <VBox spacing="15.0">
                             <Label styleClass="field-label" text="Product Description"/>
                             <TextArea fx:id="txtProductDesc" maxWidth="Infinity" minHeight="60.0"
+                                      wrapText="true"
                                       promptText="Enter product description"
-                                      styleClass="input-field"/>
+                                      styleClass="input-field, text-area" />
                         </VBox>
                         <!--Product Image-->
                         <VBox spacing="15.0">
