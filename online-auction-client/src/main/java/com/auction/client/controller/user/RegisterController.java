@@ -119,17 +119,21 @@ public class RegisterController {
     }
 
     @FXML
-    private void switchToOtpScreen(ActionEvent event, String registeredEmail) {
+    protected void switchToOtpScreen(ActionEvent event, String registeredEmail) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
-            Node sourceNode = (Node) event.getSource();
+            Node verifyNode = loader.load();
+            VerifyController verifyController = loader.getController();
+            verifyController.setEmail(registeredEmail);
 
+
+            Node sourceNode = (Node) event.getSource();
             StackPane dynamicContentArea = (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
 
             if (dynamicContentArea != null) {
 
                 dynamicContentArea.getChildren().clear();
-                dynamicContentArea.getChildren().add(loader.load());
+                dynamicContentArea.getChildren().add(verifyNode);
 
             } else {
                 System.err.println("Không tìm thấy StackPane dynamicContentArea");

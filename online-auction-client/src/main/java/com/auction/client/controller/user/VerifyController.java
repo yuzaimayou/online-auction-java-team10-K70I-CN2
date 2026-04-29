@@ -1,11 +1,28 @@
 package com.auction.client.controller.user;
 
+import com.auction.client.service.AuthService;
+import com.auction.client.util.NavigationUtil;
+import com.auction.client.util.UserSession;
+import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+
+import java.io.IOException;
 
 public class VerifyController {
+    private String email;
+    private AuthService authService = AuthService.getInstance();
+
+    @FXML
+    private Label lblMessage;
     @FXML
     private TextField txtCode1;
     @FXML
@@ -28,6 +45,10 @@ public class VerifyController {
         addAutoJump(txtCode4, txtCode5, txtCode3);
         addAutoJump(txtCode5, txtCode6, txtCode4);
         addAutoJump(txtCode6, null, txtCode5);
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     private void addAutoJump(TextField current, TextField next, TextField previous) {
@@ -59,11 +80,93 @@ public class VerifyController {
 
     @FXML
     public void handleVerify(ActionEvent event) {
-
+        String otp = txtCode1.getText() + txtCode2.getText() + txtCode3.getText() + txtCode4.getText() + txtCode5.getText() + txtCode6.getText();
+        authService.verify(email, otp)
+                .thenAccept(responseMessage -> {
+                    if ("success".equals(responseMessage.getStatus())) {
+                        PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(0.5));
+                        if (UserSession.getInstance().getLoggedInUser() != null) {
+                            pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage, UserSession.getInstance().getLoggedInUser()));
+                        } else {
+                            pause.setOnFinished(e -> handleSwitchToLogin(event));
+                        }
+                        pause.play();
+                    } else {
+                        javafx.application.Platform.runLater(() -> {
+                            // Hiển thị lỗi nếu có
+                            lblMessage.setTextFill(Color.RED);
+                            lblMessage.setText(responseMessage.getMessage());
+                        });
+                    }
+                })
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    javafx.application.Platform.runLater(() -> {
+                        lblMessage.setTextFill(Color.RED);
+                        lblMessage.setText("Failed to connect to server");
+                    });
+                    return null;
+                });
     }
 
     @FXML
     public void handleResend(ActionEvent event) {
+        authService.sendOtp(email)
+                .thenAccept(responseMessage -> {
+                    javafx.application.Platform.runLater(() -> {
+                        if ("success".equals(responseMessage.getStatus())) {
+                            lblMessage.setTextFill(Color.GREEN);
+                            lblMessage.setText("OTP has been resent to your email");
+                            txtCode1.clear();
+                            txtCode2.clear();
+                            txtCode3.clear();
+                            txtCode4.clear();
+                            txtCode5.clear();
+                            txtCode6.clear();
+                        } else {
+                            lblMessage.setTextFill(Color.RED);
+                            lblMessage.setText(responseMessage.getMessage());
+                        }
 
+
+                    });
+                })
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    javafx.application.Platform.runLater(() -> {
+                        lblMessage.setTextFill(Color.RED);
+                        lblMessage.setText("Failed to connect to server");
+                    });
+                    return null;
+                });
+    }
+
+    @FXML
+    public void handleSwitchToLogin(ActionEvent event) {
+
+        try {
+
+            Parent loginRoot = FXMLLoader.load(
+                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+
+            Node sourceNode = (Node) event.getSource();
+
+            StackPane dynamicContentArea =
+                    (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
+
+            if (dynamicContentArea != null) {
+
+                dynamicContentArea.getChildren().clear();
+                dynamicContentArea.getChildren().add(loginRoot);
+
+            } else {
+
+                System.err.println("Không tìm thấy StackPane dynamicContentArea");
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

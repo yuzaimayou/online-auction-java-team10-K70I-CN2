@@ -11,25 +11,23 @@ public class User extends Person {
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
     protected List<Double> reviewScores; // Keep track of all reviews
     protected String email;
-    protected String otp;
-    protected boolean isEnable;
+    protected boolean isVerify;
 
     public User(String id, String username, String password) {
+
         super(id, username, password);
         this.role = "User"; // Set specific role
         this.balance = 0.0;
         this.rating = 5.0; // New users start with perfect rating
         this.reviewScores = new ArrayList<>();
         this.email = null;
-        this.otp = null;
-        this.isEnable = true;
+        this.isVerify = true;
     }
 
-    public User(String id, String username, String password, String email, String otp, boolean isEnable) {
+    public User(String id, String username, String password, String email, boolean isEnable) {
         this(id, username, password);
         this.email = email;
-        this.otp = otp;
-        this.isEnable = isEnable;
+        this.isVerify = isEnable;
     }
 
     // --- Specific Getters & Setters ---
@@ -74,20 +72,12 @@ public class User extends Person {
         this.email = (email == null) ? null : email.trim();
     }
 
-    public String getOtp() {
-        return otp;
+    public boolean isVerify() {
+        return isVerify;
     }
 
-    public void setOtp(String otp) {
-        this.otp = otp;
-    }
-
-    public boolean isEnable() {
-        return isEnable;
-    }
-
-    public void setEnable(boolean enable) {
-        isEnable = enable;
+    protected void setEnable(boolean enable) {
+        isVerify = enable;
     }
 
     public int getReviewCount() {
@@ -183,7 +173,7 @@ public class User extends Person {
                 "id='" + id + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
-                ", isEnable=" + isEnable +
+                ", isEnable=" + isVerify +
                 ", balance=" + balance +
                 ", rating=" + String.format("%.2f", rating) +
                 ", reviews=" + reviewScores.size() +

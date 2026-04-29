@@ -1,10 +1,7 @@
 package com.auction.server;
 
 import com.auction.server.controller.ClientHandler;
-import com.auction.server.controller.api.AddProduct;
-import com.auction.server.controller.api.GetDataProducts;
-import com.auction.server.controller.api.LoginHandler;
-import com.auction.server.controller.api.RegisterHandler;
+import com.auction.server.controller.api.*;
 import com.auction.server.database.DatabaseInit;
 import com.sun.net.httpserver.HttpServer;
 
@@ -28,6 +25,8 @@ public class MainServer {
             HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
             httpServer.createContext("/api/login", new LoginHandler());
             httpServer.createContext("/api/register", new RegisterHandler());
+            httpServer.createContext("/api/verify-account", new VerifyHandler());
+            httpServer.createContext("/api/send-otp", new SendOtp());
             httpServer.createContext("/api/add-product", new AddProduct());
             httpServer.createContext("/api/products", new GetDataProducts());
             httpServer.createContext("/images", new StaticFileServer.ImageHandler());

@@ -33,6 +33,46 @@ public class UserRepository {
         }
     }
 
+    public boolean enableUser(String email) {
+        String sql = "UPDATE users SET isVerify = true WHERE email = ?";
+
+        try (
+                Connection conn = DatabaseConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, email);
+            int rowsUpdated = stmt.executeUpdate();
+            return rowsUpdated > 0; // Return true if at least one row was updated
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public User findByEmail(String email) {
+        String sqp = "SELECT * FROM users WHERE email=?";
+        try (
+                Connection conn = DatabaseConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sqp)
+        ) {
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new User(
+                        rs.getString("id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("email"),
+                        rs.getBoolean("isVerify")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
     public User findByUsername(String username) {
 
         String sql = "SELECT * FROM users WHERE username = ?";
@@ -51,7 +91,9 @@ public class UserRepository {
                 return new User(
                         rs.getString("id"),
                         rs.getString("username"),
-                        rs.getString("password")
+                        rs.getString("password"),
+                        rs.getString("email"),
+                        rs.getBoolean("isVerify")
                 );
             }
 
