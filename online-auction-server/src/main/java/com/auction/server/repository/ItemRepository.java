@@ -131,6 +131,40 @@ public class ItemRepository {
         return null;
     }
 
+    public List<Item> findAllBySellerId(String sellerID) {
+        List<Item> items = new ArrayList<>();
+        String sql = "SELECT * FROM items WHERE seller_id = ?";
+        try (
+                Connection conn = DatabaseConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, sellerID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Item item = new Item(
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getDouble("start_price"),
+                            rs.getDouble("current_price"),
+                            LocalDateTime.parse(rs.getString("start_time")),
+                            LocalDateTime.parse(rs.getString("end_time")),
+                            rs.getString("seller_id"),
+                            rs.getString("category"),
+                            rs.getDouble("bid_step"),
+                            rs.getString("image_path")
+                    );
+                    item.setId(rs.getString("id"));
+                    items.add(item);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
+
     public List<Item> findAllItems() {
 
         List<Item> items = new ArrayList<>();

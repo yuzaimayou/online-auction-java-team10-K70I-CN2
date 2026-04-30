@@ -54,7 +54,7 @@ public class LoginController {
                     if ("success".equals(responseMessage.getStatus())) {
                         User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
-                        PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+                        PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(2));
 
                         if (loggedInUser.isVerify() == false) {
                             javafx.application.Platform.runLater(() -> {

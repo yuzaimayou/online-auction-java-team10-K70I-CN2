@@ -9,7 +9,7 @@
         prefHeight="760.0" prefWidth="820.0" spacing="18.0" styleClass="content-card"
         stylesheets="@../../css/MyAuctionsPage.css"
         xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-        fx:controller="com.auction.client.controller.setting.MyAuctionsPageController">
+        fx:controller="com.auction.client.controller.setting.MyAuctionsController">
     <padding>
         <Insets bottom="24.0" left="28.0" right="28.0" top="24.0"/>
     </padding>

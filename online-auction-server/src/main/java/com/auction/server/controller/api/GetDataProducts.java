@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,9 +23,20 @@ public class GetDataProducts implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         if ("GET".equals(exchange.getRequestMethod())) {
-
             ItemRepository itemRepository = new ItemRepository();
-            List<Item> payload = itemRepository.findAllItems();
+            List<Item> payload;
+            URI requestURI = exchange.getRequestURI();
+            String query = requestURI.getQuery();
+            if (query == null) {
+                payload = itemRepository.findAllItems();
+            } else if (query.contains("sellerId")) {
+                String sellerId = extractSellerId(query);
+                payload = itemRepository.findAllBySellerId(sellerId);
+            } else {
+                payload = null;
+            }
+
+
             ResponseMessage response = new ResponseMessage();
             if (payload != null) {
                 String jsonPayload = gson.toJson(payload);
@@ -44,5 +56,16 @@ public class GetDataProducts implements HttpHandler {
         } else {
             HttpResponseUtil.sendMessage(exchange, 405, new ResponseMessage("error", "Method Not Allowed", null));
         }
+    }
+
+    private String extractSellerId(String query) {
+        String[] params = query.split("&");
+        for (String param : params) {
+            String[] keyValue = param.split("=");
+            if (keyValue.length == 2 && "sellerId".equals(keyValue[0])) {
+                return keyValue[1];
+            }
+        }
+        return null;
     }
 }
