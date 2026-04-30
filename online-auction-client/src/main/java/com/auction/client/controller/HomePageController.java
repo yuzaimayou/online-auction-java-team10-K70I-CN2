@@ -68,25 +68,6 @@ public class HomePageController {
                         System.out.println(res.getMessage());
                     }
                 });
-//        CompletableFuture.supplyAsync(() -> {
-//            return network.sendRequest(new RequestMessage(ActionType.GETDATAPRODUCT));
-//        }).thenAccept(res -> {
-//            if (res == null) {
-//                System.err.println("Unable to connect to the server");
-//                return;
-//            }
-//            if ("SUCCESS".equals(res.getStatus())) {
-//                System.out.println(res.getMessage());
-//                Type listType = new TypeToken<List<Item>>() {
-//                }.getType();
-//                List<Item> dataItems = gson.fromJson(res.getData(), listType);
-//                Platform.runLater(() -> {
-//                    loadItemsToUI(dataItems);
-//                });
-//            } else {
-//                System.out.println(res.getMessage());
-//            }
-//        });
     }
 
     @FXML
