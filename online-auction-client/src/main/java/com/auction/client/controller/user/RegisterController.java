@@ -48,18 +48,18 @@ public class RegisterController {
 
         if (username.isEmpty() || password.isEmpty() || confirm.isEmpty() || email.isEmpty()) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Vui lòng nhập đầy đủ thông tin");
+            lblMessage.setText("Please fill in all fields.");
             return;
         }
         if (!email.matches(regex)) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Email không hợp lệ");
+            lblMessage.setText("Invalid email address.");
             return;
         }
 
         if (!password.equals(confirm)) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Mật khẩu không khớp");
+            lblMessage.setText("Passwords do not match.");
             return;
         }
 

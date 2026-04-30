@@ -55,7 +55,7 @@ public class NavigationUtil {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle("Hệ thống Đấu giá Trực tuyến - Home");
+            stage.setTitle(String.format("%s - Home", AppConfig.getAppName()));
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Không tìm thấy file HomePage.fxml! Kiểm tra lại đường dẫn.");
