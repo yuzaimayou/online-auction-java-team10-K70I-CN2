@@ -154,7 +154,8 @@ public class AuctionFormController {
         String userId = UserSession.getInstance().getLoggedInUser().getId();
 
         //Kiem tra
-        if (isAnyNull(productName, productDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep, selectedImageFile)) {
+        if (isAnyNull(productName, productDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
+                || selectedFiles.isEmpty()) {
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText("Please fill in all required fields.");
             return;
@@ -179,8 +180,11 @@ public class AuctionFormController {
         }
         //Xu ly hinh anh
         try {
-            String[] imageConverted = ImageUtil.convertImgToBase64(selectedImageFile);
+            String[] imageConverted = ImageUtil.convertImgToBase64(selectedFiles.get(0));
+
             if (imageConverted == null) {
+                lblMessage.setTextFill(Color.RED);
+                lblMessage.setText("Image processing failed.");
                 return;
             }
 
