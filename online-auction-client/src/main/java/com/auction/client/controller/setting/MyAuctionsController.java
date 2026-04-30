@@ -1,6 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.service.ItemsService;
+import com.auction.client.util.AppConfig;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
@@ -99,7 +100,7 @@ public class MyAuctionsController {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Product Edit");
+            stage.setTitle(String.format("%s - Product Edit", AppConfig.getAppName()));
 
         } catch (IOException e) {
             e.printStackTrace();
