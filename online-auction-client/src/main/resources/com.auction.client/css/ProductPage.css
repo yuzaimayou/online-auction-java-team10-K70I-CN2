@@ -1,141 +1,185 @@
-/* --- Cài đặt chung --- */
-.root {
-    -fx-font-family: "Segoe UI", Arial, sans-serif;
-    -fx-background-color: white;
-}
-
+/* Container chính */
 .main-container {
+    -fx-background-color: #F8F9FA;
+}
+
+/* Ảnh sản phẩm */
+.main-image-container {
     -fx-background-color: white;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
+    -fx-padding: 20;
 }
 
-/* --- Header Section --- */
-.header-section {
+.thumbnail-container {
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
     -fx-background-color: white;
-    -fx-padding: 20 40 20 40;
+    -fx-min-width: 80;
+    -fx-min-height: 60;
 }
 
-.top-bar {
-    -fx-padding: 0 0 20 0;
-}
-
-.logo-container {
-    -fx-padding: 0 30 0 0;
-}
-
-.logo-icon {
+/* Typography */
+.product-title {
     -fx-font-size: 24px;
-    -fx-text-fill: #0056b3;
-}
-
-.logo-text {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
-    -fx-font-style: italic;
-    -fx-text-fill: #0056b3;
-}
-
-.categories-dropdown {
-    -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: #333333;
-    -fx-cursor: hand;
 }
 
-/* Thanh tìm kiếm */
-.search-bar {
-    -fx-background-color: #f1f3f5;
-    -fx-background-radius: 20px;
-    -fx-padding: 5 15 5 15;
-    -fx-pref-width: 400px;
+.description-container {
+    -fx-background-color: white;
+    -fx-padding: 30;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 4px;
 }
 
-.search-icon {
-    -fx-text-fill: #0056b3;
-    -fx-font-size: 14px;
-}
-
-.search-input {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-prompt-text-fill: #a0a0a0;
-    -fx-pref-width: 350px;
-}
-
-/* Profile */
-.profile-icon-container {
-    -fx-background-color: #0056b3;
-    -fx-background-radius: 50%;
-    -fx-min-width: 35px;
-    -fx-min-height: 35px;
-    -fx-max-width: 35px;
-    -fx-max-height: 35px;
-}
-
-.profile-icon {
-    -fx-text-fill: white;
-    -fx-font-size: 18px;
-}
-
-.profile-name {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-}
-
-/* Navigation Menu */
-.nav-menu {
-    -fx-spacing: 40px;
-    -fx-padding: 10 0 10 0;
-}
-
-.nav-item {
+.description-body {
     -fx-font-size: 15px;
-    -fx-text-fill: #888888;
-    -fx-font-weight: bold;
+    -fx-text-fill: #666666;
+    -fx-line-spacing: 5;
+}
+
+/* Auction Card */
+.auction-card {
+    -fx-background-color: white;
+    -fx-padding: 25;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 4px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 0);
+    -fx-spacing: 15;
+}
+
+/* Timer */
+.timer-container {
+    -fx-padding: 10 0;
+}
+.timer-num { -fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #444; }
+.timer-unit { -fx-font-size: 11px; -fx-text-fill: #999; -fx-font-weight: bold; }
+
+/* Bid Suggest Buttons */
+.bid-suggest-btn {
+    -fx-background-color: white;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 20px;
+    -fx-padding: 8 20;
+    -fx-text-fill: #666;
     -fx-cursor: hand;
 }
+.bid-suggest-btn:hover { -fx-background-color: #F0F0F0; }
 
-.nav-item:hover {
-    -fx-text-fill: #333333;
+/* Input */
+.bid-input {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: transparent transparent #E0E0E0 transparent;
+    -fx-padding: 12;
+    -fx-alignment: center;
+    -fx-font-size: 15px;
 }
 
-.nav-item-active {
-    -fx-text-fill: #aaaaaa; /* Dựa theo màu nhạt của nút Home trong ảnh */
-}
-
-.info-label-gray { -fx-text-fill: #888888; -fx-font-size: 13px; }
-.info-label-gray-small { -fx-text-fill: #999999; -fx-font-size: 11px; }
-
-.timer-num { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333333; }
-.timer-unit { -fx-font-size: 10px; -fx-text-fill: #888888; }
-
-.sub-section-title { -fx-font-size: 16px; -fx-font-weight: bold; }
-.info-value-bold { -fx-font-weight: bold; -fx-text-fill: #555555; }
-
-.btn-join-live {
+/* Buttons */
+.btn-place-bid {
     -fx-background-color: #4A835D;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-padding: 12 0;
+    -fx-padding: 12;
     -fx-background-radius: 4px;
+    -fx-font-size: 18px;
+    -fx-cursor: hand;
+}
+.btn-place-bid:hover { -fx-background-color: #3d6b4c; }
+
+.btn-auto-bid {
+    -fx-background-color: transparent;
+    -fx-border-color: #2D55FF;
+    -fx-border-radius: 4px;
+    -fx-text-fill: #2D55FF;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-padding: 10;
     -fx-cursor: hand;
 }
 
-.product-title {
-    -fx-font-family: "Segoe UI", Arial, sans-serif;
+.btn-auto-bid:hover {
+    -fx-background-color: #F0F4FF;
+    -fx-effect: dropshadow(three-pass-box, rgba(45, 85, 255, 0.2), 8, 0, 0, 0);
+}
+
+.btn-auto-bid:pressed {
+    -fx-background-color: #E6EDFF;
+    -fx-border-width: 1.5px;
+    -fx-scale-x: 1; /* Cố định tỷ lệ X để không bị nhỏ lại */
+    -fx-scale-y: 1; /* Cố định tỷ lệ Y để không bị nhỏ lại */
+}
+
+.auto-bid-header {
+    -fx-text-fill: #4A835D;
+    -fx-font-family: "Inter", "System";
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-font-size: 32px
+    -fx-padding: 0 0 5 0;
+}
+
+.input-label {
+    -fx-text-fill: #000000;
+    -fx-font-family: "Inter", "System";
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 5 0;
+}
+
+.auto-bid-text-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+}
+
+.auto-bid-info {
+    -fx-text-fill: #4A835D;
+    -fx-font-family: "Inter", "System";
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+    -fx-opacity: 0.9;
+}
+
+.auto-bid-panel {
+    -fx-background-color: #F1F9F3;
+    -fx-border-color: #A3D1B0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 15;
+}
+
+.auto-bid-active-panel {
+    -fx-background-color: #F1F9F3;
+    -fx-border-color: #4A835D;
+    -fx-border-radius: 8;
+    -fx-padding: 15;
+    -fx-alignment: center;
+}
+
+.user-current-bid {
+    -fx-background-color: #E2F0E5;
+    -fx-border-radius: 8;
+    -fx-padding: 10;
+    -fx-text-fill: #4A835D;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
 
 }
-/* --- Lịch sử Bid --- */
-.history-header { -fx-border-color: transparent transparent #EEE transparent; -fx-padding: 0 0 5 0; }
-.bidder-name-text { -fx-font-weight: bold; -fx-font-size: 14px; }
-.price-green { -fx-text-fill: #2ecc71; -fx-font-weight: bold; -fx-font-size: 15px; }
-.see-more-link { -fx-text-fill: #0056b3; -fx-underline: false; }
 
-/* --- Footer tối --- */
-.footer-dark {
-    -fx-background-color: #000000;
-    -fx-padding: 50 60 50 60;
+.btn-cancel-auto-bid {
+    -fx-background-color: transparent;
+    -fx-border-color: #FF0000;
+    -fx-text-fill: #FF0000;
+    -fx-font-weight: bold;
+    -fx-padding: 12;
 }
-.footer-header { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15px; }
-.footer-link { -fx-text-fill: #999999; -fx-font-size: 13px; -fx-cursor: hand; }
+
+/* History */
+.bidder-name-text { -fx-font-weight: bold; -fx-text-fill: #333; }
+.price-green { -fx-text-fill: #4A835D; -fx-font-weight: bold; -fx-font-size: 16px; }
+.see-more-link { -fx-text-fill: #2D55FF; -fx-underline: false; -fx-font-weight: bold; }
