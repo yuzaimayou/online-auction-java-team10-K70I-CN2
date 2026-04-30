@@ -34,4 +34,15 @@ public class ItemsService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
 
     }
+
+    public CompletableFuture<ResponseMessage> createItem(String jsonPayload) {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/product?action=create", AppConfig.getHttpUrl())))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    }
 }

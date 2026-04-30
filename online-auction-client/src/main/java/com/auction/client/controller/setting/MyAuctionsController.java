@@ -48,8 +48,7 @@ public class MyAuctionsController {
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
                         // Xử lý hiển thị sản phẩm ở đây
                         Type listType = new TypeToken<List<Item>>() {
-                        }
-                                .getType();
+                        }.getType();
                         List<Item> items = gson.fromJson(responseMessage.getData(), listType);
                         javafx.application.Platform.runLater(() -> {
                             // Cập nhật giao diện với danh sách sản phẩm
@@ -69,11 +68,6 @@ public class MyAuctionsController {
                     System.err.println("Lỗi khi gửi yêu cầu lấy danh sách sản phẩm: " + e.getMessage());
                     return null;
                 });
-    }
-
-    @FXML
-    private void handleMyAuctions(ActionEvent event) {
-        myAuctionsBtn.setSelected(true);
     }
 
 

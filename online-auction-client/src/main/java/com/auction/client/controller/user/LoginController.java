@@ -7,6 +7,7 @@ import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -59,13 +60,16 @@ public class LoginController {
                         if (loggedInUser.isVerify() == false) {
                             javafx.application.Platform.runLater(() -> {
                                 lblMessage.setTextFill(Color.RED);
-                                lblMessage.setText("Tài khoản của bạn đang chờ được xác thực.");
+                                lblMessage.setText("Tài khoản chưa được xác thực. Vui lòng kiểm tra email để lấy mã OTP.");
                             });
                             pause.setOnFinished(e -> NavigationUtil.switchToOtpScreen(event, loggedInUser.getEmail()));
                             pause.play();
                             return;
                         }
-
+                        Platform.runLater(() -> {
+                            lblMessage.setTextFill(Color.GREEN);
+                            lblMessage.setText(responseMessage.getMessage());
+                        });
                         pause.setOnFinished(e -> handleSwitchToHomePage(loggedInUser));
                         pause.play();
                     } else {
