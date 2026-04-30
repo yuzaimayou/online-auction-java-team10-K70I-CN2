@@ -245,4 +245,11 @@ public class Auction {
                 ", winner='" + winnerId + '\'' +
                 '}';
     }
+    public String getHighestBidderId() {
+        if (bidHistory.isEmpty()) {
+            return null;
+        }
+
+        return bidHistory.get(bidHistory.size() - 1).getBidderId();
+    }
 }
