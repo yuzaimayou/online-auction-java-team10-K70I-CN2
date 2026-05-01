@@ -1,13 +1,16 @@
 /* --- NỀN CƠ BẢN --- */
 .root-container {
     -fx-background-color: #F8FAFC;
- }
+}
 
 .root {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-background-color: transparent;
 }
-.main-bg { -fx-background-color: transparent; }
+
+.main-bg {
+    -fx-background-color: transparent;
+}
 
 /* --- FORM CARD & HEADER (Thiết kế mới) --- */
 .form-card-modern {
@@ -47,6 +50,7 @@
     -fx-min-height: 32px;
     -fx-cursor: hand;
 }
+
 .btn-close-modern:hover {
     -fx-background-color: #F1F5F9;
     -fx-text-fill: #0F172A;
@@ -79,7 +83,10 @@
     -fx-background-color: #F8FAFC;
     -fx-cursor: hand;
 }
-.btn-add-photo-small:hover { -fx-background-color: #F1F5F9; }
+
+.btn-add-photo-small:hover {
+    -fx-background-color: #F1F5F9;
+}
 
 .item-title-large {
     -fx-font-size: 26px;
@@ -144,9 +151,19 @@
     -fx-font-size: 14px;
     -fx-text-fill: #1E293B;
 }
+
 .input-modern:focused {
     -fx-border-color: #3B82F6;
     -fx-border-width: 1.5px;
+}
+
+/* Ẩn nền nút mũi tên của ComboBox để giao diện phẳng hơn */
+.input-modern .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.input-modern .arrow {
+    -fx-background-color: #64748B;
 }
 
 /* --- RICH TEXT EDITOR FAKE --- */
@@ -156,6 +173,7 @@
     -fx-background-radius: 8px;
     -fx-background-color: #FFFFFF;
 }
+
 .editor-toolbar {
     -fx-background-color: #F8FAFC;
     -fx-padding: 10 15 10 15;
@@ -163,19 +181,31 @@
     -fx-border-width: 0 0 1 0;
     -fx-background-radius: 8px 8px 0 0;
 }
+
 .editor-icon {
     -fx-font-size: 14px;
     -fx-text-fill: #64748B;
     -fx-cursor: hand;
 }
+
+.editor-icon:hover {
+    -fx-text-fill: #1E293B;
+}
+
 .editor-textarea {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-padding: 5;
     -fx-font-size: 14px;
 }
-.editor-textarea .content { -fx-background-color: transparent; }
-.editor-textarea:focused .content { -fx-background-color: transparent; }
+
+.editor-textarea .content {
+    -fx-background-color: transparent;
+}
+
+.editor-textarea:focused .content {
+    -fx-background-color: transparent;
+}
 
 /* --- DATE PICKER MODERN --- */
 .date-picker-modern {
@@ -184,14 +214,21 @@
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
+
 .date-picker-modern > .text-field {
     -fx-background-color: transparent;
     -fx-padding: 12 15 12 15;
     -fx-font-size: 14px;
 }
+
 .date-picker-modern > .arrow-button {
     -fx-background-color: transparent;
     -fx-padding: 0 10 0 10;
+}
+
+.date-picker-modern:focused {
+    -fx-border-color: #3B82F6;
+    -fx-border-width: 1.5px;
 }
 
 /* --- ACTION BUTTONS --- */
@@ -206,7 +243,11 @@
     -fx-padding: 10 25 10 25;
     -fx-cursor: hand;
 }
-.btn-cancel-modern:hover { -fx-background-color: #F8FAFC; }
+
+.btn-cancel-modern:hover {
+    -fx-background-color: #F8FAFC;
+    -fx-text-fill: #0F172A;
+}
 
 .btn-save-modern {
     -fx-background-color: #3B82F6;
@@ -217,15 +258,37 @@
     -fx-padding: 10 25 10 25;
     -fx-cursor: hand;
 }
-.btn-save-modern:hover { -fx-background-color: #2563EB; }
 
-/* Scrollpane tinh chỉnh cho mượt */
+.btn-save-modern:hover {
+    -fx-background-color: #2563EB;
+}
+
+/* --- CUSTOM SCROLLPANE --- */
+.custom-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
 .custom-scroll .scroll-bar:vertical {
     -fx-pref-width: 8px;
     -fx-background-color: transparent;
 }
-.custom-scroll .scroll-bar:vertical .track { -fx-background-color: transparent; }
+
+.custom-scroll .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
 .custom-scroll .scroll-bar:vertical .thumb {
     -fx-background-color: #CBD5E1;
     -fx-background-radius: 10px;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #94A3B8;
+}
+
+/* Ẩn hai nút mũi tên cuộn lên/xuống để thanh cuộn nhìn hiện đại hơn */
+.custom-scroll .scroll-bar:vertical .increment-button,
+.custom-scroll .scroll-bar:vertical .decrement-button {
+    -fx-pref-height: 0px;
 }
