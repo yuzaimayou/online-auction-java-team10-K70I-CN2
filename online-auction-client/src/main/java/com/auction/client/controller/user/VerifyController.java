@@ -86,7 +86,7 @@ public class VerifyController {
                     if ("success".equals(responseMessage.getStatus())) {
                         PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(0.5));
                         if (UserSession.getInstance().getLoggedInUser() != null) {
-                            pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage, UserSession.getInstance().getLoggedInUser()));
+                            pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         } else {
                             pause.setOnFinished(e -> handleSwitchToLogin(event));
                         }
