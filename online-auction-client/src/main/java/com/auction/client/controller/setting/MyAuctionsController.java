@@ -141,6 +141,7 @@ public class MyAuctionsController {
                     getClass().getResource("/com.auction.client/fxml/ProductEdit.fxml")
             );
             Parent root = loader.load();
+            SettingController.targetTab = "MyAuctions";
 
             Node sourceNode = (Node) event.getSource();
             Scene currentScene = sourceNode.getScene();
