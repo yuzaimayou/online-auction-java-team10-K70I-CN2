@@ -156,3 +156,84 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, 0, 8);
     -fx-translate-y: -5px;
 }
+
+/* Auction Card */
+.auction-card {
+    -fx-background-color: white;
+    -fx-background-radius: 20px; /* Bo góc lớn hiện đại */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 15, 0, 0, 5);
+    -fx-pref-width: 280px;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-transition: all 0.3s ease-in-out;
+}
+
+.auction-card:hover {
+    -fx-translate-y: -8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.12), 20, 0, 0, 10);
+}
+
+/* Container ảnh */
+.image-container {
+    -fx-background-color: #F4F4F4;
+    -fx-background-radius: 20px 20px 0 0;
+    -fx-padding: 15;
+    -fx-min-height: 250px;
+    -fx-alignment: center;
+}
+
+/* Nội dung thông tin */
+.content-container {
+    -fx-padding: 20;
+    -fx-spacing: 12;
+}
+
+.product-name {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1A1A1B;
+}
+
+.status-badge {
+    -fx-background-color: #E8F5E9;
+    -fx-text-fill: #2E7D32;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10;
+    -fx-background-radius: 5px;
+}
+
+/* Lưới thông tin Giá và Thời gian */
+.info-grid {
+    -fx-border-color: #F0F0F0 transparent transparent transparent;
+    -fx-border-width: 1px;
+    -fx-padding: 15 0 0 0;
+}
+
+.info-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #8E8E93;
+    -fx-font-weight: 600;
+}
+
+.info-icon {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2ecc71;
+}
+
+.info-value-price {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111111;
+}
+
+.info-value-time {
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #111111;
+}
+
+.info-sub-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #999999;
+}

@@ -53,7 +53,7 @@ public class AutoBiddingService {
     }
 
     public void triggerAutoBids(String auctionId, BiddingService biddingService) throws Exception {
-        lock.readLock().lock();
+        lock.writeLock().lock();
         try {
             List<AutoBid> autoBids = auctionAutoBidsMap.get(auctionId);
             if (autoBids == null || autoBids.isEmpty()) {
@@ -62,42 +62,61 @@ public class AutoBiddingService {
 
             Auction auction = biddingService.getAuction(auctionId);
             double currentPrice = auction.getItem().getHighestCurrentPrice();
+            String currentWinnerId = auction.getHighestBidderId();
 
             autoBids.sort(Comparator.comparing(AutoBid::getRegisteredAt));
 
-            for (AutoBid autoBid : autoBids) {
-                if (!autoBid.isActive()) {
-                    continue;
-                }
+            boolean hasNewBid;
+            int loopGuard = 0;
 
-                try {
-                    double nextBidAmount = autoBid.calculateNextBidAmount(currentPrice);
-
-                    if (nextBidAmount <= currentPrice) {
-                        autoBid.setActive(false);
-                        System.out.println("Auto-bid reached max limit: " + autoBid.getAutoBidId());
+            do {
+                hasNewBid = false;
+                for (AutoBid autoBid : autoBids) {
+                    if (!autoBid.isActive()) {
                         continue;
                     }
 
-                    User bidder = new User(autoBid.getBidderId(), "bidder", "pass");
-                    bidder.setBalance(autoBid.getMaxBid());
+                    if (autoBid.getBidderId().equals(currentWinnerId)) continue;
 
-                    BidTransaction bid = biddingService.placeBid(
-                            auctionId, bidder, nextBidAmount);
-                    bid.setAutoBid(true);
+                    double nextBidAmount = currentPrice + autoBid.getIncrement();
 
-                    System.out.println("Auto-bid executed: " + autoBid.getAutoBidId() +
+                    if (nextBidAmount > autoBid.getMaxBid()) {
+                        autoBid.setActive(false);
+                        continue;
+                    }
+
+                    try {
+
+                        User bidder = new User(autoBid.getBidderId(), "bidder", "pass");
+
+                        BidTransaction bid = biddingService.placeBid(
+                                auctionId, bidder, nextBidAmount);
+                        bid.setAutoBid(true);
+
+                        System.out.println("Auto-bid executed: " + autoBid.getAutoBidId() +
                             " | Amount: " + nextBidAmount);
 
-                    currentPrice = nextBidAmount;
+                        currentPrice = nextBidAmount;
+                        currentWinnerId = bidder.getId();
+                        hasNewBid = true;
 
-                } catch (Exception e) {
-                    System.out.println("Auto-bid failed: " + e.getMessage());
-                    autoBid.setActive(false);
+                        // Gửi realtime về client
+                        biddingService.broadcastNewBid(auctionId, bid);
+                        // Delay nhẹ chống spam
+                        Thread.sleep(50);
+
+
+                    } catch (Exception e) {
+                        System.out.println("Auto-bid failed: " + e.getMessage());
+                        autoBid.setActive(false);
+                    }
                 }
-            }
+
+                loopGuard++;
+            } while (hasNewBid && loopGuard < 20); // Loop cạnh tranh + chống loop vô hạn
+
         } finally {
-            lock.readLock().unlock();
+            lock.writeLock().unlock();
         }
     }
 

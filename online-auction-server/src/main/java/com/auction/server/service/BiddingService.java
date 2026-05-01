@@ -163,4 +163,8 @@ public class BiddingService {
         }
         return active;
     }
+
+    public void broadcastNewBid(String auctionId, BidTransaction bid) {
+        System.out.println("Broadcasting new bid: " + bid.getBidAmount());
+    }
 }
