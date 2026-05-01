@@ -49,6 +49,7 @@ public class SettingController {
             profileInfoBtn.setSelected(true);
             loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
         }
+        targetTab = "ProfileInfo";
     }
 
     private void loadPage(String fxmlPath) {
@@ -72,20 +73,16 @@ public class SettingController {
 
     @FXML
     public void handleProfileInfo(ActionEvent event) {
-        targetTab = "ProfileInfo"; // ---> CODE MỚI: Lưu lại trạng thái
         loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
     }
 
     @FXML
     public void handleMyAuctions(ActionEvent event) {
-        targetTab = "MyAuctions"; // ---> CODE MỚI: Lưu lại trạng thái
         loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
     }
 
     @FXML
     public void handleHistoryBid(ActionEvent event) {
-        targetTab = "HistoryBid"; // ---> CODE MỚI: Lưu lại trạng thái
-        // loadPage("/com.auction.client/fxml/setting/HistoryBidPage.fxml");
     }
 
     @FXML
