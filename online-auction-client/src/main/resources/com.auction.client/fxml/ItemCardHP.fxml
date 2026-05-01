@@ -1,26 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.ItemCardHPController"
-      styleClass="auction-card" onMouseClicked="#handleSwitchToProductPage"
-      style="-fx-cursor: hand;">
-    <StackPane styleClass="card-image-placeholder">
-        <ImageView fx:id="productImage" fitWidth="280.0" fitHeight="250.0"
-                   preserveRatio="true"/>
+      styleClass="auction-card"
+      onMouseClicked="#handleSwitchToProductPage">
+
+    <StackPane styleClass="image-container">
+        <ImageView fx:id="productImage" fitWidth="260.0" fitHeight="240.0"
+                   preserveRatio="true" />
     </StackPane>
-    <VBox styleClass="card-content">
-        <Label fx:id="productNameLabel" styleClass="card-title" text="IPhone 17 Pro Max 2025"/>
-        <Label fx:id="statusLabel" styleClass="live-badge" text="Auction is live"/>
-        <Label fx:id="endTimeLabel" styleClass="card-info" text="Ends at: 28/03/2026 18:00PM"/>
-        <Label fx:id="priceLabel" styleClass="card-info" text="Starting Price: 20.000.000 VNĐ"/>
+
+    <VBox styleClass="content-container">
+        <Label fx:id="productNameLabel" styleClass="product-name" text="IPhone 17 Pro Max 2025"/>
+
+        <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>
+
+        <HBox styleClass="info-grid">
+            <VBox styleClass="info-column" HBox.hgrow="ALWAYS">
+                <HBox spacing="5" alignment="CENTER_LEFT">
+                    <Label styleClass="info-icon" text="＄"/>
+                    <Label styleClass="info-label" text="CURRENT BID"/>
+                </HBox>
+                <Label fx:id="priceLabel" styleClass="info-value-price" text="20.000.000 VNĐ"/>
+            </VBox>
+
+            <VBox styleClass="info-column" alignment="TOP_RIGHT">
+                <HBox spacing="5" alignment="CENTER_RIGHT">
+                    <Label styleClass="info-icon" text="🕒"/>
+                    <Label styleClass="info-label" text="TIME LEFT"/>
+                </HBox>
+                <Label fx:id="endTimeLabel" styleClass="info-value-time" text="02d 15h 38m"/>
+                <Label fx:id="fullEndDateLabel" styleClass="info-sub-label" text="Ends on Jun 25, 2024"/>
+            </VBox>
+        </HBox>
     </VBox>
 </VBox>
-
-
-
