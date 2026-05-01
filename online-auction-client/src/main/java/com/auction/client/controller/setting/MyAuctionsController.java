@@ -1,6 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.service.ItemsService;
+import com.auction.client.util.AppConfig;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
@@ -48,8 +49,7 @@ public class MyAuctionsController {
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
                         // Xử lý hiển thị sản phẩm ở đây
                         Type listType = new TypeToken<List<Item>>() {
-                        }
-                                .getType();
+                        }.getType();
                         List<Item> items = gson.fromJson(responseMessage.getData(), listType);
                         javafx.application.Platform.runLater(() -> {
                             // Cập nhật giao diện với danh sách sản phẩm
@@ -69,11 +69,6 @@ public class MyAuctionsController {
                     System.err.println("Lỗi khi gửi yêu cầu lấy danh sách sản phẩm: " + e.getMessage());
                     return null;
                 });
-    }
-
-    @FXML
-    private void handleMyAuctions(ActionEvent event) {
-        myAuctionsBtn.setSelected(true);
     }
 
 
@@ -105,7 +100,7 @@ public class MyAuctionsController {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Product Edit");
+            stage.setTitle(String.format("%s - Product Edit", AppConfig.getAppName()));
 
         } catch (IOException e) {
             e.printStackTrace();
