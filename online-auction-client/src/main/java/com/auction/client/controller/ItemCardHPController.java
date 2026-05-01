@@ -61,7 +61,7 @@ public class ItemCardHPController {
 
     private String formatPrice(double price) {
         NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
-        return "$" + formatter.format(price) + " USD";
+        return "$ " + formatter.format(price) + " USD";
     }
 
     private String formatTimeLeft(LocalDateTime endTime) {
