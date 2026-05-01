@@ -1,16 +1,10 @@
 package com.auction.client.controller;
 
-import com.auction.client.service.NetworkService;
+import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class NavBarController {
     private User user = UserSession.getInstance().getLoggedInUser();
@@ -23,30 +17,10 @@ public class NavBarController {
     }
 
     public void handleSwitchToHome() {
-        try {
-            NetworkService.getInstance().leaveRoom();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
-            Parent root = loader.load();
-            Scene currentScene = userName.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-            currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - HomePage");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        NavigationUtil.handleSwitchToHomePage(userName);
     }
 
     public void handleSwitchToSetting() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/Setting.fxml"));
-            Parent root = loader.load();
-
-            Scene currentScene = userName.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-            currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Profile Page");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        NavigationUtil.handleSwitchToSetting(userName);
     }
 }

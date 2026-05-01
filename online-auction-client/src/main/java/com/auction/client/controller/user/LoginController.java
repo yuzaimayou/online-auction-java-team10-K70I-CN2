@@ -67,7 +67,7 @@ public class LoginController {
                             lblMessage.setTextFill(Color.GREEN);
                             lblMessage.setText(responseMessage.getMessage());
                         });
-                        pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage, loggedInUser));
+                        pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         pause.play();
                     } else {
                         javafx.application.Platform.runLater(() -> {

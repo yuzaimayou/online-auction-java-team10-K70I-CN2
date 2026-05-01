@@ -241,7 +241,7 @@ public class AuctionFormController {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Homepage");
+            stage.setTitle(String.format("%s - Homepage", AppConfig.getAppName()));
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("The HomePage.fxml file was not found! Please check the path again.");

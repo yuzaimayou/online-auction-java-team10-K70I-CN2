@@ -24,7 +24,7 @@ public class SettingController {
     }
 
     @FXML
-    private void handleProfileInfo(ActionEvent event) {
+    public void handleProfileInfo(ActionEvent event) {
         dynamicContent.getChildren().clear();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/ProfilePage.fxml"));
@@ -39,7 +39,7 @@ public class SettingController {
     }
 
     @FXML
-    private void handleMyAuctions(ActionEvent event) {
+    public void handleMyAuctions(ActionEvent event) {
         dynamicContent.getChildren().clear();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/MyAuctionsPage.fxml"));
@@ -53,7 +53,7 @@ public class SettingController {
     }
 
     @FXML
-    private void handleHistoryBid(ActionEvent event) {
+    public void handleHistoryBid(ActionEvent event) {
 
     }
 
