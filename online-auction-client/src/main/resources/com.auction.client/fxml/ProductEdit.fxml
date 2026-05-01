@@ -170,50 +170,41 @@
                             </VBox>
                         </HBox>
                         <VBox spacing="15.0">
-                            <children>
-                                <Label styleClass="field-label" text="Images"/>
-                                <HBox fx:id="imageContainer" alignment="CENTER_LEFT" spacing="20.0">
-                                    <children>
-                                        <StackPane styleClass="image-wrapper, main-image">
-                                            <children>
-                                                <ImageView fitHeight="120.0" fitWidth="180.0" pickOnBounds="true">
-                                                    <image>
-                                                        <Image url="@../assets/macbook.jpg"/>
-                                                    </image>
-                                                </ImageView>
-                                                <Label styleClass="main-badge" text="★ Main"
-                                                       StackPane.alignment="BOTTOM_LEFT"/>
-                                                <ToggleButton mnemonicParsing="false" styleClass="delete-btn" text="×"
-                                                              StackPane.alignment="TOP_RIGHT">
-                                                    <StackPane.margin>
-                                                        <Insets right="-8.0" top="-8.0"/>
-                                                    </StackPane.margin>
-                                                </ToggleButton>
-                                            </children>
-                                        </StackPane>
+                            <Label styleClass="field-label" text="Images"/>
+                            <HBox fx:id="imageContainer" alignment="CENTER_LEFT" spacing="20.0">
+                                <StackPane styleClass="image-wrapper, main-image">
+                                    <ImageView fitHeight="120.0" fitWidth="180.0" pickOnBounds="true">
+                                        <image>
+                                            <Image url="@../assets/macbook.jpg"/>
+                                        </image>
+                                    </ImageView>
+                                    <Label styleClass="main-badge" text="★ Main"
+                                           StackPane.alignment="BOTTOM_LEFT"/>
+                                    <ToggleButton mnemonicParsing="false" styleClass="delete-btn" text="×"
+                                                  StackPane.alignment="TOP_RIGHT">
+                                        <StackPane.margin>
+                                            <Insets right="-8.0" top="-8.0"/>
+                                        </StackPane.margin>
+                                    </ToggleButton>
+                                </StackPane>
 
-                                        <VBox alignment="CENTER" minHeight="120.0" minWidth="180.0" spacing="8.0"
-                                              styleClass="add-photo-btn">
-                                            <children>
-                                                <Label style="-fx-font-size: 28; -fx-text-fill: #999;" text="+"/>
-                                                <Label styleClass="add-text" text="Add Photos"/>
-                                            </children>
-                                        </VBox>
-                                    </children>
-                                    <padding>
-                                        <Insets bottom="10.0" top="10.0"/>
-                                    </padding>
-                                </HBox>
-                            </children>
+                                <VBox alignment="CENTER" minHeight="120.0" minWidth="180.0" spacing="8.0"
+                                      styleClass="add-photo-btn">
+                                    <Label style="-fx-font-size: 28; -fx-text-fill: #999;" text="+"/>
+                                    <Label styleClass="add-text" text="Add Photos"/>
+                                </VBox>
+                                <padding>
+                                    <Insets bottom="10.0" top="10.0"/>
+                                </padding>
+                            </HBox>
+
                         </VBox>
 
                         <HBox alignment="CENTER_RIGHT" spacing="20.0">
-                            <children>
-                                <ToggleButton mnemonicParsing="false" prefHeight="55.0" prefWidth="180.0"
-                                              styleClass="btn-cancel" text="Cancel"/>
-                                <ToggleButton mnemonicParsing="false" prefHeight="55.0" prefWidth="220.0"
-                                              styleClass="btn-save" text="Save Changes"/>
-                            </children>
+                            <ToggleButton mnemonicParsing="false" prefHeight="55.0" prefWidth="180.0"
+                                          styleClass="btn-cancel" text="Cancel"/>
+                            <ToggleButton mnemonicParsing="false" prefHeight="55.0" prefWidth="220.0"
+                                          styleClass="btn-save" text="Save Changes"/>
                             <padding>
                                 <Insets top="20.0"/>
                             </padding>

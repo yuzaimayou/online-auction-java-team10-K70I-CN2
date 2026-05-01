@@ -6,31 +6,54 @@ import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class MyAuctionsController {
     private ItemsService itemsService = ItemsService.getInstance();
+    private final DateTimeFormatter multiLineFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy\nHH:mm a");
     private Gson gson = new GsonUtil().getInstance();
-
     @FXML
     private ToggleButton profileInfoBtn;
-
     @FXML
     private ToggleButton myAuctionsBtn;
-
     @FXML
     private ToggleButton historyBidBtn;
+
+    @FXML
+    private TableView<Item> auctionTable;
+    @FXML
+    private TableColumn<Item, Item> productCol;
+    @FXML
+    private TableColumn<Item, String> categoryCol;
+    @FXML
+    private TableColumn<Item, String> statusCol;
+    @FXML
+    private TableColumn<Item, String> priceCol;
+    @FXML
+    private TableColumn<Item, LocalDateTime> endTimeCol;
+    @FXML
+    private TableColumn<Item, Item> actionCol;
+
+    private ObservableList<Item> masterData = FXCollections.observableArrayList();
 
 
     @FXML
@@ -38,8 +61,28 @@ public class MyAuctionsController {
         if (myAuctionsBtn != null) {
             myAuctionsBtn.setSelected(true);
         }
-        displayItems();
+        auctionTable.setSelectionModel(null);
 
+        javafx.application.Platform.runLater(() -> {
+            javafx.scene.Node header = auctionTable.lookup(".column-header-background");
+            if (header != null) {
+                header.setMouseTransparent(true);
+            }
+        });
+
+        // ================= GỌI HELPER ĐỂ SETUP BẢNG =================
+        // Truyền các cột và reference của hàm handleSwitchToProductEdit sang helper
+        MyAuctionsTableHelper.setupTableColumns(
+                productCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
+                this::handleSwitchToProductEdit
+        );
+
+        displayItems();
+    }
+
+
+    private void handleEditItem(Item item) {
+        System.out.println("Đang chỉnh sửa: " + item.getName());
     }
 
     private void displayItems() {
@@ -52,6 +95,10 @@ public class MyAuctionsController {
                         }.getType();
                         List<Item> items = gson.fromJson(responseMessage.getData(), listType);
                         javafx.application.Platform.runLater(() -> {
+
+                            masterData.setAll(items);
+                            auctionTable.setItems(masterData);
+
                             // Cập nhật giao diện với danh sách sản phẩm
                             // Ví dụ: hiển thị tên sản phẩm đầu tiên
                             if (!items.isEmpty()) {
