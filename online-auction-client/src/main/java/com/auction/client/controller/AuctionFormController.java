@@ -1,8 +1,8 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.ProductPayload;
 import com.auction.shared.util.ImageUtil;
 import com.auction.shared.util.LocalDateTimeAdapter;
@@ -30,10 +30,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -76,6 +73,7 @@ public class AuctionFormController {
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
+    private final ItemsService itemsService = ItemsService.getInstance();
 
 
     @FXML
@@ -198,17 +196,8 @@ public class AuctionFormController {
             System.out.println("Debug: Sending POST request to " + httpUrl);
 
             HttpClient httpClient = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(String.format("%s/api/add-product", AppConfig.getHttpUrl())))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                    .build();
-
-            httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApply(HttpResponse::body)
-                    .thenAccept(responseBody -> {
-                        ResponseMessage responseMessage = gson.fromJson(responseBody, ResponseMessage.class);
-
+            itemsService.createItem(jsonPayload)
+                    .thenAccept(responseMessage -> {
                         if ("success".equals(responseMessage.getStatus())) {
                             Platform.runLater(() -> {
                                 lblMessage.setTextFill(Color.GREEN);
@@ -226,14 +215,12 @@ public class AuctionFormController {
                     })
                     .exceptionally(e -> {
                         e.printStackTrace();
-                        javafx.application.Platform.runLater(() -> {
-                            ;
+                        Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText("Failed to connect to server");
                         });
                         return null;
                     });
-
 
         } catch (IOException e) {
             lblMessage.setTextFill(Color.RED);
@@ -254,7 +241,7 @@ public class AuctionFormController {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Homepage");
+            stage.setTitle(String.format("%s - Homepage", AppConfig.getAppName()));
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("The HomePage.fxml file was not found! Please check the path again.");
@@ -285,6 +272,7 @@ public class AuctionFormController {
             updateUI();
         }
     }
+
     private void updateUI() {
         if (selectedFiles.isEmpty()) {
             dragDropArea.setVisible(true);

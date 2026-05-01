@@ -14,10 +14,11 @@ public class ProductService {
     private Gson gson = GsonUtil.getInstance();
 
     public ProductService() {
+
         this.itemRepository = new ItemRepository();
     }
 
-    public boolean addProduct(ProductPayload productData) {
+    public Item setItem(ProductPayload productData) {
         String productName = productData.getProductName();
         String category = productData.getCategory();
         LocalDateTime startTime = productData.getStartDateTime();
@@ -27,11 +28,10 @@ public class ProductService {
         Double initPrice = productData.getInitPrice();
         Double bidStep = productData.getBidStep();
 
-
         String userId = productData.getUserId();
-
         String imagePath = ImageUtil.convertBase64ToImg(productImg[0], productImg[1]);
-        Item newItem = new Item(
+
+        return new Item(
                 productName,
                 productDesc,
                 initPrice,
@@ -42,7 +42,19 @@ public class ProductService {
                 bidStep,
                 imagePath
         );
+    }
 
-        return itemRepository.createItem(newItem);
+    public boolean addProduct(ProductPayload productData) {
+        Item item = setItem(productData);
+        return itemRepository.createItem(item);
+    }
+
+    public boolean updateProduct(ProductPayload productData, String itemId) {
+        Item item = setItem(productData);
+        return itemRepository.updateItem(item, itemId);
+    }
+
+    public boolean deleteProduct(String itemId) {
+        return itemRepository.deleteItem(itemId);
     }
 }

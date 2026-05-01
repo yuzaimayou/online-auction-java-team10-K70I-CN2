@@ -56,6 +56,75 @@ public class ItemRepository {
         }
     }
 
+    public boolean updateItem(Item item, String itemId) {
+        String sql = """
+                UPDATE items SET 
+                    name = ?, 
+                    description = ?, 
+                    start_price = ?, 
+                    current_price = ?, 
+                    seller_id = ?, 
+                    start_time = ?, 
+                    end_time = ?, 
+                    category = ?, 
+                    bid_step = ?, 
+                    image_path = ?
+                WHERE id = ?
+                """;
+
+        try (
+                Connection conn = DatabaseConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            // Set các tham số cần cập nhật (Thứ tự từ 1 đến 10)
+            stmt.setString(1, item.getName());
+            stmt.setString(2, item.getDescription());
+            stmt.setDouble(3, item.getStartingPrice());
+            stmt.setDouble(4, item.getHighestCurrentPrice());
+            stmt.setString(5, item.getSellerId());
+            stmt.setString(6, item.getStartTime().toString());
+            stmt.setString(7, item.getEndTime().toString());
+            stmt.setString(8, item.getCategory());
+            stmt.setDouble(9, item.getBidStep());
+            stmt.setString(10, item.getImagePath());
+
+            // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
+            stmt.setString(11, itemId);
+
+            // executeUpdate() trả về số dòng bị ảnh hưởng.
+            // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteItem(String id) {
+        String sql = """
+                DELETE FROM items
+                WHERE id = ?
+                """;
+
+        try (
+                Connection conn = DatabaseConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            // Set tham số ID cần xóa
+            stmt.setString(1, id);
+
+            // Nếu xóa thành công (ID có tồn tại), rowsAffected sẽ > 0
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public Item findById(String itemId) {
 
         String sql = "SELECT * FROM items WHERE id = ?";
@@ -238,4 +307,5 @@ public class ItemRepository {
             return false;
         }
     }
+
 }
