@@ -25,12 +25,12 @@
         <TextField fx:id="txtCode6" styleClass="otp-box"/>
     </HBox>
 
-    <Button text="Xác nhận" onAction="#handleVerify" prefWidth="320.0" prefHeight="45.0"
+    <Button text="Submit" onAction="#handleVerify" defaultButton="true" prefWidth="320.0" prefHeight="45.0"
             style="-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px;"/>
 
     <HBox alignment="CENTER" spacing="5.0">
-        <Label text="Chưa nhận được mã?" style="-fx-text-fill: #666666;"/>
-        <Button text="Gửi lại" onAction="#handleResend" style="-fx-text-fill: #000000; -fx-font-weight: bold;"/>
+        <Label text="Didn't receive the code?" style="-fx-text-fill: #666666;"/>
+        <Button text="Resend" onAction="#handleResend" style="-fx-text-fill: #000000; -fx-font-weight: bold;"/>
     </HBox>
 
 </VBox>

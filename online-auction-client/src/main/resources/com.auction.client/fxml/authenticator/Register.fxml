@@ -88,7 +88,8 @@
         </VBox>
 
 
-        <Button onAction="#handleRegister" mnemonicParsing="false" styleClass="submitButton" id="registerSubmit"
+        <Button onAction="#handleRegister" defaultButton="true" mnemonicParsing="false" styleClass="submitButton"
+                id="registerSubmit"
                 prefHeight="58.0" prefWidth="463.0" text="Creating account >">
             <VBox.margin>
                 <Insets top="10.0"/>

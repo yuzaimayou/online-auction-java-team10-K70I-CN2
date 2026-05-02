@@ -18,6 +18,9 @@ public class Item extends Entity {
     private double bidStep;
     private String imagePath;
     private String currentTopPLayerId;
+    private String status;
+    private LocalDateTime create_at;
+
 
     // Constructor khi tạo item mới
     public Item(String name, String description,
@@ -75,6 +78,17 @@ public class Item extends Entity {
         this.category = category;
         this.bidStep = bidStep;
         this.imagePath = imagePath;
+        this.create_at = LocalDateTime.now();
+
+        if (LocalDateTime.now().isBefore(startTime)) {
+            this.status = "PENDING";
+        } else if (LocalDateTime.now().isBefore(endTime) || LocalDateTime.now().isEqual(startTime)) {
+            this.status = "LIVE";
+        } else if (LocalDateTime.now().isAfter(endTime) || LocalDateTime.now().isEqual(endTime)) {
+            this.status = "ENDED";
+        } else {
+            this.status = "ERROR";
+        }
     }
 
     // Constructor khi load tu database
@@ -170,6 +184,18 @@ public class Item extends Entity {
 
     public void setCurrentTopPLayerId(String playerId) {
         currentTopPLayerId = playerId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreate_at() {
+        return create_at;
     }
 
     public void printItemDetails() {
