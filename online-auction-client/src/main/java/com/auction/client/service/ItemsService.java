@@ -4,6 +4,7 @@ import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
+import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 
 import java.net.URI;
@@ -17,7 +18,7 @@ public class ItemsService {
     private static ItemsService instance;
     private User loggedInUser = UserSession.getInstance().getLoggedInUser();
     private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonUtil().getInstance();
 
     public static ItemsService getInstance() {
         if (instance == null) {
