@@ -1,5 +1,6 @@
 package com.auction.client.controller.setting;
 
+import com.auction.client.util.ClientImageUtil;
 import com.auction.shared.model.product.Item;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -40,41 +41,37 @@ public class MyAuctionsTableHelper {
 
         // PRODUCT
         productCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
-        productCol.setCellFactory(column -> new TableCell<Item, Item>() {
+        productCol.setCellFactory(param -> new TableCell<>() {
             @Override
             protected void updateItem(Item item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
+                    setText(null);
                 } else {
-                    HBox container = new HBox(12);
-                    container.setAlignment(Pos.CENTER_LEFT);
+                    // Tạo khung chứa ảnh
+                    ImageView imageView = new ImageView();
+                    imageView.setFitWidth(50); // Chỉnh chiều rộng ảnh thumbnail
+                    imageView.setFitHeight(50);
+                    imageView.setPreserveRatio(true);
 
-                    ImageView img = new ImageView();
-                    img.setFitWidth(50);
-                    img.setFitHeight(50);
-                    img.setPreserveRatio(true);
-
-                    String path = item.getImagePath();
-                    try {
-                        if (path != null && !path.trim().isEmpty()) {
-                            String imageUri = path.trim();
-                            if (!imageUri.startsWith("http") && !imageUri.startsWith("file:")) {
-                                imageUri = "file:" + imageUri;
-                            }
-                            img.setImage(new Image(imageUri, true));
-                        } else {
-                            img.setImage(null);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Không thể tải ảnh từ: " + path);
+                    // GỌI HÀM TẢI ẢNH CỦA BẠN
+                    // Tham số "images" là tên thư mục chứa ảnh trên Server
+                    if (item.getImagePath() != null && !item.getImagePath().isEmpty()) {
+                        ClientImageUtil.displayImage(item.getImagePath(), "images", imageView);
                     }
 
+                    // Tên sản phẩm
                     Label nameLabel = new Label(item.getName());
-                    nameLabel.getStyleClass().add("product-name-label");
+                    nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #333333;");
 
-                    container.getChildren().addAll(img, nameLabel);
-                    setGraphic(container);
+                    // Gộp ảnh và tên vào 1 hàng ngang (HBox)
+                    HBox hBox = new HBox(15); // Khoảng cách giữa ảnh và chữ là 15
+                    hBox.setAlignment(Pos.CENTER_LEFT);
+                    hBox.getChildren().addAll(imageView, nameLabel);
+
+                    setGraphic(hBox);
+                    setText(null);
                 }
             }
         });
