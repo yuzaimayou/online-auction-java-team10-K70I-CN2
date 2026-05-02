@@ -35,6 +35,11 @@ public class LoginController {
     private Gson gson = new Gson();
 
     @FXML
+    public void initialize() {
+
+    }
+
+    @FXML
     protected void handleLogin(ActionEvent event) {
         String username = txtUsername.getText().trim();
         String password = txtPassword.getText();

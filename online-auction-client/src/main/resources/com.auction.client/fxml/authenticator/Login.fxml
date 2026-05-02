@@ -36,7 +36,8 @@
             <PasswordField fx:id="txtPassword" prefHeight="43.0" styleClass="textBox" promptText=""/>
         </VBox>
 
-        <Button onAction="#handleLogin" mnemonicParsing="false" styleClass="submitButton" prefHeight="58.0"
+        <Button defaultButton="true" onAction="#handleLogin" mnemonicParsing="false" styleClass="submitButton"
+                prefHeight="58.0"
                 prefWidth="463.0" text="Sign in">
             <VBox.margin>
                 <Insets top="17.0"/>

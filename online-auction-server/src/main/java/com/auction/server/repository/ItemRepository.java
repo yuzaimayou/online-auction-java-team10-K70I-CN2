@@ -6,6 +6,7 @@ import com.auction.shared.model.product.Item;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,10 @@ public class ItemRepository {
                     end_time,
                     category,
                     bid_step,
-                    image_path
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?)
+                    image_path,
+                    status,
+                    create_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
 
         try (
@@ -46,6 +49,8 @@ public class ItemRepository {
             stmt.setString(9, item.getCategory());
             stmt.setDouble(10, item.getBidStep());
             stmt.setString(11, item.getImagePath());
+            stmt.setString(12, item.getStatus());
+            stmt.setString(13, item.getCreate_at().toString());
 
             stmt.executeUpdate();
             return true;
@@ -68,7 +73,9 @@ public class ItemRepository {
                     end_time = ?, 
                     category = ?, 
                     bid_step = ?, 
-                    image_path = ?
+                    image_path = ?,
+                    status=?,
+                
                 WHERE id = ?
                 """;
 
@@ -87,9 +94,10 @@ public class ItemRepository {
             stmt.setString(8, item.getCategory());
             stmt.setDouble(9, item.getBidStep());
             stmt.setString(10, item.getImagePath());
+            stmt.setString(11, item.getStatus());
 
             // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
-            stmt.setString(11, itemId);
+            stmt.setString(12, itemId);
 
             // executeUpdate() trả về số dòng bị ảnh hưởng.
             // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
@@ -306,6 +314,35 @@ public class ItemRepository {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public List<String> updateStatus() {
+        List<String> updatedId = new ArrayList<>();
+        String selectEndedSql = "SELECT id FROM items WHERE status = 'ACTIVE' AND datetime(end_time) <= datetime('now','localtime')";
+        String selectLiveSql = "SELECT id FROM items WHERE status = 'PENDING' AND datetime(start_time) <= datetime('now','localtime')";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            try (PreparedStatement ps = conn.prepareStatement(selectEndedSql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    updatedId.add(rs.getString("id"));
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(selectLiveSql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    updatedId.add(rs.getString("id"));
+                }
+            }
+
+            for (String id : updatedId) {
+
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return updatedId;
     }
 
 }
