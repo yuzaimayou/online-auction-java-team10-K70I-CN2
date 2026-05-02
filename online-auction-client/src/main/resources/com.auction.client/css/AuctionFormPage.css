@@ -123,6 +123,8 @@
     -fx-text-fill: #1E293B;
 }
 
+/* form sản phẩm*/
+
 .form-card {
     -fx-background-color: white;
     -fx-background-radius: 40;
@@ -131,13 +133,25 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 30, 0, 0, 15);
 }
 
+.close-button {
+    -fx-background-color: transparent;
+        -fx-border-color: #E2E8F0;
+        -fx-border-radius: 50%;
+        -fx-background-radius: 50%;
+        -fx-text-fill: #64748B;
+        -fx-font-size: 18px;
+        -fx-min-width: 32px;
+        -fx-min-height: 32px;
+        -fx-cursor: hand;
+
+}
+
 .field-label {
     -fx-font-family: "Segoe UI Bold";
-    -fx-font-size: 20px;
+    -fx-font-size: 24px;
     -fx-text-fill: #0F172A;
     -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-font-size: 30px;
 }
 
 .input-field {
@@ -155,28 +169,8 @@
     -fx-border-color: #3B82F6;
     -fx-border-width: 2;
 }
-.text-area {
-    -fx-pref-height: 120px;
-}
 
-.text-area .content {
-    -fx-background-color: transparent;
-}
-
-.text-area .scroll-pane {
-   -fx-hbar-policy: never;
-}
-
-/* Làm trong suốt khung nhìn (viewport) của thanh cuộn ẩn bên trong */
-.text-area .viewport {
-    -fx-background-color: transparent;
-}
-
-/* (Tùy chọn) Đảm bảo khi bạn click chuột vào nhập liệu, cái nét gạch đó không hiện lại */
-.text-area:focused .content {
-    -fx-background-color: transparent;
-}
-
+/*category*/
 .category-btn {
     -fx-min-width: 85;
     -fx-min-height: 85;
@@ -198,6 +192,29 @@
     -fx-text-fill: #475569;
 }
 
+/*desciption*/
+
+.text-area {
+    -fx-pref-height: 120px;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+.text-area .scroll-pane {
+   -fx-hbar-policy: never;
+}
+
+.text-area .viewport {
+    -fx-background-color: transparent;
+}
+
+.text-area:focused .content {
+    -fx-background-color: transparent;
+}
+
+/*ngày giờ*/
 .date-picker {
     -fx-background-color: transparent;
     -fx-border-color: #CBD5E1;
@@ -230,11 +247,10 @@
 }
 
 .time-picker {
-    -fx-background-color: #F1F5F9;
+    -fx-background-color: transparent;
     -fx-border-color: #CBD5E1;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-pref-height: 38px;
+    -fx-border-radius: 16px;
+    -fx-pref-height: 50px;
 }
 
 .time-picker .arrow-button {
@@ -245,16 +261,7 @@
     -fx-background-color: #4a5568;
 }
 
-.close-button {
-    -fx-background-color: #ffc6c6;
-    -fx-border-color: #CBD5E1;
-    -fx-padding: 0;
-    -fx-background-radius: 45em;
-    -fx-border-radius: 45em;
-    -fx-alignment: center;
-    -fx-cursor: hand;
 
-}
 
 /* Drag & Drop Image Area*/
 .image-upload-container {
@@ -340,59 +347,7 @@
     -fx-background-color: #F1F5F9;
 }
 
-.submit-button {
-    -fx-background-color: #10B981;
-    -fx-text-fill: white;
-    -fx-font-family: "Segoe UI Bold";
-    -fx-font-size: 22px;
-    -fx-background-radius: 30;
-    -fx-cursor: hand;
-}
-
-.submit-button:hover {
-    -fx-background-color: #059669;
-    -fx-scale-x: 1.03;
-    -fx-scale-y: 1.03;
-}
-
-/* 1. Chỉnh độ rộng của toàn bộ thanh cuộn dọc */
-.scroll-pane .scroll-bar:vertical {
-    -fx-pref-width: 12px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
-    -fx-background-color: transparent;
-}
-
-/* 2. Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
-.scroll-pane .scroll-bar:vertical .track {
-    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
-    -fx-border-color: transparent;
-    -fx-background-radius: 0em;
-}
-
-/* 3. Chỉnh cục lăn (Thumb - phần bạn dùng chuột cầm để kéo) */
-.scroll-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
-    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
-}
-
-/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
-.scroll-pane .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
-}
-
-/* 4. (Tùy chọn) Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn để form trông hiện đại hơn */
-.scroll-pane .scroll-bar:vertical .increment-button,
-.scroll-pane .scroll-bar:vertical .decrement-button {
-    -fx-background-color: transparent;
-    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
-    -fx-padding: 0;
-}
-
-.scroll-pane .scroll-bar:vertical .increment-arrow,
-.scroll-pane .scroll-bar:vertical .decrement-arrow {
-    -fx-shape: " "; /* Xóa hình mũi tên */
-    -fx-padding: 0;
-}
-
+/*Định nghĩa UI cho ngày */
 /* Tùy chỉnh toàn bộ khung cửa sổ lịch */
 .date-picker-popup {
     -fx-background-color: white;
@@ -483,3 +438,59 @@
     -fx-font-size: 12px;
     -fx-padding: 0 0 10px 0;
 }
+
+
+.add-button {
+    -fx-background-color: #10B981;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold";
+    -fx-font-size: 22px;
+    -fx-background-radius: 30;
+    -fx-cursor: hand;
+}
+
+.add-button:hover {
+    -fx-background-color: #059669;
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+/*thanh lăn lên xuống*/
+/* Chỉnh độ rộng của toàn bộ thanh cuộn dọc */
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 14px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
+    -fx-background-color: transparent;
+}
+
+/* Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+/* Chỉnh cục lăn  */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
+    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
+}
+
+/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
+}
+
+/* Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn  */
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " "; /* Xóa hình mũi tên */
+    -fx-padding: 0;
+}
+
