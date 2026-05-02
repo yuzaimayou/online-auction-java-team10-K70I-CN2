@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class ItemsService {
     private static ItemsService instance;
@@ -41,6 +42,16 @@ public class ItemsService {
                 .uri(URI.create(String.format("%s/api/product?action=create", AppConfig.getHttpUrl())))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    }
+
+    public CompletableFuture<ResponseMessage> updateItem(String jsonPayload) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/product?action=update", AppConfig.getHttpUrl())))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload)) // Thường dùng PUT để update dữ liệu
                 .build();
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
