@@ -49,16 +49,13 @@ public class ItemCardHPController {
     public void initialize() {
         if (imageContainer == null) return;
 
-        // 1. Tạo mặt nạ cắt phần thừa (border-radius)
         Rectangle clip = new Rectangle(280, 240);
-        clip.setArcWidth(30); // Nếu muốn bo góc nhẹ, bạn có thể tăng lên 10-15
+        clip.setArcWidth(30);
         clip.setArcHeight(30);
         imageContainer.setClip(clip);
 
-        // Tắt tính năng tự giữ tỷ lệ của JavaFX để mình tự tính bằng code
         productImage.setPreserveRatio(false);
 
-        // 2. Lắng nghe ảnh thay đổi
         productImage.imageProperty().addListener((observable, oldImage, newImage) -> {
             if (newImage != null) {
                 newImage.widthProperty().addListener((obs, oldW, newW) -> applyObjectFitCover(newImage));
