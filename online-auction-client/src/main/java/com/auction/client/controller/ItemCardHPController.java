@@ -9,8 +9,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -25,6 +28,8 @@ public class ItemCardHPController {
     private Item currentItem;
 
     @FXML
+    private StackPane imageContainer;
+    @FXML
     private ImageView productImage;
     @FXML
     private Label productNameLabel;
@@ -38,6 +43,53 @@ public class ItemCardHPController {
     private Label fullEndDateLabel;
 
     private Timeline timeline;
+
+
+    @FXML
+    public void initialize() {
+        if (imageContainer == null) return;
+
+        // 1. Tạo mặt nạ cắt phần thừa (border-radius)
+        Rectangle clip = new Rectangle(280, 240);
+        clip.setArcWidth(30); // Nếu muốn bo góc nhẹ, bạn có thể tăng lên 10-15
+        clip.setArcHeight(30);
+        imageContainer.setClip(clip);
+
+        // Tắt tính năng tự giữ tỷ lệ của JavaFX để mình tự tính bằng code
+        productImage.setPreserveRatio(false);
+
+        // 2. Lắng nghe ảnh thay đổi
+        productImage.imageProperty().addListener((observable, oldImage, newImage) -> {
+            if (newImage != null) {
+                newImage.widthProperty().addListener((obs, oldW, newW) -> applyObjectFitCover(newImage));
+                newImage.heightProperty().addListener((obs, oldH, newH) -> applyObjectFitCover(newImage));
+                applyObjectFitCover(newImage);
+            }
+        });
+    }
+
+    private void applyObjectFitCover(Image img) {
+        if (img == null) return;
+
+        double w = img.getWidth();
+        double h = img.getHeight();
+
+        if (w <= 0 || h <= 0) return;
+
+        double containerW = 280.0;
+        double containerH = 240.0;
+
+        // Tìm tỷ lệ phóng to cho chiều ngang và chiều dọc
+        double scaleX = containerW / w;
+        double scaleY = containerH / h;
+
+        // Cover: Phải lấy tỷ lệ lớn hơn để đảm bảo lấp đầy toàn bộ khung
+        double scale = Math.max(scaleX, scaleY);
+
+        // Set lại kích thước cho ảnh sau khi đã nhân tỷ lệ
+        productImage.setFitWidth(w * scale);
+        productImage.setFitHeight(h * scale);
+    }
 
     public void setData(Item item) {
         this.currentItem = item;
