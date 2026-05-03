@@ -13,9 +13,11 @@
       styleClass="auction-card"
       onMouseClicked="#handleSwitchToProductPage">
 
-    <StackPane styleClass="image-container">
-        <ImageView fx:id="productImage" fitWidth="260.0" fitHeight="240.0"
-                   preserveRatio="true" />
+    <StackPane fx:id="imageContainer" styleClass="image-container"
+               prefWidth="280.0" prefHeight="240.0"
+               minWidth="280.0" minHeight="240.0"
+               maxWidth="280.0" maxHeight="240.0">
+        <ImageView fx:id="productImage"/>
     </StackPane>
 
     <VBox styleClass="content-container">

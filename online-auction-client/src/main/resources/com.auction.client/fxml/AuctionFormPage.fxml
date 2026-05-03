@@ -4,11 +4,13 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<VBox prefHeight="850.0" prefWidth="1440.0" styleClass="root-container" stylesheets="@../css/AuctionFormPage.css"
+<?import javafx.scene.image.Image?>
+<VBox prefHeight="2000.0" prefWidth="1440.0" styleClass="root-container"
+      stylesheets="@../css/AuctionFormPage.css"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.AuctionFormController">
 
-    <fx:include source="NavBar.fxml"/>
+    <fx:include fx:id="navBar" source="NavBar.fxml"/>
 
     <StackPane VBox.vgrow="ALWAYS">
         <padding>
@@ -16,7 +18,7 @@
         </padding>
 
 
-        <VBox alignment="CENTER" maxHeight="800.0" maxWidth="1100.0" spacing="35.0" styleClass="form-card">
+        <VBox styleClass="form-card">
             <padding>
                 <Insets top="20.0" bottom="20.0" right="20.0"/>
             </padding>
@@ -31,7 +33,6 @@
                             <Label fx:id="lblMessage" text=""/>
                             <Button fx:id="btnClose" onAction="#handleSwitchToHomePage" text="✕"
                                     styleClass="close-button"
-                                    prefWidth="50.0" prefHeight="50.0"
                                     StackPane.alignment="CENTER_RIGHT">
                                 <StackPane.margin>
                                     <Insets right="0"/>
@@ -57,7 +58,11 @@
                                     <ToggleButton fx:id="btnFashion" userData="Fashion" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <Region styleClass="icon-fashion"/>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/fashion_icon.png"/>
+                                                </image>
+                                            </ImageView>
                                         </graphic>
                                     </ToggleButton>
                                     <Label styleClass="category-text" text="Fashion"/>
@@ -67,7 +72,11 @@
                                                   styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <Region styleClass="icon-electronics"/>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/electronics_icon.png"/>
+                                                </image>
+                                            </ImageView>
                                         </graphic>
                                     </ToggleButton>
                                     <Label styleClass="category-text" text="Electronics"/>
@@ -76,28 +85,66 @@
                                     <ToggleButton fx:id="btnHome" userData="Home" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <Region styleClass="icon-home"/>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/home_icon.png"/>
+                                                </image>
+                                            </ImageView>
                                         </graphic>
                                     </ToggleButton>
-                                    <Label styleClass="category-text" text="Home"/>
+                                    <Label styleClass="category-text" text="Home &amp; Garden"/>
                                 </VBox>
                                 <VBox alignment="CENTER" spacing="10.0">
                                     <ToggleButton fx:id="btnArt" userData="Art" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <Region styleClass="icon-art"/>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/art_icon.png"/>
+                                                </image>
+                                            </ImageView>
                                         </graphic>
                                     </ToggleButton>
                                     <Label styleClass="category-text" text="Art"/>
                                 </VBox>
                                 <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnBook" userData="Book" styleClass="category-btn"
+                                                  toggleGroup="$categoryGroup">
+                                        <graphic>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/book_icon.png"/>
+                                                </image>
+                                            </ImageView>
+                                        </graphic>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Book"/>
+                                </VBox>
+                                <VBox alignment="CENTER" spacing="10.0">
                                     <ToggleButton fx:id="btnJewelry" userData="Jewelry" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <Region styleClass="icon-jewelry"/>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/jewelry_icon.png"/>
+                                                </image>
+                                            </ImageView>
                                         </graphic>
                                     </ToggleButton>
                                     <Label styleClass="category-text" text="Jewelry"/>
+                                </VBox>
+                                <VBox alignment="CENTER" spacing="10.0">
+                                    <ToggleButton fx:id="btnSports" userData="Sports" styleClass="category-btn"
+                                                  toggleGroup="$categoryGroup">
+                                        <graphic>
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                                <image>
+                                                    <Image url="@../assets/sports_icon.png"/>
+                                                </image>
+                                            </ImageView>
+                                        </graphic>
+                                    </ToggleButton>
+                                    <Label styleClass="category-text" text="Sports"/>
                                 </VBox>
                             </HBox>
                         </VBox>
@@ -147,24 +194,27 @@
 
                         <!--Product Time-->
                         <HBox spacing="40.0">
-                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="field-label" text="Start Time"/>
-                                <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="55.0"
-                                            styleClass="date-picker"/>
-                                <ComboBox fx:id="cbStartTime" promptText="Set Time" prefWidth="100.0"
-                                          prefHeight="55.0" styleClass="time-picker"/>
+                            <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text="Start Time " />
+                                <HBox spacing="10.0">
+                                    <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="60.0"
+                                                promptText=" "
+                                                styleClass="date-picker"
+                                                HBox.hgrow="ALWAYS" />
+                                    <ComboBox fx:id="cbStartTime" promptText="10:00 PM" styleClass="time-picker" />
+                                </HBox>
                             </VBox>
-                            <VBox spacing="12.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="field-label" text="End Time"/>
-                                <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="55.0"
-                                            styleClass="date-picker"/>
-                                <ComboBox fx:id="cbEndTime" promptText="Set Time" prefWidth="100.0"
-                                          prefHeight="55.0" styleClass="time-picker"/>
+                            <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="field-label" text=" End Time " />
+                                <HBox spacing="10.0">
+                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="60.0" promptText=" " styleClass="date-picker" HBox.hgrow="ALWAYS" />
+                                    <ComboBox fx:id="cbEndTime" promptText="10:00 PM" styleClass="time-picker" />
+                                </HBox>
                             </VBox>
                         </HBox>
 
                         <Button onAction="#handleAddProduct" maxWidth="Infinity" prefHeight="65.0"
-                                styleClass="submit-button"
+                                styleClass="add-button"
                                 text="Add Product"/>
                     </VBox>
                 </content>
