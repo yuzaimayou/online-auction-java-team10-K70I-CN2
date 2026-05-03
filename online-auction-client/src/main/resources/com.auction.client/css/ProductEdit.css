@@ -267,12 +267,83 @@ form-card-header {
     -fx-pref-height: 50px;
 }
 
-.time-picker .arrow-button {
+/*Thanh giờ*/
+.time-picker:focused {
+    -fx-border-color: #3B82F6;
+}
+
+.time-picker .list-cell {
+    -fx-text-fill: #0F172A;
     -fx-background-color: transparent;
+    -fx-padding: 0 10 0 15;
+    -fx-font-family: "Segoe UI";
+}
+
+.time-picker .arrow-button {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 0 15 15 0;
+    -fx-padding: 0 15 0 15;
 }
 
 .time-picker .arrow {
     -fx-background-color: #4a5568;
+}
+
+.time-picker .combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 5);
+    -fx-padding: 8px;
+    -fx-margin: 5px 0 0 0;
+}
+
+.time-picker .combo-box-popup .list-cell {
+    -fx-text-fill: #555555;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-padding: 10px 15px;
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+}
+
+.time-picker .combo-box-popup .list-cell:hover {
+    -fx-background-color: #e3f2fd;
+    -fx-text-fill: #1976d2;
+    -fx-cursor: hand;
+}
+
+.time-picker .combo-box-popup .list-cell:selected {
+    -fx-background-color: #1976d2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.time-picker .combo-box-popup .scroll-bar:vertical {
+    -fx-pref-width: 8px;
+    -fx-background-color: transparent;
+}
+
+.time-picker .combo-box-popup .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.time-picker .combo-box-popup .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1;
+    -fx-background-radius: 10px;
+}
+
+.time-picker .combo-box-popup .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8;
+}
+
+.time-picker .combo-box-popup .scroll-bar:vertical .increment-button,
+.time-picker .combo-box-popup .scroll-bar:vertical .decrement-button {
+    -fx-pref-height: 0;
+    -fx-padding: 0;
 }
 
 /* --- ACTION BUTTONS --- */
