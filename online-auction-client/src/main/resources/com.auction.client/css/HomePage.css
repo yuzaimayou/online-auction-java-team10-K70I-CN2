@@ -181,3 +181,40 @@
     -fx-font-size: 11px;
     -fx-text-fill: #999999;
 }
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 14px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
+    -fx-background-color: transparent;
+}
+
+/* Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+/* Chỉnh cục lăn  */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
+    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
+}
+
+/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
+}
+
+/* Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn  */
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " "; /* Xóa hình mũi tên */
+    -fx-padding: 0;
+}
