@@ -93,7 +93,10 @@ public class HomePageController {
         for (Item item : itemsFromServer) {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
-                VBox cardBox = fxmlLoader.load();
+                VBox cardBox = fxmlLoader.load();cardBox.getStylesheets().add(
+                        getClass().getResource("/com.auction.client/css/HomePage.css").toExternalForm()
+                );
+
 
                 cardBox.setMinWidth(280);
 

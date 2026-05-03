@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox xmlns="http://javafx.com/javafx"
+<VBox xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.ItemCardHPController"
       styleClass="auction-card"
