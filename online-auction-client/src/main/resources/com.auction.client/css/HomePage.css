@@ -16,11 +16,16 @@
     -fx-padding: 30 0 40 0;
 }
 
+.auctions-section {
+    -fx-spacing: 25px;
+    -fx-padding: 20 0 10 0;
+}
+
 .section-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #111111;
-    -fx-pref-height: 80px;
+    -fx-pref-height: 40px;
     -fx-maxWidth: Infinity;
     -fx-alignment: center;
 }
