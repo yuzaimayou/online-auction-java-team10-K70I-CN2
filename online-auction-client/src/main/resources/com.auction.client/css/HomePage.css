@@ -6,12 +6,7 @@
 
 .main-container {
     -fx-background-color: white;
-}
-
-/* --- Header Section --- */
-.header-section {
-    -fx-background-color: white;
-    -fx-padding: 20 40 20 40;
+    -fx-padding: 0;
 }
 
 
@@ -25,19 +20,23 @@
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #111111;
-    -fx-pref-height: 80px; /* Mở rộng chiều cao ra 60px */
-    -fx-pref-width: 1440px;
-     -fx-alignment: center;
+    -fx-pref-height: 80px;
+    -fx-maxWidth: Infinity;
+    -fx-alignment: center;
 }
 
 .categories-list {
-    -fx-spacing: 35px;
+    -fx-vgap: 20px;
+    -fx-hgap: 40px;
+    -fx-padding: 20 0 40 0;
+    -fx-alignment: center;
 }
 
 .category-item {
     -fx-alignment: center;
     -fx-spacing: 10px;
     -fx-cursor: hand;
+    -fx-pref-width: 100px;
 }
 
 .cat-icon-bg {
@@ -53,22 +52,19 @@
     -fx-padding: 0;
 }
 
-/* Hiệu ứng khi nhấn giữ chuột (Click) vào toàn bộ item */
 .category-item:pressed {
-    -fx-opacity: 0.7; /* Làm mờ nhẹ */
+    -fx-opacity: 0.7;
 }
 
-/* Hiệu ứng thu nhỏ riêng cái vòng tròn icon khi bấm */
 .category-item:pressed .cat-icon-bg {
-    -fx-scale-x: 0.92; /* Thu nhỏ 8% theo chiều ngang */
-    -fx-scale-y: 0.92; /* Thu nhỏ 8% theo chiều dọc */
+    -fx-scale-x: 0.92;
+    -fx-scale-y: 0.92;
 }
 
-/* Hiệu ứng cho riêng nút Add Auction (vì nó là Button) */
 .add-auction-button:pressed {
     -fx-scale-x: 0.9;
     -fx-scale-y: 0.9;
-    -fx-background-color: #1d4ed8; /* Đổi sang màu xanh đậm hơn khi bấm */
+    -fx-background-color: #1d4ed8;
 }
 
 .add-auction-button {
@@ -85,7 +81,7 @@
 .add-auction-button .label {
     -fx-text-fill: white !important;
     -fx-font-weight: bold;
-    -fx-font-size: 30px; /* Chỉnh cỡ dấu cộng cho vừa vặn */
+    -fx-font-size: 30px;
     -fx-alignment: center;
 }
 
@@ -94,17 +90,19 @@
 }
 
 .category-item Label {
-    -fx-text-fill: #888888;
+    -fx-text-fill: #666666;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
 }
 
 /* Auction Card Tổng thể */
 .auction-card {
     -fx-background-color: white;
-    -fx-background-radius: 20px; /* Bo góc hiện đại */
+    -fx-background-radius: 20px;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 15, 0, 0, 5);
-    -fx-pref-width: 280px; /* Đồng bộ chiều rộng 280px */
+    -fx-pref-width: 280px;
     -fx-min-height: 400px;
     -fx-cursor: hand;
     -fx-padding: 0;
@@ -116,11 +114,10 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.12), 20, 0, 0, 10);
 }
 
-/* Container ảnh - QUAN TRỌNG: Không để padding */
 .image-container {
     -fx-background-color: #F4F4F4;
-    -fx-background-radius: 20px 20px 0 0; /* Khớp bo góc trên của card */
-    -fx-padding: 0; /* Đã đưa về 0 để ảnh tràn lấp đầy viền */
+    -fx-background-radius: 20px 20px 0 0;
+    -fx-padding: 0;
     -fx-min-height: 240px;
     -fx-alignment: center;
 }
@@ -135,7 +132,7 @@
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #1A1A1B;
-    -fx-pref-height: 40px; /* Cố định để các card đều nhau */
+    -fx-pref-height: 40px;
 }
 
 /* Badge Trạng thái */
@@ -146,11 +143,10 @@
     -fx-font-weight: bold;
     -fx-padding: 4px 10px;
     -fx-background-radius: 5px;
-    -fx-max-width: 80px; /* Giữ cho badge gọn gàng */
+    -fx-max-width: 80px; /
     -fx-alignment: center;
 }
 
-/* Lưới thông tin Giá và Thời gian */
 .info-grid {
     -fx-border-color: #F0F0F0 transparent transparent transparent;
     -fx-border-width: 1px;
@@ -186,38 +182,35 @@
 }
 
 .scroll-pane .scroll-bar:vertical {
-    -fx-pref-width: 14px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
+    -fx-pref-width: 14px;
     -fx-background-color: transparent;
 }
 
-/* Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
 .scroll-pane .scroll-bar:vertical .track {
-    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
+    -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-background-radius: 0em;
 }
 
 /* Chỉnh cục lăn  */
 .scroll-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
-    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
+    -fx-background-color: #c1c1c1;
+    -fx-background-radius: 10px;
 }
 
-/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
 .scroll-pane .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
+    -fx-background-color: #a8a8a8;
 }
 
-/* Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn  */
 .scroll-pane .scroll-bar:vertical .increment-button,
 .scroll-pane .scroll-bar:vertical .decrement-button {
     -fx-background-color: transparent;
-    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
+    -fx-pref-height: 0px;
     -fx-padding: 0;
 }
 
 .scroll-pane .scroll-bar:vertical .increment-arrow,
 .scroll-pane .scroll-bar:vertical .decrement-arrow {
-    -fx-shape: " "; /* Xóa hình mũi tên */
+    -fx-shape: " ";
     -fx-padding: 0;
 }
