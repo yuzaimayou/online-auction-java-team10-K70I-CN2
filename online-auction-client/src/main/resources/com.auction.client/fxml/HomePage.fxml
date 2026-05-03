@@ -4,6 +4,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -20,43 +22,71 @@
                 <HBox alignment="CENTER" styleClass="categories-list">
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="👜" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/fashion_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Fashion" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="💻" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/electronics_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Electronics" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane maxHeight="60.0" maxWidth="60.0" styleClass="cat-icon-bg">
-                            <Label text="🏠" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/home_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Home &amp; Garden" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="🖼️" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/art_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Art" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="📚" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/book_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Books" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="💎" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/jewelry_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Jewelry" />
                     </VBox>
                     <VBox styleClass="category-item">
                         <StackPane styleClass="cat-icon-bg">
-                            <Label text="⚽" />
+                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../assets/sports_icon.png" />
+                                </image>
+                            </ImageView>
                         </StackPane>
                         <Label text="Sports" />
                     </VBox>
@@ -73,7 +103,6 @@
 
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="ONGOING AUCTIONS" />
-                <!--Card Item-->
                 <FlowPane fx:id="ongoingAuctionsContainer" alignment="CENTER" hgap="15.0" maxWidth="1165.0" styleClass="auctions-list" vgap="15.0">
                 </FlowPane>
             </VBox>

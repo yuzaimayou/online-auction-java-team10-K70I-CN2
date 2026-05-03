@@ -181,6 +181,12 @@ form-card-header {
     -fx-background-radius: 50em;
     -fx-background-color: #F1F5F9;
     -fx-cursor: hand;
+    -fx-alignment: center;
+    -fx-padding: 0;
+}
+
+.category-btn:hover {
+    -fx-background-color: #E2E8F0;
 }
 
 .category-btn:selected {
@@ -188,6 +194,10 @@ form-card-header {
     -fx-border-color: #3B82F6;
     -fx-border-width: 2;
     -fx-border-radius: 50em;
+}
+
+.category-btn:selected:hover {
+    -fx-background-color: #DBEAFE;
 }
 
 .category-text {

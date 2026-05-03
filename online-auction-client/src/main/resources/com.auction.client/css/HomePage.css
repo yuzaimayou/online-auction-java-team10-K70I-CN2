@@ -42,9 +42,13 @@
     -fx-background-color: #f1f3f5;
     -fx-background-radius: 50%;
     -fx-min-width: 60px;
+    -fx-max-width: 60px;
     -fx-min-height: 60px;
+    -fx-max-height: 60px;
     -fx-scale-x: 1.0;
     -fx-scale-y: 1.0;
+    -fx-alignment: center;
+    -fx-padding: 0;
 }
 
 /* Hiệu ứng khi nhấn giữ chuột (Click) vào toàn bộ item */
@@ -69,7 +73,9 @@
     -fx-background-color: #3b82f6;
     -fx-background-radius: 50%;
     -fx-min-width: 60px;
+    -fx-max-width: 60px;
     -fx-min-height: 60px;
+    -fx-max-height: 60px;
     -fx-cursor: hand;
     -fx-padding: 0;
 }
@@ -85,15 +91,10 @@
     -fx-background-color: #2563eb;
 }
 
-
 .category-item Label {
     -fx-text-fill: #888888;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-}
-
-.category-item .cat-icon-bg Label {
-    -fx-font-size: 24px; /* Icon size */
 }
 
 /* Auction Card Tổng thể */
