@@ -18,7 +18,7 @@
         </padding>
 
 
-        <VBox alignment="CENTER" maxHeight="2000.0" maxWidth="1100.0" spacing="35.0" styleClass="form-card">
+        <VBox styleClass="form-card">
             <padding>
                 <Insets top="20.0" bottom="20.0" right="20.0"/>
             </padding>
@@ -33,7 +33,6 @@
                             <Label fx:id="lblMessage" text=""/>
                             <Button fx:id="btnClose" onAction="#handleSwitchToHomePage" text="✕"
                                     styleClass="close-button"
-                                    prefWidth="50.0" prefHeight="50.0"
                                     StackPane.alignment="CENTER_RIGHT">
                                 <StackPane.margin>
                                     <Insets right="0"/>
@@ -198,18 +197,18 @@
                             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                                 <Label styleClass="field-label" text="Start Time " />
                                 <HBox spacing="10.0">
-                                    <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="50.0"
+                                    <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="60.0"
                                                 promptText=" "
                                                 styleClass="date-picker"
                                                 HBox.hgrow="ALWAYS" />
-                                    <ComboBox fx:id="cbStartTime" prefHeight="50.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
+                                    <ComboBox fx:id="cbStartTime" promptText="10:00 PM" styleClass="time-picker" />
                                 </HBox>
                             </VBox>
                             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                                 <Label styleClass="field-label" text=" End Time " />
                                 <HBox spacing="10.0">
-                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="50.0" promptText=" " styleClass="date-picker" HBox.hgrow="ALWAYS" />
-                                    <ComboBox fx:id="cbEndTime" prefHeight="50.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
+                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="60.0" promptText=" " styleClass="date-picker" HBox.hgrow="ALWAYS" />
+                                    <ComboBox fx:id="cbEndTime" promptText="10:00 PM" styleClass="time-picker" />
                                 </HBox>
                             </VBox>
                         </HBox>

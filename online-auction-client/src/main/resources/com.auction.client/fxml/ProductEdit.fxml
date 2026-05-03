@@ -233,18 +233,18 @@
                                 <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                                     <Label styleClass="field-label" text="Start Time " />
                                     <HBox spacing="10.0">
-                                        <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="50.0"
+                                        <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="60.0"
                                                     promptText="21/04/2026"
                                                     styleClass="date-picker"
                                                     HBox.hgrow="ALWAYS" />
-                                        <ComboBox fx:id="cbStartTime" prefHeight="50.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
+                                        <ComboBox fx:id="cbStartTime" prefHeight="60.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
                                     </HBox>
                                 </VBox>
                                 <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                                     <Label styleClass="field-label" text=" End Time " />
                                     <HBox spacing="10.0">
-                                        <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="50.0" promptText="28/04/2026" styleClass="date-picker" HBox.hgrow="ALWAYS" />
-                                        <ComboBox fx:id="cbEndTime" prefHeight="50.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
+                                        <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="60.0" promptText="28/04/2026" styleClass="date-picker" HBox.hgrow="ALWAYS" />
+                                        <ComboBox fx:id="cbEndTime" prefHeight="60.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
                                     </HBox>
                                 </VBox>
                             </HBox>
@@ -252,8 +252,8 @@
 
                         <HBox alignment="CENTER_RIGHT" spacing="15.0">
                             <VBox.margin><Insets top="20.0" /></VBox.margin>
-                            <Button prefHeight="50.0" styleClass="btn-cancel-modern" text="Cancel" />
-                            <Button prefHeight="50.0" styleClass="btn-save-modern" text="Save Changes" />
+                            <Button prefHeight="60.0" styleClass="btn-cancel-modern" text="Cancel" />
+                            <Button prefHeight="60.0" styleClass="btn-save-modern" text="Save Changes" />
                         </HBox>
 
                     </VBox>

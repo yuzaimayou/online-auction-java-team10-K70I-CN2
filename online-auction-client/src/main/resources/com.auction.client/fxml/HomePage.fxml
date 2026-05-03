@@ -16,90 +16,87 @@
         <VBox styleClass="main-container">
 
             <fx:include fx:id="navBar" source="NavBar.fxml" />
-
-            <VBox alignment="CENTER" styleClass="categories-section">
-                <Label styleClass="section-title" text="Explore Categories" />
-                <HBox alignment="CENTER" styleClass="categories-list">
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/fashion_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Fashion" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/electronics_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Electronics" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane maxHeight="60.0" maxWidth="60.0" styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/home_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Home &amp; Garden" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/art_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Art" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/book_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Books" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/jewelry_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Jewelry" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <StackPane styleClass="cat-icon-bg">
-                            <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                                <image>
-                                    <Image url="@../assets/sports_icon.png" />
-                                </image>
-                            </ImageView>
-                        </StackPane>
-                        <Label text="Sports" />
-                    </VBox>
-                    <VBox styleClass="category-item">
-                        <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage" styleClass="add-auction-button">
-                            <graphic>
-                                <Label styleClass="add-icon" text="+" />
-                            </graphic>
-                        </Button>
-                        <Label text="Add an Auction" />
-                    </VBox>
-                </HBox>
-            </VBox>
+             <Label styleClass="section-title" text="Explore Categories" />
+             <HBox alignment="CENTER" styleClass="categories-list">
+                 <VBox styleClass="category-item">
+                     <StackPane styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/fashion_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Fashion" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <StackPane styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/electronics_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Electronics" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <StackPane maxHeight="60.0" maxWidth="60.0" styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/home_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Home &amp; Garden" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <StackPane styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/art_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Art" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <StackPane styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/book_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Books" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <StackPane styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/jewelry_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Jewelry" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <StackPane styleClass="cat-icon-bg">
+                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                 <Image url="@../assets/sports_icon.png" />
+                             </image>
+                         </ImageView>
+                     </StackPane>
+                     <Label text="Sports" />
+                 </VBox>
+                 <VBox styleClass="category-item">
+                     <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage" styleClass="add-auction-button">
+                         <graphic>
+                             <Label styleClass="add-icon" text="+" />
+                         </graphic>
+                     </Button>
+                     <Label text="Add an Auction" />
+                 </VBox>
+             </HBox>
 
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="ONGOING AUCTIONS" />

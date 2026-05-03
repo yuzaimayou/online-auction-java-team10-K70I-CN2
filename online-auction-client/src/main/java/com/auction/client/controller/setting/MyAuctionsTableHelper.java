@@ -15,12 +15,15 @@ import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
 public class MyAuctionsTableHelper {
 
     /**
      * Hàm cấu hình toàn bộ các cột cho bảng Auction
-     * @param onEditAction Cầu nối (Callback) để gọi hàm chuyển trang Edit bên Controller
+     *
+     * @param onEditAction   Cầu nối (Callback) để gọi hàm chuyển trang Edit bên Controller
+     * @param onDeleteAction Cầu nối để gọi hàm Xóa bên Controller (THÊM MỚI CHỖ NÀY)
      */
     public static void setupTableColumns(
             TableColumn<Item, Item> productCol,
@@ -29,7 +32,8 @@ public class MyAuctionsTableHelper {
             TableColumn<Item, String> priceCol,
             TableColumn<Item, LocalDateTime> endTimeCol,
             TableColumn<Item, Item> actionCol,
-            EventHandler<ActionEvent> onEditAction) {
+            EventHandler<ActionEvent> onEditAction,
+            Consumer<Item> onDeleteAction) {
 
         //  TẮT TÍNH NĂNG SORT
         productCol.setSortable(false);
@@ -185,6 +189,13 @@ public class MyAuctionsTableHelper {
                     Button deleteBtn = new Button("Delete");
                     deleteBtn.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
                     deleteBtn.getStyleClass().add("action-btn-delete");
+
+                    // THÊM SỰ KIỆN CHO NÚT DELETE: Truyền Item hiện tại ngược về Controller
+                    deleteBtn.setOnAction(e -> {
+                        if (onDeleteAction != null) {
+                            onDeleteAction.accept(item);
+                        }
+                    });
 
                     actions.getChildren().addAll(editBtn, viewBtn, deleteBtn);
                     setGraphic(actions);

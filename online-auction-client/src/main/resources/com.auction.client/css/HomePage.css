@@ -25,7 +25,9 @@
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #111111;
-    -fx-padding: 0 0 30 0;
+    -fx-pref-height: 80px; /* Mở rộng chiều cao ra 60px */
+    -fx-pref-width: 1440px;
+     -fx-alignment: center;
 }
 
 .categories-list {
