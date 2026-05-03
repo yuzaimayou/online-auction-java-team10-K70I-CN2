@@ -21,7 +21,7 @@
     <content>
         <VBox styleClass="main-container">
 
-            <fx:include source="NavBar.fxml" />
+            <fx:include fx:id="navBar" source="NavBar.fxml" />
 
             <HBox alignment="TOP_CENTER" spacing="40" style="-fx-padding: 40 60 40 60;">
 

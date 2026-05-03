@@ -186,5 +186,17 @@ public class Item extends Entity {
         System.out.println("Start time: " + startTime);
         System.out.println("End time: " + endTime);
     }
+
+    public String getStatus() {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isBefore(startTime)) {
+            return "UPCOMING";
+        } else if (now.isAfter(endTime)) {
+            return "ENDED";
+        } else {
+            return "ONGOING";
+        }
+    }
 }
 

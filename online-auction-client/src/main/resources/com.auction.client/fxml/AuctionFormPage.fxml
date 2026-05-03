@@ -9,7 +9,7 @@
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.AuctionFormController">
 
-    <fx:include source="NavBar.fxml"/>
+    <fx:include fx:id="navBar" source="NavBar.fxml"/>
 
     <StackPane VBox.vgrow="ALWAYS">
         <padding>
