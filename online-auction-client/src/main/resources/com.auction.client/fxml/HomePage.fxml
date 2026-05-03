@@ -96,20 +96,21 @@
                 <FlowPane fx:id="ongoingAuctionsContainer"
                           alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
                           styleClass="auctions-list" />
+                <VBox.margin><Insets top="25.0" /></VBox.margin>
             </VBox>
 
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="UPCOMING AUCTIONS" />
                 <FlowPane fx:id="upcomingAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
                           styleClass="auctions-list" />
-                <VBox.margin><Insets top="30.0" /></VBox.margin>
+                <VBox.margin><Insets top="25.0" /></VBox.margin>
             </VBox>
 
             <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="ENDED AUCTIONS" />
                 <FlowPane fx:id="endedAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
                           styleClass="auctions-list" />
-                <VBox.margin><Insets top="30.0" /></VBox.margin>
+                <VBox.margin><Insets top="25.0" /></VBox.margin>
             </VBox>
         </VBox>
     </content>
