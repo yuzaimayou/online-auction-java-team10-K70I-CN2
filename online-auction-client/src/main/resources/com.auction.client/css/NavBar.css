@@ -1,5 +1,5 @@
 .header-section {
-    -fx-background-color: white;
+    -fx-background-color: #1B263B;
     -fx-padding: 20 40 20 40;
 }
 
@@ -12,21 +12,21 @@
 }
 
 .logo-icon {
-    -fx-font-size: 24px;
-    -fx-text-fill: #0056b3;
+    -fx-font-size: 32px;
+    -fx-text-fill: #FBBF24;
 }
 
 .logo-text {
     -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-font-style: italic;
-    -fx-text-fill: #0056b3;
+    -fx-text-fill: white;
 }
 
 .categories-dropdown {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #333333;
+    -fx-text-fill: white;
     -fx-cursor: hand;
 }
 
@@ -66,6 +66,7 @@
 }
 
 .profile-name {
+    -fx-text-fill: white;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
 }
@@ -78,7 +79,7 @@
 
 .nav-item {
     -fx-font-size: 15px;
-    -fx-text-fill: #777777;
+    -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-cursor: hand;
 }

@@ -41,7 +41,7 @@
     </HBox>
 
     <HBox alignment="CENTER" styleClass="nav-menu">
-        <Label onMouseClicked="#handleSwitchToHome" styleClass="nav-item, nav-item-active" text="Home"/>
+        <Label onMouseClicked="#handleSwitchToHome" styleClass="nav-item" text="Home"/>
         <Label styleClass="nav-item" text="About Us"/>
         <Label styleClass="nav-item" text="Browse Auction"/>
         <Label styleClass="nav-item" text="How It Works"/>

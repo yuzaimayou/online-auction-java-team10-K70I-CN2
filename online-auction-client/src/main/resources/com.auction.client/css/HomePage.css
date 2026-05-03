@@ -25,7 +25,9 @@
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #111111;
-    -fx-padding: 0 0 30 0;
+    -fx-pref-height: 80px; /* Mở rộng chiều cao ra 60px */
+    -fx-pref-width: 1440px;
+     -fx-alignment: center;
 }
 
 .categories-list {
@@ -42,9 +44,13 @@
     -fx-background-color: #f1f3f5;
     -fx-background-radius: 50%;
     -fx-min-width: 60px;
+    -fx-max-width: 60px;
     -fx-min-height: 60px;
+    -fx-max-height: 60px;
     -fx-scale-x: 1.0;
     -fx-scale-y: 1.0;
+    -fx-alignment: center;
+    -fx-padding: 0;
 }
 
 /* Hiệu ứng khi nhấn giữ chuột (Click) vào toàn bộ item */
@@ -69,7 +75,9 @@
     -fx-background-color: #3b82f6;
     -fx-background-radius: 50%;
     -fx-min-width: 60px;
+    -fx-max-width: 60px;
     -fx-min-height: 60px;
+    -fx-max-height: 60px;
     -fx-cursor: hand;
     -fx-padding: 0;
 }
@@ -85,84 +93,19 @@
     -fx-background-color: #2563eb;
 }
 
-
 .category-item Label {
     -fx-text-fill: #888888;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
 }
 
-.category-item .cat-icon-bg Label {
-    -fx-font-size: 24px; /* Icon size */
-}
-
-/* --- Ongoing Auctions Section --- */
-.auctions-section {
-    -fx-background-color: #f8f9fa; /* Màu nền xám nhạt */
-    -fx-padding: 40 0 60 0;
-}
-
-.gray-title {
-    -fx-text-fill: #777777;
-}
-
-.auctions-list {
-    -fx-spacing: 30px;
-}
-
-/* Card Styling */
+/* Auction Card Tổng thể */
 .auction-card {
     -fx-background-color: white;
-    -fx-background-radius: 8px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 10, 0, 0, 5);
-    -fx-pref-width: 280px;
-    -fx-min-height: 400px;
-}
-
-.card-image-placeholder {
-    -fx-background-color: #fdf2f2; /* Màu nền giả lập giống ảnh iPhone */
-    -fx-pref-height: 250px;
-    -fx-background-radius: 8px 8px 0 0;
-}
-
-.card-content {
-    -fx-padding: 15px;
-    -fx-spacing: 8px;
-}
-
-.card-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #111111;
-    -fx-pref-height: 40px; /* Cố định chiều cao để thẻ thẳng hàng nếu tên dài */
-}
-
-.live-badge {
-    -fx-background-color: #2ecc71;
-    -fx-text-fill: white;
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-padding: 3 8 3 8;
-    -fx-background-radius: 4px;
-    -fx-max-width: 100px; /* Đảm bảo badge không kéo dài toàn chiều rộng */
-}
-
-.card-info {
-    -fx-text-fill: #999999;
-    -fx-font-size: 12px;
-}
-
-.auction-card:hover {
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, 0, 8);
-    -fx-translate-y: -5px;
-}
-
-/* Auction Card */
-.auction-card {
-    -fx-background-color: white;
-    -fx-background-radius: 20px; /* Bo góc lớn hiện đại */
+    -fx-background-radius: 20px; /* Bo góc hiện đại */
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 15, 0, 0, 5);
-    -fx-pref-width: 280px;
+    -fx-pref-width: 280px; /* Đồng bộ chiều rộng 280px */
+    -fx-min-height: 400px;
     -fx-cursor: hand;
     -fx-padding: 0;
     -fx-transition: all 0.3s ease-in-out;
@@ -173,45 +116,49 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.12), 20, 0, 0, 10);
 }
 
-/* Container ảnh */
+/* Container ảnh - QUAN TRỌNG: Không để padding */
 .image-container {
     -fx-background-color: #F4F4F4;
-    -fx-background-radius: 20px 20px 0 0;
-    -fx-padding: 15;
-    -fx-min-height: 250px;
+    -fx-background-radius: 20px 20px 0 0; /* Khớp bo góc trên của card */
+    -fx-padding: 0; /* Đã đưa về 0 để ảnh tràn lấp đầy viền */
+    -fx-min-height: 240px;
     -fx-alignment: center;
 }
 
 /* Nội dung thông tin */
 .content-container {
-    -fx-padding: 20;
-    -fx-spacing: 12;
+    -fx-padding: 20px;
+    -fx-spacing: 12px;
 }
 
 .product-name {
-    -fx-font-size: 24px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #1A1A1B;
+    -fx-pref-height: 40px; /* Cố định để các card đều nhau */
 }
 
+/* Badge Trạng thái */
 .status-badge {
     -fx-background-color: #E8F5E9;
     -fx-text-fill: #2E7D32;
-    -fx-font-size: 10px;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 4 10;
+    -fx-padding: 4px 10px;
     -fx-background-radius: 5px;
+    -fx-max-width: 80px; /* Giữ cho badge gọn gàng */
+    -fx-alignment: center;
 }
 
 /* Lưới thông tin Giá và Thời gian */
 .info-grid {
     -fx-border-color: #F0F0F0 transparent transparent transparent;
     -fx-border-width: 1px;
-    -fx-padding: 15 0 0 0;
+    -fx-padding: 15px 0 0 0;
 }
 
 .info-label {
-    -fx-font-size: 14px;
+    -fx-font-size: 12px;
     -fx-text-fill: #8E8E93;
     -fx-font-weight: 600;
 }
@@ -222,18 +169,55 @@
 }
 
 .info-value-price {
-    -fx-font-size: 24px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #111111;
 }
 
 .info-value-time {
     -fx-font-size: 14px;
-    -fx-font-weight: 500;
+    -fx-font-weight: bold;
     -fx-text-fill: #111111;
 }
 
 .info-sub-label {
-    -fx-font-size: 10px;
+    -fx-font-size: 11px;
     -fx-text-fill: #999999;
+}
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 14px; /* Thay đổi con số này để làm thanh cuộn to/nhỏ tùy ý */
+    -fx-background-color: transparent;
+}
+
+/* Chỉnh cái rãnh trượt (Track - phần nền tảng đằng sau) */
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent; /* Để trong suốt cho đẹp */
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+/* Chỉnh cục lăn  */
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1; /* Màu của thanh lăn */
+    -fx-background-radius: 10px; /* Bo góc cho thanh lăn tròn trịa */
+}
+
+/* Hiệu ứng khi di chuột vào cục lăn (Hover) */
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8; /* Đổi màu đậm hơn một chút khi di chuột vào */
+}
+
+/* Ẩn 2 cái nút mũi tên lên/xuống ở 2 đầu thanh cuộn  */
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px; /* Ép chiều cao về 0 để ẩn đi */
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " "; /* Xóa hình mũi tên */
+    -fx-padding: 0;
 }
