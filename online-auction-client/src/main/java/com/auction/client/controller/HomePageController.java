@@ -13,6 +13,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -29,6 +30,9 @@ public class HomePageController {
     //network
     private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
+
+    @FXML
+    private ScrollPane mainScrollPane;
     @FXML
     private FlowPane ongoingAuctionsContainer;
     @FXML
@@ -41,6 +45,13 @@ public class HomePageController {
         NetworkService.getInstance().leaveRoom();
 
         System.out.println("Đã vào trang chủ!");
+
+        mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
+            double width = newVal.doubleValue() - 40; // trừ padding
+            ongoingAuctionsContainer.setPrefWidth(width);
+            upcomingAuctionsContainer.setPrefWidth(width);
+            endedAuctionsContainer.setPrefWidth(width);
+        });
 
         getDataItemsAndDisplay();
     }
@@ -75,44 +86,31 @@ public class HomePageController {
 
     @FXML
     public void loadItemsToUI(List<Item> itemsFromServer) {
-
         ongoingAuctionsContainer.getChildren().clear();
         upcomingAuctionsContainer.getChildren().clear();
         endedAuctionsContainer.getChildren().clear();
 
         for (Item item : itemsFromServer) {
             try {
-                System.out.printf("Load item: %s \n", item.getName());
-                FXMLLoader fxmlLoader = new FXMLLoader();
-                fxmlLoader.setLocation(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
+                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
                 VBox cardBox = fxmlLoader.load();
+
+                cardBox.setMinWidth(280);
 
                 ItemCardHPController cardHPController = fxmlLoader.getController();
                 cardHPController.setData(item);
 
-                // CHỈNH SỬA: Phân loại card dựa trên trạng thái (Status)
-                // Lưu ý: Tùy vào cách model Item của bạn thiết kế, bạn có thể gọi item.getStatus().name() hoặc getter tương tự.
-                // Ở đây mình ví dụ gọi item.getStatus() trả về chuỗi (hoặc Enum).
-                String status = "";
-                if (item.getStatus() != null) {
-                    status = item.getStatus().toString().toUpperCase();
-                }
+                String status = (item.getStatus() != null) ? item.getStatus().toString().toUpperCase() : "";
 
-                // Kiểm tra trạng thái và thêm vào đúng container
                 if (status.contains("ONGOING") || status.contains("LIVE")) {
                     ongoingAuctionsContainer.getChildren().add(cardBox);
                 } else if (status.contains("UPCOMING")) {
                     upcomingAuctionsContainer.getChildren().add(cardBox);
-                } else if (status.contains("ENDED") || status.contains("CLOSED")) {
-                    endedAuctionsContainer.getChildren().add(cardBox);
                 } else {
-                    // Mặc định nếu không rõ trạng thái thì cho vào Ongoing
-                    ongoingAuctionsContainer.getChildren().add(cardBox);
+                    endedAuctionsContainer.getChildren().add(cardBox);
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
-                System.out.println("Error while loading data item!");
             }
         }
     }
