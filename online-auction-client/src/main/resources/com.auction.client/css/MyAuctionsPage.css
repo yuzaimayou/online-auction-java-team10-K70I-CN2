@@ -304,3 +304,66 @@
 .end-time-column-style {
     -fx-alignment: CENTER-LEFT;
 }
+
+
+
+/* Giao diện tổng thể của hộp thoại */
+.dialog-pane {
+    -fx-background-color: white;
+    -fx-padding: 10px;
+    -fx-border-radius: 15px;
+    -fx-background-radius: 15px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+}
+
+/* Header (Tiêu đề) */
+.dialog-pane .header-panel {
+    -fx-background-color: #f8f9fa;
+    -fx-background-radius: 15px 15px 0px 0px;
+}
+
+.dialog-pane .label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333;
+    -fx-font-family: "Segoe UI", system-ui;
+}
+
+.dialog-pane:header .header-panel .label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+/* Khu vực nội dung */
+.dialog-pane .content {
+    -fx-padding: 20px;
+}
+
+/* Nút bấm (Button) */
+.dialog-pane .button {
+    -fx-background-radius: 8px;
+    -fx-padding: 8 20 8 20;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-transition: all 0.3s;
+}
+
+/* Nút OK / Xóa (Thường là mặc định) */
+.dialog-pane .button:default {
+    -fx-background-color: #e74c3c; /* Màu đỏ cho hành động xóa */
+    -fx-text-fill: white;
+}
+
+.dialog-pane .button:default:hover {
+    -fx-background-color: #c0392b;
+}
+
+/* Nút Cancel / Thoát */
+.dialog-pane .button:cancel {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #7f8c8d;
+}
+
+.dialog-pane .button:cancel:hover {
+    -fx-background-color: #bdc3c7;
+}

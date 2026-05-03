@@ -57,4 +57,14 @@ public class ItemsService {
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
+
+    public CompletableFuture<ResponseMessage> deleteItem(String id) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/product?action=delete&itemId=%s", AppConfig.getHttpUrl(), id)))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    }
 }
