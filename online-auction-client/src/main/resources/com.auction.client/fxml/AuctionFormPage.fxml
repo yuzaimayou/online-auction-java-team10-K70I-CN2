@@ -199,7 +199,7 @@
                                 <Label styleClass="field-label" text="Start Time " />
                                 <HBox spacing="10.0">
                                     <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="50.0"
-                                                promptText="21/04/2026"
+                                                promptText=" "
                                                 styleClass="date-picker"
                                                 HBox.hgrow="ALWAYS" />
                                     <ComboBox fx:id="cbStartTime" prefHeight="50.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
@@ -208,7 +208,7 @@
                             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                                 <Label styleClass="field-label" text=" End Time " />
                                 <HBox spacing="10.0">
-                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="50.0" promptText="28/04/2026" styleClass="date-picker" HBox.hgrow="ALWAYS" />
+                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="50.0" promptText=" " styleClass="date-picker" HBox.hgrow="ALWAYS" />
                                     <ComboBox fx:id="cbEndTime" prefHeight="50.0" prefWidth="130.0" promptText="10:00 PM" styleClass="time-picker" />
                                 </HBox>
                             </VBox>
