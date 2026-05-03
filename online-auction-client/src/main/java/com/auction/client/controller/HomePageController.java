@@ -14,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -24,6 +25,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HomePageController {
 
@@ -39,6 +41,15 @@ public class HomePageController {
     private FlowPane upcomingAuctionsContainer;
     @FXML
     private FlowPane endedAuctionsContainer;
+    @FXML
+    private VBox ongoingSection;
+    @FXML
+    private VBox upcomingSection;
+    @FXML
+    private VBox endedSection;
+
+    private List<Item> masterItemList;
+    private String currentCategory = "ALL";
 
     @FXML
     public void initialize() {
@@ -55,6 +66,7 @@ public class HomePageController {
 
         getDataItemsAndDisplay();
     }
+
 
     @FXML
     private void getDataItemsAndDisplay() {
@@ -76,12 +88,35 @@ public class HomePageController {
                         }.getType();
                         List<Item> dataItems = gson.fromJson(res.getData(), listType);
                         javafx.application.Platform.runLater(() -> {
-                            loadItemsToUI(dataItems);
+                            this.masterItemList = dataItems;
+                            applyFilter();
                         });
                     } else {
                         System.out.println(res.getMessage());
                     }
                 });
+    }
+    private void applyFilter() {
+        if (masterItemList == null)
+            return;
+
+        List<Item> filtered;
+
+        if ("ALL".equals(currentCategory)) {
+            filtered = masterItemList;
+        } else {
+            filtered = masterItemList.stream()
+                    .filter(item -> {
+                        if (item.getCategory() == null)
+                            return false;
+
+                        return item.getCategory().toString()
+                                .equalsIgnoreCase(currentCategory);
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        loadItemsToUI(filtered);
     }
 
     @FXML
@@ -90,6 +125,10 @@ public class HomePageController {
         upcomingAuctionsContainer.getChildren().clear();
         endedAuctionsContainer.getChildren().clear();
 
+        int ongoingCount = 0;
+        int upcomingCount = 0;
+        int endedCount = 0;
+
         for (Item item : itemsFromServer) {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
@@ -97,26 +136,71 @@ public class HomePageController {
                         getClass().getResource("/com.auction.client/css/HomePage.css").toExternalForm()
                 );
 
-
+                cardBox.setPrefWidth(280);
                 cardBox.setMinWidth(280);
+                cardBox.setMaxWidth(280);
 
                 ItemCardHPController cardHPController = fxmlLoader.getController();
                 cardHPController.setData(item);
 
-                String status = (item.getStatus() != null) ? item.getStatus().toString().toUpperCase() : "";
+                String status = (item.getStatus() != null)
+                        ? item.getStatus().toString().toUpperCase() : "";
 
                 if (status.contains("ONGOING") || status.contains("LIVE")) {
                     ongoingAuctionsContainer.getChildren().add(cardBox);
+                    ongoingCount++;
                 } else if (status.contains("UPCOMING")) {
                     upcomingAuctionsContainer.getChildren().add(cardBox);
+                    upcomingCount++;
                 } else {
                     endedAuctionsContainer.getChildren().add(cardBox);
+                    endedCount++;
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
     }
+    private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
+
+        ongoingSection.setVisible(ongoing > 0);
+        ongoingSection.setManaged(ongoing > 0);
+
+        upcomingSection.setVisible(upcoming > 0);
+        upcomingSection.setManaged(upcoming > 0);
+
+        endedSection.setVisible(ended > 0);
+        endedSection.setManaged(ended > 0);
+    }
+
+
+    @FXML
+    private void handleCategoryClick(MouseEvent event) {
+        VBox clicked = (VBox) event.getSource();
+
+        String category = clicked.getId();
+        boolean isReset = category.equalsIgnoreCase(currentCategory);
+
+        if (isReset) {
+            currentCategory = "ALL";
+        } else {
+            currentCategory = category;
+        }
+
+        clicked.getParent().getChildrenUnmodifiable().forEach(node -> {
+            node.getStyleClass().remove("active-category");
+        });
+
+        if (!"ALL".equals(currentCategory)) {
+            clicked.getStyleClass().add("active-category");
+        }
+
+        applyFilter();
+    }
+
 
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {

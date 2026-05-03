@@ -1,50 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      stylesheets="@../css/NavBar.css"
-      fx:controller="com.auction.client.controller.NavBarController"
-      prefHeight="137.0" maxWidth="Infinity" styleClass="header-section">
+<VBox maxWidth="Infinity" styleClass="header-section" stylesheets="@../css/NavBar.css"
+      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.NavBarController">
+    <HBox alignment="CENTER" styleClass="top-bar">
 
-    <HBox alignment="CENTER_LEFT" styleClass="top-bar">
-        <HBox onMouseClicked="#handleSwitchToHome" style="-fx-cursor: hand" alignment="CENTER_LEFT" spacing="5"
-              styleClass="logo-container">
-            <Label styleClass="logo-icon" text="⚖"/>
-            <Label styleClass="logo-text" text="AUCTION"/>
+        <HBox alignment="CENTER_LEFT" spacing="25" HBox.hgrow="ALWAYS">
+            <HBox onMouseClicked="#handleSwitchToHome" style="-fx-cursor: hand" alignment="CENTER_LEFT" spacing="10"
+                  styleClass="logo-container">
+                <Label styleClass="logo-icon" text="⚖"/>
+                <Label styleClass="logo-text" text="AUCTION"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="20">
+                <Label onMouseClicked="#handleSwitchToHome" styleClass="nav-item" text="Home"/>
+                <Label styleClass="categories-dropdown" text="Categories ˅"/>
+            </HBox>
         </HBox>
 
-        <Label styleClass="categories-dropdown" text="Categories ˅"/>
-
-        <Region HBox.hgrow="ALWAYS"/>
-
-        <HBox alignment="CENTER_LEFT" styleClass="search-bar" maxWidth="600.0" HBox.hgrow="SOMETIMES">
+        <HBox alignment="CENTER" maxWidth="800.0" prefWidth="600.0" styleClass="search-bar" HBox.hgrow="ALWAYS">
             <Label styleClass="search-icon" text="🔍"/>
             <TextField promptText="Search for anything" styleClass="search-input" HBox.hgrow="ALWAYS"/>
         </HBox>
 
-        <Region HBox.hgrow="ALWAYS"/>
-
-        <HBox alignment="CENTER_LEFT" spacing="10" onMouseClicked="#handleSwitchToSetting" style="-fx-cursor: hand">
-            <StackPane styleClass="profile-icon">
-                <ImageView fx:id="profileImage" fitWidth="40.0" fitHeight="40.0" preserveRatio="true">
-                    <image>
-                        <Image url="@../assets/default_avatar.png"/>
-                    </image>
-                </ImageView>
-            </StackPane>
-            <Label fx:id="userName" styleClass="profile-name" text="User"/>
+        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" onMouseClicked="#handleSwitchToSetting" spacing="12" style="-fx-cursor: hand">
+                <StackPane styleClass="profile-icon">
+                    <ImageView fx:id="profileImage" fitHeight="38.0" fitWidth="38.0" preserveRatio="true">
+                        <image>
+                            <Image url="@../assets/default_avatar.png"/>
+                        </image>
+                    </ImageView>
+                </StackPane>
+                <Label fx:id="userName" styleClass="profile-name" text="User"/>
+            </HBox>
         </HBox>
-    </HBox>
-
-    <HBox alignment="CENTER" styleClass="nav-menu" spacing="30">
-        <Label onMouseClicked="#handleSwitchToHome" styleClass="nav-item" text="Home"/>
-        <Label styleClass="nav-item" text="About Us"/>
-        <Label styleClass="nav-item" text="Browse Auction"/>
-        <Label styleClass="nav-item" text="How It Works"/>
     </HBox>
 </VBox>
