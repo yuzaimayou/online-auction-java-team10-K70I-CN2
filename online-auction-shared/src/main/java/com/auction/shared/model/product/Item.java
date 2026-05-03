@@ -186,9 +186,9 @@ public class Item extends Entity {
         currentTopPLayerId = playerId;
     }
 
-    public String getStatus() {
-        return status;
-    }
+//    public String getStatus() {
+//        return status;
+//    }
 
     public void setStatus(String status) {
         this.status = status;
