@@ -7,6 +7,7 @@ import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -53,12 +54,15 @@ public class HomePageController {
 
     @FXML
     public void initialize() {
+        SearchStoreController.searchQueryProperty().addListener((obs, oldVal, newVal) -> {
+            applyFilter();
+        });
         NetworkService.getInstance().leaveRoom();
 
         System.out.println("Đã vào trang chủ!");
 
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
-            double width = newVal.doubleValue() - 40; // trừ padding
+            double width = newVal.doubleValue() - 40;
             ongoingAuctionsContainer.setPrefWidth(width);
             upcomingAuctionsContainer.setPrefWidth(width);
             endedAuctionsContainer.setPrefWidth(width);
@@ -66,7 +70,6 @@ public class HomePageController {
 
         getDataItemsAndDisplay();
     }
-
 
     @FXML
     private void getDataItemsAndDisplay() {
@@ -100,69 +103,70 @@ public class HomePageController {
         if (masterItemList == null)
             return;
 
-        List<Item> filtered;
+        String query = SearchStoreController.getSearchQuery().toLowerCase().trim();
 
-        if ("ALL".equals(currentCategory)) {
-            filtered = masterItemList;
-        } else {
-            filtered = masterItemList.stream()
-                    .filter(item -> {
-                        if (item.getCategory() == null)
-                            return false;
+        List<Item> filtered = masterItemList.stream()
+                .filter(item -> {
+                    // Lọc theo Category
+                    boolean matchesCategory = currentCategory.equals("ALL") ||
+                            (item.getCategory() != null && item.getCategory().toString().equalsIgnoreCase(currentCategory));
 
-                        return item.getCategory().toString()
-                                .equalsIgnoreCase(currentCategory);
-                    })
-                    .collect(Collectors.toList());
-        }
+                    // Lọc theo Search Query
+                    boolean matchesSearch = query.isEmpty() ||
+                            (item.getName() != null && item.getName().toLowerCase().contains(query));
+
+                    return matchesCategory && matchesSearch;
+                })
+                .collect(Collectors.toList());
 
         loadItemsToUI(filtered);
     }
 
     @FXML
     public void loadItemsToUI(List<Item> itemsFromServer) {
-        ongoingAuctionsContainer.getChildren().clear();
-        upcomingAuctionsContainer.getChildren().clear();
-        endedAuctionsContainer.getChildren().clear();
+        Platform.runLater(() -> {
+            ongoingAuctionsContainer.getChildren().clear();
+            upcomingAuctionsContainer.getChildren().clear();
+            endedAuctionsContainer.getChildren().clear();
 
-        int ongoingCount = 0;
-        int upcomingCount = 0;
-        int endedCount = 0;
+            int ongoingCount = 0;
+            int upcomingCount = 0;
+            int endedCount = 0;
 
-        for (Item item : itemsFromServer) {
-            try {
-                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
-                VBox cardBox = fxmlLoader.load();cardBox.getStylesheets().add(
-                        getClass().getResource("/com.auction.client/css/HomePage.css").toExternalForm()
-                );
+            for (Item item : itemsFromServer) {
+                try {
+                    FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
+                    VBox cardBox = fxmlLoader.load();cardBox.getStylesheets().add(
+                            getClass().getResource("/com.auction.client/css/HomePage.css").toExternalForm()
+                    );
 
-                cardBox.setPrefWidth(280);
-                cardBox.setMinWidth(280);
-                cardBox.setMaxWidth(280);
+                    cardBox.setPrefWidth(280);
+                    cardBox.setMinWidth(280);
+                    cardBox.setMaxWidth(280);
 
-                ItemCardHPController cardHPController = fxmlLoader.getController();
-                cardHPController.setData(item);
+                    ItemCardHPController cardHPController = fxmlLoader.getController();
+                    cardHPController.setData(item);
 
-                String status = (item.getStatus() != null)
-                        ? item.getStatus().toString().toUpperCase() : "";
+                    String status = (item.getStatus() != null)
+                            ? item.getStatus().toString().toUpperCase() : "";
 
-                if (status.contains("ONGOING") || status.contains("LIVE")) {
-                    ongoingAuctionsContainer.getChildren().add(cardBox);
-                    ongoingCount++;
-                } else if (status.contains("UPCOMING")) {
-                    upcomingAuctionsContainer.getChildren().add(cardBox);
-                    upcomingCount++;
-                } else {
-                    endedAuctionsContainer.getChildren().add(cardBox);
-                    endedCount++;
+                    if (status.contains("ONGOING") || status.contains("LIVE")) {
+                        ongoingAuctionsContainer.getChildren().add(cardBox);
+                        ongoingCount++;
+                    } else if (status.contains("UPCOMING")) {
+                        upcomingAuctionsContainer.getChildren().add(cardBox);
+                        upcomingCount++;
+                    } else {
+                        endedAuctionsContainer.getChildren().add(cardBox);
+                        endedCount++;
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-        }
-
         updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
+        });
     }
     private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
 

@@ -28,7 +28,7 @@
 
         <HBox alignment="CENTER" maxWidth="800.0" prefWidth="600.0" styleClass="search-bar" HBox.hgrow="ALWAYS">
             <Label styleClass="search-icon" text="🔍"/>
-            <TextField promptText="Search for anything" styleClass="search-input" HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="searchField" promptText="Search for anything" styleClass="search-input" HBox.hgrow="ALWAYS"/>
         </HBox>
 
         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
