@@ -5,18 +5,33 @@
 
 /* Ảnh sản phẩm */
 .main-image-container {
-    -fx-background-color: white;
+    -fx-background-color: #FFFFFF;
     -fx-border-color: #E0E0E0;
     -fx-border-width: 1px;
-    -fx-padding: 20;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-min-width: 700px;
+    -fx-max-width: 700px;
+    -fx-min-height: 450px;
+    -fx-max-height: 450px;
 }
 
 .thumbnail-container {
     -fx-border-color: #E0E0E0;
     -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
     -fx-background-color: white;
     -fx-min-width: 80;
     -fx-min-height: 60;
+    -fx-max-width: 80;
+    -fx-max-height: 60;
+    -fx-alignment: CENTER;
+   -fx-cursor: hand;
+}
+
+.thumbnail-container:hover {
+    -fx-border-color: #2D55FF; /* Hiệu ứng highlight khi di chuột vào ảnh nhỏ */
 }
 
 /* Typography */
@@ -183,3 +198,37 @@
 .bidder-name-text { -fx-font-weight: bold; -fx-text-fill: #333; }
 .price-green { -fx-text-fill: #4A835D; -fx-font-weight: bold; -fx-font-size: 16px; }
 .see-more-link { -fx-text-fill: #2D55FF; -fx-underline: false; -fx-font-weight: bold; }
+
+/* Chỉnh cục lăn  */
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 14px;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1;
+    -fx-background-radius: 10px;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px;
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
