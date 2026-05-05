@@ -27,7 +27,7 @@ public class ProductHandler implements HttpHandler {
 
             URI requestURI = exchange.getRequestURI();
             String query = requestURI.getQuery();
-            if (query == null && !query.contains("action")) {
+            if (query == null || !query.contains("action")) {
                 return;
             }
             String[] params = query.split("&");

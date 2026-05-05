@@ -1,16 +1,22 @@
 package com.auction.client.controller.setting;
 
+import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class ProfilePageController {
+    @FXML private TextField emailField;
+    @FXML private TextField firstNameField; // Tạm thời dùng hiển thị Username vào đây
+    @FXML private TextField lastNameField;
 
     @FXML
     private ToggleButton profileInfoBtn;
@@ -25,6 +31,36 @@ public class ProfilePageController {
     public void initialize() {
         if (profileInfoBtn != null) {
             profileInfoBtn.setSelected(true);
+        }
+
+        displayUserData();
+    }
+
+    private void displayUserData() {
+        User currentUser = UserSession.getInstance().getLoggedInUser();
+
+        if (currentUser != null) {
+            if (emailField != null) {
+                emailField.setText(currentUser.getEmail());
+            }
+            if (firstNameField != null) {
+                firstNameField.setText(currentUser.getUsername());
+            }
+            if (lastNameField != null) {
+                lastNameField.setText("User Account");
+            }
+
+            lockFields(emailField, firstNameField, lastNameField);
+        }
+    }
+
+    private void lockFields(TextField... fields) {
+        for (TextField field : fields) {
+            if (field != null) {
+                field.setEditable(false);
+                field.setFocusTraversable(false);
+                field.setMouseTransparent(true);
+            }
         }
     }
 
@@ -48,11 +84,10 @@ public class ProfilePageController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
 
-            Stage stage = (Stage) profileInfoBtn.getScene().getWindow();
-            Scene scene = new Scene(root);
-
-            stage.setScene(scene);
-            stage.show();
+            if (profileInfoBtn != null && profileInfoBtn.getScene() != null) {
+                Stage stage = (Stage) profileInfoBtn.getScene().getWindow();
+                stage.getScene().setRoot(root);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

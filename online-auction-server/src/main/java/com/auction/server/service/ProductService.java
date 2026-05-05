@@ -8,6 +8,7 @@ import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ProductService {
     private final ItemRepository itemRepository;
@@ -17,6 +18,15 @@ public class ProductService {
 
         this.itemRepository = new ItemRepository();
     }
+
+    public List<Item> getAllProductsBySeller(String sellerId) {
+        if (sellerId == null || sellerId.trim().isEmpty()) {
+            return null; // Hoặc trả về list rỗng tùy logic của bạn
+        }
+        // Gọi hàm từ ItemRepository
+        return itemRepository.findAllBySellerId(sellerId);
+    }
+
 
     public Item setItem(ProductPayload productData) {
         String productName = productData.getProductName();

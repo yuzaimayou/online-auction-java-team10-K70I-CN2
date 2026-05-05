@@ -7,74 +7,93 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class SettingController {
+
+    public static String targetTab = "ProfileInfo";
+
     @FXML
     private VBox dynamicContent;
+    @FXML
+    private ToggleButton profileInfoBtn;
+    @FXML
+    private ToggleGroup menuGroup;
+    @FXML
+    private ToggleButton myAuctionsBtn;
+    @FXML
+    private ToggleButton historyBidBtn;
+
+    @FXML
+    public void initialize() {
+        menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                menuGroup.selectToggle(oldToggle);
+            }
+        });
+
+        if ("MyAuctions".equals(targetTab)) {
+            myAuctionsBtn.setSelected(true);
+            loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
+        } else if ("HistoryBid".equals(targetTab)) {
+            historyBidBtn.setSelected(true);
+        } else {
+            profileInfoBtn.setSelected(true);
+            loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
+        }
+        targetTab = "ProfileInfo";
+    }
+
+    private void loadPage(String fxmlPath) {
+        dynamicContent.getChildren().clear();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent page = loader.load();
+            dynamicContent.getChildren().add(page);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Không tìm thấy file: " + fxmlPath);
+        }
+    }
 
     @FXML
     private void handleLogout(ActionEvent event) {
         UserSession.getInstance().cleanUserSession();
-        handleSwitchToAuthenPage(event);
+        handleSwitchToLogin(event);
 
     }
 
     @FXML
     public void handleProfileInfo(ActionEvent event) {
-        dynamicContent.getChildren().clear();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/ProfilePage.fxml"));
-            Parent profilePage = loader.load();
-            dynamicContent.getChildren().add(profilePage);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Không tìm thấy file ProfilePage.fxml! Kiểm tra lại đường dẫn.");
-        }
-
-
+        loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
     }
 
     @FXML
     public void handleMyAuctions(ActionEvent event) {
-        dynamicContent.getChildren().clear();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/MyAuctionsPage.fxml"));
-            Parent myAuctionsPage = loader.load();
-            dynamicContent.getChildren().add(myAuctionsPage);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Không tìm thấy file MyAuctionsPage.fxml! Kiểm tra lại đường dẫn.");
-        }
-
+        loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
     }
 
     @FXML
     public void handleHistoryBid(ActionEvent event) {
-
     }
 
     @FXML
-    public void handleSwitchToAuthenPage(ActionEvent event) {
+    protected void handleSwitchToLogin(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/authenticator/AuthPage.fxml")
-            );
-            Parent root = loader.load();
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
 
-            Node sourceNode = (Node) event.getSource();
-            Scene currentScene = sourceNode.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
+            javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
 
-            currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Authentication");
+            stage.getScene().setRoot(loginRoot);
 
         } catch (IOException e) {
+            System.err.println("Không tìm thấy file Login.fxml!");
             e.printStackTrace();
-            System.err.println("Không tìm thấy file AuthPage.fxml! Kiểm tra lại đường dẫn.");
         }
     }
 }
