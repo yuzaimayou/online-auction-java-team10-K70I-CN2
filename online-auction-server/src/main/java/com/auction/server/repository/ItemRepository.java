@@ -318,8 +318,8 @@ public class ItemRepository {
 
     public List<String> updateStatus() {
         List<String> updatedId = new ArrayList<>();
-        String selectEndedSql = "SELECT id FROM items WHERE status = 'ACTIVE' AND datetime(end_time) <= datetime('now','localtime')";
-        String selectLiveSql = "SELECT id FROM items WHERE status = 'PENDING' AND datetime(start_time) <= datetime('now','localtime')";
+        String selectEndedSql = "SELECT id FROM items WHERE status = 'ONGOING' AND datetime(end_time) <= datetime('now','localtime')";
+        String selectLiveSql = "SELECT id FROM items WHERE status = 'UPCOMING' AND datetime(start_time) <= datetime('now','localtime')";
 
         try (Connection conn = DatabaseConnection.connect()) {
             try (PreparedStatement ps = conn.prepareStatement(selectEndedSql);
