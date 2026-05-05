@@ -19,6 +19,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+
 import java.util.List;
 
 
@@ -206,10 +207,11 @@ public class ProductPageController implements NetworkService.MessageListener {
             productImage.setViewport(new javafx.geometry.Rectangle2D(viewX, viewY, viewW, viewH));
         });
     }
+
     private void displayDataProduct(Item item) {
         thumbnailContainer.getChildren().clear();
 
-        List<String> images = item.getImagePaths();
+        List<String> images = item.getImagesPath();
 
         if (images != null && !images.isEmpty()) {
             String mainImageUrl = images.get(0);
@@ -254,7 +256,8 @@ public class ProductPageController implements NetworkService.MessageListener {
         bidStepLabel.setText(String.valueOf(item.getBidStep()));
         startTimeLabel.setText(String.valueOf(item.getStartTime()));
         endTimeLabel.setText(String.valueOf(item.getEndTime()));
-}
+    }
+
     // Ẩn/Hiện form nhập liệu khi nhấn nút Auto Bid
     @FXML
     private void toggleAutoBidForm() {
