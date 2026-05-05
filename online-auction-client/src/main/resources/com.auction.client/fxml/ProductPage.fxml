@@ -21,20 +21,16 @@
     <content>
         <VBox styleClass="main-container">
 
-            <fx:include source="NavBar.fxml" />
+            <fx:include fx:id="navBar" source="NavBar.fxml" />
 
             <HBox alignment="TOP_CENTER" spacing="40" style="-fx-padding: 40 60 40 60;">
 
                 <VBox maxWidth="750" spacing="25" HBox.hgrow="ALWAYS">
-                    <StackPane prefHeight="450" styleClass="main-image-container">
-                        <ImageView fx:id="productImage" fitHeight="450.0" fitWidth="700.0" preserveRatio="true" />
+                    <StackPane minHeight="450" maxHeight="450" prefHeight="450" prefWidth="700" styleClass="main-image-container">
+                        <ImageView fx:id="productImage" pickOnBounds="true" StackPane.alignment="CENTER" />
                     </StackPane>
 
-                    <HBox alignment="CENTER_LEFT" spacing="15">
-                        <StackPane styleClass="thumbnail-container"><ImageView fitHeight="60" fitWidth="80" /></StackPane>
-                        <StackPane styleClass="thumbnail-container"><ImageView fitHeight="60" fitWidth="80" /></StackPane>
-                        <StackPane styleClass="thumbnail-container"><ImageView fitHeight="60" fitWidth="80" /></StackPane>
-                        <StackPane styleClass="thumbnail-container"><ImageView fitHeight="60" fitWidth="80" /></StackPane>
+                    <HBox fx:id="thumbnailContainer" alignment="CENTER_LEFT" spacing="15">
                     </HBox>
                      <Label fx:id="productNameLabel" styleClass="product-title" text="NAME PRODUCT" wrapText="true" />
 

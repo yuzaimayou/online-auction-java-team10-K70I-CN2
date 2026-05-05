@@ -5,7 +5,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox prefWidth="820.0"
+<VBox prefWidth=".0"
       prefHeight="760.0"
       spacing="28.0"
       styleClass="content-card"
@@ -18,7 +18,6 @@
         <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
     </padding>
 
-    <children>
         <Label text="Personal Information" styleClass="content-title"/>
 
         <GridPane hgap="24.0" vgap="18.0">
@@ -27,48 +26,35 @@
                 <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
             </columnConstraints>
 
-            <children>
                 <!-- Email -->
                 <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                    <children>
                         <Label text="Email" styleClass="field-label"/>
-                        <TextField styleClass="info-field"/>
-                    </children>
+                        <TextField fx:id="emailField" styleClass="info-field"/>
                 </VBox>
 
                 <!-- First Name -->
                 <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                    <children>
                         <Label text="First Name" styleClass="field-label"/>
-                        <TextField styleClass="info-field"/>
-                    </children>
+                        <TextField fx:id="firstNameField" styleClass="info-field"/>
                 </VBox>
 
                 <!-- Last Name -->
                 <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                    <children>
                         <Label text="Last Name" styleClass="field-label"/>
-                        <TextField styleClass="info-field"/>
-                    </children>
+                        <TextField fx:id="lastNameField" styleClass="info-field"/>
                 </VBox>
 
                 <!-- Phone Number -->
                 <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                    <children>
                         <Label text="Phone Number" styleClass="field-label"/>
                         <TextField styleClass="info-field"/>
-                    </children>
                 </VBox>
-            </children>
         </GridPane>
 
         <Region VBox.vgrow="ALWAYS"/>
 
         <HBox alignment="CENTER_RIGHT">
-            <children>
                 <Label text="Edit Profile" styleClass="edit-profile-btn"/>
-            </children>
         </HBox>
-    </children>
 </VBox>
 

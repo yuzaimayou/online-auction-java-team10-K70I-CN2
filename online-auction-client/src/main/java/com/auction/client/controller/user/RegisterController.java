@@ -90,30 +90,16 @@ public class RegisterController {
     }
 
     @FXML
-    public void handleSwitchToLogin(ActionEvent event) {
-
+    protected void handleSwitchToLogin(ActionEvent event) {
         try {
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
 
-            Parent loginRoot = FXMLLoader.load(
-                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+            javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
 
-            Node sourceNode = (Node) event.getSource();
-
-            StackPane dynamicContentArea =
-                    (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
-
-            if (dynamicContentArea != null) {
-
-                dynamicContentArea.getChildren().clear();
-                dynamicContentArea.getChildren().add(loginRoot);
-
-            } else {
-
-                System.err.println("Không tìm thấy StackPane dynamicContentArea");
-
-            }
+            stage.getScene().setRoot(loginRoot);
 
         } catch (IOException e) {
+            System.err.println("Không tìm thấy file Login.fxml!");
             e.printStackTrace();
         }
     }
