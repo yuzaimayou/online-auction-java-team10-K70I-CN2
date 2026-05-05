@@ -2,15 +2,19 @@ package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseConnection;
 import com.auction.shared.model.product.Item;
+import com.auction.shared.util.GsonUtil;
+import com.google.gson.Gson;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ItemRepository {
+    private Gson gson = new GsonUtil().getInstance();
 
     public boolean createItem(Item item) {
 
@@ -26,8 +30,10 @@ public class ItemRepository {
                     end_time,
                     category,
                     bid_step,
-                    image_path
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?)
+                    image_path,
+                    status,
+                    create_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
 
         try (
@@ -45,7 +51,9 @@ public class ItemRepository {
             stmt.setString(8, item.getEndTime().toString());
             stmt.setString(9, item.getCategory());
             stmt.setDouble(10, item.getBidStep());
-            stmt.setString(11, item.getImagePath());
+            stmt.setString(11, gson.toJson(item.getImagesPath()));
+            stmt.setString(12, item.getStatus());
+            stmt.setString(13, item.getCreate_at().toString());
 
             stmt.executeUpdate();
             return true;
@@ -68,7 +76,9 @@ public class ItemRepository {
                     end_time = ?, 
                     category = ?, 
                     bid_step = ?, 
-                    image_path = ?
+                    images_path = ?,
+                    status=?,
+                
                 WHERE id = ?
                 """;
 
@@ -86,10 +96,11 @@ public class ItemRepository {
             stmt.setString(7, item.getEndTime().toString());
             stmt.setString(8, item.getCategory());
             stmt.setDouble(9, item.getBidStep());
-            stmt.setString(10, item.getImagePath());
+            stmt.setString(10, gson.toJson(item.getImagesPath()));
+            stmt.setString(11, item.getStatus());
 
             // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
-            stmt.setString(11, itemId);
+            stmt.setString(12, itemId);
 
             // executeUpdate() trả về số dòng bị ảnh hưởng.
             // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
@@ -139,6 +150,8 @@ public class ItemRepository {
             try (ResultSet rs = stmt.executeQuery()) {
 
                 if (rs.next()) {
+                    String pathsData = rs.getString("image_path");
+                    List<String> imagePaths = gson.fromJson(pathsData, List.class);
 
                     Item item = new Item(
                             rs.getString("name"),
@@ -150,7 +163,7 @@ public class ItemRepository {
                             rs.getString("seller_id"),
                             rs.getString("category"),
                             rs.getDouble("bid_step"),
-                            rs.getString("image_path")
+                            imagePaths
                     );
                     item.setId(rs.getString("id"));
                     return item;
@@ -175,6 +188,8 @@ public class ItemRepository {
             try (ResultSet rs = stmt.executeQuery()) {
 
                 if (rs.next()) {
+                    String pathsData = rs.getString("image_path");
+                    List<String> imagePaths = gson.fromJson(pathsData, List.class);
 
                     Item item = new Item(
                             rs.getString("name"),
@@ -186,7 +201,7 @@ public class ItemRepository {
                             rs.getString("seller_id"),
                             rs.getString("category"),
                             rs.getDouble("bid_step"),
-                            rs.getString("image_path")
+                            imagePaths
                     );
                     item.setId(rs.getString("id"));
                     return item;
@@ -209,6 +224,8 @@ public class ItemRepository {
         ) {
             stmt.setString(1, sellerID);
             try (ResultSet rs = stmt.executeQuery()) {
+                String pathsData = rs.getString("image_path");
+                List<String> imagePaths = gson.fromJson(pathsData, List.class);
                 while (rs.next()) {
                     Item item = new Item(
                             rs.getString("name"),
@@ -220,7 +237,7 @@ public class ItemRepository {
                             rs.getString("seller_id"),
                             rs.getString("category"),
                             rs.getDouble("bid_step"),
-                            rs.getString("image_path")
+                            imagePaths
                     );
                     item.setId(rs.getString("id"));
                     items.add(item);
@@ -247,6 +264,8 @@ public class ItemRepository {
         ) {
 
             while (rs.next()) {
+                String pathsData = rs.getString("image_path");
+                List<String> imagePaths = gson.fromJson(pathsData, List.class);
 
                 Item item = new Item(
                         rs.getString("name"),
@@ -258,7 +277,7 @@ public class ItemRepository {
                         rs.getString("seller_id"),
                         rs.getString("category"),
                         rs.getDouble("bid_step"),
-                        rs.getString("image_path")
+                        imagePaths
                 );
                 item.setId(rs.getString("id"));
 
@@ -306,6 +325,35 @@ public class ItemRepository {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public List<String> updateStatus() {
+        List<String> updatedId = new ArrayList<>();
+        String selectEndedSql = "SELECT id FROM items WHERE status = 'ONGOING' AND datetime(end_time) <= datetime('now','localtime')";
+        String selectLiveSql = "SELECT id FROM items WHERE status = 'UPCOMING' AND datetime(start_time) <= datetime('now','localtime')";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            try (PreparedStatement ps = conn.prepareStatement(selectEndedSql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    updatedId.add(rs.getString("id"));
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(selectLiveSql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    updatedId.add(rs.getString("id"));
+                }
+            }
+
+            for (String id : updatedId) {
+
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return updatedId;
     }
 
 }

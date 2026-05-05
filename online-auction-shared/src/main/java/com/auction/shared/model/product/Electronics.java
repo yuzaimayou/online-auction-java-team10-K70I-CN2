@@ -1,4 +1,4 @@
-package com.auction.shared.model.product;
+/* package com.auction.shared.model.product;
 
 import java.time.LocalDateTime;
 
@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
  * <p>
  * With the current database schema, electronics records use the same columns
  * as items, so this class keeps constructor parity with Item.
- */
 public class Electronics extends Item {
 
     // Constructor for creating a new electronics listing.
@@ -35,4 +34,4 @@ public class Electronics extends Item {
         super(name, description, startingPrice, highestCurrentPrice, startTime, endTime, sellerId, category, bidStep, imagePath);
     }
 }
-
+*/
