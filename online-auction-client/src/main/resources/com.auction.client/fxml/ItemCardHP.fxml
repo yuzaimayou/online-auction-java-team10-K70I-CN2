@@ -20,8 +20,11 @@
         <ImageView fx:id="productImage"/>
     </StackPane>
 
-    <VBox styleClass="content-container">
-        <Label fx:id="productNameLabel" styleClass="product-name" text="IPhone 17 Pro Max 2025"/>
+    <VBox styleClass="content-container" >
+        <Label fx:id="productNameLabel" styleClass="product-name"
+               wrapText="true"
+               minHeight="-Infinity"
+               text="IPhone 17 Pro Max 2025"/>
 
         <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>
 

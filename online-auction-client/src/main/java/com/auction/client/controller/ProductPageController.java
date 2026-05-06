@@ -19,6 +19,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -297,7 +298,17 @@ public class ProductPageController implements NetworkService.MessageListener {
             }
         }
 
+        double minHeight = 100;
+        productDesLabel.setMinHeight(minHeight);
         productDesLabel.setText(item.getDescription());
+        productDesLabel.setWrapText(true);
+        productDesLabel.setMaxWidth(Double.MAX_VALUE);
+        productDesLabel.prefWidthProperty().bind(
+                productDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
+        );
+
+        productDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        productDesLabel.setMinHeight(Region.USE_PREF_SIZE);
         productNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
         currentPriceLabel.setText(String.format("Current bid: %.0f", item.getCurrentPrice()));

@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -96,11 +97,9 @@ public class ItemCardHPController {
     public void setData(Item item) {
         this.currentItem = item;
 
-        // Tên và Ảnh giữ nguyên
-        productNameLabel.setText(truncateText(item.getName(), 40));
-        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
+        productNameLabel.setText(item.getName());
 
-        // Kích hoạt bộ đếm thời gian. Bộ đếm sẽ tự động render các thông tin còn lại.
+        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
         startCountdown();
     }
 
@@ -170,11 +169,6 @@ public class ItemCardHPController {
         );
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.playFromStart();
-    }
-
-    private String truncateText(String text, int maxLength) {
-        if (text == null) return "";
-        return (text.length() <= maxLength) ? text : text.substring(0, maxLength) + "...";
     }
 
     @FXML
