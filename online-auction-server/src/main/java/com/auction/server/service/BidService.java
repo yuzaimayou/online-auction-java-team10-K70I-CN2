@@ -46,6 +46,14 @@ public class BidService {
                     return false;
                 }
 
+                // [FIX] Kiểm tra xem phiên đấu giá đã hết thời gian chưa
+                LocalDateTime now = LocalDateTime.now();
+                if (now.isAfter(item.getEndTime())) {
+                    conn.rollback();
+                    System.out.println("Auto-bid registration rejected: auction has ended at " + item.getEndTime());
+                    return false;
+                }
+
                 double minimumPossible = item.getHighestCurrentPrice() + item.getBidStep();
                 if (maxBid + PRICE_EPSILON < minimumPossible) {
                     conn.rollback();
@@ -87,6 +95,14 @@ public class BidService {
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
                     System.out.println("Bid rejected: item not found or user is the seller");
+                    return false;
+                }
+
+                // [FIX] Kiểm tra xem phiên đấu giá đã hết thời gian chưa
+                LocalDateTime now = LocalDateTime.now();
+                if (now.isAfter(item.getEndTime())) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: auction has ended at " + item.getEndTime() + ", current time: " + now);
                     return false;
                 }
 

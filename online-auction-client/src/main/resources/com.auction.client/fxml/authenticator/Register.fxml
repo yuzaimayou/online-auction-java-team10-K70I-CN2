@@ -5,112 +5,69 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
 <?import java.net.URL?>
-<VBox id="auth-page" alignment="CENTER" prefHeight="1024.0" prefWidth="720.0" spacing="30.0"
-      fx:controller="com.auction.client.controller.user.RegisterController" xmlns="http://javafx.com/javafx/25"
-      xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="rootNode" prefHeight="1024.0" prefWidth="1440.0"
+      xmlns="http://javafx.com/javafx/25"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.user.RegisterController">
     <stylesheets>
         <URL value="@../../css/AuthPage.css"/>
     </stylesheets>
-    <padding>
-        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0"/>
-    </padding>
-    <Label fx:id="lblMessage" text=""></Label>
-    <Label text="Sign up" id="main-title">
 
-    </Label>
+    <StackPane HBox.hgrow="ALWAYS" minWidth="400.0" style="-fx-background-color: #1a1a1a;">
+        <ImageView fitHeight="1024.0" fitWidth="720.0" preserveRatio="false" smooth="true" StackPane.alignment="CENTER">
+            <image>
+                <Image url="@../../assets/Signup.png"/>
+            </image>
+        </ImageView>
+    </StackPane>
 
-    <Button alignment="CENTER" mnemonicParsing="false"
-            prefHeight="45.0" prefWidth="463.0"
-            styleClass="linkedButton"
-            text="  Continue with Google">
+    <VBox alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="500.0" style="-fx-background-color: #ffffff;">
+        <padding>
+            <Insets bottom="50.0" left="100.0" right="100.0" top="50.0"/>
+        </padding>
 
-        <graphic>
-            <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                <image>
-                    <Image url="@../../assets/logo_google.png"/>
-                </image>
-            </ImageView>
-        </graphic>
-    </Button>
+        <VBox alignment="CENTER" maxWidth="450.0" spacing="25.0">
+            <Label fx:id="lblMessage" wrapText="true" textAlignment="CENTER"/>
+            <Label id="main-title" style="-fx-font-size: 32px; -fx-font-family: 'Inter Bold';" text="Sign up"/>
 
-    <Button alignment="CENTER" mnemonicParsing="false"
-            prefHeight="45.0" prefWidth="463.0"
-            styleClass="linkedButton"
-            text="  Continue with Apple">
+            <VBox spacing="15.0">
+                <VBox spacing="8.0">
+                    <Label styleClass="title" text="Email address"/>
+                    <TextField fx:id="txtEmail" prefHeight="50.0" styleClass="textBox"/>
+                </VBox>
 
-        <graphic>
-            <ImageView fitHeight="20.0" fitWidth="20.0" preserveRatio="true">
-                <image>
-                    <Image url="@../../assets/logo_apple.png"/>
-                </image>
-            </ImageView>
-        </graphic>
-    </Button>
+                <VBox spacing="8.0">
+                    <Label styleClass="title" text="Username"/>
+                    <TextField fx:id="txtUsername" prefHeight="50.0" styleClass="textBox"/>
+                </VBox>
 
-    <HBox alignment="CENTER" spacing="15.0" maxWidth="463.0">
-        <Separator HBox.hgrow="ALWAYS"/>
-        <Label text="or" style="-fx-text-fill: #374151;">
-            <font>
-                <Font size="14.0"/>
-            </font>
-        </Label>
-        <Separator HBox.hgrow="ALWAYS"/>
-    </HBox>
+                <VBox spacing="8.0">
+                    <Label styleClass="title" text="Password"/>
+                    <PasswordField fx:id="txtPassword" prefHeight="50.0" styleClass="textBox"/>
+                </VBox>
 
-    <VBox maxWidth="463.0" prefWidth="463.0" spacing="20.0">
+                <VBox spacing="8.0">
+                    <Label styleClass="title" text="Confirm password"/>
+                    <PasswordField fx:id="txtConfirmPassword" prefHeight="50.0" styleClass="textBox"/>
+                </VBox>
+            </VBox>
 
-        <VBox spacing="8.0">
-            <Label text="Email address" styleClass="title">
-            </Label>
-            <TextField fx:id="txtEmail" prefHeight="43.0" styleClass="textBox" promptText=""/>
-        </VBox>
-
-        <VBox spacing="8.0">
-            <Label text="Username" styleClass="title">
-            </Label>
-            <TextField fx:id="txtUsername" prefHeight="43.0" styleClass="textBox" promptText=""/>
-        </VBox>
-
-        <VBox spacing="8.0">
-            <Label text="Password" styleClass="title">
-
-            </Label>
-            <PasswordField fx:id="txtPassword" prefHeight="43.0" styleClass="textBox" promptText=""/>
-        </VBox>
-
-        <VBox spacing="8.0">
-            <Label text="Confirm password" styleClass="title">
-
-            </Label>
-            <PasswordField fx:id="txtConfirmPassword" prefHeight="43.0" styleClass="textBox" promptText=""/>
-        </VBox>
-
-
-        <Button onAction="#handleRegister" defaultButton="true" mnemonicParsing="false" styleClass="submitButton"
-                id="registerSubmit"
-                prefHeight="58.0" prefWidth="463.0" text="Creating account >">
-            <VBox.margin>
-                <Insets top="10.0"/>
-            </VBox.margin>
-        </Button>
-
-        <HBox alignment="CENTER" spacing="5.0">
-            <VBox.margin>
-                <Insets top="15.0"/>
-            </VBox.margin>
-            <Label text="Already have account?" style="-fx-font-size: 16;">
-
-            </Label>
-            <Button onAction="#handleSwitchToLogin" styleClass="switchButton" text="Sign in!">
+            <Button id="registerSubmit" maxWidth="Infinity" prefHeight="60.0"
+                    mnemonicParsing="false" onAction="#handleRegister"
+                    styleClass="submitButton" text="Creating account &gt;">
+                <VBox.margin>
+                    <Insets top="10.0"/>
+                </VBox.margin>
             </Button>
-        </HBox>
 
+            <HBox alignment="CENTER" spacing="8.0">
+                <VBox.margin>
+                    <Insets top="15.0"/>
+                </VBox.margin>
+                <Label style="-fx-font-size: 16;" text="Already have account?"/>
+                <Button onAction="#handleSwitchToLogin" styleClass="switchButton" text="Sign in"/>
+            </HBox>
+        </VBox>
     </VBox>
-</VBox>
-
-
-
-
-
+</HBox>
