@@ -41,6 +41,11 @@
     -fx-text-fill: #333333;
 }
 
+.sub-section-title {
+    -fx-font-size: 20px;
+      -fx-font-weight: bold;
+    }
+
 .description-container {
     -fx-background-color: white;
     -fx-padding: 30;
