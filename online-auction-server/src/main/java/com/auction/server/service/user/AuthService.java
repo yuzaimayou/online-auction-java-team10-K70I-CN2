@@ -15,12 +15,15 @@ public class AuthService {
 
     public boolean register(String username, String password, String email) {
 
-        User existingUser = userRepository.findByUsername(username);
+        User existingUsername = userRepository.findByUsername(username);
 
-        if (existingUser != null) {
+
+        if (existingUsername != null) {
             System.out.println("The username already exists!");
             return false;
         }
+
+
         new Thread(() -> {
             verifyService.sendEmail(email);
             System.out.println("Da gui email");
