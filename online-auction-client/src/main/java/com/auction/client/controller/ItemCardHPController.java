@@ -103,7 +103,7 @@ public class ItemCardHPController {
             fullEndDateLabel.setText("Ends on " + item.getEndTime().format(formatter));
         }
 
-        ClientImageUtil.displayImage(item.getImagePath(), "images", productImage);
+        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
 
         startCountdown();
     }

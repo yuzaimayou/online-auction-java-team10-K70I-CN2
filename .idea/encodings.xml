@@ -3,6 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/online-auction-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/online-auction-client/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/online-auction-client/src/main/resources/com.auction.client/assets/fonts/Inter/Inter_18pt-Italic.ttf" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/online-auction-client/src/main/resources/com.auction.client/assets/fonts/Inter/Inter_18pt-Light.ttf" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/online-auction-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/online-auction-server/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/online-auction-shared/src/main/java" charset="UTF-8" />
