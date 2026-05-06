@@ -29,7 +29,7 @@
             <VBox styleClass="info-column" HBox.hgrow="ALWAYS">
                 <HBox spacing="5" alignment="CENTER_LEFT">
                     <Label styleClass="info-icon" text="＄"/>
-                    <Label styleClass="info-label" text="CURRENT BID"/>
+                    <Label fx:id="priceTitleLabel" styleClass="info-label" text="CURRENT BID"/>
                 </HBox>
                 <Label fx:id="priceLabel" styleClass="info-value-price" text="20.000.000 VNĐ"/>
             </VBox>
@@ -40,7 +40,7 @@
                     <Label styleClass="info-label" text="TIME LEFT"/>
                 </HBox>
                 <Label fx:id="endTimeLabel" styleClass="info-value-time" text="02d 15h 38m"/>
-                <Label fx:id="fullEndDateLabel" styleClass="info-sub-label" text="Ends on Jun 25, 2024"/>
+                <Label fx:id="timeTitleLabel" styleClass="info-sub-label" text="Ends on Jun 25, 2024"/>
             </VBox>
         </HBox>
     </VBox>

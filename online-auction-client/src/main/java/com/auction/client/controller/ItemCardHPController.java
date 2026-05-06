@@ -13,6 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -40,7 +41,11 @@ public class ItemCardHPController {
     @FXML
     private Label priceLabel;
     @FXML
-    private Label fullEndDateLabel;
+    private Label priceTitleLabel;
+    @FXML
+    private Label timeTitleLabel;
+    @FXML
+    private VBox timeContainer;
 
     private Timeline timeline;
 
@@ -91,20 +96,11 @@ public class ItemCardHPController {
     public void setData(Item item) {
         this.currentItem = item;
 
+        // Tên và Ảnh giữ nguyên
         productNameLabel.setText(truncateText(item.getName(), 40));
-
-        double displayPrice = (item.getHighestCurrentPrice() > 0) ?
-                item.getHighestCurrentPrice() : item.getStartingPrice();
-        priceLabel.setText(formatPrice(displayPrice));
-
-        statusLabel.setText(getStatus(item.getEndTime()));
-        if (item.getEndTime() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
-            fullEndDateLabel.setText("Ends on " + item.getEndTime().format(formatter));
-        }
-
         ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
 
+        // Kích hoạt bộ đếm thời gian. Bộ đếm sẽ tự động render các thông tin còn lại.
         startCountdown();
     }
 
@@ -113,25 +109,15 @@ public class ItemCardHPController {
         return "$ " + formatter.format(price) + " USD";
     }
 
-    private String formatTimeLeft(LocalDateTime endTime) {
-        if (endTime == null) return "N/A";
+    private String formatTimeLeft(LocalDateTime from, LocalDateTime to) {
+        if (to == null || from == null) return "N/A";
 
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isAfter(endTime)) return "Ended";
-
-        long days = ChronoUnit.DAYS.between(now, endTime);
-        long hours = ChronoUnit.HOURS.between(now, endTime) % 24;
-        long minutes = ChronoUnit.MINUTES.between(now, endTime) % 60;
-        long seconds = ChronoUnit.SECONDS.between(now, endTime) % 60;
+        long days = ChronoUnit.DAYS.between(from, to);
+        long hours = ChronoUnit.HOURS.between(from, to) % 24;
+        long minutes = ChronoUnit.MINUTES.between(from, to) % 60;
+        long seconds = ChronoUnit.SECONDS.between(from, to) % 60;
 
         return String.format("%02dd %02dh %02dm %02ds", days, hours, minutes, seconds);
-    }
-
-    private String getStatus(LocalDateTime endTime) {
-        if (endTime == null || endTime.isBefore(LocalDateTime.now())) {
-            return "ENDED";
-        }
-        return "LIVE";
     }
 
     private void startCountdown() {
@@ -139,19 +125,51 @@ public class ItemCardHPController {
             timeline.stop();
         }
 
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+
         timeline = new Timeline(
                 new KeyFrame(Duration.seconds(1), e -> {
-                    String timeLeft = formatTimeLeft(currentItem.getEndTime());
-                    endTimeLabel.setText(timeLeft);
+                    LocalDateTime now = LocalDateTime.now();
 
-                    if (timeLeft.equals("Ended")) {
+
+                    // upcoming
+                    if (currentItem.getStartTime() != null && now.isBefore(currentItem.getStartTime())) {
+                        statusLabel.setText("UPCOMING");;
+
+                        priceTitleLabel.setText("START PRICE");
+                        priceLabel.setText(formatPrice(currentItem.getStartingPrice()));
+                        endTimeLabel.setText(formatTimeLeft(now, currentItem.getStartTime()));
+                        timeTitleLabel.setText("Starts on " + currentItem.getStartTime().format(dateFormatter));
+                    }
+                    // ongoing
+                    else if (currentItem.getEndTime() != null && now.isBefore(currentItem.getEndTime())) {
+                        statusLabel.setText("LIVE");
+
+                        priceTitleLabel.setText("CURRENT BID");
+                        double displayPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
+                        priceLabel.setText(formatPrice(displayPrice));
+                        endTimeLabel.setText(formatTimeLeft(now, currentItem.getEndTime()));
+                        timeTitleLabel.setText("Ends on " + currentItem.getEndTime().format(dateFormatter));
+                    }
+                    // ended
+                    else {
                         statusLabel.setText("ENDED");
+
+                        priceTitleLabel.setText("FINAL PRICE");
+                        double finalPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
+                        priceLabel.setText(formatPrice(finalPrice));
+
+                        endTimeLabel.setText("Auction Ended");
+                        if (currentItem.getEndTime() != null) {
+                            timeTitleLabel.setText("Ended on " + currentItem.getEndTime().format(dateFormatter));
+                        }
+
                         timeline.stop();
                     }
                 })
         );
         timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
+        timeline.playFromStart();
     }
 
     private String truncateText(String text, int maxLength) {
