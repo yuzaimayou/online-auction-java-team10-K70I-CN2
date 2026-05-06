@@ -24,7 +24,7 @@
     <VBox maxWidth="463.0" prefWidth="463.0" spacing="20.0">
 
         <VBox spacing="8.0">
-            <Label text="Username or email address" styleClass="title">
+            <Label text="Username" styleClass="title">
             </Label>
             <TextField fx:id="txtUsername" prefHeight="43.0" styleClass="textBox" promptText=""/>
         </VBox>
