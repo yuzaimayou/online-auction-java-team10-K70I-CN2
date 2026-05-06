@@ -8,8 +8,11 @@ import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.product.Item;
 import com.google.gson.Gson;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -19,7 +22,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 
@@ -62,6 +68,20 @@ public class ProductPageController implements NetworkService.MessageListener {
     private Label userCurrentBidLabel;
     @FXML
     private Button btnAutoBidToggle;
+
+    //Các Label điều khiển đồng hồ
+    @FXML
+    private Label timeStatusLabel;
+    @FXML
+    private Label daysLabel;
+    @FXML
+    private Label hoursLabel;
+    @FXML
+    private Label minsLabel;
+    @FXML
+    private Label secsLabel;
+
+    private Timeline timeline;
 
     private static final double IMAGE_WIDTH = 700.0;
     private static final double IMAGE_HEIGHT = 450.0;
@@ -148,8 +168,37 @@ public class ProductPageController implements NetworkService.MessageListener {
         });
 
     }
+    // [THÊM MỚI] Hàm kiểm tra trạng thái sản phẩm và hiển thị thông báo
+    private boolean checkBiddableStatus() {
+        // Giả sử model Item của bạn có phương thức getStatus() trả về String hoặc Enum
+        // Nếu tên hàm getStatus() của bạn khác, hãy đổi lại cho đúng (VD: getState())
+        String status = item.getStatus().toString().toUpperCase();
+
+        if (status.equals("UPCOMING")) {
+            showAlert(Alert.AlertType.WARNING, "Không thể đấu giá", "Sản phẩm này chưa tới thời gian đấu giá (Upcoming).");
+            return false;
+        } else if (status.equals("ENDED")) {
+            showAlert(Alert.AlertType.WARNING, "Không thể đấu giá", "Cuộc đấu giá cho sản phẩm này đã kết thúc (Ended).");
+            return false;
+        }
+        return true;
+    }
+
+    // [THÊM MỚI] Hàm tiện ích để hiển thị Alert
+    private void showAlert(Alert.AlertType alertType, String title, String content) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 
     public void bidHandle() {
+
+        if (!checkBiddableStatus()) {
+            return;
+        }
+
         String inputAmount = bidAmountField.getText().trim();
 
         if (inputAmount.isEmpty()) {
@@ -256,6 +305,65 @@ public class ProductPageController implements NetworkService.MessageListener {
         bidStepLabel.setText(String.valueOf(item.getBidStep()));
         startTimeLabel.setText(String.valueOf(item.getStartTime()));
         endTimeLabel.setText(String.valueOf(item.getEndTime()));
+
+        startCountdown();
+    }
+
+    private void startCountdown() {
+        if (timeline != null) {
+            timeline.stop();
+        }
+        updateTimeDisplay();
+
+        timeline = new Timeline(
+                new KeyFrame(Duration.seconds(1), e -> updateTimeDisplay())
+        );
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.playFromStart();
+    }
+    private void updateTimeDisplay() {
+        if (item == null) return;
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime targetTime = null;
+        String statusText = "Time Left:";
+
+        // upcoming
+        if (item.getStartTime() != null && now.isBefore(item.getStartTime())) {
+            targetTime = item.getStartTime();
+            statusText = "Starts in:";
+        }
+        // ongoing
+        else if (item.getEndTime() != null && now.isBefore(item.getEndTime())) {
+            targetTime = item.getEndTime();
+            statusText = "Time Left:";
+        }
+
+        if (timeStatusLabel != null) {
+            timeStatusLabel.setText(statusText);
+        }
+        // ended
+        if (targetTime == null || !now.isBefore(targetTime)) {
+            updateTimerLabels(0, 0, 0, 0);
+            if (timeStatusLabel != null) {
+                timeStatusLabel.setText("Ended");
+            }
+            if (timeline != null) timeline.stop();
+        } else {
+            long days = ChronoUnit.DAYS.between(now, targetTime);
+            long hours = ChronoUnit.HOURS.between(now, targetTime) % 24;
+            long minutes = ChronoUnit.MINUTES.between(now, targetTime) % 60;
+            long seconds = ChronoUnit.SECONDS.between(now, targetTime) % 60;
+
+            updateTimerLabels(days, hours, minutes, seconds);
+        }
+    }
+
+    private void updateTimerLabels(long d, long h, long m, long s) {
+        if (daysLabel != null) daysLabel.setText(String.format("%02d", d));
+        if (hoursLabel != null) hoursLabel.setText(String.format("%02d", h));
+        if (minsLabel != null) minsLabel.setText(String.format("%02d", m));
+        if (secsLabel != null) secsLabel.setText(String.format("%02d", s));
     }
 
     // Ẩn/Hiện form nhập liệu khi nhấn nút Auto Bid
@@ -269,6 +377,11 @@ public class ProductPageController implements NetworkService.MessageListener {
     // Bắt đầu chế độ tự động
     @FXML
     private void startAutoBid() {
+
+        if (!checkBiddableStatus()) {
+            return;
+        }
+
         try {
             maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
             autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
