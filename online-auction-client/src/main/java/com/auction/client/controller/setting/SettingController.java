@@ -31,7 +31,6 @@ public class SettingController {
 
     @FXML
     public void initialize() {
-        // Lắng nghe thay đổi của ToggleGroup
         menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 menuGroup.selectToggle(oldToggle);
@@ -43,8 +42,6 @@ public class SettingController {
             loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
         } else if ("HistoryBid".equals(targetTab)) {
             historyBidBtn.setSelected(true);
-            // Bạn có thể mở comment dòng dưới khi đã có file HistoryBidPage.fxml
-            // loadPage("/com.auction.client/fxml/setting/HistoryBidPage.fxml");
         } else {
             profileInfoBtn.setSelected(true);
             loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
@@ -67,7 +64,7 @@ public class SettingController {
     @FXML
     private void handleLogout(ActionEvent event) {
         UserSession.getInstance().cleanUserSession();
-        handleSwitchToAuthenPage(event);
+        handleSwitchToLogin(event);
 
     }
 
@@ -86,23 +83,17 @@ public class SettingController {
     }
 
     @FXML
-    public void handleSwitchToAuthenPage(ActionEvent event) {
+    protected void handleSwitchToLogin(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/authenticator/AuthPage.fxml")
-            );
-            Parent root = loader.load();
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
 
-            Node sourceNode = (Node) event.getSource();
-            Scene currentScene = sourceNode.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
+            javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
 
-            currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Authentication");
+            stage.getScene().setRoot(loginRoot);
 
         } catch (IOException e) {
+            System.err.println("Không tìm thấy file Login.fxml!");
             e.printStackTrace();
-            System.err.println("Không tìm thấy file AuthPage.fxml! Kiểm tra lại đường dẫn.");
         }
     }
 }

@@ -8,6 +8,7 @@ import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProductService {
@@ -34,12 +35,16 @@ public class ProductService {
         LocalDateTime startTime = productData.getStartDateTime();
         LocalDateTime endTime = productData.getEndDateTime();
         String productDesc = productData.getProductDesc();
-        String[] productImg = productData.getProductImg();
+        List<String[]> imagesConverted = productData.getImagesConverted();
         Double initPrice = productData.getInitPrice();
         Double bidStep = productData.getBidStep();
 
         String userId = productData.getUserId();
-        String imagePath = ImageUtil.convertBase64ToImg(productImg[0], productImg[1]);
+        List<String> imagesPath = new ArrayList<>();
+        for (String[] image : imagesConverted) {
+            String path = ImageUtil.convertBase64ToImg(image[0], image[1]);
+            imagesPath.add(path);
+        }
 
         return new Item(
                 productName,
@@ -50,7 +55,7 @@ public class ProductService {
                 userId,
                 category,
                 bidStep,
-                imagePath
+                imagesPath
         );
     }
 
