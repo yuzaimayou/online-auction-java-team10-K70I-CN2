@@ -66,7 +66,7 @@ public class ProductPageController implements NetworkService.MessageListener {
     private static final double IMAGE_WIDTH = 700.0;
     private static final double IMAGE_HEIGHT = 450.0;
     private static final double IMAGE_ARC = 20.0;
-    private final long AUTO_BID_DELAY = 500;
+    private final long AUTO_BID_DELAY = 50;
     private Item item;
     private final User user = UserSession.getInstance().getLoggedInUser();
     private NetworkService network = NetworkService.getInstance();
