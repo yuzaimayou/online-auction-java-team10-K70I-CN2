@@ -3,6 +3,7 @@ package com.auction.shared.model.product;
 import com.auction.shared.model.base.Entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class Item extends Entity {
@@ -16,7 +17,7 @@ public class Item extends Entity {
     private String sellerId;
     private String category;
     private double bidStep;
-    private String imagePath;
+    private List<String> imagesPath;
     private String currentTopPLayerId;
     private String status;
     private LocalDateTime create_at;
@@ -30,7 +31,7 @@ public class Item extends Entity {
                 String sellerId,
                 String category,
                 double bidStep,
-                String imagePath) {
+                List<String> imagesPath) {
 
         super(UUID.randomUUID().toString());
         //Validate item name
@@ -64,7 +65,7 @@ public class Item extends Entity {
             throw new IllegalArgumentException("Error: Bid step must be greater than 0!");
         }
 
-        if (imagePath == null || imagePath.trim().isEmpty()) {
+        if (imagesPath == null || imagesPath.isEmpty()) {
             throw new IllegalArgumentException("Error: Image path cannot be null or empty!");
         }
 
@@ -77,7 +78,7 @@ public class Item extends Entity {
         this.sellerId = sellerId;
         this.category = category;
         this.bidStep = bidStep;
-        this.imagePath = imagePath;
+        this.imagesPath = imagesPath;
         this.create_at = LocalDateTime.now();
 
         if (LocalDateTime.now().isBefore(startTime)) {
@@ -98,7 +99,7 @@ public class Item extends Entity {
                 String sellerId,
                 String category,
                 double bidStep,
-                String imagePath) {
+                List<String> imagesPath) {
 
         super(UUID.randomUUID().toString());
 
@@ -111,7 +112,7 @@ public class Item extends Entity {
         this.sellerId = sellerId;
         this.category = category;
         this.bidStep = bidStep;
-        this.imagePath = imagePath;
+        this.imagesPath = imagesPath;
     }
 
     public String getName() {
@@ -152,8 +153,9 @@ public class Item extends Entity {
         return bidStep;
     }
 
-    public String getImagePath() {
-        return imagePath;
+
+    public List<String> getImagesPath() {
+        return imagesPath;
     }
 
     // Getters for time (needed for auction time validation)
@@ -208,7 +210,7 @@ public class Item extends Entity {
         System.out.println("Seller: " + sellerId);
         System.out.println("Category: " + category);
         System.out.println("Bid step: " + bidStep);
-        System.out.println("Image path: " + imagePath);
+        System.out.println("Image path: " + imagesPath);
         System.out.println("Start time: " + startTime);
         System.out.println("End time: " + endTime);
     }

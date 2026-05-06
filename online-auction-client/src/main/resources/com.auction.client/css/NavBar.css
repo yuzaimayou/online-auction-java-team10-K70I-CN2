@@ -1,30 +1,57 @@
 .header-section {
     -fx-background-color: #1B263B;
-    -fx-padding: 20 40 20 40;
+    -fx-padding: 30 40 30 40;
 }
 
 .top-bar {
-    -fx-padding: 0 0 20 0;
+    -fx-padding: 0 0 0 0;
 }
 
+/* khung chứa logo và tên*/
 .logo-container {
     -fx-padding: 0 30 0 0;
 }
 
 .logo-icon {
     -fx-font-size: 32px;
+    -fx-alignment: CENTER;
     -fx-text-fill: #FBBF24;
 }
 
 .logo-text {
-    -fx-font-size: 22px;
+    -fx-font-size: 25px;
     -fx-font-weight: bold;
     -fx-font-style: italic;
     -fx-text-fill: white;
 }
 
+/* Home Menu */
+.nav-menu {
+    -fx-spacing: 40px;
+    -fx-padding: 10 0 10 0;
+}
+
+.nav-item {
+    -fx-font-size: 20px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-border-width: 0 0 3 0;
+}
+
+.nav-item:hover {
+    -fx-text-fill: #FBBF24;
+}
+
+/*CATEGORY*/
+.categories-dropdown-active {
+    -fx-text-fill: #FBBF24;
+    -fx-border-color: #FBBF24;
+    -fx-border-width: 0 0 3 0;
+}
+
 .categories-dropdown {
-    -fx-font-size: 14px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: white;
     -fx-cursor: hand;
@@ -35,7 +62,7 @@
     -fx-background-color: #f1f3f5;
     -fx-background-radius: 20px;
     -fx-padding: 5 15 5 15;
-    -fx-pref-width: 400px;
+    -fx-min-width: 300px;
 }
 
 .search-icon {
@@ -71,23 +98,3 @@
     -fx-font-weight: bold;
 }
 
-/* Navigation Menu */
-.nav-menu {
-    -fx-spacing: 40px;
-    -fx-padding: 10 0 10 0;
-}
-
-.nav-item {
-    -fx-font-size: 15px;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-cursor: hand;
-}
-
-.nav-item:hover {
-    -fx-text-fill: #333333;
-}
-
-.nav-item-active {
-    -fx-text-fill: #777777; /* Dựa theo màu nhạt của nút Home trong ảnh */
-}

@@ -17,6 +17,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 
@@ -93,32 +94,14 @@ public class LoginController {
 
     @FXML
     protected void handleSwitchToRegister(ActionEvent event) {
-
         try {
+            Parent registerRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Register.fxml"));
 
-            Parent registerRoot =
-                    FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Register.fxml"));
-
-            Node sourceNode = (Node) event.getSource();
-
-            StackPane dynamicContentArea =
-                    (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
-
-            if (dynamicContentArea != null) {
-
-                dynamicContentArea.getChildren().clear();
-                dynamicContentArea.getChildren().add(registerRoot);
-
-            } else {
-
-                System.err.println(
-                        "Error: Could not find StackPane with ID 'dynamicContentArea'"
-                );
-            }
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.getScene().setRoot(registerRoot);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 }

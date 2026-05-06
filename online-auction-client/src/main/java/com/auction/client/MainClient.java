@@ -2,16 +2,14 @@ package com.auction.client;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-import javafx.scene.transform.Scale;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class MainClient extends Application {
+
+    // Hàm load fonts Inter
     private static void loadInterFonts() {
         String[] fontPaths = {
                 "/com.auction.client/assets/fonts/Inter/Inter_18pt-Italic.ttf",
@@ -25,11 +23,7 @@ public class MainClient extends Application {
         };
         for (String font : fontPaths) {
             var is = MainClient.class.getResourceAsStream(font);
-            if (is == null) {
-                System.out.println("Not found: " + font);
-                continue;
-            }
-            var f = javafx.scene.text.Font.loadFont(is, 12);
+            if (is != null) javafx.scene.text.Font.loadFont(is, 12);
         }
     }
 
@@ -38,58 +32,33 @@ public class MainClient extends Application {
         try {
             // Load fonts
             loadInterFonts();
-            // Base size
-            double baseW = 1100;
-            double baseH = 600;
-            // Tải file giao diện FXML.
-            // Lưu ý: Đường dẫn này trỏ tới thư mục
-            // src/main/resources/com/auction/client/Login.fxml
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/authenticator/AuthPage.fxml"));
-            Parent content = loader.load();
-            // Group scale UI
-            Group scaleGroup = new Group(content);
 
-            StackPane root = new StackPane(scaleGroup);
-            root.setStyle("-fx-background-color: #ffffff;");
+            // TẢI TRỰC TIẾP LOGIN.FXML (Bây giờ đã bao gồm cả ảnh bên trái)
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+            Parent root = loader.load();
 
-            // Khởi tạo Scene (khung cảnh)
-            Scene scene = new Scene(root, baseW, baseH);
+            // Khởi tạo Scene với kích thước mặc định nhưng cho phép thay đổi
+            Scene scene = new Scene(root, 1440, 900);
 
-            // Scale demo(dang loi), dang khoa kich thuoc
-            Scale scale = new Scale(1, 1, 0, 0);
-            scaleGroup.getTransforms().add(scale);
-            Runnable updateScale = () -> {
-                double scaleX = scene.getWidth() / baseW;
-                double scaleY = scene.getHeight() / baseH;
-                double s = Math.min(scaleX, scaleY);
-                scale.setX(s);
-                scale.setY(s);
-            };
-            scene.widthProperty().addListener((obs, oldV, newV) -> updateScale.run());
-            scene.heightProperty().addListener((obs, oldV, newV) -> updateScale.run());
-
-            updateScale.run();
-
-            // Cấu hình Stage (Cửa sổ ứng dụng)
             primaryStage.setTitle("Hệ thống Đấu giá Trực tuyến - Đăng nhập");
             primaryStage.setScene(scene);
 
-            // Tạm thời khóa thay đổi kích thước để form không bị xô lệch
-            primaryStage.setResizable(false);
+            // BẬT RESIZABLE ĐỂ GIAO DIỆN LINH HOẠT
+            primaryStage.setResizable(true);
 
-            // Hiển thị cửa sổ
+            // Đặt kích thước tối thiểu để không bị vỡ layout
+            primaryStage.setMinWidth(1000);
+            primaryStage.setMinHeight(700);
 
             primaryStage.show();
 
         } catch (IOException e) {
-            System.err.println("Lỗi: Không thể tải file FXML. Hãy kiểm tra lại đường dẫn trong resources!");
+            System.err.println("Lỗi: Không thể tải file FXML!");
             e.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
-        // Lệnh bắt buộc để khởi chạy vòng đời của một ứng dụng JavaFX
         launch(args);
     }
 }
