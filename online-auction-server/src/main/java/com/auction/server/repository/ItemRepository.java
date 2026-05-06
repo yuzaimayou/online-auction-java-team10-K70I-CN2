@@ -13,6 +13,38 @@ import java.util.List;
 
 public class ItemRepository {
 
+    // Cập nhật giá hiện tại và người đặt cao nhất trong 1 câu SQL (dùng trong transaction đặt giá)
+    public boolean updateCurrentBidder(Connection conn, String itemId,
+                                       double newPrice, String newBidderId) {
+        String sql = """
+                UPDATE items
+                SET current_price     = ?,
+                    current_bidder_id = ?
+                WHERE id = ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, newPrice);
+            stmt.setString(2, newBidderId);
+            stmt.setString(3, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
+    public boolean markEnded(Connection conn, String itemId) {
+        String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean createItem(Item item) {
 
         String sql = """
@@ -74,8 +106,7 @@ public class ItemRepository {
                     category = ?, 
                     bid_step = ?, 
                     image_path = ?,
-                    status=?,
-                
+                    status=?
                 WHERE id = ?
                 """;
 
@@ -143,69 +174,50 @@ public class ItemRepository {
         ) {
 
             stmt.setString(1, itemId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-
                 if (rs.next()) {
-
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            rs.getString("image_path")
-                    );
-                    item.setId(rs.getString("id"));
-                    return item;
+                    return mapRow(rs);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
     public Item findById(Connection conn, String itemId) {
-
         String sql = "SELECT * FROM items WHERE id = ?";
-
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, itemId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-
                 if (rs.next()) {
-
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            rs.getString("image_path")
-                    );
-                    item.setId(rs.getString("id"));
-                    return item;
+                    return mapRow(rs);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
+    }
+
+    private Item mapRow(ResultSet rs) throws Exception {
+        Item item = new Item(
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDouble("start_price"),
+                rs.getDouble("current_price"),
+                LocalDateTime.parse(rs.getString("start_time")),
+                LocalDateTime.parse(rs.getString("end_time")),
+                rs.getString("seller_id"),
+                rs.getString("category"),
+                rs.getDouble("bid_step"),
+                rs.getString("image_path")
+        );
+        item.setId(rs.getString("id"));
+        item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
+        String dbStatus = rs.getString("status");
+        if (dbStatus != null) item.setStatus(dbStatus);
+        return item;
     }
 
     public List<Item> findAllBySellerId(String sellerID) {
@@ -218,20 +230,7 @@ public class ItemRepository {
             stmt.setString(1, sellerID);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            rs.getString("image_path")
-                    );
-                    item.setId(rs.getString("id"));
-                    items.add(item);
+                    items.add(mapRow(rs));
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -255,22 +254,7 @@ public class ItemRepository {
         ) {
 
             while (rs.next()) {
-
-                Item item = new Item(
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("start_price"),
-                        rs.getDouble("current_price"),
-                        LocalDateTime.parse(rs.getString("start_time")),
-                        LocalDateTime.parse(rs.getString("end_time")),
-                        rs.getString("seller_id"),
-                        rs.getString("category"),
-                        rs.getDouble("bid_step"),
-                        rs.getString("image_path")
-                );
-                item.setId(rs.getString("id"));
-
-                items.add(item);
+                items.add(mapRow(rs));
             }
 
         } catch (Exception e) {

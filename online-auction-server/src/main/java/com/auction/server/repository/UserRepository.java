@@ -10,14 +10,24 @@ import java.util.UUID;
 
 public class UserRepository {
 
+    // Tạo user mới với số dư mặc định
     public boolean createUser(String username, String password, String role, String email) {
 
-        String sql = "INSERT INTO users(id,username,password,role,email) VALUES(?,?,?,?,?)";
+        String sql = """
+                INSERT INTO users(
+                    id,
+                    username,
+                    password,
+                    role,
+                    email,
+                    balance,
+                    frozen_balance
+                ) VALUES(?,?,?,?,?,?,?)
+                """;
 
         try (
                 Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, UUID.randomUUID().toString());
             stmt.setString(2, username);
@@ -25,52 +35,84 @@ public class UserRepository {
             stmt.setString(4, role);
             stmt.setString(5, email);
 
+            // Số dư mặc định
+            stmt.setDouble(6, 10000);
+            // Chưa có tiền bị khóa
+            stmt.setDouble(7, 0);
+
             stmt.executeUpdate();
             return true;
 
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
 
     public boolean enableUser(String email) {
+
         String sql = "UPDATE users SET isVerify = true WHERE email = ?";
 
         try (
                 Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setString(1, email);
+
             int rowsUpdated = stmt.executeUpdate();
-            return rowsUpdated > 0; // Return true if at least one row was updated
+
+            return rowsUpdated > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    public User findByEmail(String email) {
-        String sqp = "SELECT * FROM users WHERE email=?";
-        try (
-                Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sqp)
-        ) {
-            stmt.setString(1, email);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return new User(
-                        rs.getString("id"),
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getBoolean("isVerify")
-                );
+    // Tìm user theo id (dùng connection bên ngoài transaction)
+    public User findById(Connection conn, String userId) {
+
+        String sql = "SELECT * FROM users WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
 
+        return null;
+    }
+
+    public User findByEmail(String email) {
+
+        String sql = "SELECT * FROM users WHERE email = ?";
+
+        try (
+                Connection conn = DatabaseConnection.connect();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return mapRow(rs);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public User findByUsername(String username) {
@@ -79,22 +121,14 @@ public class UserRepository {
 
         try (
                 Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
 
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-
-                return new User(
-                        rs.getString("id"),
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("email"),
-                        rs.getBoolean("isVerify")
-                );
+                return mapRow(rs);
             }
 
         } catch (Exception e) {
@@ -102,5 +136,21 @@ public class UserRepository {
         }
 
         return null;
+    }
+
+    // Convert ResultSet -> User
+    private User mapRow(ResultSet rs) throws Exception {
+
+        User user = new User(
+                rs.getString("id"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("email"),
+                rs.getBoolean("isVerify"));
+
+        user.setBalance(rs.getDouble("balance"));
+        user.setFrozenBalance(rs.getDouble("frozen_balance"));
+
+        return user;
     }
 }

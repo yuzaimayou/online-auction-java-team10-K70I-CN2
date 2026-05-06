@@ -30,6 +30,9 @@ public class MainServer {
             httpServer.createContext("/api/product", new ProductHandler());
             httpServer.createContext("/api/products", new GetDataProducts());
             httpServer.createContext("/images", new StaticFileServer.ImageHandler());
+            // Wallet & settlement endpoints
+            httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());
+            httpServer.createContext("/api/auction/settle", new WalletHandler.SettleHandler());
 
             httpServer.setExecutor(null);
             httpServer.start();
