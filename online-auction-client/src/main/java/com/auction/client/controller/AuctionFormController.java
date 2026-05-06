@@ -176,58 +176,62 @@ public class AuctionFormController {
             lblMessage.setText("End time must be after the start time.");
             return;
         }
+        //Xu ly phan loai san pham
+        selectedCategory = selectedToggle.getUserData().toString();
         //Xu ly hinh anh
+        List<String[]> imagesConverted = new ArrayList<>();
         try {
-            String[] imageConverted = ImageUtil.convertImgToBase64(selectedFiles.get(0));
-
-            if (imageConverted == null) {
+            if (selectedFiles != null && !selectedFiles.isEmpty()) {
+                for (File file : selectedFiles) {
+                    String[] base64 = ImageUtil.convertImgToBase64(file);
+                    if (base64 != null) {
+                        imagesConverted.add(base64);
+                    }
+                }
+            }
+            if (imagesConverted == null) {
                 lblMessage.setTextFill(Color.RED);
                 lblMessage.setText("Image processing failed.");
                 return;
             }
-
-            //Xu ly phan loai san pham
-            selectedCategory = selectedToggle.getUserData().toString();
-
-
-            ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imageConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
-            String jsonPayload = gson.toJson(payload);
-            String httpUrl = String.format("%s/api/add-product", AppConfig.getHttpUrl());
-            System.out.println("Debug: Sending POST request to " + httpUrl);
-
-            HttpClient httpClient = HttpClient.newHttpClient();
-            itemsService.createItem(jsonPayload)
-                    .thenAccept(responseMessage -> {
-                        if ("success".equals(responseMessage.getStatus())) {
-                            Platform.runLater(() -> {
-                                lblMessage.setTextFill(Color.GREEN);
-                                lblMessage.setText(responseMessage.getMessage());
-                            });
-                            PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-                            pause.setOnFinished(e -> handleSwitchToHomePage());
-                            pause.play();
-                        } else {
-                            Platform.runLater(() -> {
-                                lblMessage.setTextFill(Color.RED);
-                                lblMessage.setText(responseMessage.getMessage());
-                            });
-                        }
-                    })
-                    .exceptionally(e -> {
-                        e.printStackTrace();
-                        Platform.runLater(() -> {
-                            lblMessage.setTextFill(Color.RED);
-                            lblMessage.setText("Failed to connect to server");
-                        });
-                        return null;
-                    });
-
         } catch (IOException e) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Error reading image file!");
+            lblMessage.setText("Error processing images.");
             e.printStackTrace();
-
         }
+
+        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
+        String jsonPayload = gson.toJson(payload);
+        String httpUrl = String.format("%s/api/add-product", AppConfig.getHttpUrl());
+        System.out.println("Debug: Sending POST request to " + httpUrl);
+
+        HttpClient httpClient = HttpClient.newHttpClient();
+        itemsService.createItem(jsonPayload)
+                .thenAccept(responseMessage -> {
+                    if ("success".equals(responseMessage.getStatus())) {
+                        Platform.runLater(() -> {
+                            lblMessage.setTextFill(Color.GREEN);
+                            lblMessage.setText(responseMessage.getMessage());
+                        });
+                        PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
+                        pause.setOnFinished(e -> handleSwitchToHomePage());
+                        pause.play();
+                    } else {
+                        Platform.runLater(() -> {
+                            lblMessage.setTextFill(Color.RED);
+                            lblMessage.setText(responseMessage.getMessage());
+                        });
+                    }
+                })
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    Platform.runLater(() -> {
+                        lblMessage.setTextFill(Color.RED);
+                        lblMessage.setText("Failed to connect to server");
+                    });
+                    return null;
+                });
+
 
     }
 

@@ -8,12 +8,19 @@ import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.product.Item;
 import com.google.gson.Gson;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
+
+import java.util.List;
 
 
 public class ProductPageController implements NetworkService.MessageListener {
@@ -39,6 +46,8 @@ public class ProductPageController implements NetworkService.MessageListener {
     private TextField bidAmountField;
     @FXML
     private Button submitBid;
+    @FXML
+    private HBox thumbnailContainer;
 
     // Auto Bid UI
     @FXML
@@ -54,6 +63,10 @@ public class ProductPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnAutoBidToggle;
 
+    private static final double IMAGE_WIDTH = 700.0;
+    private static final double IMAGE_HEIGHT = 450.0;
+    private static final double IMAGE_ARC = 20.0;
+    private final long AUTO_BID_DELAY = 500;
     private Item item;
     private final User user = UserSession.getInstance().getLoggedInUser();
     private NetworkService network = NetworkService.getInstance();
@@ -65,7 +78,25 @@ public class ProductPageController implements NetworkService.MessageListener {
     private double autoBidIncremental = 0;
     private double myLastBid = 0;
     private long lastAutoBidTime = 0;
-    private final long AUTO_BID_DELAY = 500;
+
+
+    @FXML
+    public void initialize() {
+        Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
+        clip.setArcWidth(IMAGE_ARC);
+        clip.setArcHeight(IMAGE_ARC);
+        productImage.setClip(clip);
+
+        productImage.setFitWidth(IMAGE_WIDTH);
+        productImage.setFitHeight(IMAGE_HEIGHT);
+        productImage.setPreserveRatio(true);
+
+        productImage.imageProperty().addListener((obs, oldImg, newImg) -> {
+            if (newImg != null) {
+                applyObjectFitCover(newImg);
+            }
+        });
+    }
 
     public void initData(Item item) {
         this.item = item;
@@ -92,12 +123,10 @@ public class ProductPageController implements NetworkService.MessageListener {
         }
     }
 
-    public void initialize() {}
-
     @Override
     public void onMessageReceived(ResponseMessage response) {
         System.out.println(response);
-        javafx.application.Platform.runLater(() -> {
+        Platform.runLater(() -> {
             if ("success".equals(response.getStatus()) && "NEW_BID".equals(response.getMessage())) {
                 String jsonPayload = response.getData();
                 BidPayload bidPayload = gson.fromJson(jsonPayload, BidPayload.class);
@@ -139,8 +168,86 @@ public class ProductPageController implements NetworkService.MessageListener {
 
     }
 
+    private void applyObjectFitCover(Image img) {
+        if (img == null) return;
+
+        // Khi ảnh load bất đồng bộ, Width/Height ban đầu có thể là 0.
+        if (img.getProgress() < 1.0) {
+            img.progressProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal.doubleValue() == 1.0) {
+                    Platform.runLater(() -> applyObjectFitCover(img));
+                }
+            });
+            return;
+        }
+
+        Platform.runLater(() -> {
+            double imgW = img.getWidth();
+            double imgH = img.getHeight();
+
+            // Tránh lỗi chia cho 0 trong trường hợp ảnh bị lỗi hoặc không load được
+            if (imgW == 0 || imgH == 0) return;
+
+            double targetRatio = IMAGE_WIDTH / IMAGE_HEIGHT;
+            double sourceRatio = imgW / imgH;
+            double viewW, viewH, viewX, viewY;
+
+            if (sourceRatio > targetRatio) {
+                viewH = imgH;
+                viewW = imgH * targetRatio;
+                viewX = (imgW - viewW) / 2;
+                viewY = 0;
+            } else {
+                viewW = imgW;
+                viewH = imgW / targetRatio;
+                viewX = 0;
+                viewY = (imgH - viewH) / 2;
+            }
+
+            productImage.setViewport(new javafx.geometry.Rectangle2D(viewX, viewY, viewW, viewH));
+        });
+    }
+
     private void displayDataProduct(Item item) {
-        ClientImageUtil.displayImage(item.getImagePath(), "images", productImage);
+        thumbnailContainer.getChildren().clear();
+
+        List<String> images = item.getImagesPath();
+
+        if (images != null && !images.isEmpty()) {
+            String mainImageUrl = images.get(0);
+            ClientImageUtil.displayImage(mainImageUrl, "images", productImage);
+
+            for (String imgPath : images) {
+                if (imgPath == null || imgPath.trim().isEmpty()) continue;
+
+                StackPane thumbPane = new StackPane();
+                thumbPane.getStyleClass().add("thumbnail-container");
+                thumbPane.setMinWidth(80);
+                thumbPane.setMinHeight(60);
+                thumbPane.setMaxWidth(80);
+                thumbPane.setMaxHeight(60);
+
+                ImageView thumbView = new ImageView();
+                thumbView.setFitWidth(80);
+                thumbView.setFitHeight(60);
+                thumbView.setPreserveRatio(true);
+
+                ClientImageUtil.displayImage(imgPath, "images", thumbView);
+                thumbPane.getChildren().add(thumbView);
+
+                thumbPane.setOnMouseClicked(e -> {
+                    Image clickedImage = thumbView.getImage();
+                    if (clickedImage != null) {
+                        productImage.setImage(clickedImage);
+                    } else {
+                        ClientImageUtil.displayImage(imgPath, "images", productImage);
+                    }
+                });
+
+                thumbnailContainer.getChildren().add(thumbPane);
+            }
+        }
+
         productDesLabel.setText(item.getDescription());
         productNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
@@ -149,9 +256,9 @@ public class ProductPageController implements NetworkService.MessageListener {
         bidStepLabel.setText(String.valueOf(item.getBidStep()));
         startTimeLabel.setText(String.valueOf(item.getStartTime()));
         endTimeLabel.setText(String.valueOf(item.getEndTime()));
-
     }
-    // 1. Ẩn/Hiện form nhập liệu khi nhấn nút Auto Bid
+
+    // Ẩn/Hiện form nhập liệu khi nhấn nút Auto Bid
     @FXML
     private void toggleAutoBidForm() {
         boolean isVisible = autoBidForm.isVisible();
@@ -208,7 +315,7 @@ public class ProductPageController implements NetworkService.MessageListener {
 
         if (myNextBid <= maxBidAmount) {
             long now = System.currentTimeMillis();
-            if (now - lastAutoBidTime < 500) return; // chống spam
+            if (now - lastAutoBidTime < AUTO_BID_DELAY) return; // chống spam
             lastAutoBidTime = now;
             network.sendBid(item.getId(), user.getId(), myNextBid, "");
             myLastBid = myNextBid;
