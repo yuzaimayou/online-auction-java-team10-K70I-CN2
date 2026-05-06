@@ -11,112 +11,135 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="850.0" prefWidth="1440.0" stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
+<ScrollPane fx:id="mainScrollPane" fitToWidth="true" hbarPolicy="NEVER" prefHeight="850.0" prefWidth="1440.0"
+            stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
     <content>
-        <VBox styleClass="main-container">
+        <VBox styleClass="main-container" alignment="TOP_CENTER" maxWidth="Infinity">
+            <padding>
+                <Insets bottom="100.0" left="0.0" right="0.0" top="0.0"/>
+            </padding>
 
-            <fx:include fx:id="navBar" source="NavBar.fxml" />
-             <Label styleClass="section-title" text="Explore Categories" />
-             <HBox alignment="CENTER" styleClass="categories-list">
-                 <VBox styleClass="category-item">
-                     <StackPane styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/fashion_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Fashion" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <StackPane styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/electronics_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Electronics" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <StackPane maxHeight="60.0" maxWidth="60.0" styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/home_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Home &amp; Garden" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <StackPane styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/art_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Art" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <StackPane styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/book_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Books" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <StackPane styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/jewelry_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Jewelry" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <StackPane styleClass="cat-icon-bg">
-                         <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
-                             <image>
-                                 <Image url="@../assets/sports_icon.png" />
-                             </image>
-                         </ImageView>
-                     </StackPane>
-                     <Label text="Sports" />
-                 </VBox>
-                 <VBox styleClass="category-item">
-                     <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage" styleClass="add-auction-button">
-                         <graphic>
-                             <Label styleClass="add-icon" text="+" />
-                         </graphic>
-                     </Button>
-                     <Label text="Add an Auction" />
-                 </VBox>
-             </HBox>
+            <fx:include fx:id="navBar" source="NavBar.fxml"/>
 
-            <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
-                <Label styleClass="section-title, gray-title" text="ONGOING AUCTIONS" />
-                <FlowPane fx:id="ongoingAuctionsContainer" alignment="CENTER" hgap="15.0" maxWidth="1165.0" styleClass="auctions-list" vgap="15.0">
-                </FlowPane>
-            </VBox>
-            <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
-                <Label styleClass="section-title, gray-title" text="UPCOMING AUSTIONS" />
-                <FlowPane fx:id="upcomingAuctionsContainer" alignment="CENTER" hgap="15.0" maxWidth="1165.0" styleClass="auctions-list" vgap="15.0">
-                </FlowPane>
+            <Label styleClass="section-title" text="Explore Categories">
                 <VBox.margin>
-                    <Insets top="30.0" />
+                    <Insets top="20.0"/>
+                </VBox.margin>
+            </Label>
+
+            <FlowPane alignment="CENTER" styleClass="categories-list">
+                <VBox styleClass="category-item" fx:id="FASHION" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/fashion_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Fashion"/>
+                </VBox>
+
+                <VBox styleClass="category-item" fx:id="ELECTRONICS" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/electronics_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Electronics"/>
+                </VBox>
+
+                <VBox styleClass="category-item" fx:id="HOME" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/home_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Home &amp; Garden"/>
+                </VBox>
+
+                <VBox styleClass="category-item" fx:id="ART" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/art_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Art"/>
+                </VBox>
+
+                <VBox styleClass="category-item" fx:id="BOOKS" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/book_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Books"/>
+                </VBox>
+
+                <VBox styleClass="category-item" fx:id="JEWELRY" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/jewelry_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Jewelry"/>
+                </VBox>
+
+                <VBox styleClass="category-item" fx:id="SPORTS" onMouseClicked="#handleCategoryClick">
+                    <StackPane styleClass="cat-icon-bg">
+                        <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../assets/sports_icon.png"/>
+                            </image>
+                        </ImageView>
+                    </StackPane>
+                    <Label text="Sports"/>
+                </VBox>
+
+                <VBox styleClass="category-item">
+                    <Button mnemonicParsing="false" onAction="#handleSwitchToAuctionFormPage"
+                            styleClass="add-auction-button">
+                        <graphic>
+                            <Label styleClass="add-icon" text="+"/>
+                        </graphic>
+                    </Button>
+                    <Label text="Add an Auction"/>
+                </VBox>
+            </FlowPane>
+
+            <VBox fx:id="ongoingSection" alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+                <Label styleClass="section-title, gray-title" text="ONGOING AUCTIONS"/>
+                <FlowPane fx:id="ongoingAuctionsContainer"
+                          alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
+                          styleClass="auctions-list"/>
+            </VBox>
+
+            <VBox fx:id="upcomingSection" alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+                <Label styleClass="section-title, gray-title" text="UPCOMING AUCTIONS"/>
+                <FlowPane fx:id="upcomingAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0"
+                          maxWidth="Infinity"
+                          styleClass="auctions-list"/>
+                <VBox.margin>
+                    <Insets top="30.0"/>
                 </VBox.margin>
             </VBox>
-            <VBox alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
-                <Label styleClass="section-title, gray-title" text="ENDED AUCTIONS" />
-                <FlowPane fx:id="endedAuctionsContainer" alignment="CENTER" hgap="15.0" maxWidth="1165.0" styleClass="auctions-list" vgap="15.0">
-                </FlowPane>
+
+            <VBox fx:id="endedSection" alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+                <Label styleClass="section-title, gray-title" text="ENDED AUCTIONS"/>
+                <FlowPane fx:id="endedAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
+                          styleClass="auctions-list"/>
                 <VBox.margin>
-                    <Insets top="30.0" />
+                    <Insets top="30.0"/>
                 </VBox.margin>
             </VBox>
         </VBox>

@@ -7,8 +7,10 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.image.Image;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -61,8 +63,8 @@ public class MyAuctionsTableHelper {
 
                     // GỌI HÀM TẢI ẢNH CỦA BẠN
                     // Tham số "images" là tên thư mục chứa ảnh trên Server
-                    if (item.getImagePath() != null && !item.getImagePath().isEmpty()) {
-                        ClientImageUtil.displayImage(item.getImagePath(), "images", imageView);
+                    if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
+                        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView);
                     }
 
                     // Tên sản phẩm
