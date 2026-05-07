@@ -17,6 +17,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.layout.Region?>
 <ScrollPane fitToWidth="true" stylesheets="@../css/ProductPage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.ProductPageController">
     <content>
         <VBox styleClass="main-container">
@@ -25,7 +26,7 @@
 
             <HBox alignment="TOP_CENTER" spacing="40" style="-fx-padding: 40 60 40 60;">
 
-                <VBox maxWidth="750" spacing="25" HBox.hgrow="ALWAYS">
+                <VBox maxWidth="750" spacing="25" HBox.hgrow="ALWAYS" >
                     <StackPane minHeight="450" maxHeight="450" prefHeight="450" prefWidth="700" styleClass="main-image-container">
                         <ImageView fx:id="productImage" pickOnBounds="true" StackPane.alignment="CENTER" />
                     </StackPane>
@@ -34,25 +35,27 @@
                     </HBox>
                      <Label fx:id="productNameLabel" styleClass="product-title" text="NAME PRODUCT" wrapText="true" />
 
-                    <VBox spacing="17.0" styleClass="description-container">
+                    <VBox spacing="17.0" styleClass="description-container" VBox.vgrow="NEVER" maxWidth="Infinity" >
 
-                        <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" styleClass="sub-section-title" text="Description" />
+                        <Label styleClass="sub-section-title" text="Description" />
                         <Separator />
 
-                        <Label fx:id="productDesLabel" alignment="TOP_LEFT" minHeight="200" styleClass="description-body" text="description product" wrapText="true" />
+                        <Label fx:id="productDesLabel" alignment="TOP_LEFT"
+                               maxWidth="Infinity"
+                               styleClass="description-body" text="description product" wrapText="true" />
                     </VBox>
                 </VBox>
 
                 <VBox maxWidth="380" minWidth="380" spacing="20">
 
-                    <VBox styleClass="auction-card">
+                    <VBox styleClass="auction-info-card">
                         <VBox alignment="CENTER" spacing="5">
-                            <Label style="-fx-text-fill: #888888; -fx-font-size: 13px;" text="Time Left:" />
+                            <Label style="-fx-text-fill: #888888; -fx-font-size: 16px;" text="Time Left:" />
                             <HBox alignment="CENTER" spacing="15" styleClass="timer-container">
-                                <VBox alignment="CENTER"><Label styleClass="timer-num" text="04" /><Label styleClass="timer-unit" text="DAYS" /></VBox>
-                                <VBox alignment="CENTER"><Label styleClass="timer-num" text="04" /><Label styleClass="timer-unit" text="HOURS" /></VBox>
-                                <VBox alignment="CENTER"><Label styleClass="timer-num" text="04" /><Label styleClass="timer-unit" text="MINUTES" /></VBox>
-                                <VBox alignment="CENTER"><Label styleClass="timer-num" text="04" /><Label styleClass="timer-unit" text="SECONDS" /></VBox>
+                                <VBox alignment="CENTER"><Label fx:id="daysLabel" styleClass="timer-num" text="00" /><Label styleClass="timer-unit" text="DAYS" /></VBox>
+                                <VBox alignment="CENTER"><Label fx:id="hoursLabel" styleClass="timer-num" text="00" /><Label styleClass="timer-unit" text="HOURS" /></VBox>
+                                <VBox alignment="CENTER"><Label fx:id="minsLabel" styleClass="timer-num" text="00" /><Label styleClass="timer-unit" text="MINUTES" /></VBox>
+                                <VBox alignment="CENTER"><Label fx:id="secsLabel" styleClass="timer-num" text="00" /><Label styleClass="timer-unit" text="SECONDS" /></VBox>
                             </HBox>
                         </VBox>
 
@@ -64,23 +67,29 @@
                         </HBox>
 
                         <VBox spacing="15.0">
-                            <Label fx:id="currentPriceLabel" style="-fx-font-size: 18px; -fx-text-fill: #4A835D;" styleClass="sub-section-title" text="Current Bid: 000" />
+                            <HBox alignment="CENTER_LEFT">
+                                <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #888888;" text="Current Bid:" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="currentPriceLabel" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A835D;" text="000" />
+                            </HBox>
+
+                            <Separator />
 
                             <GridPane hgap="10" vgap="10">
-                                <Label style="-fx-text-fill: #888888;" text="Starting Price:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                <Label styleClass="text-info" text="Starting Price:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                 <Label fx:id="startPriceLabel" styleClass="info-value-bold" text="20.000.000 VNĐ" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-                                <Label style="-fx-text-fill: #888888;" text="Increment Amount:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                <Label styleClass="text-info"  text="Increment Amount:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                                 <Label fx:id="bidStepLabel" styleClass="info-value-bold" text="100.000VNĐ" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
-                                <Label style="-fx-text-fill: #888888;" text="Starts at:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <Label styleClass="text-info"  text="Starts at:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                                 <Label fx:id="startTimeLabel" styleClass="info-value-bold" text="28/03/2026 18:00PM" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 
-                                <Label style="-fx-text-fill: #888888;" text="Ends at:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <Label styleClass="text-info"  text="Ends at:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
                                 <Label fx:id="endTimeLabel" styleClass="info-value-bold" text="28/03/2026 18:00PM" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                 <columnConstraints>
                                     <ColumnConstraints minWidth="130" />
-                                    <ColumnConstraints hgrow="ALWAYS" />
+                                    <ColumnConstraints hgrow="ALWAYS" halignment="RIGHT" />
                                 </columnConstraints>
                         <rowConstraints>
                            <RowConstraints />
@@ -92,6 +101,7 @@
                         </VBox>
 
                         <VBox spacing="10">
+                            <Label fx:id="minimumBidLabel" styleClass="bid-title" text="Your last bid ( min next: $ 0 )" />
                             <HBox spacing="10">
                                 <Button maxWidth="Infinity" styleClass="bid-suggest-btn" text="100.000" HBox.hgrow="ALWAYS" />
                                 <Button maxWidth="Infinity" styleClass="bid-suggest-btn" text="200.000" HBox.hgrow="ALWAYS" />
@@ -143,7 +153,7 @@
                         </VBox>
                     </VBox>
 
-                    <VBox styleClass="auction-card">
+                    <VBox styleClass="auction-info-card">
                         <Label style="-fx-font-weight: bold; -fx-font-size: 15px;" text="History Bids" />
                         <VBox spacing="10">
                             <HBox alignment="CENTER_LEFT">

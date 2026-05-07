@@ -109,7 +109,7 @@ public class MyAuctionsTableHelper {
         statusCol.setCellValueFactory(cellData -> {
             Item item = cellData.getValue();
             LocalDateTime now = LocalDateTime.now();
-            String status = "Ongoing"; // Mặc định
+            String status = "Ongoing";
             if (now.isBefore(item.getStartTime())) status = "Upcoming";
             else if (now.isAfter(item.getEndTime())) status = "Ended";
             return new SimpleStringProperty(status);
