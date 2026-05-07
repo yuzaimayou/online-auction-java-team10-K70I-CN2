@@ -23,7 +23,7 @@
     <VBox styleClass="content-container" >
         <Label fx:id="productNameLabel" styleClass="product-name"
                wrapText="true"
-               minHeight="-Infinity"
+               prefHeight="55.0" minHeight="55.0" maxHeight="55.0"
                text="IPhone 17 Pro Max 2025"/>
 
         <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>

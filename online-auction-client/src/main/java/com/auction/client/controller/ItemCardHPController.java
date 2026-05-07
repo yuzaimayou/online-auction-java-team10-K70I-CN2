@@ -97,6 +97,12 @@ public class ItemCardHPController {
     public void setData(Item item) {
         this.currentItem = item;
 
+        String name = item.getName();
+        int maxLength = 50; // Bạn có thể tăng/giảm số này tùy vào độ rộng Card
+        if (name != null && name.length() > maxLength) {
+            name = name.substring(0, maxLength - 3) + "...";
+        }
+
         productNameLabel.setText(item.getName());
 
         ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);

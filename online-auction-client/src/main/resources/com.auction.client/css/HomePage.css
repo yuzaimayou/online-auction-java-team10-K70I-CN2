@@ -157,7 +157,7 @@
 
 /* Nội dung thông tin */
 .content-container {
-    -fx-padding: 20px;
+    -fx-padding: 10px;
     -fx-spacing: 12px;
 }
 
@@ -165,6 +165,7 @@
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #1A1A1B;
+
 }
 
 /* Badge Trạng thái */
@@ -186,7 +187,7 @@
 }
 
 .info-label {
-    -fx-font-size: 12px;
+    -fx-font-size: 14px;
     -fx-text-fill: #8E8E93;
     -fx-font-weight: 600;
 }
@@ -199,7 +200,7 @@
 .info-value-price {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #111111;
+    -fx-text-fill: #4A835D;
 }
 
 .info-value-time {

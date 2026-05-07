@@ -32,7 +32,7 @@
 
             <VBox spacing="15.0">
                 <VBox spacing="8.0">
-                    <Label styleClass="title" text="Username or email address" />
+                    <Label styleClass="title" text="Username" />
                     <TextField fx:id="txtUsername" prefHeight="50.0" styleClass="textBox" />
                 </VBox>
 
