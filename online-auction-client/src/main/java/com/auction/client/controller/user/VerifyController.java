@@ -14,6 +14,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 
@@ -143,28 +144,11 @@ public class VerifyController {
 
     @FXML
     public void handleSwitchToLogin(ActionEvent event) {
-
         try {
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
 
-            Parent loginRoot = FXMLLoader.load(
-                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
-
-            Node sourceNode = (Node) event.getSource();
-
-            StackPane dynamicContentArea =
-                    (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
-
-            if (dynamicContentArea != null) {
-
-                dynamicContentArea.getChildren().clear();
-                dynamicContentArea.getChildren().add(loginRoot);
-
-            } else {
-
-                System.err.println("Không tìm thấy StackPane dynamicContentArea");
-
-            }
-
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.getScene().setRoot(loginRoot);
         } catch (IOException e) {
             e.printStackTrace();
         }
