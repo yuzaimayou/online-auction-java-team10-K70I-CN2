@@ -10,6 +10,22 @@
 
 }
 
+.image-container {
+    -fx-background-color: #1a1a1a;
+    -fx-background-size: cover;          /* Tự động lấp đầy và giữ tỷ lệ */
+    -fx-background-position: center;     /* Căn giữa bức ảnh */
+    -fx-background-repeat: no-repeat;
+}
+
+/* Đảm bảo đường dẫn này đúng từ thư mục css sang thư mục assets của bạn */
+.login-image-bg {
+    -fx-background-image: url("../assets/Signin.png");
+}
+
+.register-image-bg {
+    -fx-background-image: url("../assets/Signup.png");
+}
+
 .title {
     -fx-font-family: "Inter 18pt Medium";
     -fx-font-size: 16
