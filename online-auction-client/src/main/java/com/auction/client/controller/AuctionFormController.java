@@ -74,6 +74,7 @@ public class AuctionFormController {
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
     private final ItemsService itemsService = ItemsService.getInstance();
+    private boolean isSubmitting = false;
 
 
     @FXML
@@ -134,6 +135,9 @@ public class AuctionFormController {
 
     @FXML
     public void handleAddProduct(ActionEvent event) {
+        if (isSubmitting) {
+            return;
+        }
 
         String productName = txtProductName.getText().trim();
         String productDesc = txtProductDesc.getText().trim();
@@ -206,6 +210,15 @@ public class AuctionFormController {
         System.out.println("Debug: Sending POST request to " + httpUrl);
 
         HttpClient httpClient = HttpClient.newHttpClient();
+        isSubmitting = true;
+
+        Platform.runLater(() -> {
+            btnChooseImage.setDisable(true);
+
+            Button clickedButton = (Button) event.getSource();
+            clickedButton.setDisable(true);
+            clickedButton.setText("Creating...");
+        });
         itemsService.createItem(jsonPayload)
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
@@ -217,22 +230,42 @@ public class AuctionFormController {
                         pause.setOnFinished(e -> handleSwitchToHomePage());
                         pause.play();
                     } else {
+
+                        isSubmitting = false;
+
                         Platform.runLater(() -> {
+
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
+
+                            btnChooseImage.setDisable(false);
+
+                            Button clickedButton = (Button) event.getSource();
+                            clickedButton.setDisable(false);
+                            clickedButton.setText("Add Product");
                         });
                     }
                 })
                 .exceptionally(e -> {
+
                     e.printStackTrace();
+
+                    isSubmitting = false;
+
                     Platform.runLater(() -> {
+
                         lblMessage.setTextFill(Color.RED);
                         lblMessage.setText("Failed to connect to server");
+
+                        btnChooseImage.setDisable(false);
+
+                        Button clickedButton = (Button) event.getSource();
+                        clickedButton.setDisable(false);
+                        clickedButton.setText("Add Product");
                     });
+
                     return null;
                 });
-
-
     }
 
     public void handleSwitchToHomePage() {
@@ -246,6 +279,16 @@ public class AuctionFormController {
 
             currentScene.setRoot(root);
             stage.setTitle(String.format("%s - Homepage", AppConfig.getAppName()));
+
+            PauseTransition refreshDelay =
+                    new PauseTransition(Duration.seconds(0.5));
+
+            refreshDelay.setOnFinished(event -> {
+                homePageController.refreshProducts();
+            });
+
+            refreshDelay.play();
+
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("The HomePage.fxml file was not found! Please check the path again.");

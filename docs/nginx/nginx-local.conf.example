@@ -1,0 +1,31 @@
+server {
+    listen 80;
+    server_name 127.0.0.1; # Chạy trên máy cá nhân
+
+    # 1. TRẢ ẢNH TỪ THƯ MỤC PROJECT CỦA BẠN
+    location /images/ {
+        # Đổi đường dẫn này khớp chính xác với thư mục project trên máy bạn
+        #vd: /home/ducanh/Project/online-auction-java-team10-K70I-CN2/dataBase/images/
+        alias /DUONG_DAN_TUYET_DOI_TOI_THU_MUC_PROJECT/dataBase/images/;
+
+
+        expires 0; # Ở môi trường dev, tắt cache để sửa ảnh là thấy ngay
+        add_header Cache-Control "no-cache";
+    }
+
+    # 2. XỬ LÝ WEBSOCKET (CỔNG 9090)
+    location /ws/ {
+        proxy_pass http://127.0.0.1:9090;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+    }
+
+    # 3. XỬ LÝ HTTP API LOGIC (CỔNG 8080)
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}

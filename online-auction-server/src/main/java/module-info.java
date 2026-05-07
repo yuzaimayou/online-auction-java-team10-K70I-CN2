@@ -7,4 +7,5 @@ module online.auction.server {
     requires jdk.compiler;
     requires jakarta.mail;
     requires io.github.cdimascio.dotenv.java;
+    requires com.zaxxer.hikari;
 }

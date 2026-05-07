@@ -61,7 +61,7 @@ public class DatabaseInit {
                 """;
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 Statement stmt = conn.createStatement()
         ) {
 
