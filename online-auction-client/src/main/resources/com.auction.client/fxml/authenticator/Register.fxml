@@ -6,8 +6,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -20,7 +18,7 @@
         <URL value="@../../css/AuthPage.css" />
     </stylesheets>
 
-    <StackPane HBox.hgrow="ALWAYS" minWidth="400.0" prefWidth="720.0" styleClass="image-container, register-image-bg">
+    <StackPane HBox.hgrow="ALWAYS" styleClass="image-container, register-image-bg">
     </StackPane>
 
     <VBox alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="500.0" style="-fx-background-color: #ffffff;">
@@ -30,33 +28,33 @@
 
         <VBox alignment="CENTER" maxWidth="450.0" spacing="25.0">
             <Label fx:id="lblMessage" wrapText="true" textAlignment="CENTER" />
-            <Label id="main-title" style="-fx-font-size: 32px; -fx-font-family: 'Inter Bold';" text="Sign up" />
+            <Label id="main-title" text="Sign up" />
 
             <VBox spacing="15.0">
                 <VBox spacing="8.0">
                     <Label styleClass="title" text="Email address" />
-                    <TextField fx:id="txtEmail" prefHeight="50.0" styleClass="textBox" />
+                    <TextField fx:id="txtEmail" styleClass="textBox" />
                 </VBox>
 
                 <VBox spacing="8.0">
                     <Label styleClass="title" text="Username" />
-                    <TextField fx:id="txtUsername" prefHeight="50.0" styleClass="textBox" />
+                    <TextField fx:id="txtUsername" styleClass="textBox" />
                 </VBox>
 
                 <VBox spacing="8.0">
                     <Label styleClass="title" text="Password" />
-                    <PasswordField fx:id="txtPassword" prefHeight="50.0" styleClass="textBox" />
+                    <PasswordField fx:id="txtPassword" styleClass="textBox" />
                 </VBox>
 
                 <VBox spacing="8.0">
                     <Label styleClass="title" text="Confirm password" />
-                    <PasswordField fx:id="txtConfirmPassword" prefHeight="50.0" styleClass="textBox" />
+                    <PasswordField fx:id="txtConfirmPassword" styleClass="textBox" />
                 </VBox>
             </VBox>
 
-            <Button id="registerSubmit" maxWidth="Infinity" prefHeight="60.0"
-                    mnemonicParsing="false" onAction="#handleRegister"
-                    styleClass="submitButton" text="Creating account &gt;">
+            <Button id="registerSubmit" mnemonicParsing="false"
+                    onAction="#handleRegister" styleClass="submitButton"
+                    text="Creating account &gt;">
                 <VBox.margin>
                     <Insets top="10.0" />
                 </VBox.margin>
