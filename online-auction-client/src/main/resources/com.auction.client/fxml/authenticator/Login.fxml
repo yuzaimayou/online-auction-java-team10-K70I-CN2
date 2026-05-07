@@ -13,12 +13,7 @@
         <URL value="@../../css/AuthPage.css" />
     </stylesheets>
 
-    <StackPane HBox.hgrow="ALWAYS" minWidth="400.0" style="-fx-background-color: #1a1a1a;">
-        <ImageView fitHeight="1024.0" fitWidth="720.0" preserveRatio="false" smooth="true" StackPane.alignment="CENTER">
-            <image>
-                <Image url="@../../assets/Signin.png" />
-            </image>
-        </ImageView>
+    <StackPane HBox.hgrow="ALWAYS" minWidth="400.0" prefWidth="720.0" styleClass="image-container, login-image-bg">
     </StackPane>
 
     <VBox alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="500.0" style="-fx-background-color: #ffffff;">
