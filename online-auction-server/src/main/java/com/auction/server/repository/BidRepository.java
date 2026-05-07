@@ -1,6 +1,6 @@
 package com.auction.server.repository;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -47,7 +47,7 @@ public class BidRepository {
         String sql = "INSERT INTO bids(item_id,user_id,bid_price,bid_time) VALUES(?,?,?,?)";
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
 
@@ -86,7 +86,7 @@ public class BidRepository {
     }
 
     public boolean upsertAutoBid(String itemId, String userId, double maxBid, double increment, String registeredAt) {
-        try (Connection conn = DatabaseConnection.connect()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             return upsertAutoBid(conn, itemId, userId, maxBid, increment, registeredAt);
         } catch (Exception e) {
             return false;
@@ -123,7 +123,7 @@ public class BidRepository {
         String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ?";
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, itemId);

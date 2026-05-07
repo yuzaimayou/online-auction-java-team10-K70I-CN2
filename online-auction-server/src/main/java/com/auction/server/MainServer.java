@@ -1,8 +1,10 @@
 package com.auction.server;
 
+import com.auction.server.config.AppConfig;
 import com.auction.server.controller.ClientHandler;
 import com.auction.server.controller.api.*;
 import com.auction.server.database.DatabaseInit;
+import com.auction.server.database.DatabaseManager;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -10,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
 
 public class MainServer {
     private static final int PORT = 8000;
@@ -17,8 +20,11 @@ public class MainServer {
     public static final List<ClientHandler> activeClients = new CopyOnWriteArrayList<>();
 
     public static void main(String[] agrs) {
+        AppConfig.initFolders();
         // tao database
         DatabaseInit.init();
+        DatabaseManager.init();
+
         //start http server
         try {
             System.out.println("Starting HTTP server...");
@@ -29,9 +35,10 @@ public class MainServer {
             httpServer.createContext("/api/send-otp", new SendOtp());
             httpServer.createContext("/api/product", new ProductHandler());
             httpServer.createContext("/api/products", new GetDataProducts());
-            httpServer.createContext("/images", new StaticFileServer.ImageHandler());
+            //ngix da xu ly viec /images
+//            httpServer.createContext("/images", new StaticFileServer.ImageHandler());
 
-            httpServer.setExecutor(null);
+            httpServer.setExecutor(Executors.newFixedThreadPool(50));
             httpServer.start();
             System.out.println("HTTP server started on port 8080");
         } catch (Exception e) {

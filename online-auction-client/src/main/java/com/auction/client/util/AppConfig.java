@@ -16,6 +16,10 @@ public class AppConfig {
         return String.format("http://%s:%d", ServerIp, HttpPort);
     }
 
+    public static String getStaticUrl() {
+        return String.format("http://%s", ServerIp);
+    }
+
     public static String getAppName() {
         return appName;
     }
