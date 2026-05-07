@@ -28,6 +28,8 @@ import javafx.util.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class ProductPageController implements NetworkService.MessageListener {
@@ -56,6 +58,9 @@ public class ProductPageController implements NetworkService.MessageListener {
     @FXML
     private HBox thumbnailContainer;
 
+    @FXML
+    private Label minimumBidLabel;
+
     // Auto Bid UI
     @FXML
     private VBox autoBidForm;
@@ -82,11 +87,15 @@ public class ProductPageController implements NetworkService.MessageListener {
     @FXML
     private Label secsLabel;
 
+    private static final Map<String, Double> userLastBidSession = new ConcurrentHashMap<>();
     private Timeline timeline;
 
     private static final double IMAGE_WIDTH = 700.0;
     private static final double IMAGE_HEIGHT = 450.0;
     private static final double IMAGE_ARC = 20.0;
+    private static final double THUMB_WIDTH = 80.0;
+    private static final double THUMB_HEIGHT = 60.0;
+    private double myLastBid = 0;
     private final long AUTO_BID_DELAY = 50;
     private Item item;
     private final User user = UserSession.getInstance().getLoggedInUser();
@@ -97,7 +106,6 @@ public class ProductPageController implements NetworkService.MessageListener {
     private boolean isAutoBidActive = false;
     private double maxBidAmount = 0;
     private double autoBidIncremental = 0;
-    private double myLastBid = 0;
     private long lastAutoBidTime = 0;
 
 
@@ -110,7 +118,7 @@ public class ProductPageController implements NetworkService.MessageListener {
 
         productImage.setFitWidth(IMAGE_WIDTH);
         productImage.setFitHeight(IMAGE_HEIGHT);
-        productImage.setPreserveRatio(true);
+        productImage.setPreserveRatio(false);
 
         productImage.imageProperty().addListener((obs, oldImg, newImg) -> {
             if (newImg != null) {
@@ -121,6 +129,7 @@ public class ProductPageController implements NetworkService.MessageListener {
 
     public void initData(Item item) {
         this.item = item;
+        this.myLastBid = userLastBidSession.getOrDefault(item.getId(), 0.0);
         displayDataProduct(item);
         connectToRealTimeBidding();
         if (item.getSellerId().equals(user.getId())) {
@@ -154,7 +163,15 @@ public class ProductPageController implements NetworkService.MessageListener {
                 if (bidPayload != null) {
                     System.out.println("Received new bid update: " + jsonPayload);
                     item.setCurrentPrice(bidPayload.getBidPrice());
-                    currentPriceLabel.setText(String.format("Current bid: %.0f", item.getCurrentPrice()));
+                    currentPriceLabel.setText(String.format("$ " +  item.getCurrentPrice()));
+
+                    // Nếu người vừa đặt giá thành công là chính user này, cập nhật myLastBid
+                    if (user.getId().equals(bidPayload.getUserId())) {
+                        myLastBid = bidPayload.getBidPrice();
+                        userLastBidSession.put(item.getId(), myLastBid);
+                    }
+                    // Cập nhật lại UI hiển thị (Minimum chạy theo Current Price, Your Bid giữ nguyên nếu người khác bid)
+                    updateMinimumBidLabel();
 
                     // Kích hoạt logic Auto Bid nếu đang bật
                     handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
@@ -169,7 +186,7 @@ public class ProductPageController implements NetworkService.MessageListener {
         });
 
     }
-    // [THÊM MỚI] Hàm kiểm tra trạng thái sản phẩm và hiển thị thông báo
+    // Hàm kiểm tra trạng thái sản phẩm và hiển thị thông báo
     private boolean checkBiddableStatus() {
         // Giả sử model Item của bạn có phương thức getStatus() trả về String hoặc Enum
         // Nếu tên hàm getStatus() của bạn khác, hãy đổi lại cho đúng (VD: getState())
@@ -185,7 +202,7 @@ public class ProductPageController implements NetworkService.MessageListener {
         return true;
     }
 
-    // [THÊM MỚI] Hàm tiện ích để hiển thị Alert
+    // Hàm tiện ích để hiển thị Alert
     private void showAlert(Alert.AlertType alertType, String title, String content) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
@@ -219,13 +236,16 @@ public class ProductPageController implements NetworkService.MessageListener {
     }
 
     private void applyObjectFitCover(Image img) {
-        if (img == null) return;
+        applyObjectFitCoverToImageView(productImage, img, IMAGE_WIDTH, IMAGE_HEIGHT);
+    }
 
-        // Khi ảnh load bất đồng bộ, Width/Height ban đầu có thể là 0.
+    private void applyObjectFitCoverToImageView(ImageView imageView, Image img, double targetW, double targetH) {
+        if (img == null || imageView == null) return;
+
         if (img.getProgress() < 1.0) {
             img.progressProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal.doubleValue() == 1.0) {
-                    Platform.runLater(() -> applyObjectFitCover(img));
+                    Platform.runLater(() -> applyObjectFitCoverToImageView(imageView, img, targetW, targetH));
                 }
             });
             return;
@@ -238,7 +258,7 @@ public class ProductPageController implements NetworkService.MessageListener {
             // Tránh lỗi chia cho 0 trong trường hợp ảnh bị lỗi hoặc không load được
             if (imgW == 0 || imgH == 0) return;
 
-            double targetRatio = IMAGE_WIDTH / IMAGE_HEIGHT;
+            double targetRatio = targetW / targetH;
             double sourceRatio = imgW / imgH;
             double viewW, viewH, viewX, viewY;
 
@@ -254,7 +274,7 @@ public class ProductPageController implements NetworkService.MessageListener {
                 viewY = (imgH - viewH) / 2;
             }
 
-            productImage.setViewport(new javafx.geometry.Rectangle2D(viewX, viewY, viewW, viewH));
+            imageView.setViewport(new javafx.geometry.Rectangle2D(viewX, viewY, viewW, viewH));
         });
     }
 
@@ -267,6 +287,8 @@ public class ProductPageController implements NetworkService.MessageListener {
             String mainImageUrl = images.get(0);
             ClientImageUtil.displayImage(mainImageUrl, "images", productImage);
 
+            boolean isFirst = true;
+
             for (String imgPath : images) {
                 if (imgPath == null || imgPath.trim().isEmpty()) continue;
 
@@ -277,10 +299,23 @@ public class ProductPageController implements NetworkService.MessageListener {
                 thumbPane.setMaxWidth(80);
                 thumbPane.setMaxHeight(60);
 
+                if (isFirst) {
+                    thumbPane.getStyleClass().add("active-thumb");
+                    isFirst = false;
+                }
+
                 ImageView thumbView = new ImageView();
                 thumbView.setFitWidth(80);
                 thumbView.setFitHeight(60);
                 thumbView.setPreserveRatio(true);
+
+                thumbView.setPreserveRatio(false);
+
+                thumbView.imageProperty().addListener((obs, oldImg, newImg) -> {
+                    if (newImg != null) {
+                        applyObjectFitCoverToImageView(thumbView, newImg, THUMB_WIDTH, THUMB_HEIGHT);
+                    }
+                });
 
                 ClientImageUtil.displayImage(imgPath, "images", thumbView);
                 thumbPane.getChildren().add(thumbView);
@@ -292,7 +327,13 @@ public class ProductPageController implements NetworkService.MessageListener {
                     } else {
                         ClientImageUtil.displayImage(imgPath, "images", productImage);
                     }
+                thumbnailContainer.getChildren().forEach(node -> {
+                    node.getStyleClass().remove("active-thumb");
                 });
+
+                // 2. Thêm class 'active-thumb' vào thumbnail vừa được click
+                thumbPane.getStyleClass().add("active-thumb");
+            });
 
                 thumbnailContainer.getChildren().add(thumbPane);
             }
@@ -311,13 +352,23 @@ public class ProductPageController implements NetworkService.MessageListener {
         productDesLabel.setMinHeight(Region.USE_PREF_SIZE);
         productNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
-        currentPriceLabel.setText(String.format("Current bid: %.0f", item.getCurrentPrice()));
+        currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
         startPriceLabel.setText(String.valueOf(item.getStartingPrice()));
         bidStepLabel.setText(String.valueOf(item.getBidStep()));
         startTimeLabel.setText(String.valueOf(item.getStartTime()));
         endTimeLabel.setText(String.valueOf(item.getEndTime()));
 
         startCountdown();
+
+        updateMinimumBidLabel();
+    }
+
+    private void updateMinimumBidLabel() {
+        if (item != null && minimumBidLabel != null) {
+            double minimumNextBid = item.getCurrentPrice() + item.getBidStep();
+            // Cập nhật text: Hiển thị giá bid cuối cùng của User và Giá tối thiểu yêu cầu cho lượt tới
+            minimumBidLabel.setText(String.format("Your last bid: $ %.0f ( min next: $ %.0f ) ", myLastBid, minimumNextBid));
+        }
     }
 
     private void startCountdown() {
@@ -430,6 +481,7 @@ public class ProductPageController implements NetworkService.MessageListener {
         // Nếu mình đã là người cao nhất thì không cần bid thêm
         if (user.getId().equals(lastBidderId)) {
             myLastBid = serverCurrentPrice;
+            userLastBidSession.put(item.getId(), myLastBid);
             userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
             return;
         }
@@ -465,6 +517,4 @@ public class ProductPageController implements NetworkService.MessageListener {
         // Disable nút đặt giá tay khi đang chạy auto để tránh xung đột
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
     }
-
-
 }
