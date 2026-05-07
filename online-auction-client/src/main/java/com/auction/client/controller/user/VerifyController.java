@@ -109,7 +109,6 @@ public class VerifyController {
                     return null;
                 });
     }
-
     @FXML
     public void handleResend(ActionEvent event) {
         authService.sendOtp(email)
@@ -128,8 +127,6 @@ public class VerifyController {
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
                         }
-
-
                     });
                 })
                 .exceptionally(e -> {
