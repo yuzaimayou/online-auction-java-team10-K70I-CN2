@@ -1,6 +1,6 @@
 package com.auction.server.repository;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.account.User;
 
 import java.sql.Connection;
@@ -15,7 +15,7 @@ public class UserRepository {
         String sql = "INSERT INTO users(id,username,password,role,email) VALUES(?,?,?,?,?)";
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
 
@@ -37,7 +37,7 @@ public class UserRepository {
         String sql = "UPDATE users SET isVerify = true WHERE email = ?";
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, email);
@@ -52,7 +52,7 @@ public class UserRepository {
     public User findByEmail(String email) {
         String sqp = "SELECT * FROM users WHERE email=?";
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sqp)
         ) {
             stmt.setString(1, email);
@@ -78,7 +78,7 @@ public class UserRepository {
         String sql = "SELECT * FROM users WHERE username = ?";
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
 
