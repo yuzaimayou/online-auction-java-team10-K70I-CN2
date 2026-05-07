@@ -12,9 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -45,10 +43,8 @@ public class ItemCardHPController {
     private Label priceTitleLabel;
     @FXML
     private Label timeTitleLabel;
-    @FXML
-    private VBox timeContainer;
-
     private Timeline timeline;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
 
 
     @FXML
@@ -82,7 +78,6 @@ public class ItemCardHPController {
         double containerW = 280.0;
         double containerH = 240.0;
 
-        // Tìm tỷ lệ phóng to cho chiều ngang và chiều dọc
         double scaleX = containerW / w;
         double scaleY = containerH / h;
 
@@ -98,15 +93,62 @@ public class ItemCardHPController {
         this.currentItem = item;
 
         String name = item.getName();
-        int maxLength = 50; // Bạn có thể tăng/giảm số này tùy vào độ rộng Card
-        if (name != null && name.length() > maxLength) {
-            name = name.substring(0, maxLength - 3) + "...";
+        if (name != null && name.length() > 50) {
+            name = name.substring(0, 47) + "...";
         }
 
         productNameLabel.setText(item.getName());
 
-        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
+        if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
+            ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
+        }
+        updateUI();
         startCountdown();
+    }
+
+    private void updateUI() {
+        if (currentItem == null) return;
+        LocalDateTime now = LocalDateTime.now();
+
+        // Upcoming
+        if (currentItem.getStartTime() != null && now.isBefore(currentItem.getStartTime())) {
+            statusLabel.setText("UPCOMING");
+            statusLabel.setStyle("-fx-background-color: #fff3c4; -fx-text-fill: #eea504;");
+            priceTitleLabel.setText("START PRICE");
+            priceLabel.setText(formatPrice(currentItem.getStartingPrice()));
+            endTimeLabel.setText(formatTimeLeft(now, currentItem.getStartTime()));
+            timeTitleLabel.setText("Starts on " + currentItem.getStartTime().format(dateFormatter));
+        }
+        // Live
+        else if (currentItem.getEndTime() != null && now.isAfter(currentItem.getStartTime()) && now.isBefore(currentItem.getEndTime())) {
+            statusLabel.setText("LIVE");
+            statusLabel.setStyle("-fx-background-color: #ecfdf5");
+            priceTitleLabel.setText("CURRENT BID");
+            double displayPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
+            priceLabel.setText(formatPrice(displayPrice));
+            endTimeLabel.setText(formatTimeLeft(now, currentItem.getEndTime()));
+            timeTitleLabel.setText("Ends on " + currentItem.getEndTime().format(dateFormatter));
+        }
+        // Ended
+        else {
+            statusLabel.setText("ENDED");
+            statusLabel.setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white;");
+            priceTitleLabel.setText("FINAL PRICE");
+            double finalPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
+            priceLabel.setText(formatPrice(finalPrice));
+            endTimeLabel.setText("Auction Ended");
+            if (currentItem.getEndTime() != null) {
+                timeTitleLabel.setText("Ended on " + currentItem.getEndTime().format(dateFormatter));
+            }
+            if (timeline != null) timeline.stop();
+        }
+    }
+
+    private void startCountdown() {
+        if (timeline != null) timeline.stop();
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateUI()));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
     }
 
     private String formatPrice(double price) {
@@ -124,59 +166,6 @@ public class ItemCardHPController {
 
         return String.format("%02dd %02dh %02dm %02ds", days, hours, minutes, seconds);
     }
-
-    private void startCountdown() {
-        if (timeline != null) {
-            timeline.stop();
-        }
-
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
-
-        timeline = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> {
-                    LocalDateTime now = LocalDateTime.now();
-
-
-                    // upcoming
-                    if (currentItem.getStartTime() != null && now.isBefore(currentItem.getStartTime())) {
-                        statusLabel.setText("UPCOMING");;
-
-                        priceTitleLabel.setText("START PRICE");
-                        priceLabel.setText(formatPrice(currentItem.getStartingPrice()));
-                        endTimeLabel.setText(formatTimeLeft(now, currentItem.getStartTime()));
-                        timeTitleLabel.setText("Starts on " + currentItem.getStartTime().format(dateFormatter));
-                    }
-                    // ongoing
-                    else if (currentItem.getEndTime() != null && now.isBefore(currentItem.getEndTime())) {
-                        statusLabel.setText("LIVE");
-
-                        priceTitleLabel.setText("CURRENT BID");
-                        double displayPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
-                        priceLabel.setText(formatPrice(displayPrice));
-                        endTimeLabel.setText(formatTimeLeft(now, currentItem.getEndTime()));
-                        timeTitleLabel.setText("Ends on " + currentItem.getEndTime().format(dateFormatter));
-                    }
-                    // ended
-                    else {
-                        statusLabel.setText("ENDED");
-
-                        priceTitleLabel.setText("FINAL PRICE");
-                        double finalPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
-                        priceLabel.setText(formatPrice(finalPrice));
-
-                        endTimeLabel.setText("Auction Ended");
-                        if (currentItem.getEndTime() != null) {
-                            timeTitleLabel.setText("Ended on " + currentItem.getEndTime().format(dateFormatter));
-                        }
-
-                        timeline.stop();
-                    }
-                })
-        );
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.playFromStart();
-    }
-
     @FXML
     public void handleSwitchToProductPage(MouseEvent event) {
         try {
