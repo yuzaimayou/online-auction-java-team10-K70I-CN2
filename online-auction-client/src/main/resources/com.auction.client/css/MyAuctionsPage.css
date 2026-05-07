@@ -117,7 +117,7 @@
     -fx-border-color: #2563eb;
 }
 
-/* --- TableView - Thiết kế hiện đại --- */
+/* TableView */
 .auction-table {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
@@ -176,7 +176,7 @@
     -fx-line-spacing: 3px;
 }
 
-/* --- Badges (Trạng thái & Danh mục) --- */
+/* rạng thái & Danh mục */
 .status-badge-base {
     -fx-padding: 5 14;
     -fx-background-radius: 20;
@@ -184,9 +184,20 @@
     -fx-font-weight: bold;
 }
 
-.status-upcoming { -fx-background-color: #eef2ff; -fx-text-fill: #4f46e5; }
-.status-live { -fx-background-color: #ecfdf5; -fx-text-fill: #059669; }
-.status-ended { -fx-background-color: #f3f4f6; -fx-text-fill: #4b5563; }
+.status-upcoming {
+    -fx-background-color: #fff3c4;
+    -fx-text-fill: #eea504;;
+}
+
+.status-live {
+    -fx-background-color: #ecfdf5;
+    -fx-text-fill: #059669;
+}
+
+.status-ended {
+    -fx-background-color: #bdbdbd;
+    -fx-text-fill: white;
+}
 
 .category-badge {
     -fx-padding: 4 12;

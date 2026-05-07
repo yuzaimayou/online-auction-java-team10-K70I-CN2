@@ -7,7 +7,6 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
@@ -28,8 +27,8 @@
                 </VBox.margin>
             </Label>
 
-            <FlowPane alignment="CENTER" styleClass="categories-list">
-                <VBox styleClass="category-item" fx:id="FASHION" onMouseClicked="#handleCategoryClick">
+            <FlowPane styleClass="categories-list">
+                <VBox fx:id="FASHION" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>
@@ -40,7 +39,7 @@
                     <Label text="Fashion"/>
                 </VBox>
 
-                <VBox styleClass="category-item" fx:id="ELECTRONICS" onMouseClicked="#handleCategoryClick">
+                <VBox fx:id="ELECTRONICS" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>
@@ -51,7 +50,7 @@
                     <Label text="Electronics"/>
                 </VBox>
 
-                <VBox styleClass="category-item" fx:id="HOME" onMouseClicked="#handleCategoryClick">
+                <VBox fx:id="HOME" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>
@@ -62,7 +61,7 @@
                     <Label text="Home &amp; Garden"/>
                 </VBox>
 
-                <VBox styleClass="category-item" fx:id="ART" onMouseClicked="#handleCategoryClick">
+                <VBox fx:id="ART" styleClass="category-item" onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>
@@ -73,7 +72,7 @@
                     <Label text="Art"/>
                 </VBox>
 
-                <VBox styleClass="category-item" fx:id="BOOKS" onMouseClicked="#handleCategoryClick">
+                <VBox fx:id="BOOKS" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>
@@ -84,7 +83,7 @@
                     <Label text="Books"/>
                 </VBox>
 
-                <VBox styleClass="category-item" fx:id="JEWELRY" onMouseClicked="#handleCategoryClick">
+                <VBox fx:id="JEWELRY" styleClass="category-item" onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>
@@ -95,7 +94,7 @@
                     <Label text="Jewelry"/>
                 </VBox>
 
-                <VBox styleClass="category-item" fx:id="SPORTS" onMouseClicked="#handleCategoryClick">
+                <VBox fx:id="SPORTS" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
                     <StackPane styleClass="cat-icon-bg">
                         <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                             <image>

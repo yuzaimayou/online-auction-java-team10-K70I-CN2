@@ -16,22 +16,31 @@
     -fx-max-height: 450px;
 }
 
+/* Trạng thái bình thường của thumbnail */
 .thumbnail-container {
-    -fx-border-color: #E0E0E0;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-background-color: white;
-    -fx-min-width: 80;
-    -fx-min-height: 60;
-    -fx-max-width: 80;
-    -fx-max-height: 60;
-    -fx-alignment: CENTER;
-   -fx-cursor: hand;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 2px;
+    -fx-border-radius: 6px; /* Bo góc ảnh một chút cho đẹp */
+    -fx-background-radius: 6px;
+    -fx-transition: all 0.2s ease-in-out;
 }
 
+/* Hiệu ứng hover khi lướt chuột qua (tuỳ chọn) */
 .thumbnail-container:hover {
-    -fx-border-color: #2D55FF; /* Hiệu ứng highlight khi di chuột vào ảnh nhỏ */
+    -fx-opacity: 0.8;
+}
+
+/* Trạng thái khi thumbnail ĐANG ĐƯỢC CHỌN */
+.thumbnail-container.active-thumb {
+    -fx-border-color: #3b82f6; /* Màu viền xanh */
+    -fx-border-width: 2.5px; /* Độ dày của viền */
+    -fx-border-radius: 6px;
+
+    /* insets số âm đẩy viền ra xa khỏi khung 80x60 tạo thành gap */
+    -fx-border-insets: -5px;
+
+    -fx-opacity: 1.0;
 }
 
 /* Typography */
@@ -41,11 +50,47 @@
     -fx-text-fill: #333333;
 }
 
+.current-bid-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #888888;
+}
+
+.current-bid {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4A835D;
+}
+
+.sub-section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    fx-text-fill: #4A835D;
+    }
+
+.text-info {
+    -fx-text-fill: #888888;
+    -fx-font-size: 14px;
+}
+
+.info-value-bold {
+     -fx-text-fill: #888888;
+     -fx-font-size: 14px;
+}
+
+.bid-title {
+    -fx-text-fill: #555555;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
 .description-container {
-    -fx-background-color: white;
-    -fx-padding: 30;
-    -fx-border-color: #E0E0E0;
-    -fx-border-radius: 4px;
+    -fx-padding: 25;
+    -fx-spacing: 15;
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
 }
 
 .description-body {
@@ -55,13 +100,13 @@
 }
 
 /* Auction Card */
-.auction-card {
-    -fx-background-color: white;
+.auction-info-card {
     -fx-padding: 25;
-    -fx-border-color: #E0E0E0;
-    -fx-border-radius: 4px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 0);
     -fx-spacing: 15;
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
 }
 
 /* Timer */

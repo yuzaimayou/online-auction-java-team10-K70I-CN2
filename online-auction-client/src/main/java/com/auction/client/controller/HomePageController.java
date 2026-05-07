@@ -226,7 +226,11 @@ public class HomePageController {
             System.err.println("Không tìm thấy file AuctionFormPage.fxml! Kiểm tra lại đường dẫn.");
         }
     }
+    public void refreshProducts() {
 
+        System.out.println("Refreshing homepage products...");
 
+        getDataItemsAndDisplay();
+    }
 }
 
