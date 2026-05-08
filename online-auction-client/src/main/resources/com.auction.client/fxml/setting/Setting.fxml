@@ -3,6 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <VBox prefHeight="1024.0" prefWidth="1440.0"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -47,20 +49,13 @@
 
                     <!-- Avatar -->
                     <VBox alignment="CENTER" spacing="12.0">
-                        <StackPane prefHeight="92.0"
-                                   prefWidth="92.0"
-                                   minHeight="92.0"
-                                   minWidth="92.0"
-                                   maxHeight="92.0"
-                                   maxWidth="92.0"
-                                   styleClass="avatar-outer">
-                            <StackPane prefHeight="64.0"
-                                       prefWidth="64.0"
-                                       minHeight="64.0"
-                                       minWidth="64.0"
-                                       maxHeight="64.0"
-                                       maxWidth="64.0"
-                                       styleClass="avatar-inner"/>
+                        <StackPane styleClass="avatar-outer">
+                            <StackPane styleClass="avatar-inner"/>
+                            <ImageView fitHeight="45.0" fitWidth="45.0" preserveRatio="true">
+                                <image>
+                                    <Image url="@../../assets/default_avatar.png"/>
+                                </image>
+                            </ImageView>
                         </StackPane>
 
                         <Label fx:id="lblUserName" text="Duc Anh" styleClass="user-name"/>
