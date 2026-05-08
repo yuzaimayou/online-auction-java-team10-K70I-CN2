@@ -1,6 +1,6 @@
 package com.auction.server.repository;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.account.User;
 
 import java.sql.Connection;
@@ -26,8 +26,9 @@ public class UserRepository {
                 """;
 
         try (
-                Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
 
             stmt.setString(1, UUID.randomUUID().toString());
             stmt.setString(2, username);
@@ -54,9 +55,9 @@ public class UserRepository {
         String sql = "UPDATE users SET isVerify = true WHERE email = ?";
 
         try (
-                Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
             stmt.setString(1, email);
 
             int rowsUpdated = stmt.executeUpdate();
@@ -69,78 +70,78 @@ public class UserRepository {
         }
     }
 
-    // Tìm user theo id (dùng connection bên ngoài transaction)
+    // Tìm user theo id (dùng trong transaction ví)
     public User findById(Connection conn, String userId) {
-
         String sql = "SELECT * FROM users WHERE id = ?";
-
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, userId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-
                 if (rs.next()) {
                     return mapRow(rs);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
+    }
 
+    public User findById(String id) {
+        String sql = "SELECT * FROM users WHERE id=?";
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     public User findByEmail(String email) {
-
         String sql = "SELECT * FROM users WHERE email = ?";
-
         try (
-                Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
             stmt.setString(1, email);
-
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return mapRow(rs);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
     public User findByUsername(String username) {
-
         String sql = "SELECT * FROM users WHERE username = ?";
-
         try (
-                Connection conn = DatabaseConnection.connect();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
             stmt.setString(1, username);
-
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return mapRow(rs);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
-    // Convert ResultSet -> User
+    // Convert ResultSet -> User (Gần như đầy đủ các trường ví)
     private User mapRow(ResultSet rs) throws Exception {
-
         User user = new User(
                 rs.getString("id"),
                 rs.getString("username"),
@@ -150,7 +151,6 @@ public class UserRepository {
 
         user.setBalance(rs.getDouble("balance"));
         user.setFrozenBalance(rs.getDouble("frozen_balance"));
-
         return user;
     }
 }

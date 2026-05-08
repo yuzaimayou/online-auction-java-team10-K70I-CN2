@@ -1,6 +1,6 @@
 package com.auction.server.repository;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
@@ -68,7 +68,7 @@ public class ItemRepository {
                 """;
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, item.getId());
@@ -111,7 +111,7 @@ public class ItemRepository {
                 """;
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, item.getName());
@@ -138,7 +138,7 @@ public class ItemRepository {
     public boolean deleteItem(String id) {
         String sql = "DELETE FROM items WHERE id = ?";
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, id);
@@ -152,7 +152,7 @@ public class ItemRepository {
     public Item findById(String itemId) {
         String sql = "SELECT * FROM items WHERE id = ?";
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, itemId);
@@ -221,7 +221,7 @@ public class ItemRepository {
         List<Item> items = new ArrayList<>();
         String sql = "SELECT * FROM items WHERE seller_id = ?";
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, sellerID);
@@ -240,7 +240,7 @@ public class ItemRepository {
         List<Item> items = new ArrayList<>();
         String sql = "SELECT * FROM items";
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()
         ) {
@@ -256,7 +256,7 @@ public class ItemRepository {
     public void updateCurrentPrice(String itemId, double newPrice) {
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setDouble(1, newPrice);
@@ -284,7 +284,7 @@ public class ItemRepository {
         String selectEndedSql = "SELECT id FROM items WHERE status = 'ONGOING' AND datetime(end_time) <= datetime('now','localtime')";
         String selectLiveSql = "SELECT id FROM items WHERE status = 'UPCOMING' AND datetime(start_time) <= datetime('now','localtime')";
 
-        try (Connection conn = DatabaseConnection.connect()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(selectEndedSql);
                  ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -298,6 +298,8 @@ public class ItemRepository {
                 }
             }
         } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return updatedId;

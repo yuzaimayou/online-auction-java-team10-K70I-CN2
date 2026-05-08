@@ -1,6 +1,6 @@
 package com.auction.server.service;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.shared.model.payloads.BidPayload;
@@ -39,7 +39,7 @@ public class BidService {
         }
 
         synchronized (getItemLock(itemId)) {
-            try (Connection conn = DatabaseConnection.connect()) {
+            try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
                 Item item = itemRepository.findById(conn, itemId);
@@ -108,7 +108,7 @@ public class BidService {
         }
 
         // ── Auto-bid resolution (runs AFTER the committed bid) ────────────
-        try (Connection conn = DatabaseConnection.connect()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             runAutoBiddingRounds(conn, itemId, userId, bidPrice);
             conn.commit();

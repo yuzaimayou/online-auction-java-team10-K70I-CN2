@@ -14,6 +14,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -108,22 +109,12 @@ public class RegisterController {
     protected void switchToOtpScreen(ActionEvent event, String registeredEmail) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
-            Node verifyNode = loader.load();
+            Parent verifyRoot = loader.load();
             VerifyController verifyController = loader.getController();
             verifyController.setEmail(registeredEmail);
 
-
-            Node sourceNode = (Node) event.getSource();
-            StackPane dynamicContentArea = (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
-
-            if (dynamicContentArea != null) {
-
-                dynamicContentArea.getChildren().clear();
-                dynamicContentArea.getChildren().add(verifyNode);
-
-            } else {
-                System.err.println("Không tìm thấy StackPane dynamicContentArea");
-            }
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.getScene().setRoot(verifyRoot);
         } catch (IOException e) {
             e.printStackTrace();
         }
