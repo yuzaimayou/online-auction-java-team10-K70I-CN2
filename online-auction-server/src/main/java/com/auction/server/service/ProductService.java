@@ -46,6 +46,17 @@ public class ProductService {
             imagesPath.add(path);
         }
 
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime.isBefore(now)) {
+            throw new IllegalArgumentException("Start time cannot be in the past!");
+        }
+        if (endTime.isBefore(now)) {
+            throw new IllegalArgumentException("End time cannot be in the past!");
+        }
+        if (endTime.isBefore(startTime)) {
+            throw new IllegalArgumentException("End time must be after start time!");
+        }
+
         return new Item(
                 productName,
                 productDesc,
