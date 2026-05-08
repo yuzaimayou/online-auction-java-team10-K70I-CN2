@@ -22,8 +22,8 @@ public class MainServer {
     public static void main(String[] agrs) {
         AppConfig.initFolders();
         // tao database
-        DatabaseInit.init();
         DatabaseManager.init();
+        DatabaseInit.init();
 
         //start http server
         try {

@@ -43,6 +43,10 @@ public class VerifyService {
     private static final ConcurrentHashMap<String, OtpInfo> otpStorage = new ConcurrentHashMap<>();
 
     private VerifyService() {
+        System.out.println("==== KIỂM TRA ĐỌC FILE .ENV ====");
+        System.out.println("Mail User: " + (username == null ? "BỊ NULL RỒI!" : username));
+        System.out.println("Mail Pass: " + (password == null ? "BỊ NULL RỒI!" : password));
+        System.out.println("================================");
         //Config SMTP
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -51,7 +55,7 @@ public class VerifyService {
         props.put("mail.debug", "true");
 
         props.put("mail.smtp.host", "smtp-relay.brevo.com");
-        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.port", "2525");
 
         this.session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -95,7 +99,7 @@ public class VerifyService {
         System.out.println(otpStorage);
 
         try {
-            Message message = new MimeMessage(session);
+            Message message = new MimeMessage(this.session);
             message.setFrom(new InternetAddress("ducanhng0401@gmail.com", "Online Auction Team 10 - No Reply"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));
 
@@ -125,7 +129,19 @@ public class VerifyService {
             message.setSubject("Your OTP Code");
             message.setContent(htmlContent, "text/html; charset=utf-8");
 
-            Transport.send(message);
+            //Transport.send(message);
+            // Thêm đoạn này vào cuối khối try { ... }
+            Transport transport = this.session.getTransport("smtp");
+
+            // Ép đăng nhập trực tiếp bằng tay
+            transport.connect("smtp-relay.brevo.com", username, password);
+
+            // Gửi thư đi
+            transport.sendMessage(message, message.getAllRecipients());
+
+            // Đóng kết nối
+            transport.close();
+
             System.out.println("OTP email sent successfully to " + email);
         } catch (MessagingException e) {
             e.printStackTrace();

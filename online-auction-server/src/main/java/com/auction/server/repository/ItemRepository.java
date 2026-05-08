@@ -257,6 +257,7 @@ public class ItemRepository {
 
         String sql = "SELECT * FROM items";
 
+
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -266,6 +267,8 @@ public class ItemRepository {
             while (rs.next()) {
                 String pathsData = rs.getString("image_path");
                 List<String> imagePaths = gson.fromJson(pathsData, List.class);
+                String sellerId = rs.getString("seller_id");
+                String sellerName = new UserRepository().findById(sellerId).getUsername();
 
                 Item item = new Item(
                         rs.getString("name"),
@@ -274,7 +277,7 @@ public class ItemRepository {
                         rs.getDouble("current_price"),
                         LocalDateTime.parse(rs.getString("start_time")),
                         LocalDateTime.parse(rs.getString("end_time")),
-                        rs.getString("seller_id"),
+                        sellerName,
                         rs.getString("category"),
                         rs.getDouble("bid_step"),
                         imagePaths
