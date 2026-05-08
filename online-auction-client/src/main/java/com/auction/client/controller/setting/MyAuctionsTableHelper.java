@@ -64,7 +64,7 @@ public class MyAuctionsTableHelper {
                     // GỌI HÀM TẢI ẢNH CỦA BẠN
                     // Tham số "images" là tên thư mục chứa ảnh trên Server
                     if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
-                        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView);
+                        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView, 200, 200);
                     }
 
                     // Tên sản phẩm

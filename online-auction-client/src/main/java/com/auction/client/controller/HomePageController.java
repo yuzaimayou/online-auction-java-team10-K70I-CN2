@@ -34,6 +34,10 @@ public class HomePageController {
     private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
 
+    private static final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .build();
+
     @FXML
     private ScrollPane mainScrollPane;
     @FXML
@@ -75,7 +79,7 @@ public class HomePageController {
     private void getDataItemsAndDisplay() {
         System.out.println("Dang tien hanh lay du lieu");
 
-        HttpClient httpClient = HttpClient.newHttpClient();
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/products", AppConfig.getHttpUrl())))
                 .GET()
@@ -99,6 +103,7 @@ public class HomePageController {
                     }
                 });
     }
+
     private void applyFilter() {
         if (masterItemList == null)
             return;
@@ -136,9 +141,7 @@ public class HomePageController {
             for (Item item : itemsFromServer) {
                 try {
                     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
-                    VBox cardBox = fxmlLoader.load();cardBox.getStylesheets().add(
-                            getClass().getResource("/com.auction.client/css/HomePage.css").toExternalForm()
-                    );
+                    VBox cardBox = fxmlLoader.load();
 
                     cardBox.setPrefWidth(280);
                     cardBox.setMinWidth(280);
@@ -165,9 +168,10 @@ public class HomePageController {
                     e.printStackTrace();
                 }
             }
-        updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
+            updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
         });
     }
+
     private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
 
         ongoingSection.setVisible(ongoing > 0);
@@ -226,9 +230,15 @@ public class HomePageController {
             System.err.println("Không tìm thấy file AuctionFormPage.fxml! Kiểm tra lại đường dẫn.");
         }
     }
+
     public void refreshProducts() {
 
         System.out.println("Refreshing homepage products...");
+        Platform.runLater(() -> {
+            ongoingAuctionsContainer.getChildren().clear();
+            upcomingAuctionsContainer.getChildren().clear();
+            endedAuctionsContainer.getChildren().clear();
+        });
 
         getDataItemsAndDisplay();
     }

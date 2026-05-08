@@ -15,6 +15,11 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class NavigationUtil {
+
+    private static Parent homePageRoot;
+
+    private static HomePageController homePageController;
+
     public static void switchToOtpScreen(ActionEvent event, String registeredEmail) {
         try {
             FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
@@ -42,20 +47,24 @@ public class NavigationUtil {
     public static void handleSwitchToHomePage(Label label) {
         try {
             System.out.println("Da chuyen sang trang chu");
-            // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
-            FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource("/com.auction.client/fxml/HomePage.fxml"));
-            Parent root = loader.load();
 
-            //Lay Controller
-            HomePageController homePageController = loader.getController();
+            if (homePageController == null) {
+                // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
+                FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource("/com.auction.client/fxml/HomePage.fxml"));
+                homePageRoot = loader.load();
 
+                //Lay Controller
+                homePageController = loader.getController();
+                
+            } else {
+                homePageController.refreshProducts();
+            }
 
-            //Lay scene hien tai
             Scene currentScene = label.getScene();
             Stage stage = (Stage) currentScene.getWindow();
-
-            currentScene.setRoot(root);
+            currentScene.setRoot(homePageRoot);
             stage.setTitle(String.format("%s - Home", AppConfig.getAppName()));
+
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Không tìm thấy file HomePage.fxml! Kiểm tra lại đường dẫn.");
