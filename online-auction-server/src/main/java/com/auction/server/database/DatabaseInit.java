@@ -77,7 +77,7 @@ public class DatabaseInit {
                 """;
 
         try (
-                Connection conn = DatabaseConnection.connect();
+                Connection conn = DatabaseManager.getConnection();
                 Statement stmt = conn.createStatement()
         ) {
             stmt.execute("PRAGMA journal_mode=WAL;");  // Better concurrency for SQLite

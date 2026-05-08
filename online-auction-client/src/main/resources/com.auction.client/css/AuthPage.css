@@ -1,4 +1,3 @@
-
 #auth-page {
     -fx-background-color: white;
     -fx-font-family: "Inter 18pt";
@@ -6,8 +5,17 @@
 
 #main-title {
     -fx-font-family: "Inter 18pt SemiBold";
-    -fx-font-size: 28;
+    -fx-font-size: 32;
+}
 
+/*chung*/
+.image-container {
+    -fx-background-color: #1a1a1a;
+    -fx-background-size: cover;
+    -fx-pref-width: 720px;
+    -fx-min-width: 400px;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
 }
 
 .title {
@@ -19,6 +27,7 @@
     -fx-background-color: white;
     -fx-border-color: #3b82f6;
     -fx-border-radius: 6;
+    -fx-pref-height: 50px;
     -fx-background-radius: 6;
     -fx-border-width: 1.5;
 }
@@ -27,6 +36,8 @@
     -fx-background-color: #3b82f6;
     -fx-text-fill: white;
     -fx-font-size: 20px;
+    -fx-pref-height: 60px;
+    -fx-max-width: Infinity;
     -fx-background-radius: 6;
     -fx-cursor: hand;
 }
@@ -38,14 +49,14 @@
     -fx-background-color: none;
 }
 
-.linkedButton {
-    -fx-font-size: 17;
-    -fx-background-color: #f9fafb;
-    -fx-border-color: #e5e7eb;
-    -fx-border-radius: 6;
-    -fx-background-radius: 6;
-    -fx-text-fill: #111827;
-    -fx-cursor: hand;
+/*login*/
+.login-image-bg {
+    -fx-background-image: url("../assets/Signin.png");
+}
+
+/*register*/
+.register-image-bg {
+    -fx-background-image: url("../assets/Signup.png");
 }
 
 #registerSubmit {
@@ -62,16 +73,15 @@
     -fx-pref-height: 55px;
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-alignment: center; /* Căn giữa chữ số */
+    -fx-alignment: center;
     -fx-background-color: #f3f4f6;
     -fx-border-color: #d1d5db;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
 
-/* Khi người dùng click vào ô (Focus) */
 .otp-box:focused {
-    -fx-border-color: #2563eb; /* Đổi viền thành màu xanh */
+    -fx-border-color: #2563eb;
     -fx-border-width: 2px;
     -fx-background-color: #ffffff;
 }

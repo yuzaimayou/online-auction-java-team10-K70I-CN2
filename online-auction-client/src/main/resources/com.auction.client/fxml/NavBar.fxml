@@ -22,7 +22,6 @@
             </HBox>
             <HBox alignment="CENTER_LEFT" spacing="20">
                 <Label onMouseClicked="#handleSwitchToHome" styleClass="nav-item" text="Home"/>
-                <Label styleClass="categories-dropdown" text="Categories ˅"/>
             </HBox>
         </HBox>
 

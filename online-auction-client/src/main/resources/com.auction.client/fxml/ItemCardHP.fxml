@@ -5,23 +5,20 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
 
 <VBox xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.ItemCardHPController"
+      stylesheets="@../css/HomePage.css"
       styleClass="auction-card"
       onMouseClicked="#handleSwitchToProductPage">
 
-    <StackPane fx:id="imageContainer" styleClass="image-container"
-               prefWidth="280.0" prefHeight="240.0"
-               minWidth="280.0" minHeight="240.0"
-               maxWidth="280.0" maxHeight="240.0">
+    <StackPane fx:id="imageContainer" styleClass="image-container">
         <ImageView fx:id="productImage"/>
     </StackPane>
 
-    <VBox styleClass="content-container">
-        <Label fx:id="productNameLabel" styleClass="product-name" text="IPhone 17 Pro Max 2025"/>
+    <VBox styleClass="content-container" >
+        <Label fx:id="productNameLabel" styleClass="product-name" wrapText="true" text="IPhone 17 Pro Max 2025"/>
 
         <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>
 
@@ -29,7 +26,7 @@
             <VBox styleClass="info-column" HBox.hgrow="ALWAYS">
                 <HBox spacing="5" alignment="CENTER_LEFT">
                     <Label styleClass="info-icon" text="＄"/>
-                    <Label styleClass="info-label" text="CURRENT BID"/>
+                    <Label fx:id="priceTitleLabel" styleClass="info-label" text="CURRENT BID"/>
                 </HBox>
                 <Label fx:id="priceLabel" styleClass="info-value-price" text="20.000.000 VNĐ"/>
             </VBox>
@@ -40,7 +37,7 @@
                     <Label styleClass="info-label" text="TIME LEFT"/>
                 </HBox>
                 <Label fx:id="endTimeLabel" styleClass="info-value-time" text="02d 15h 38m"/>
-                <Label fx:id="fullEndDateLabel" styleClass="info-sub-label" text="Ends on Jun 25, 2024"/>
+                <Label fx:id="timeTitleLabel" styleClass="info-sub-label" text="Ends on Jun 25, 2024"/>
             </VBox>
         </HBox>
     </VBox>
