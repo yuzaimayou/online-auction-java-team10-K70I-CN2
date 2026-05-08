@@ -1,12 +1,14 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
@@ -28,9 +30,16 @@ public class SettingController {
     private ToggleButton myAuctionsBtn;
     @FXML
     private ToggleButton historyBidBtn;
+    @FXML
+    private Label lblUserName;
 
     @FXML
     public void initialize() {
+        User currentUser = UserSession.getInstance().getLoggedInUser();
+        if (currentUser != null && lblUserName != null) {
+            // Hiển thị Username hoặc FirstName tùy theo model của bạn
+            lblUserName.setText(currentUser.getUsername());
+        }
         menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 menuGroup.selectToggle(oldToggle);

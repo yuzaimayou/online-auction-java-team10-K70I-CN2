@@ -63,7 +63,7 @@
                                        styleClass="avatar-inner"/>
                         </StackPane>
 
-                        <Label text="Duc Anh" styleClass="user-name"/>
+                        <Label fx:id="lblUserName" text="Duc Anh" styleClass="user-name"/>
                     </VBox>
 
                     <!-- Menu -->
