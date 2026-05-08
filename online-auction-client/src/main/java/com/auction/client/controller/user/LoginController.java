@@ -57,58 +57,56 @@ public class LoginController {
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+
+                        UserSession.getInstance().cleanUserSession();
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
                         PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(2));
 
-                        if (loggedInUser.isVerify() == false) {
-                            javafx.application.Platform.runLater(() -> {
+                        if (!loggedInUser.isVerify()) { // Dùng ! Thay vì == false cho gọn
+                            Platform.runLater(() -> {
                                 lblMessage.setTextFill(Color.RED);
-                                lblMessage.setText("Account unverified. Please check your email for the OTP.");
+                                lblMessage.setText("Account unverified. Redirecting to Verify...");
                             });
-                            pause.setOnFinished(e -> {
-                                try {
-
-                                    FXMLLoader loader = new FXMLLoader(
-                                            getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml")
-                                    );
-
-                                    Parent verifyRoot = loader.load();
-
-                                    VerifyController verifyController = loader.getController();
-                                    verifyController.setEmail(loggedInUser.getEmail());
-
-                                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-                                    stage.getScene().setRoot(verifyRoot);
-
-                                } catch (IOException ex) {
-                                    ex.printStackTrace();
-                                }
-                            });
+                            pause.setOnFinished(e -> redirectToVerify(event, loggedInUser.getEmail()));
                             pause.play();
                             return;
                         }
+
                         Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.GREEN);
-                            lblMessage.setText(responseMessage.getMessage());
+                            lblMessage.setText("Login successful! Welcome " + loggedInUser.getUsername());
                         });
+
+                        // Chuyển về trang chủ
                         pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         pause.play();
                     } else {
-                        javafx.application.Platform.runLater(() -> {
+                        Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
                         });
                     }
                 })
                 .exceptionally(e -> {
-                    e.printStackTrace();
-                    javafx.application.Platform.runLater(() -> {
+                    Platform.runLater(() -> {
                         lblMessage.setTextFill(Color.RED);
                         lblMessage.setText("Failed to connect to server");
                     });
                     return null;
                 });
+    }
+
+    private void redirectToVerify(ActionEvent event, String email) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
+            Parent verifyRoot = loader.load();
+            VerifyController verifyController = loader.getController();
+            verifyController.setEmail(email);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.getScene().setRoot(verifyRoot);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @FXML

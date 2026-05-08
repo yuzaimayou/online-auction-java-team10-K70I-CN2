@@ -52,6 +52,8 @@ public class HomePageController {
     private VBox upcomingSection;
     @FXML
     private VBox endedSection;
+    @FXML
+    private NavBarController navBarController;
 
     private List<Item> masterItemList;
     private String currentCategory = "ALL";
@@ -241,6 +243,13 @@ public class HomePageController {
         });
 
         getDataItemsAndDisplay();
+    }
+    public void refreshNavBarInfo() {
+        if (navBarController != null) {
+            navBarController.refreshUserInfo();
+        } else {
+            System.out.println("Cảnh báo: Không kết nối được với NavBarController.");
+        }
     }
 }
 
