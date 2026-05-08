@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-
+<?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.ItemCardHPController"
-      stylesheets="@../css/HomePage.css"
       styleClass="auction-card"
       onMouseClicked="#handleSwitchToProductPage">
 
@@ -17,7 +13,7 @@
         <ImageView fx:id="productImage"/>
     </StackPane>
 
-    <VBox styleClass="content-container" >
+    <VBox styleClass="content-container">
         <Label fx:id="productNameLabel" styleClass="product-name" wrapText="true" text="IPhone 17 Pro Max 2025"/>
 
         <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>
