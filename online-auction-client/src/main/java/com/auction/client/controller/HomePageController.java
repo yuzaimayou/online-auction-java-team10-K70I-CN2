@@ -248,7 +248,7 @@ public class HomePageController {
         if (navBarController != null) {
             navBarController.refreshUserInfo();
         } else {
-            System.out.println("Cảnh báo: Không kết nối được với NavBarController.");
+            System.out.println("Cảnh báo: Không kết nối được với NavBarController..");
         }
     }
 }
