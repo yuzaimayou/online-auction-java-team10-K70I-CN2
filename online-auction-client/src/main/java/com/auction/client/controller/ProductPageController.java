@@ -163,7 +163,7 @@ public class ProductPageController implements NetworkService.MessageListener {
                 if (bidPayload != null) {
                     System.out.println("Received new bid update: " + jsonPayload);
                     item.setCurrentPrice(bidPayload.getBidPrice());
-                    currentPriceLabel.setText(String.format("$ " +  item.getCurrentPrice()));
+                    currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
 
                     // Nếu người vừa đặt giá thành công là chính user này, cập nhật myLastBid
                     if (user.getId().equals(bidPayload.getUserId())) {
@@ -186,6 +186,7 @@ public class ProductPageController implements NetworkService.MessageListener {
         });
 
     }
+
     // Hàm kiểm tra trạng thái sản phẩm và hiển thị thông báo
     private boolean checkBiddableStatus() {
         // Giả sử model Item của bạn có phương thức getStatus() trả về String hoặc Enum
@@ -285,7 +286,7 @@ public class ProductPageController implements NetworkService.MessageListener {
 
         if (images != null && !images.isEmpty()) {
             String mainImageUrl = images.get(0);
-            ClientImageUtil.displayImage(mainImageUrl, "images", productImage);
+            ClientImageUtil.displayImage(mainImageUrl, "images", productImage, 200, 200);
 
             boolean isFirst = true;
 
@@ -317,7 +318,7 @@ public class ProductPageController implements NetworkService.MessageListener {
                     }
                 });
 
-                ClientImageUtil.displayImage(imgPath, "images", thumbView);
+                ClientImageUtil.displayImage(imgPath, "images", thumbView, 200, 200);
                 thumbPane.getChildren().add(thumbView);
 
                 thumbPane.setOnMouseClicked(e -> {
@@ -325,15 +326,15 @@ public class ProductPageController implements NetworkService.MessageListener {
                     if (clickedImage != null) {
                         productImage.setImage(clickedImage);
                     } else {
-                        ClientImageUtil.displayImage(imgPath, "images", productImage);
+                        ClientImageUtil.displayImage(imgPath, "images", productImage, 200, 200);
                     }
-                thumbnailContainer.getChildren().forEach(node -> {
-                    node.getStyleClass().remove("active-thumb");
-                });
+                    thumbnailContainer.getChildren().forEach(node -> {
+                        node.getStyleClass().remove("active-thumb");
+                    });
 
-                // 2. Thêm class 'active-thumb' vào thumbnail vừa được click
-                thumbPane.getStyleClass().add("active-thumb");
-            });
+                    // 2. Thêm class 'active-thumb' vào thumbnail vừa được click
+                    thumbPane.getStyleClass().add("active-thumb");
+                });
 
                 thumbnailContainer.getChildren().add(thumbPane);
             }
@@ -383,6 +384,7 @@ public class ProductPageController implements NetworkService.MessageListener {
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.playFromStart();
     }
+
     private void updateTimeDisplay() {
         if (item == null) return;
 
