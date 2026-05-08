@@ -29,9 +29,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class HomePageController {
-
-    //network
-    private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
@@ -64,7 +61,6 @@ public class HomePageController {
             applyFilter();
         });
         NetworkService.getInstance().leaveRoom();
-
         System.out.println("Đã vào trang chủ!");
 
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
@@ -80,8 +76,6 @@ public class HomePageController {
     @FXML
     private void getDataItemsAndDisplay() {
         System.out.println("Dang tien hanh lay du lieu");
-
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/products", AppConfig.getHttpUrl())))
                 .GET()
@@ -105,20 +99,19 @@ public class HomePageController {
                     }
                 });
     }
-
+    // Hàm để phân loại
     private void applyFilter() {
         if (masterItemList == null)
             return;
-
         String query = SearchStoreController.getSearchQuery().toLowerCase().trim();
 
         List<Item> filtered = masterItemList.stream()
                 .filter(item -> {
-                    // Lọc theo Category
+                    // Theo Category
                     boolean matchesCategory = currentCategory.equals("ALL") ||
-                            (item.getCategory() != null && item.getCategory().toString().equalsIgnoreCase(currentCategory));
+                            (item.getCategory() != null && item.getCategory().equalsIgnoreCase(currentCategory));
 
-                    // Lọc theo Search Query
+                    // Theo Search Query
                     boolean matchesSearch = query.isEmpty() ||
                             (item.getName() != null && item.getName().toLowerCase().contains(query));
 
@@ -129,7 +122,6 @@ public class HomePageController {
         loadItemsToUI(filtered);
     }
 
-    @FXML
     public void loadItemsToUI(List<Item> itemsFromServer) {
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
@@ -165,7 +157,6 @@ public class HomePageController {
                         endedAuctionsContainer.getChildren().add(cardBox);
                         endedCount++;
                     }
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -186,11 +177,9 @@ public class HomePageController {
         endedSection.setManaged(ended > 0);
     }
 
-
     @FXML
     private void handleCategoryClick(MouseEvent event) {
         VBox clicked = (VBox) event.getSource();
-
         String category = clicked.getId();
         boolean isReset = category.equalsIgnoreCase(currentCategory);
 
@@ -199,7 +188,6 @@ public class HomePageController {
         } else {
             currentCategory = category;
         }
-
         clicked.getParent().getChildrenUnmodifiable().forEach(node -> {
             node.getStyleClass().remove("active-category");
         });
@@ -207,19 +195,30 @@ public class HomePageController {
         if (!"ALL".equals(currentCategory)) {
             clicked.getStyleClass().add("active-category");
         }
-
         applyFilter();
     }
-
-
+    public void refreshProducts() {
+        System.out.println("Refreshing homepage products...");
+        Platform.runLater(() -> {
+            ongoingAuctionsContainer.getChildren().clear();
+            upcomingAuctionsContainer.getChildren().clear();
+            endedAuctionsContainer.getChildren().clear();
+        });
+        getDataItemsAndDisplay();
+    }
+    public void refreshNavBarInfo() {
+        if (navBarController != null) {
+            navBarController.refreshUserInfo();
+        } else {
+            System.out.println("Cảnh báo: Không kết nối được với NavBarController.");
+        }
+    }
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
             Parent root = loader.load();
             Node sourceNode = (Node) event.getSource();
-
-            AuctionFormController auctionFormController = loader.getController();
 
             Scene currentScene = sourceNode.getScene();
             Stage stage = (Stage) currentScene.getWindow();
@@ -233,23 +232,4 @@ public class HomePageController {
         }
     }
 
-    public void refreshProducts() {
-
-        System.out.println("Refreshing homepage products...");
-        Platform.runLater(() -> {
-            ongoingAuctionsContainer.getChildren().clear();
-            upcomingAuctionsContainer.getChildren().clear();
-            endedAuctionsContainer.getChildren().clear();
-        });
-
-        getDataItemsAndDisplay();
-    }
-    public void refreshNavBarInfo() {
-        if (navBarController != null) {
-            navBarController.refreshUserInfo();
-        } else {
-            System.out.println("Cảnh báo: Không kết nối được với NavBarController.");
-        }
-    }
 }
-
