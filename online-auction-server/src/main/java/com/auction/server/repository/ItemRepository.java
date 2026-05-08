@@ -184,7 +184,19 @@ public class ItemRepository {
 
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString("image_path");
-        List<String> imagePaths = gson.fromJson(pathsData, List.class);
+        List<String> imagePaths = new ArrayList<>();
+        if (pathsData != null && !pathsData.isEmpty()) {
+            try {
+                // Try to parse as JSON list (new format)
+                imagePaths = gson.fromJson(pathsData, List.class);
+                if (imagePaths == null) {
+                    imagePaths = new ArrayList<>();
+                }
+            } catch (Exception e) {
+                // Fallback for old format (single string path)
+                imagePaths.add(pathsData);
+            }
+        }
 
         Item item = new Item(
                 rs.getString("name"),

@@ -48,8 +48,12 @@ public class StaticFileServer {
                     } else if (fileName.endsWith(".jpeg")) {
                         mimeType = "image/jpeg";
                     } else {
-                        System.out.println("filetype is invalid");
-                        System.out.println(fileName);
+                        String response = "400 (Invalid file type)\n";
+                        exchange.sendResponseHeaders(400, response.length());
+                        try (OutputStream os = exchange.getResponseBody()) {
+                            os.write(response.getBytes());
+                        }
+                        System.out.println("Invalid file type: " + fileName);
                         return;
                     }
                     exchange.getResponseHeaders().set("Content-Type", mimeType);
@@ -72,9 +76,9 @@ public class StaticFileServer {
                 } else {
                     String response = "404 (Not found)\n";
                     exchange.sendResponseHeaders(404, response.length());
-                    OutputStream os = exchange.getResponseBody();
-                    os.write(response.length());
-                    os.close();
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response.getBytes());
+                    }
                     System.out.println("Not found: " + imageFile.getAbsolutePath());
                 }
             } catch (Exception e) {
