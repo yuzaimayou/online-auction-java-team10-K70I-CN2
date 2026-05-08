@@ -50,10 +50,8 @@ public class MainServer {
         }
 
         //start socket server
-        try {
+        try (ServerSocket serverSocket = new ServerSocket(9090)) {
             System.out.println("Starting Socket server...");
-
-            ServerSocket serverSocket = new ServerSocket(9090);
             System.out.println("Socket server started on port 9090");
 
             while (true) {
@@ -64,13 +62,11 @@ public class MainServer {
                 activeClients.add(handler);
 
                 Thread clientThread = new Thread(handler);
-
                 clientThread.start();
             }
         } catch (Exception e) {
             System.err.println("Failed to start Socket server: " + e.getMessage());
             e.printStackTrace();
-
         }
 
     }

@@ -1,6 +1,6 @@
 package com.auction.server.service;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
@@ -31,7 +31,7 @@ public class AuctionSettlementService {
 
         Connection conn = null;
         try {
-            conn = DatabaseConnection.connect();
+            conn = DatabaseManager.getConnection();
             conn.setAutoCommit(false);
 
             // Đọc item
