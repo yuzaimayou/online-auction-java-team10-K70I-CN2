@@ -97,10 +97,16 @@ public class ItemCardHPController {
             name = name.substring(0, 47) + "...";
         }
 
-        productNameLabel.setText(item.getName());
+        productNameLabel.setText(name);
 
         if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
-            ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
+            ClientImageUtil.displayImage(
+                    item.getImagesPath().get(0),
+                    "images",
+                    productImage,
+                    200,
+                    200
+            );
         }
         updateUI();
         startCountdown();
@@ -166,6 +172,7 @@ public class ItemCardHPController {
 
         return String.format("%02dd %02dh %02dm %02ds", days, hours, minutes, seconds);
     }
+
     @FXML
     public void handleSwitchToProductPage(MouseEvent event) {
         try {
