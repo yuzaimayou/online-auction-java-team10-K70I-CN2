@@ -12,7 +12,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 public class ItemsService {
     private static ItemsService instance;
@@ -27,9 +26,11 @@ public class ItemsService {
         return instance;
     }
 
-    public CompletableFuture<ResponseMessage> getAllFromSeller() {
+    public CompletableFuture<ResponseMessage> getAllFromSeller(String id, String userName) {
+
+        System.out.println("Getting items for seller: " + userName + " (ID: " + id + ")");
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/products?sellerId=%s", AppConfig.getHttpUrl(), loggedInUser.getId())))
+                .uri(URI.create(String.format("%s/api/products?sellerId=%s", AppConfig.getHttpUrl(), id)))
                 .GET()
                 .build();
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())

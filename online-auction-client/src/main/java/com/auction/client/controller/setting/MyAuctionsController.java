@@ -2,6 +2,8 @@ package com.auction.client.controller.setting;
 
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
+import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.product.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
@@ -15,10 +17,6 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -32,6 +30,7 @@ public class MyAuctionsController {
     private ItemsService itemsService = ItemsService.getInstance();
     private final DateTimeFormatter multiLineFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy\nHH:mm a");
     private Gson gson = new GsonUtil().getInstance();
+    private User loggedInUser = UserSession.getInstance().getLoggedInUser();
     @FXML
     private ToggleButton profileInfoBtn;
     @FXML
@@ -139,8 +138,9 @@ public class MyAuctionsController {
                     });
         }
     }
+
     private void displayItems() {
-        itemsService.getAllFromSeller()
+        itemsService.getAllFromSeller(loggedInUser.getId(), loggedInUser.getUsername())
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
