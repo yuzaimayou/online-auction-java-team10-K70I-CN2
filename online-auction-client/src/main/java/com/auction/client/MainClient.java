@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class MainClient extends Application {
 
-    // Hàm load fonts Inter
+    // Giữ nguyên hàm loadInterFonts của bạn
     private static void loadInterFonts() {
         String[] fontPaths = {
                 "/com.auction.client/assets/fonts/Inter/Inter_18pt-Italic.ttf",
@@ -23,18 +23,19 @@ public class MainClient extends Application {
         };
         for (String font : fontPaths) {
             var is = MainClient.class.getResourceAsStream(font);
-            if (is != null) javafx.scene.text.Font.loadFont(is, 12);
+            if (is != null)
+                javafx.scene.text.Font.loadFont(is, 12);
         }
     }
 
     @Override
     public void start(Stage primaryStage) {
         try {
-            // Load fonts
             loadInterFonts();
 
             // TẢI TRỰC TIẾP LOGIN.FXML (Bây giờ đã bao gồm cả ảnh bên trái)
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
             Parent root = loader.load();
 
             // Khởi tạo Scene với kích thước mặc định nhưng cho phép thay đổi

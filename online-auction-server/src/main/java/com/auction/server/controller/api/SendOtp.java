@@ -22,26 +22,21 @@ public class SendOtp implements HttpHandler {
 
             ResponseMessage responseMessage = new ResponseMessage();
             if (email != null && !email.isEmpty()) {
-                new Thread(() -> {
+                try {
+                    verifyService.sendEmail(email);
+                    System.out.println("Sent OTP to email: " + email);
+                    String response = "OTP sent to email: " + email;
+                    HttpResponseUtil.sendMessage(exchange, 200, new ResponseMessage("success", response, null));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    String response = "Failed to send OTP to email: " + email;
                     try {
-                        verifyService.sendEmail(email);
-                        System.out.println("Sent OTP to email: " + email);
-                        String response = "OTP sent to email: " + email;
-                        HttpResponseUtil.sendMessage(exchange, 200, new ResponseMessage("success", response, null));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        String response = "Failed to send OTP to email: " + email;
-                        try {
-                            HttpResponseUtil.sendMessage(exchange, 500, new ResponseMessage("error", response, null));
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                            System.err.println("Failed to send error response for email: " + email);
-                        }
-
+                        HttpResponseUtil.sendMessage(exchange, 500, new ResponseMessage("error", response, null));
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        System.err.println("Failed to send error response for email: " + email);
                     }
-                }).start();
-
-
+                }
             } else {
                 String response = "Email parameter is missing!";
                 HttpResponseUtil.sendMessage(exchange, 400, new ResponseMessage("error", response, null));

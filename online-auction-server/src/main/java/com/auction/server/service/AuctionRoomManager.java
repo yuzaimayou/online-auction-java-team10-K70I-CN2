@@ -51,7 +51,7 @@ public class AuctionRoomManager {
         if (currentRoom != null) {
             currentRoom.remove(client);
             System.out.println("Client " + client.getUsername() + " left room for product " + productId);
-            if (rooms.isEmpty()) {
+            if (currentRoom.isEmpty()) {
                 rooms.remove(productId);
             }
         }
