@@ -1,6 +1,6 @@
 package com.auction.server.service;
 
-import com.auction.server.database.DatabaseConnection;
+import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
@@ -51,7 +51,7 @@ public class WalletService {
         synchronized (getItemLock(itemId)) {
             Connection conn = null;
             try {
-                conn = DatabaseConnection.connect();
+                conn = DatabaseManager.getConnection();
                 conn.setAutoCommit(false);
 
                 // Bước 2: Đọc item trong transaction
@@ -61,10 +61,14 @@ public class WalletService {
                     return BidResult.fail("Không tìm thấy item");
                 }
 
-                // Bước 3: Validate
                 if (item.getSellerId().equals(bidderId)) {
                     rollback(conn);
                     return BidResult.fail("Người bán không được tự đặt giá");
+                }
+
+                if (bidderId.equals(item.getCurrentTopPLayerId())) {
+                    rollback(conn);
+                    return BidResult.fail("Bạn đang là người đặt giá cao nhất cho sản phẩm này");
                 }
 
                 String status = item.getStatus();
@@ -166,7 +170,7 @@ public class WalletService {
 
         Connection conn = null;
         try {
-            conn = DatabaseConnection.connect();
+            conn = DatabaseManager.getConnection();
             conn.setAutoCommit(false);
 
             double[] before = walletRepo.getBalances(conn, userId);
