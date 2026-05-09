@@ -1,7 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.util.ClientImageUtil;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -179,11 +179,11 @@ public class ItemCardHPController {
             // Dừng timeline trước khi chuyển trang để tránh rò rỉ bộ nhớ
             if (timeline != null) timeline.stop();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ProductPage.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemPage.fxml"));
             Parent root = loader.load();
 
-            ProductPageController productPageController = loader.getController();
-            productPageController.initData(this.currentItem);
+            ItemPageController itemPageController = loader.getController();
+            itemPageController.initData(this.currentItem);
 
             Scene currentScene = productNameLabel.getScene();
             Stage stage = (Stage) currentScene.getWindow();

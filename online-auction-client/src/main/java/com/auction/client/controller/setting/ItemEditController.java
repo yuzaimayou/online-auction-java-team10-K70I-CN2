@@ -3,8 +3,8 @@ package com.auction.client.controller.setting;
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.payloads.ProductPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.payloads.ItemPayload;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-public class ProductEditController {
+public class ItemEditController {
 
     @FXML
     private Label lblMessage;
@@ -157,7 +157,7 @@ public class ProductEditController {
         String selectedCategory = selectedToggle.getUserData().toString();
 
         // Tạo Payload
-        ProductPayload payload = new ProductPayload(
+        ItemPayload payload = new ItemPayload(
                 productName, selectedCategory, productDesc,
                 null, // Hiện tại FXML chưa gắn nút add ảnh thật, gửi mảng rỗng
                 startDateTime, endDateTime, initPrice, bidStep, currentProductId

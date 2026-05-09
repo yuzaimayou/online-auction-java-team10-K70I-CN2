@@ -5,7 +5,7 @@ import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;

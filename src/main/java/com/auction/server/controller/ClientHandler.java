@@ -12,7 +12,7 @@ import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.payloads.ProductPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

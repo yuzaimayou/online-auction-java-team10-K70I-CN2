@@ -1,7 +1,7 @@
 package com.auction.shared.model.auction;
 
 import com.auction.shared.model.enums.AuctionStatus;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
