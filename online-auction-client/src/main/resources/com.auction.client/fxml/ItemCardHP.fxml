@@ -7,14 +7,14 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.ItemCardHPController"
       styleClass="auction-card"
-      onMouseClicked="#handleSwitchToProductPage">
+      onMouseClicked="#handleSwitchToItemPage">
 
     <StackPane fx:id="imageContainer" styleClass="image-container">
-        <ImageView fx:id="productImage"/>
+        <ImageView fx:id="itemImage"/>
     </StackPane>
 
     <VBox styleClass="content-container">
-        <Label fx:id="productNameLabel" styleClass="product-name" wrapText="true" text="IPhone 17 Pro Max 2025"/>
+        <Label fx:id="itemNameLabel" styleClass="item-name" wrapText="true" text="IPhone 17 Pro Max 2025"/>
 
         <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>
 

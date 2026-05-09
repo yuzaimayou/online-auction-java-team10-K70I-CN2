@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
@@ -30,7 +30,6 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -42,7 +41,7 @@ public class AuctionFormController {
     @FXML
     private Label lblMessage;
     @FXML
-    private TextField txtProductName;
+    private TextField txtItemName;
     @FXML
     private ToggleGroup categoryGroup;
     @FXML
@@ -50,13 +49,13 @@ public class AuctionFormController {
     @FXML
     private DatePicker endDateP;
     @FXML
-    private ImageView imageViewProduct;
+    private ImageView imageViewItem;
     @FXML
     private ComboBox<String> cbStartTime;
     @FXML
     private ComboBox<String> cbEndTime;
     @FXML
-    private TextArea txtProductDesc;
+    private TextArea txtItemDesc;
     @FXML
     private TextField txtInitPrice;
     @FXML
@@ -92,19 +91,19 @@ public class AuctionFormController {
         cbStartTime.setValue("06:50");
         cbEndTime.setValue("10:37");
 
-        // xuống dòng cho product desciption
-        txtProductDesc.setWrapText(true);
-        txtProductDesc.textProperty().addListener((observable, oldValue, newValue) -> {
+        // xuống dòng cho item desciption
+        txtItemDesc.setWrapText(true);
+        txtItemDesc.textProperty().addListener((observable, oldValue, newValue) -> {
             javafx.scene.text.Text helper = new javafx.scene.text.Text();
             helper.setText(newValue);
-            helper.setFont(txtProductDesc.getFont());
+            helper.setFont(txtItemDesc.getFont());
 
-            helper.setWrappingWidth(txtProductDesc.getWidth() - 40);
+            helper.setWrappingWidth(txtItemDesc.getWidth() - 40);
 
             double textHeight = helper.getLayoutBounds().getHeight();
             double newHeight = textHeight + 40;
 
-            txtProductDesc.setPrefHeight(Math.max(80, newHeight));
+            txtItemDesc.setPrefHeight(Math.max(80, newHeight));
         });
 
     }
@@ -134,13 +133,13 @@ public class AuctionFormController {
 
 
     @FXML
-    public void handleAddProduct(ActionEvent event) {
+    public void handleAddItem(ActionEvent event) {
         if (isSubmitting) {
             return;
         }
 
-        String productName = txtProductName.getText().trim();
-        String productDesc = txtProductDesc.getText().trim();
+        String itemName = txtItemName.getText().trim();
+        String itemDesc = txtItemDesc.getText().trim();
         Toggle selectedToggle = categoryGroup.getSelectedToggle();
         String selectedCategory;
         //time
@@ -156,7 +155,7 @@ public class AuctionFormController {
         String userId = UserSession.getInstance().getLoggedInUser().getId();
 
         //Kiem tra
-        if (isAnyNull(productName, productDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
+        if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
                 || selectedFiles.isEmpty()) {
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText("Please fill in all required fields.");
@@ -204,12 +203,8 @@ public class AuctionFormController {
             e.printStackTrace();
         }
 
-        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
+        ItemPayload payload = new ItemPayload(itemName, selectedCategory, itemDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
         String jsonPayload = gson.toJson(payload);
-        String httpUrl = String.format("%s/api/add-product", AppConfig.getHttpUrl());
-        System.out.println("Debug: Sending POST request to " + httpUrl);
-
-        HttpClient httpClient = HttpClient.newHttpClient();
         isSubmitting = true;
 
         Platform.runLater(() -> {
@@ -242,7 +237,7 @@ public class AuctionFormController {
 
                             Button clickedButton = (Button) event.getSource();
                             clickedButton.setDisable(false);
-                            clickedButton.setText("Add Product");
+                            clickedButton.setText("Add Item");
                         });
                     }
                 })
@@ -261,7 +256,7 @@ public class AuctionFormController {
 
                         Button clickedButton = (Button) event.getSource();
                         clickedButton.setDisable(false);
-                        clickedButton.setText("Add Product");
+                        clickedButton.setText("Add Item");
                     });
 
                     return null;
@@ -284,7 +279,7 @@ public class AuctionFormController {
                     new PauseTransition(Duration.seconds(0.5));
 
             refreshDelay.setOnFinished(event -> {
-                homePageController.refreshProducts();
+                homePageController.refreshItems();
             });
 
             refreshDelay.play();

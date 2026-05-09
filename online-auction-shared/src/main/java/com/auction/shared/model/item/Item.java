@@ -1,4 +1,4 @@
-package com.auction.shared.model.product;
+package com.auction.shared.model.item;
 
 import com.auction.shared.model.base.Entity;
 
@@ -175,7 +175,7 @@ public class Item extends Entity {
         return description;
     }
 
-    // Verify if someone is the product owner (to prevent shill bidding)
+    // Verify if someone is the item owner (to prevent shill bidding)
     public boolean isOwner(String userId) {
         return sellerId != null && sellerId.equals(userId);
     }

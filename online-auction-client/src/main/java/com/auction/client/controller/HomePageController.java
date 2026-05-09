@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.NetworkService;
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -53,7 +53,7 @@ public class HomePageController {
     @FXML
     private VBox endedSection;
 
-    private List<Item> masterItemList;
+    private List<ItemSummary> masterItemList;
     private String currentCategory = "ALL";
 
     @FXML
@@ -81,7 +81,7 @@ public class HomePageController {
 
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/products", AppConfig.getHttpUrl())))
+                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
                 .GET()
                 .build();
         httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
@@ -91,9 +91,9 @@ public class HomePageController {
                     if ("success".equals(res.getStatus())) {
                         System.out.println(res.getMessage());
 
-                        Type listType = new TypeToken<List<Item>>() {
+                        Type listType = new TypeToken<List<ItemSummary>>() {
                         }.getType();
-                        List<Item> dataItems = gson.fromJson(res.getData(), listType);
+                        List<ItemSummary> dataItems = gson.fromJson(res.getData(), listType);
                         javafx.application.Platform.runLater(() -> {
                             this.masterItemList = dataItems;
                             applyFilter();
@@ -110,7 +110,7 @@ public class HomePageController {
 
         String query = SearchStoreController.getSearchQuery().toLowerCase().trim();
 
-        List<Item> filtered = masterItemList.stream()
+        List<ItemSummary> filtered = masterItemList.stream()
                 .filter(item -> {
                     // Lọc theo Category
                     boolean matchesCategory = currentCategory.equals("ALL") ||
@@ -128,7 +128,7 @@ public class HomePageController {
     }
 
     @FXML
-    public void loadItemsToUI(List<Item> itemsFromServer) {
+    public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
             upcomingAuctionsContainer.getChildren().clear();
@@ -138,7 +138,7 @@ public class HomePageController {
             int upcomingCount = 0;
             int endedCount = 0;
 
-            for (Item item : itemsFromServer) {
+            for (ItemSummary item : itemsFromServer) {
                 try {
                     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
                     VBox cardBox = fxmlLoader.load();
@@ -223,7 +223,7 @@ public class HomePageController {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Add Product");
+            stage.setTitle("Online Auction System - Add Item");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -231,9 +231,9 @@ public class HomePageController {
         }
     }
 
-    public void refreshProducts() {
+    public void refreshItems() {
 
-        System.out.println("Refreshing homepage products...");
+        System.out.println("Refreshing homepage items...");
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
             upcomingAuctionsContainer.getChildren().clear();

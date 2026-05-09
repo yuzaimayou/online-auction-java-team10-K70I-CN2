@@ -3,22 +3,22 @@ package com.auction.shared.model.payloads;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class ProductPayload {
-    private String productName, category, productDesc;
+public class ItemPayload {
+    private String itemName, category, itemDesc;
     private LocalDateTime startDateTime, endDateTime;
     private Double initPrice, bidStep;
     private String userId;
     private List<String[]> imagesConverted;
 
-    public ProductPayload() {
+    public ItemPayload() {
     }
 
-    public ProductPayload(String productName, String category, String productDesc, List<String[]> images, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, String userId) {
-        this.productName = productName;
+    public ItemPayload(String itemName, String category, String itemDesc, List<String[]> images, LocalDateTime startTime, LocalDateTime endTime, Double initPrice, Double bidStep, String userId) {
+        this.itemName = itemName;
         this.category = category;
         this.startDateTime = startTime;
         this.endDateTime = endTime;
-        this.productDesc = productDesc;
+        this.itemDesc = itemDesc;
         this.imagesConverted = images;
         this.initPrice = initPrice;
         this.bidStep = bidStep;
@@ -34,12 +34,12 @@ public class ProductPayload {
         return endDateTime;
     }
 
-    public String getProductName() {
-        return productName;
+    public String getItemName() {
+        return itemName;
     }
 
-    public String getProductDesc() {
-        return productDesc;
+    public String getItemDesc() {
+        return itemDesc;
     }
 
     public List<String[]> getImagesConverted() {

@@ -100,6 +100,7 @@
 .active-category Label {
     -fx-text-fill: #3b82f6;
 }
+
 /*thêm sản phẩm*/
 .add-auction-button:pressed {
     -fx-scale-x: 0.9;
@@ -165,7 +166,7 @@
     -fx-spacing: 12px;
 }
 
-.product-name {
+.item-name {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #1A1A1B;
