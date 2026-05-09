@@ -12,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -37,26 +38,26 @@ public class SettingController {
     // ĐÃ THÊM: Map với FXML để quản lý ẩn/hiện
     @FXML
     private VBox adminSection;
+    @FXML
+    private StackPane adminSignal;
 
     @FXML
     public void initialize() {
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser != null && lblUserName != null) {
+            lblUserName.setText(currentUser.getUsername());
             // Hiển thị Username hoặc FirstName tùy theo model của bạn
             boolean isAdmin = currentUser.getUsername().equalsIgnoreCase("admin");
 
-            System.out.println("=== DEBUG LOGIC USERNAME ===");
-            System.out.println("User đang đăng nhập: " + currentUser.getUsername());
-            System.out.println("Có phải admin hệ thống không: " + isAdmin);
-            System.out.println("============================");
+            if (adminSignal != null) {
+                adminSignal.setVisible(isAdmin);
+                adminSignal.setManaged(isAdmin);
+            }
 
             if (adminSection != null) {
-                // setVisible: Ẩn/hiện về mặt hình ảnh
                 adminSection.setVisible(isAdmin);
-                // setManaged: Nếu false, layout sẽ coi như VBox này không tồn tại và thu gọn khoảng trống
                 adminSection.setManaged(isAdmin);
             }
-            // -------------------------
         }
         menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
             if (newToggle == null) {
