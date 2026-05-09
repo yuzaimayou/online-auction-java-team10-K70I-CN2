@@ -3,7 +3,7 @@ package com.auction.server.controller.api;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.product.ItemSummary;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -24,7 +24,7 @@ public class GetDataProducts implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         if ("GET".equals(exchange.getRequestMethod())) {
             ItemRepository itemRepository = new ItemRepository();
-            List<Item> payload;
+            List<ItemSummary> payload;
             URI requestURI = exchange.getRequestURI();
             String query = requestURI.getQuery();
             if (query == null) {
