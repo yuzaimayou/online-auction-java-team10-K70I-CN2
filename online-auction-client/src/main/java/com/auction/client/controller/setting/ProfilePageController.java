@@ -15,8 +15,8 @@ import java.io.IOException;
 
 public class ProfilePageController {
     @FXML private TextField emailField;
-    @FXML private TextField firstNameField; // Tạm thời dùng hiển thị Username vào đây
-    @FXML private TextField lastNameField;
+    @FXML private TextField userNameField; // Tạm thời dùng hiển thị Username vào đây
+    @FXML private TextField roleUserField;
 
     @FXML
     private ToggleButton profileInfoBtn;
@@ -43,14 +43,14 @@ public class ProfilePageController {
             if (emailField != null) {
                 emailField.setText(currentUser.getEmail());
             }
-            if (firstNameField != null) {
-                firstNameField.setText(currentUser.getUsername());
+            if (userNameField != null) {
+                userNameField.setText(currentUser.getUsername());
             }
-            if (lastNameField != null) {
-                lastNameField.setText("User Account");
+            if (roleUserField != null) {
+                roleUserField.setText("User Account");
             }
 
-            lockFields(emailField, firstNameField, lastNameField);
+            lockFields(emailField, userNameField, roleUserField);
         }
     }
 

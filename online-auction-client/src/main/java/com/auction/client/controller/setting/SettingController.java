@@ -1,6 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,19 +34,35 @@ public class SettingController {
     @FXML
     private Label lblUserName;
 
+    // ĐÃ THÊM: Map với FXML để quản lý ẩn/hiện
+    @FXML
+    private VBox adminSection;
+
     @FXML
     public void initialize() {
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser != null && lblUserName != null) {
             // Hiển thị Username hoặc FirstName tùy theo model của bạn
-            lblUserName.setText(currentUser.getUsername());
+            boolean isAdmin = currentUser.getUsername().equalsIgnoreCase("admin");
+
+            System.out.println("=== DEBUG LOGIC USERNAME ===");
+            System.out.println("User đang đăng nhập: " + currentUser.getUsername());
+            System.out.println("Có phải admin hệ thống không: " + isAdmin);
+            System.out.println("============================");
+
+            if (adminSection != null) {
+                // setVisible: Ẩn/hiện về mặt hình ảnh
+                adminSection.setVisible(isAdmin);
+                // setManaged: Nếu false, layout sẽ coi như VBox này không tồn tại và thu gọn khoảng trống
+                adminSection.setManaged(isAdmin);
+            }
+            // -------------------------
         }
         menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 menuGroup.selectToggle(oldToggle);
             }
         });
-
         if ("MyAuctions".equals(targetTab)) {
             myAuctionsBtn.setSelected(true);
             loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
@@ -104,5 +121,17 @@ public class SettingController {
             System.err.println("Không tìm thấy file Login.fxml!");
             e.printStackTrace();
         }
+    }
+
+    public void handleMyBids(ActionEvent actionEvent) {
+    }
+
+    public void handleChangePassword(ActionEvent actionEvent) {
+    }
+
+    public void handleUsersManagement(ActionEvent actionEvent) {
+    }
+
+    public void handleAuctionsManagement(ActionEvent actionEvent) {
     }
 }
