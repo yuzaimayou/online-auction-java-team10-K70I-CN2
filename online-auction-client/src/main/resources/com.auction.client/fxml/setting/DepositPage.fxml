@@ -12,14 +12,14 @@
         <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
     </padding>
 
-    <HBox alignment="CENTER_LEFT">
-        <Button onAction="#handleBackToWallet" styleClass="back-btn" text="← Quay lại ví"/>
+    <HBox alignment="CENTER_LEFT" >
+        <Button onAction="#handleBackToWallet" styleClass="back-btn" text="←  Back  "/>
     </HBox>
 
     <VBox spacing="5.0">
         <HBox spacing="10.0" alignment="CENTER_LEFT">
             <Label text="💰" style="-fx-font-size: 24px;"/>
-            <Label text="Nạp tiền vào tài khoản" styleClass="content-title" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1976f3;"/>
+            <Label text="Nạp tiền vào tài khoản" styleClass="content-title" />
         </HBox>
         <Label text="Chọn số tiền và phương thức thanh toán." style="-fx-text-fill: #7a828a;"/>
     </VBox>
@@ -29,12 +29,21 @@
     <VBox spacing="15.0">
         <Label text="1. Chọn số tiền nạp" style="-fx-font-weight: bold;"/>
         <HBox spacing="10.0">
-            <ToggleButton text="100,000đ" styleClass="amount-toggle"/>
-            <ToggleButton text="200,000đ" styleClass="amount-toggle"/>
-            <ToggleButton text="500,000đ" styleClass="amount-toggle" selected="true"/>
-            <ToggleButton text="1,000,000đ" styleClass="amount-toggle"/>
+            <fx:define>
+                <ToggleGroup fx:id="amountGroup"/>
+            </fx:define>
+            <ToggleButton fx:id="btn50" text="\$50" styleClass="amount-toggle"
+                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn100" text="\$100" styleClass="amount-toggle"
+                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn200" text="\$200" styleClass="amount-toggle"
+                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn500" text="\$500" styleClass="amount-toggle"
+                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn1000" text="\$1000" styleClass="amount-toggle"
+                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
         </HBox>
-        <TextField fx:id="amountField" promptText="Nhập số tiền khác" styleClass="info-field" prefHeight="40.0"/>
+        <TextField fx:id="amountField" promptText="Nhập số tiền muốn nạp" styleClass="info-field" prefHeight="40.0"/>
     </VBox>
 
     <VBox spacing="15.0">
@@ -44,7 +53,7 @@
                 <Label text="ZaloPay" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
                 <Label text="Fast payment via ZaloPay wallet" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <RadioButton selected="true"/>
+                <RadioButton />
             </HBox>
 
             <HBox spacing="15.0" alignment="CENTER_LEFT" styleClass="payment-option,  selected-option">
