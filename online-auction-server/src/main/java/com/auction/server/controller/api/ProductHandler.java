@@ -28,6 +28,7 @@ public class ProductHandler implements HttpHandler {
             URI requestURI = exchange.getRequestURI();
             String query = requestURI.getQuery();
             if (query == null || !query.contains("action")) {
+                HttpResponseUtil.sendMessage(exchange, 400, new ResponseMessage("error", "Missing action parameter", null));
                 return;
             }
             String[] params = query.split("&");

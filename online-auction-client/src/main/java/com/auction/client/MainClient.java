@@ -23,7 +23,8 @@ public class MainClient extends Application {
         };
         for (String font : fontPaths) {
             var is = MainClient.class.getResourceAsStream(font);
-            if (is != null) javafx.scene.text.Font.loadFont(is, 12);
+            if (is != null)
+                javafx.scene.text.Font.loadFont(is, 12);
         }
     }
 
@@ -33,7 +34,8 @@ public class MainClient extends Application {
             loadInterFonts();
 
             // TẢI TRỰC TIẾP LOGIN.FXML (Bây giờ đã bao gồm cả ảnh bên trái)
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
             Parent root = loader.load();
 
             // Khởi tạo Scene với kích thước mặc định nhưng cho phép thay đổi
