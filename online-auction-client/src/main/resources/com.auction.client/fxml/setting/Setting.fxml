@@ -36,14 +36,26 @@
                     </padding>
 
                     <VBox alignment="CENTER" spacing="12.0">
-                        <StackPane styleClass="avatar-outer" maxHeight="92" maxWidth="92">
-                            <StackPane styleClass="avatar-inner" maxHeight="64" maxWidth="64"/>
-                            <ImageView fitHeight="45.0" fitWidth="45.0" preserveRatio="true">
-                                <image>
-                                    <Image url="@../../assets/default_avatar.png"/>
-                                </image>
-                            </ImageView>
-                        </StackPane>
+                        <AnchorPane maxWidth="-Infinity">
+                            <StackPane styleClass="avatar-outer" maxHeight="92" maxWidth="92">
+                                <StackPane styleClass="avatar-inner" maxHeight="64" maxWidth="64"/>
+                                <ImageView fitHeight="45.0" fitWidth="45.0" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../assets/default_avatar.png"/>
+                                    </image>
+                                </ImageView>
+                            </StackPane>
+
+                            <StackPane fx:id="adminSignal" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                                       prefHeight="32.0" prefWidth="32.0"
+                                       style="-fx-background-color: #fff3b0; -fx-background-radius: 50; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 5, 0, 0, 1);">
+                                <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../assets/adm_sig.png"/>
+                                    </image>
+                                </ImageView>
+                            </StackPane>
+                        </AnchorPane>
                         <Label fx:id="lblUserName" text="Duc Anh" styleClass="user-name"/>
                     </VBox>
 
