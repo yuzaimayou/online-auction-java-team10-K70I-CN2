@@ -4,15 +4,15 @@ import com.auction.server.MainServer;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.service.AuthService;
 import com.auction.server.service.BidService;
-import com.auction.server.service.ProductService;
+import com.auction.server.service.ItemService;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.BidPayload;
-import com.auction.shared.model.payloads.ProductPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.payloads.ItemPayload;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,7 +28,7 @@ import java.util.List;
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private AuthService authService;
-    private ProductService productService;
+    private ItemService itemService;
     private BidService bidService;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -36,10 +36,10 @@ public class ClientHandler implements Runnable {
 
     private PrintWriter out;
 
-    public ClientHandler(Socket socket, AuthService authService, ProductService productService, BidService bidService) {
+    public ClientHandler(Socket socket, AuthService authService, ItemService itemService, BidService bidService) {
         this.clientSocket = socket;
         this.authService = authService;
-        this.productService = productService;
+        this.itemService = itemService;
         this.bidService = bidService;
         try {
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -74,7 +74,7 @@ public class ClientHandler implements Runnable {
                 switch (request.getAction()) {
                     case LOGIN -> keepConnectionAlive = loginAction(request.getPayload(), response);
                     case REGISTER -> keepConnectionAlive = registerAction(request.getPayload(), response);
-                    case ADDPRODUCT -> keepConnectionAlive = addProductAction(request.getPayload(), response);
+                    case ADDPRODUCT -> keepConnectionAlive = addItemAction(request.getPayload(), response);
                     case GETDATAPRODUCT -> keepConnectionAlive = getDataItems(response);
                     case BID -> keepConnectionAlive = bidAction(request.getPayload(), response);
                     case AUTO_BID_REGISTER -> keepConnectionAlive = autoBidRegisterAction(request.getPayload(), response);
@@ -149,18 +149,18 @@ public class ClientHandler implements Runnable {
         return false;
     }
 
-    private boolean addProductAction(String payload, ResponseMessage response) {
-        ProductPayload productData = gson.fromJson(payload, ProductPayload.class);
-        String userId = productData.getUserId();
-        //goi class tao product
-        boolean created = productService.addProduct(payload);
+    private boolean addItemAction(String payload, ResponseMessage response) {
+        ItemPayload itemData = gson.fromJson(payload, ItemPayload.class);
+        String userId = itemData.getUserId();
+        //goi class tao item
+        boolean created = itemService.addItem(payload);
 
         if (created) {
             response.setStatus("SUCCESS");
-            response.setMessage("Product added successfully!" + userId);
+            response.setMessage("Item added successfully!" + userId);
         } else {
             response.setStatus("FAIL");
-            response.setMessage("Failed to add product. Please try again.");
+            response.setMessage("Failed to add item. Please try again.");
         }
         return true;
     }

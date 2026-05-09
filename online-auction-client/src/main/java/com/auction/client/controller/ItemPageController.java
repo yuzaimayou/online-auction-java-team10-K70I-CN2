@@ -6,7 +6,7 @@ import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.BidPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.google.gson.Gson;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -32,13 +32,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class ProductPageController implements NetworkService.MessageListener {
+public class ItemPageController implements NetworkService.MessageListener {
     @FXML
-    private Label productNameLabel;
+    private Label itemNameLabel;
     @FXML
-    private Label productDesLabel;
+    private Label itemDesLabel;
     @FXML
-    private ImageView productImage;
+    private ImageView itemImage;
     @FXML
     private Label sellerLabel;
     @FXML
@@ -97,6 +97,7 @@ public class ProductPageController implements NetworkService.MessageListener {
     private static final double THUMB_HEIGHT = 60.0;
     private double myLastBid = 0;
     private final long AUTO_BID_DELAY = 50;
+    private String itemId;
     private Item item;
     private final User user = UserSession.getInstance().getLoggedInUser();
     private NetworkService network = NetworkService.getInstance();
@@ -114,23 +115,27 @@ public class ProductPageController implements NetworkService.MessageListener {
         Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
         clip.setArcWidth(IMAGE_ARC);
         clip.setArcHeight(IMAGE_ARC);
-        productImage.setClip(clip);
+        itemImage.setClip(clip);
 
-        productImage.setFitWidth(IMAGE_WIDTH);
-        productImage.setFitHeight(IMAGE_HEIGHT);
-        productImage.setPreserveRatio(false);
+        itemImage.setFitWidth(IMAGE_WIDTH);
+        itemImage.setFitHeight(IMAGE_HEIGHT);
+        itemImage.setPreserveRatio(false);
 
-        productImage.imageProperty().addListener((obs, oldImg, newImg) -> {
+        itemImage.imageProperty().addListener((obs, oldImg, newImg) -> {
             if (newImg != null) {
                 applyObjectFitCover(newImg);
             }
         });
     }
 
+    public void setItemId(String id) {
+        this.itemId = id;
+    }
+
     public void initData(Item item) {
         this.item = item;
         this.myLastBid = userLastBidSession.getOrDefault(item.getId(), 0.0);
-        displayDataProduct(item);
+        displayDataItem(item);
         connectToRealTimeBidding();
         if (item.getSellerId().equals(user.getId())) {
             bidAmountField.setDisable(true);
@@ -237,7 +242,7 @@ public class ProductPageController implements NetworkService.MessageListener {
     }
 
     private void applyObjectFitCover(Image img) {
-        applyObjectFitCoverToImageView(productImage, img, IMAGE_WIDTH, IMAGE_HEIGHT);
+        applyObjectFitCoverToImageView(itemImage, img, IMAGE_WIDTH, IMAGE_HEIGHT);
     }
 
     private void applyObjectFitCoverToImageView(ImageView imageView, Image img, double targetW, double targetH) {
@@ -279,14 +284,14 @@ public class ProductPageController implements NetworkService.MessageListener {
         });
     }
 
-    private void displayDataProduct(Item item) {
+    private void displayDataItem(Item item) {
         thumbnailContainer.getChildren().clear();
 
         List<String> images = item.getImagesPath();
 
         if (images != null && !images.isEmpty()) {
             String mainImageUrl = images.get(0);
-            ClientImageUtil.displayImage(mainImageUrl, "images", productImage, 200, 200);
+            ClientImageUtil.displayImage(mainImageUrl, "images", itemImage, 200, 200);
 
             boolean isFirst = true;
 
@@ -324,9 +329,9 @@ public class ProductPageController implements NetworkService.MessageListener {
                 thumbPane.setOnMouseClicked(e -> {
                     Image clickedImage = thumbView.getImage();
                     if (clickedImage != null) {
-                        productImage.setImage(clickedImage);
+                        itemImage.setImage(clickedImage);
                     } else {
-                        ClientImageUtil.displayImage(imgPath, "images", productImage, 200, 200);
+                        ClientImageUtil.displayImage(imgPath, "images", itemImage, 200, 200);
                     }
                     thumbnailContainer.getChildren().forEach(node -> {
                         node.getStyleClass().remove("active-thumb");
@@ -341,17 +346,17 @@ public class ProductPageController implements NetworkService.MessageListener {
         }
 
         double minHeight = 100;
-        productDesLabel.setMinHeight(minHeight);
-        productDesLabel.setText(item.getDescription());
-        productDesLabel.setWrapText(true);
-        productDesLabel.setMaxWidth(Double.MAX_VALUE);
-        productDesLabel.prefWidthProperty().bind(
-                productDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
+        itemDesLabel.setMinHeight(minHeight);
+        itemDesLabel.setText(item.getDescription());
+        itemDesLabel.setWrapText(true);
+        itemDesLabel.setMaxWidth(Double.MAX_VALUE);
+        itemDesLabel.prefWidthProperty().bind(
+                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
         );
 
-        productDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        productDesLabel.setMinHeight(Region.USE_PREF_SIZE);
-        productNameLabel.setText(item.getName());
+        itemDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        itemDesLabel.setMinHeight(Region.USE_PREF_SIZE);
+        itemNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
         currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
         startPriceLabel.setText(String.valueOf(item.getStartingPrice()));

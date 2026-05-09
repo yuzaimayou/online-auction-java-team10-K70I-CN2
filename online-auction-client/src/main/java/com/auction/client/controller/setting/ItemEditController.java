@@ -3,8 +3,8 @@ package com.auction.client.controller.setting;
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.payloads.ProductPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,16 +21,16 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-public class ProductEditController {
+public class ItemEditController {
 
     @FXML
     private Label lblMessage;
     @FXML
-    private TextField txtProductName;
+    private TextField txtItemName;
     @FXML
     private ToggleGroup categoryGroup;
     @FXML
-    private TextArea txtProductDesc;
+    private TextArea txtItemDesc;
     @FXML
     private TextField txtInitPrice;
     @FXML
@@ -44,7 +44,7 @@ public class ProductEditController {
     @FXML
     private ComboBox<String> cbEndTime;
 
-    private String currentProductId;
+    private String currentItemId;
     private final ItemsService itemsService = ItemsService.getInstance();
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -64,15 +64,15 @@ public class ProductEditController {
         }
 
         // 2. Tự động giãn dòng cho TextArea Description
-        if (txtProductDesc != null) {
-            txtProductDesc.setWrapText(true);
-            txtProductDesc.textProperty().addListener((observable, oldValue, newValue) -> {
+        if (txtItemDesc != null) {
+            txtItemDesc.setWrapText(true);
+            txtItemDesc.textProperty().addListener((observable, oldValue, newValue) -> {
                 javafx.scene.text.Text helper = new javafx.scene.text.Text();
                 helper.setText(newValue);
-                helper.setFont(txtProductDesc.getFont());
-                helper.setWrappingWidth(txtProductDesc.getWidth() - 40);
+                helper.setFont(txtItemDesc.getFont());
+                helper.setWrappingWidth(txtItemDesc.getWidth() - 40);
                 double textHeight = helper.getLayoutBounds().getHeight();
-                txtProductDesc.setPrefHeight(Math.max(80, textHeight + 40));
+                txtItemDesc.setPrefHeight(Math.max(80, textHeight + 40));
             });
         }
     }
@@ -83,11 +83,11 @@ public class ProductEditController {
     public void setEditData(Item item) {
         if (item == null) return;
 
-        this.currentProductId = item.getId();
+        this.currentItemId = item.getId();
 
         // Đổ dữ liệu text
-        txtProductName.setText(item.getName() != null ? item.getName() : "");
-        txtProductDesc.setText(item.getDescription() != null ? item.getDescription() : "");
+        txtItemName.setText(item.getName() != null ? item.getName() : "");
+        txtItemDesc.setText(item.getDescription() != null ? item.getDescription() : "");
         txtInitPrice.setText(String.valueOf(item.getStartingPrice()));
         txtBidStep.setText(String.valueOf(item.getBidStep()));
 
@@ -118,8 +118,8 @@ public class ProductEditController {
      */
     @FXML
     public void handleSaveChanges(ActionEvent event) {
-        String productName = txtProductName.getText().trim();
-        String productDesc = txtProductDesc.getText().trim();
+        String itemName = txtItemName.getText().trim();
+        String itemDesc = txtItemDesc.getText().trim();
         Toggle selectedToggle = categoryGroup.getSelectedToggle();
 
         LocalDate startDate = startDateP.getValue();
@@ -131,7 +131,7 @@ public class ProductEditController {
         Double bidStep = convertNumeric(txtBidStep.getText().trim());
 
         // Validate cơ bản
-        if (isAnyNull(productName, productDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)) {
+        if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)) {
             showMessage("Please fill in all required fields.", Color.RED);
             return;
         }
@@ -157,19 +157,19 @@ public class ProductEditController {
         String selectedCategory = selectedToggle.getUserData().toString();
 
         // Tạo Payload
-        ProductPayload payload = new ProductPayload(
-                productName, selectedCategory, productDesc,
+        ItemPayload payload = new ItemPayload(
+                itemName, selectedCategory, itemDesc,
                 null, // Hiện tại FXML chưa gắn nút add ảnh thật, gửi mảng rỗng
-                startDateTime, endDateTime, initPrice, bidStep, currentProductId
+                startDateTime, endDateTime, initPrice, bidStep, currentItemId
         );
 
         String jsonPayload = gson.toJson(payload);
 
         // Gọi HTTP API từ ItemsService
-        itemsService.updateItem(jsonPayload)
+        itemsService.updateItem(jsonPayload, this.currentItemId)
                 .thenAccept((ResponseMessage responseMessage) -> {
                     if ("success".equals(responseMessage.getStatus())) {
-                        showMessage("Product updated successfully!", Color.GREEN);
+                        showMessage("Item updated successfully!", Color.GREEN);
                         PauseTransition pause = new PauseTransition(Duration.seconds(1));
                         pause.setOnFinished(e -> handleClose());
                         pause.play();

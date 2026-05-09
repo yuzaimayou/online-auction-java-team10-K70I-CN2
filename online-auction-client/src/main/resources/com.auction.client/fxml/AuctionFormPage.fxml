@@ -39,11 +39,11 @@
                                 </StackPane.margin>
                             </Button>
                         </StackPane>
-                        <!--Product Name-->
+                        <!--Item Name-->
                         <VBox spacing="15.0">
-                            <Label styleClass="field-label" text="Product Name"/>
-                            <TextField fx:id="txtProductName" maxWidth="Infinity" prefHeight="60.0"
-                                       promptText="Enter product name"
+                            <Label styleClass="field-label" text="Item Name"/>
+                            <TextField fx:id="txtItemName" maxWidth="Infinity" prefHeight="60.0"
+                                       promptText="Enter item name"
                                        styleClass="input-field"/>
                         </VBox>
                         <!--Category-->
@@ -58,7 +58,8 @@
                                     <ToggleButton fx:id="btnFashion" userData="Fashion" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/fashion_icon.png"/>
                                                 </image>
@@ -72,7 +73,8 @@
                                                   styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/electronics_icon.png"/>
                                                 </image>
@@ -85,7 +87,8 @@
                                     <ToggleButton fx:id="btnHome" userData="Home" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/home_icon.png"/>
                                                 </image>
@@ -98,7 +101,8 @@
                                     <ToggleButton fx:id="btnArt" userData="Art" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/art_icon.png"/>
                                                 </image>
@@ -111,7 +115,8 @@
                                     <ToggleButton fx:id="btnBook" userData="Book" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/book_icon.png"/>
                                                 </image>
@@ -124,7 +129,8 @@
                                     <ToggleButton fx:id="btnJewelry" userData="Jewelry" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/jewelry_icon.png"/>
                                                 </image>
@@ -137,7 +143,8 @@
                                     <ToggleButton fx:id="btnSports" userData="Sports" styleClass="category-btn"
                                                   toggleGroup="$categoryGroup">
                                         <graphic>
-                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+                                            <ImageView fitHeight="45.0" fitWidth="45.0" pickOnBounds="true"
+                                                       preserveRatio="true">
                                                 <image>
                                                     <Image url="@../assets/sports_icon.png"/>
                                                 </image>
@@ -148,15 +155,15 @@
                                 </VBox>
                             </HBox>
                         </VBox>
-                        <!--Product Description-->
+                        <!--Item Description-->
                         <VBox spacing="15.0">
-                            <Label styleClass="field-label" text="Product Description"/>
-                            <TextArea fx:id="txtProductDesc" maxWidth="Infinity" minHeight="60.0"
+                            <Label styleClass="field-label" text="Item Description"/>
+                            <TextArea fx:id="txtItemDesc" maxWidth="Infinity" minHeight="60.0"
                                       wrapText="true"
-                                      promptText="Enter product description"
-                                      styleClass="input-field, text-area" />
+                                      promptText="Enter item description"
+                                      styleClass="input-field, text-area"/>
                         </VBox>
-                        <!--Product Image-->
+                        <!--Item Image-->
                         <VBox spacing="15.0">
                             <Label styleClass="field-label" text="Images Upload"/>
                             <StackPane>
@@ -165,7 +172,8 @@
                                       onMouseClicked="#handleChooseImage">
                                     <VBox alignment="CENTER" spacing="10.0">
                                         <Label styleClass="drag-drop-title" text="Drag &amp; Drop"/>
-                                        <Label styleClass="drag-drop-subtitle" text="Multiple product photos(Max 5 images)"/>
+                                        <Label styleClass="drag-drop-subtitle"
+                                               text="Multiple item photos(Max 5 images)"/>
                                     </VBox>
                                 </VBox>
                                 <HBox fx:id="imagesPreviewContainer" spacing="15.0" alignment="CENTER_LEFT"
@@ -173,12 +181,13 @@
                                     <VBox fx:id="smallAddBtn" alignment="CENTER" spacing="5.0"
                                           styleClass="small-add-card" onMouseClicked="#handleChooseImage">
                                         <Label text="+" style="-fx-font-size: 25; -fx-text-fill: #94A3B8;"/>
-                                        <Label text="Add Photos" style="-fx-font-size: 14; -fx-text-fill: #3B82F6; -fx-font-weight: bold;"/>
+                                        <Label text="Add Photos"
+                                               style="-fx-font-size: 14; -fx-text-fill: #3B82F6; -fx-font-weight: bold;"/>
                                     </VBox>
                                 </HBox>
                             </StackPane>
                         </VBox>
-                        <!--Product Price-->
+                        <!--Item Price-->
                         <HBox spacing="30.0">
                             <VBox spacing="12.0" HBox.hgrow="ALWAYS">
                                 <Label styleClass="field-label" text="Initial Price"/>
@@ -192,30 +201,31 @@
                             </VBox>
                         </HBox>
 
-                        <!--Product Time-->
+                        <!--Item Time-->
                         <HBox spacing="40.0">
                             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="field-label" text="Start Time " />
+                                <Label styleClass="field-label" text="Start Time "/>
                                 <HBox spacing="10.0">
                                     <DatePicker fx:id="startDateP" maxWidth="Infinity" prefHeight="60.0"
                                                 promptText=" "
                                                 styleClass="date-picker"
-                                                HBox.hgrow="ALWAYS" />
-                                    <ComboBox fx:id="cbStartTime" promptText="10:00 PM" styleClass="time-picker" />
+                                                HBox.hgrow="ALWAYS"/>
+                                    <ComboBox fx:id="cbStartTime" promptText="10:00 PM" styleClass="time-picker"/>
                                 </HBox>
                             </VBox>
                             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="field-label" text=" End Time " />
+                                <Label styleClass="field-label" text=" End Time "/>
                                 <HBox spacing="10.0">
-                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="60.0" promptText=" " styleClass="date-picker" HBox.hgrow="ALWAYS" />
-                                    <ComboBox fx:id="cbEndTime" promptText="10:00 PM" styleClass="time-picker" />
+                                    <DatePicker fx:id="endDateP" maxWidth="Infinity" prefHeight="60.0" promptText=" "
+                                                styleClass="date-picker" HBox.hgrow="ALWAYS"/>
+                                    <ComboBox fx:id="cbEndTime" promptText="10:00 PM" styleClass="time-picker"/>
                                 </HBox>
                             </VBox>
                         </HBox>
 
-                        <Button onAction="#handleAddProduct" maxWidth="Infinity" prefHeight="65.0"
+                        <Button onAction="#handleAddItem" maxWidth="Infinity" prefHeight="65.0"
                                 styleClass="add-button"
-                                text="Add Product"/>
+                                text="Add Item"/>
                     </VBox>
                 </content>
             </ScrollPane>

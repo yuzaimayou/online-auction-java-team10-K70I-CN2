@@ -30,7 +30,7 @@ public class ItemsService {
 
         System.out.println("Getting items for seller: " + userName + " (ID: " + id + ")");
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/products?sellerId=%s", AppConfig.getHttpUrl(), id)))
+                .uri(URI.create(String.format("%s/api/items?sellerId=%s", AppConfig.getHttpUrl(), id)))
                 .GET()
                 .build();
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -41,7 +41,7 @@ public class ItemsService {
     public CompletableFuture<ResponseMessage> createItem(String jsonPayload) {
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/product?action=create", AppConfig.getHttpUrl())))
+                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
@@ -49,9 +49,9 @@ public class ItemsService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
 
-    public CompletableFuture<ResponseMessage> updateItem(String jsonPayload) {
+    public CompletableFuture<ResponseMessage> updateItem(String jsonPayload, String itemId) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/product?action=update", AppConfig.getHttpUrl())))
+                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId)))
                 .header("Content-Type", "application/json")
                 .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload)) // Thường dùng PUT để update dữ liệu
                 .build();
@@ -59,10 +59,10 @@ public class ItemsService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
 
-    public CompletableFuture<ResponseMessage> deleteItem(String id) {
+    public CompletableFuture<ResponseMessage> deleteItem(String itemId) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/product?action=delete&itemId=%s", AppConfig.getHttpUrl(), id)))
-                .POST(HttpRequest.BodyPublishers.noBody())
+                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId)))
+                .DELETE()
                 .build();
 
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())

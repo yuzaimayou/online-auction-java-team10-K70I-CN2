@@ -1,9 +1,9 @@
 package com.auction.server.controller.api;
 
-import com.auction.server.service.ProductService;
+import com.auction.server.service.ItemService;
 import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,8 +15,8 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.time.LocalDateTime;
 
-public class ProductHandler implements HttpHandler {
-    private final ProductService productService = new ProductService();
+public class ItemHandler implements HttpHandler {
+    private final ItemService itemService = ItemService.getInstance();
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
@@ -42,14 +42,14 @@ public class ProductHandler implements HttpHandler {
                 }
             }
 
-            // Handle adding a new product
+            // Handle adding a new item
             InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
-            ProductPayload productData = gson.fromJson(isr, ProductPayload.class);
+            ItemPayload itemData = gson.fromJson(isr, ItemPayload.class);
 
             if (action.equals("create")) {
-                createItem(exchange, productData, new ResponseMessage());
+                createItem(exchange, itemData, new ResponseMessage());
             } else if (action.equals("update")) {
-                updateItem(exchange, productData, itemId, new ResponseMessage());
+                updateItem(exchange, itemData, itemId, new ResponseMessage());
             } else if (action.equals("delete")) {
                 deleteItem(exchange, itemId, new ResponseMessage());
             } else {
@@ -62,48 +62,48 @@ public class ProductHandler implements HttpHandler {
         }
     }
 
-    private void createItem(HttpExchange exchange, ProductPayload productData, ResponseMessage response) throws IOException {
-        boolean created = productService.addProduct(productData);
+    private void createItem(HttpExchange exchange, ItemPayload itemData, ResponseMessage response) throws IOException {
+        boolean created = itemService.addItem(itemData);
 
         if (created) {
-            System.out.println("Product added successfully: " + productData.getProductName());
+            System.out.println("Item added successfully: " + itemData.getItemName());
             response.setStatus("success");
-            response.setMessage("Product added successfully!");
+            response.setMessage("Item added successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to add product: " + productData.getProductName());
+            System.out.println("Failed to add item: " + itemData.getItemName());
             response.setStatus("error");
-            response.setMessage("Failed to add product!");
+            response.setMessage("Failed to add item!");
             HttpResponseUtil.sendMessage(exchange, 500, response);
         }
     }
 
-    private void updateItem(HttpExchange exchange, ProductPayload productData, String itemId, ResponseMessage response) throws IOException {
-        boolean updated = productService.updateProduct(productData, itemId);
+    private void updateItem(HttpExchange exchange, ItemPayload itemData, String itemId, ResponseMessage response) throws IOException {
+        boolean updated = itemService.updateItem(itemData, itemId);
         if (updated) {
-            System.out.println("Product updated successfully: " + productData.getProductName());
+            System.out.println("Item updated successfully: " + itemData.getItemName());
             response.setStatus("success");
-            response.setMessage("Product updated successfully!");
+            response.setMessage("Item updated successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to update product: " + productData.getProductName());
+            System.out.println("Failed to update item: " + itemData.getItemName());
             response.setStatus("error");
-            response.setMessage("Failed to update product!");
+            response.setMessage("Failed to update item!");
             HttpResponseUtil.sendMessage(exchange, 500, response);
         }
     }
 
     private void deleteItem(HttpExchange exchange, String itemId, ResponseMessage response) throws IOException {
-        boolean deleted = productService.deleteProduct(itemId);
+        boolean deleted = itemService.deleteItem(itemId);
         if (deleted) {
-            System.out.println("Product deleted successfully: " + itemId);
+            System.out.println("Item deleted successfully: " + itemId);
             response.setStatus("success");
-            response.setMessage("Product deleted successfully!");
+            response.setMessage("Item deleted successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to delete product: " + itemId);
+            System.out.println("Failed to delete item: " + itemId);
             response.setStatus("error");
-            response.setMessage("Failed to delete product!");
+            response.setMessage("Failed to delete item!");
             HttpResponseUtil.sendMessage(exchange, 500, response);
         }
     }

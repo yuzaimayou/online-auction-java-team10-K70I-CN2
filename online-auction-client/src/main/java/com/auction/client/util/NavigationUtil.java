@@ -55,9 +55,9 @@ public class NavigationUtil {
 
                 //Lay Controller
                 homePageController = loader.getController();
-                
+
             } else {
-                homePageController.refreshProducts();
+                homePageController.refreshItems();
             }
 
             Scene currentScene = label.getScene();

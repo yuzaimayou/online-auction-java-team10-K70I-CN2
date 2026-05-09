@@ -86,9 +86,9 @@ public class ClientHandler implements Runnable {
             RoomPayload roomPayload = gson.fromJson(jsonPayload, RoomPayload.class);
             this.username = roomPayload.getToken();
             System.out.println("UserId: " + roomPayload.getToken());
-            System.out.println("ProductId: " + roomPayload.getProductId());
+            System.out.println("ItemId: " + roomPayload.getItemId());
 
-            currentRoomId = roomPayload.getProductId();
+            currentRoomId = roomPayload.getItemId();
             roomManager.joinRoom(currentRoomId, this);
             responseMessage.setStatus("join_room_success");
             responseMessage.setMessage("Joined room successfully");

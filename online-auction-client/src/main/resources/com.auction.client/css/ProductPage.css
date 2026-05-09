@@ -44,7 +44,7 @@
 }
 
 /* Typography */
-.product-title {
+.item-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #333333;
@@ -66,7 +66,7 @@
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     fx-text-fill: #4A835D;
-    }
+}
 
 .text-info {
     -fx-text-fill: #888888;
@@ -74,8 +74,8 @@
 }
 
 .info-value-bold {
-     -fx-text-fill: #888888;
-     -fx-font-size: 14px;
+    -fx-text-fill: #888888;
+    -fx-font-size: 14px;
 }
 
 .bid-title {
@@ -90,7 +90,7 @@
     -fx-background-color: #ffffff;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
 }
 
 .description-body {
@@ -106,15 +106,25 @@
     -fx-background-color: #ffffff;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
 }
 
 /* Timer */
 .timer-container {
     -fx-padding: 10 0;
 }
-.timer-num { -fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #444; }
-.timer-unit { -fx-font-size: 11px; -fx-text-fill: #999; -fx-font-weight: bold; }
+
+.timer-num {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #444;
+}
+
+.timer-unit {
+    -fx-font-size: 11px;
+    -fx-text-fill: #999;
+    -fx-font-weight: bold;
+}
 
 /* Bid Suggest Buttons */
 .bid-suggest-btn {
@@ -125,7 +135,10 @@
     -fx-text-fill: #666;
     -fx-cursor: hand;
 }
-.bid-suggest-btn:hover { -fx-background-color: #F0F0F0; }
+
+.bid-suggest-btn:hover {
+    -fx-background-color: #F0F0F0;
+}
 
 /* Input */
 .bid-input {
@@ -146,7 +159,10 @@
     -fx-font-size: 18px;
     -fx-cursor: hand;
 }
-.btn-place-bid:hover { -fx-background-color: #3d6b4c; }
+
+.btn-place-bid:hover {
+    -fx-background-color: #3d6b4c;
+}
 
 .btn-auto-bid {
     -fx-background-color: transparent;
@@ -240,9 +256,22 @@
 }
 
 /* History */
-.bidder-name-text { -fx-font-weight: bold; -fx-text-fill: #333; }
-.price-green { -fx-text-fill: #4A835D; -fx-font-weight: bold; -fx-font-size: 16px; }
-.see-more-link { -fx-text-fill: #2D55FF; -fx-underline: false; -fx-font-weight: bold; }
+.bidder-name-text {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+.price-green {
+    -fx-text-fill: #4A835D;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.see-more-link {
+    -fx-text-fill: #2D55FF;
+    -fx-underline: false;
+    -fx-font-weight: bold;
+}
 
 /* Chỉnh cục lăn  */
 .scroll-pane .scroll-bar:vertical {

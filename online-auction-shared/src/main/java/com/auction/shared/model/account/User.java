@@ -1,6 +1,6 @@
 package com.auction.shared.model.account;
 
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -146,7 +146,7 @@ public class User extends Person {
             throw new IllegalStateException("Error: User " + this.username + " has insufficient rating (" + String.format("%.2f", this.rating) + ") to list new items. Required: 2.0+");
         }
 
-        System.out.println("Success: User " + this.username + " just listed a new product: " + itemName);
+        System.out.println("Success: User " + this.username + " just listed a new item: " + itemName);
     }
 
     /**
