@@ -193,6 +193,14 @@ public class AuctionFormController {
             lblMessage.setText("End time must be after the start time.");
             return;
         }
+
+        //check step
+        if (bidStep > initPrice) {
+            lblMessage.setTextFill(Color.RED);
+            lblMessage.setText("Bid step cannot be greater than starting price.");
+            return;
+        }
+
         //Xu ly phan loai san pham
         selectedCategory = selectedToggle.getUserData().toString();
         //Xu ly hinh anh
