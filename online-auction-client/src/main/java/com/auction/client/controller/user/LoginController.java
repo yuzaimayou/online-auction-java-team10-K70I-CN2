@@ -3,8 +3,10 @@ package com.auction.client.controller.user;
 import com.auction.client.service.AuthService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -56,7 +58,25 @@ public class LoginController {
         authService.login(username, password)
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
-                        User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+                        // --- ĐOẠN CODE ĐÃ ĐƯỢC SỬA LẠI ĐỂ FIX LỖI ROLE ---
+                                // 1. Đọc Data thành JsonObject để kiểm tra role trước
+                                JsonObject userData = gson.fromJson(responseMessage.getData(), JsonObject.class);
+                        String role = "";
+
+                        // Kiểm tra xem JSON có trường "role" không
+                        if (userData.has("role") && !userData.get("role").isJsonNull()) {
+                            role = userData.get("role").getAsString();
+                        }
+
+                        // 2. Khởi tạo User hoặc Admin tùy thuộc vào Role
+                        User loggedInUser;
+                        if ("Admin".equalsIgnoreCase(role)) {
+                            loggedInUser = gson.fromJson(responseMessage.getData(), Admin.class);
+                            System.out.println("Đã đăng nhập với quyền ADMIN!");
+                        } else {
+                            loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+                            System.out.println("Đã đăng nhập với quyền USER!");
+                        }
 
                         UserSession.getInstance().cleanUserSession();
                         UserSession.getInstance().setLoggedInUser(loggedInUser);

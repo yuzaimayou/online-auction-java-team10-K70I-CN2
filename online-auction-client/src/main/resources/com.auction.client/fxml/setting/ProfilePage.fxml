@@ -18,43 +18,34 @@
         <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
     </padding>
 
-        <Label text="Personal Information" styleClass="content-title"/>
+    <Label text="Personal Information" styleClass="content-title"/>
 
-        <GridPane hgap="24.0" vgap="18.0">
-            <columnConstraints>
-                <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
-                <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
-            </columnConstraints>
+    <GridPane hgap="24.0" vgap="18.0">
+        <columnConstraints>
+            <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+            <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+        </columnConstraints>
 
-                <!-- Email -->
-                <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                        <Label text="Email" styleClass="field-label"/>
-                        <TextField fx:id="emailField" styleClass="info-field"/>
-                </VBox>
 
-                <!-- First Name -->
-                <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                        <Label text="First Name" styleClass="field-label"/>
-                        <TextField fx:id="firstNameField" styleClass="info-field"/>
-                </VBox>
+        <!-- First Name -->
+        <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <Label text="User Name" styleClass="field-label"/>
+            <TextField fx:id="userNameField" styleClass="info-field"/>
+        </VBox>
 
-                <!-- Last Name -->
-                <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                        <Label text="Last Name" styleClass="field-label"/>
-                        <TextField fx:id="lastNameField" styleClass="info-field"/>
-                </VBox>
+        <!-- Email -->
+        <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <Label text="Email" styleClass="field-label"/>
+            <TextField fx:id="emailField" styleClass="info-field"/>
+        </VBox>
 
-                <!-- Phone Number -->
-                <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                        <Label text="Phone Number" styleClass="field-label"/>
-                        <TextField styleClass="info-field"/>
-                </VBox>
-        </GridPane>
+        <!-- Last Name -->
+        <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+            <Label text="Role User" styleClass="field-label"/>
+            <TextField fx:id="roleUserField" styleClass="info-field"/>
+        </VBox>
 
-        <Region VBox.vgrow="ALWAYS"/>
-
-        <HBox alignment="CENTER_RIGHT">
-                <Label text="Edit Profile" styleClass="edit-profile-btn"/>
-        </HBox>
+    </GridPane>
+    <Region VBox.vgrow="ALWAYS"/>
 </VBox>
 
