@@ -16,8 +16,39 @@ import java.util.List;
 public class ItemRepository {
     private Gson gson = new GsonUtil().getInstance();
 
-    public boolean createItem(Item item) {
+    // Cập nhật giá hiện tại và người đặt cao nhất trong 1 câu SQL (dùng trong transaction đặt giá)
+    public boolean updateCurrentBidder(Connection conn, String itemId,
+                                       double newPrice, String newBidderId) {
+        String sql = """
+                UPDATE items
+                SET current_price     = ?,
+                    current_bidder_id = ?
+                WHERE id = ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, newPrice);
+            stmt.setString(2, newBidderId);
+            stmt.setString(3, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
+    // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
+    public boolean markEnded(Connection conn, String itemId) {
+        String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean createItem(Item item) {
         String sql = """
                 INSERT INTO items(
                     id,
@@ -40,7 +71,6 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-
             stmt.setString(1, item.getId());
             stmt.setString(2, item.getName());
             stmt.setString(3, item.getDescription());
@@ -57,7 +87,6 @@ public class ItemRepository {
 
             stmt.executeUpdate();
             return true;
-
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -76,9 +105,8 @@ public class ItemRepository {
                     end_time = ?, 
                     category = ?, 
                     bid_step = ?, 
-                    images_path = ?,
-                    status=?,
-                
+                    image_path = ?,
+                    status = ?
                 WHERE id = ?
                 """;
 
@@ -86,7 +114,6 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set các tham số cần cập nhật (Thứ tự từ 1 đến 10)
             stmt.setString(1, item.getName());
             stmt.setString(2, item.getDescription());
             stmt.setDouble(3, item.getStartingPrice());
@@ -98,15 +125,10 @@ public class ItemRepository {
             stmt.setDouble(9, item.getBidStep());
             stmt.setString(10, gson.toJson(item.getImagesPath()));
             stmt.setString(11, item.getStatus());
-
-            // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
             stmt.setString(12, itemId);
 
-            // executeUpdate() trả về số dòng bị ảnh hưởng.
-            // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
-
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -114,22 +136,13 @@ public class ItemRepository {
     }
 
     public boolean deleteItem(String id) {
-        String sql = """
-                DELETE FROM items
-                WHERE id = ?
-                """;
-
+        String sql = "DELETE FROM items WHERE id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set tham số ID cần xóa
             stmt.setString(1, id);
-
-            // Nếu xóa thành công (ID có tồn tại), rowsAffected sẽ > 0
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
-
+            return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -137,82 +150,71 @@ public class ItemRepository {
     }
 
     public Item findById(String itemId) {
-
         String sql = "SELECT * FROM items WHERE id = ?";
-
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-
             stmt.setString(1, itemId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-
                 if (rs.next()) {
-                    String pathsData = rs.getString("image_path");
-                    List<String> imagePaths = gson.fromJson(pathsData, List.class);
-
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            imagePaths
-                    );
-                    item.setId(rs.getString("id"));
-                    return item;
+                    return mapRow(rs);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
     public Item findById(Connection conn, String itemId) {
-
         String sql = "SELECT * FROM items WHERE id = ?";
-
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, itemId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-
                 if (rs.next()) {
-                    String pathsData = rs.getString("image_path");
-                    List<String> imagePaths = gson.fromJson(pathsData, List.class);
-
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            imagePaths
-                    );
-                    item.setId(rs.getString("id"));
-                    return item;
+                    return mapRow(rs);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
+    }
+
+    private Item mapRow(ResultSet rs) throws Exception {
+        String pathsData = rs.getString("image_path");
+        List<String> imagePaths = new ArrayList<>();
+        if (pathsData != null && !pathsData.isEmpty()) {
+            try {
+                // Try to parse as JSON list (new format)
+                imagePaths = gson.fromJson(pathsData, List.class);
+                if (imagePaths == null) {
+                    imagePaths = new ArrayList<>();
+                }
+            } catch (Exception e) {
+                // Fallback for old format (single string path)
+                imagePaths.add(pathsData);
+            }
+        }
+
+        Item item = new Item(
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDouble("start_price"),
+                rs.getDouble("current_price"),
+                LocalDateTime.parse(rs.getString("start_time")),
+                LocalDateTime.parse(rs.getString("end_time")),
+                rs.getString("seller_id"),
+                rs.getString("category"),
+                rs.getDouble("bid_step"),
+                imagePaths
+        );
+        item.setId(rs.getString("id"));
+        item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
+        String dbStatus = rs.getString("status");
+        if (dbStatus != null) item.setStatus(dbStatus);
+        return item;
     }
 
     public List<Item> findAllBySellerId(String sellerID) {
@@ -224,26 +226,9 @@ public class ItemRepository {
         ) {
             stmt.setString(1, sellerID);
             try (ResultSet rs = stmt.executeQuery()) {
-                String pathsData = rs.getString("image_path");
-                List<String> imagePaths = gson.fromJson(pathsData, List.class);
                 while (rs.next()) {
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            imagePaths
-                    );
-                    item.setId(rs.getString("id"));
-                    items.add(item);
+                    items.add(mapRow(rs));
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -252,78 +237,42 @@ public class ItemRepository {
     }
 
     public List<Item> findAllItems() {
-
         List<Item> items = new ArrayList<>();
-
         String sql = "SELECT * FROM items";
-
-
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()
         ) {
-
             while (rs.next()) {
-                String pathsData = rs.getString("image_path");
-                List<String> imagePaths = gson.fromJson(pathsData, List.class);
-                String sellerId = rs.getString("seller_id");
-                String sellerName = new UserRepository().findById(sellerId).getUsername();
-
-                Item item = new Item(
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("start_price"),
-                        rs.getDouble("current_price"),
-                        LocalDateTime.parse(rs.getString("start_time")),
-                        LocalDateTime.parse(rs.getString("end_time")),
-                        sellerName,
-                        rs.getString("category"),
-                        rs.getDouble("bid_step"),
-                        imagePaths
-                );
-                item.setId(rs.getString("id"));
-
-                items.add(item);
+                items.add(mapRow(rs));
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return items;
     }
 
     public void updateCurrentPrice(String itemId, double newPrice) {
-
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
-
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-
             stmt.setDouble(1, newPrice);
             stmt.setString(2, itemId);
-
             stmt.executeUpdate();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public boolean updateCurrentPrice(Connection conn, String itemId, double newPrice) {
-
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
-
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setDouble(1, newPrice);
             stmt.setString(2, itemId);
-
             return stmt.executeUpdate() > 0;
-
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -348,11 +297,6 @@ public class ItemRepository {
                     updatedId.add(rs.getString("id"));
                 }
             }
-
-            for (String id : updatedId) {
-
-            }
-
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -360,5 +304,4 @@ public class ItemRepository {
         }
         return updatedId;
     }
-
 }
