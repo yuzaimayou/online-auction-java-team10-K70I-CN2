@@ -33,8 +33,8 @@ public class MainServer {
             httpServer.createContext("/api/register", new RegisterHandler());
             httpServer.createContext("/api/verify-account", new VerifyHandler());
             httpServer.createContext("/api/send-otp", new SendOtp());
-            httpServer.createContext("/api/product", new ProductHandler());
-            httpServer.createContext("/api/products", new GetDataProducts());
+            httpServer.createContext("/api/product", new ItemHandler());
+            httpServer.createContext("/api/items/", new ItemDetailHandler());
 
             // Wallet & settlement endpoints
             httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());

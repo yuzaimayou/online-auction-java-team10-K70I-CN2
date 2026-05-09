@@ -1,9 +1,9 @@
 package com.auction.server.controller.api;
 
-import com.auction.server.service.ProductService;
+import com.auction.server.service.ItemService;
 import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,8 +15,8 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.time.LocalDateTime;
 
-public class ProductHandler implements HttpHandler {
-    private final ProductService productService = new ProductService();
+public class ItemHandler implements HttpHandler {
+    private final ItemService itemService = new ItemService();
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
@@ -45,7 +45,7 @@ public class ProductHandler implements HttpHandler {
 
             // Handle adding a new product
             InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
-            ProductPayload productData = gson.fromJson(isr, ProductPayload.class);
+            ItemPayload productData = gson.fromJson(isr, ItemPayload.class);
 
             if (action.equals("create")) {
                 createItem(exchange, productData, new ResponseMessage());
@@ -63,8 +63,8 @@ public class ProductHandler implements HttpHandler {
         }
     }
 
-    private void createItem(HttpExchange exchange, ProductPayload productData, ResponseMessage response) throws IOException {
-        boolean created = productService.addProduct(productData);
+    private void createItem(HttpExchange exchange, ItemPayload productData, ResponseMessage response) throws IOException {
+        boolean created = itemService.addProduct(productData);
 
         if (created) {
             System.out.println("Product added successfully: " + productData.getProductName());
@@ -79,8 +79,8 @@ public class ProductHandler implements HttpHandler {
         }
     }
 
-    private void updateItem(HttpExchange exchange, ProductPayload productData, String itemId, ResponseMessage response) throws IOException {
-        boolean updated = productService.updateProduct(productData, itemId);
+    private void updateItem(HttpExchange exchange, ItemPayload productData, String itemId, ResponseMessage response) throws IOException {
+        boolean updated = itemService.updateProduct(productData, itemId);
         if (updated) {
             System.out.println("Product updated successfully: " + productData.getProductName());
             response.setStatus("success");
@@ -95,7 +95,7 @@ public class ProductHandler implements HttpHandler {
     }
 
     private void deleteItem(HttpExchange exchange, String itemId, ResponseMessage response) throws IOException {
-        boolean deleted = productService.deleteProduct(itemId);
+        boolean deleted = itemService.deleteProduct(itemId);
         if (deleted) {
             System.out.println("Product deleted successfully: " + itemId);
             response.setStatus("success");

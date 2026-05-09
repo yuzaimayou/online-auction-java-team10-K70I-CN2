@@ -1,8 +1,8 @@
 package com.auction.server.service;
 
 import com.auction.server.repository.ItemRepository;
-import com.auction.shared.model.payloads.ProductPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.payloads.ItemPayload;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductService {
+public class ItemService {
     private final ItemRepository itemRepository;
     private Gson gson = GsonUtil.getInstance();
 
-    public ProductService() {
+    public ItemService() {
 
         this.itemRepository = new ItemRepository();
     }
@@ -29,7 +29,7 @@ public class ProductService {
     }
 
 
-    public Item setItem(ProductPayload productData) {
+    public Item setItem(ItemPayload productData) {
         String productName = productData.getProductName();
         String category = productData.getCategory();
         LocalDateTime startTime = productData.getStartDateTime();
@@ -70,12 +70,12 @@ public class ProductService {
         );
     }
 
-    public boolean addProduct(ProductPayload productData) {
+    public boolean addProduct(ItemPayload productData) {
         Item item = setItem(productData);
         return itemRepository.createItem(item);
     }
 
-    public boolean updateProduct(ProductPayload productData, String itemId) {
+    public boolean updateProduct(ItemPayload productData, String itemId) {
         Item item = setItem(productData);
         return itemRepository.updateItem(item, itemId);
     }

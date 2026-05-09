@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.NetworkService;
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

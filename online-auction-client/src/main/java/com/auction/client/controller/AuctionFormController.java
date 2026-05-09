@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.shared.model.payloads.ProductPayload;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 import com.auction.shared.util.LocalDateTimeAdapter;
 import com.google.gson.Gson;
@@ -217,7 +217,7 @@ public class AuctionFormController {
             e.printStackTrace();
         }
 
-        ProductPayload payload = new ProductPayload(productName, selectedCategory, productDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
+        ItemPayload payload = new ItemPayload(productName, selectedCategory, productDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
         String jsonPayload = gson.toJson(payload);
         String httpUrl = String.format("%s/api/add-product", AppConfig.getHttpUrl());
         System.out.println("Debug: Sending POST request to " + httpUrl);

@@ -4,7 +4,7 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -192,7 +192,7 @@ public class MyAuctionsController {
     public void handleSwitchToProductEdit(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/ProductEdit.fxml")
+                    getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml")
             );
             Parent root = loader.load();
             SettingController.targetTab = "MyAuctions";
@@ -206,7 +206,7 @@ public class MyAuctionsController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Không tìm thấy file ProductEdit.fxml! Kiểm tra lại đường dẫn.");
+            System.err.println("Không tìm thấy file ItemEdit.fxml! Kiểm tra lại đường dẫn.");
         }
     }
 

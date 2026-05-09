@@ -1,7 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.util.ClientImageUtil;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;

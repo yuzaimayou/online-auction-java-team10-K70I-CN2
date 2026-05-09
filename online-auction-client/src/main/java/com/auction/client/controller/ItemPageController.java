@@ -6,7 +6,7 @@ import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.BidPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.google.gson.Gson;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class ProductPageController implements NetworkService.MessageListener {
+public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label productNameLabel;
     @FXML

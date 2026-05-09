@@ -1,6 +1,6 @@
 package com.auction.shared.model.account;
 
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

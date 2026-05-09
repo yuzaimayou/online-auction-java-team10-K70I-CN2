@@ -1,4 +1,4 @@
-package com.auction.shared.model.product;
+package com.auction.shared.model.item;
 
 import com.auction.shared.model.base.Entity;
 

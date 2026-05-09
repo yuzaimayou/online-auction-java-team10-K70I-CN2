@@ -1,7 +1,7 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 

@@ -19,10 +19,10 @@
 
 <VBox prefHeight="850.0" prefWidth="1440.0"
       styleClass="root-container"
-      stylesheets="@../css/ProductEdit.css"
+      stylesheets="@../css/ItemEdit.css"
       xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.ProductEditController">
+      fx:controller="com.auction.client.controller.setting.ItemEditController">
 
     <fx:include source="NavBar.fxml" />
 
