@@ -1,19 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-
 <!-- Right content card -->
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<VBox prefWidth=".0"
-      prefHeight="760.0"
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Button?>
+
+<VBox prefWidth="1000.0"
       spacing="28.0"
-      styleClass="content-card"
       HBox.hgrow="ALWAYS"
+      VBox.vgrow="ALWAYS"
+      minHeight="-Infinity"
+      maxHeight="Infinity"
+      styleClass="content-card"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.setting.ProfilePageController"
->
+      stylesheets="@../../css/ProfilePage.css">
+
     <padding>
         <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
     </padding>
@@ -22,30 +32,64 @@
 
     <GridPane hgap="24.0" vgap="18.0">
         <columnConstraints>
-            <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
-            <ColumnConstraints minWidth="350.0" prefWidth="350.0"/>
+            <ColumnConstraints percentWidth="50.0" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="50.0" hgrow="ALWAYS"/>
         </columnConstraints>
-
 
         <!-- First Name -->
         <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
             <Label text="User Name" styleClass="field-label"/>
-            <TextField fx:id="userNameField" styleClass="info-field"/>
+            <TextField fx:id="userNameField" styleClass="info-field" maxWidth="Infinity"/>
         </VBox>
 
         <!-- Email -->
         <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
             <Label text="Email" styleClass="field-label"/>
-            <TextField fx:id="emailField" styleClass="info-field"/>
+            <TextField fx:id="emailField" styleClass="info-field" maxWidth="Infinity"/>
         </VBox>
 
         <!-- Last Name -->
         <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
             <Label text="Role User" styleClass="field-label"/>
-            <TextField fx:id="roleUserField" styleClass="info-field"/>
+            <TextField fx:id="roleUserField" styleClass="info-field" maxWidth="Infinity"/>
         </VBox>
-
     </GridPane>
-    <Region VBox.vgrow="ALWAYS"/>
+    <Separator style="-fx-opacity: 0.5;"/>
+
+    <VBox spacing="15.0">
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <VBox spacing="2.0">
+                <Label text="My Wallet" styleClass="content-title"/>
+                <Label text="Manage your balance and funds for auctions" style="-fx-text-fill: #7a828a; -fx-font-size: 13px;"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <Button onAction="#handleDepositAction" text="Nạp tiền" styleClass="deposit-btn">
+            </Button>
+        </HBox>
+
+        <HBox spacing="20.0" alignment="CENTER">
+            <VBox styleClass="wallet-card, available-bg" HBox.hgrow="ALWAYS">
+                <Label text="Số dư khả dụng" styleClass="wallet-label"/>
+                <Label text="Sẵn sàng để đấu giá" styleClass="wallet-sub"/>
+                <Label fx:id="availableBalanceLabel" text="0" styleClass="wallet-amount, available-text"/>
+            </VBox>
+
+            <VBox styleClass="wallet-card, frozen-bg" HBox.hgrow="ALWAYS">
+                <Label text="Tiền đang giữ cho đấu giá" styleClass="wallet-label"/>
+                <Label text="Đang tạm giữ cho các phiên" styleClass="wallet-sub"/>
+                <Label fx:id="frozenBalanceLabel" text="0đ" styleClass="wallet-amount, frozen-text"/>
+            </VBox>
+
+            <VBox styleClass="wallet-card, total-bg" HBox.hgrow="ALWAYS">
+                <Label text="Tổng số dư" styleClass="wallet-label"/>
+                <Label text="Tổng tài sản của bạn" styleClass="wallet-sub"/>
+                <Label fx:id="totalBalanceLabel" text="0đ" styleClass="wallet-amount, total-text"/>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <Region VBox.vgrow="ALWAYS" minHeight="20.0"/>
 </VBox>
 
