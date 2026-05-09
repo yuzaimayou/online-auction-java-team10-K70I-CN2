@@ -1,12 +1,14 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.BidPayload;
+import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -25,6 +27,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -101,7 +107,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     private Item item;
     private final User user = UserSession.getInstance().getLoggedInUser();
     private NetworkService network = NetworkService.getInstance();
-    private Gson gson = new Gson();
+    private Gson gson = GsonUtil.getInstance();
 
     // Biến điều khiển logic Auto Bid
     private boolean isAutoBidActive = false;
@@ -129,7 +135,29 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     public void setItemId(String id) {
+
         this.itemId = id;
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), id)))
+                .GET()
+                .build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(responseBody -> {
+                    ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
+                    if ("success".equals(response.getStatus()) && response.getData() != null) {
+                        Item item = gson.fromJson(response.getData(), Item.class);
+                        Platform.runLater(() -> initData(item));
+                        System.out.println("Item data loaded successfully for item ID: " + id);
+                    } else {
+                        System.err.println("Failed to load item data: " + response.getMessage());
+                    }
+                })
+                .exceptionally(ex -> {
+                    System.err.println("Error fetching item data: " + ex.getMessage());
+                    return null;
+                });
     }
 
     public void initData(Item item) {
