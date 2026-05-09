@@ -1,10 +1,19 @@
+
 .back-btn {
-    -fx-background-color: white;
-    -fx-border-color: #e0e0e0;
-    -fx-border-radius: 5;
-    -fx-padding: 5 15;
+    -fx-background-color: transparent;
+     -fx-border-color: transparent;
+    -fx-text-fill: #111111;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
     -fx-cursor: hand;
 }
+
+.back-btn:hover {
+    -fx-text-fill: #2563eb;
+
+}
+
 
 .sub-label {
     -fx-text-fill: #7a828a;
@@ -69,9 +78,10 @@
 }
 
 .content-title {
-    -fx-font-size: 22px;
     -fx-font-weight: 800;
     -fx-text-fill: #1976f3;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold; -
 }
 
 .sub-label {
