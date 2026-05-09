@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefWidth="1000.0" spacing="25.0" styleClass="content-card" HBox.hgrow="ALWAYS"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.setting.DepositController"
+      stylesheets="@../../css/DepositPage.css">
+    <padding>
+        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+    </padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <Button onAction="#handleBackToWallet" styleClass="back-btn" text="← Quay lại ví"/>
+    </HBox>
+
+    <VBox spacing="5.0">
+        <HBox spacing="10.0" alignment="CENTER_LEFT">
+            <Label text="💰" style="-fx-font-size: 24px;"/>
+            <Label text="Nạp tiền vào tài khoản" styleClass="content-title" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1976f3;"/>
+        </HBox>
+        <Label text="Chọn số tiền và phương thức thanh toán." style="-fx-text-fill: #7a828a;"/>
+    </VBox>
+
+    <Separator style="-fx-opacity: 0.5;"/>
+
+    <VBox spacing="15.0">
+        <Label text="1. Chọn số tiền nạp" style="-fx-font-weight: bold;"/>
+        <HBox spacing="10.0">
+            <ToggleButton text="100,000đ" styleClass="amount-toggle"/>
+            <ToggleButton text="200,000đ" styleClass="amount-toggle"/>
+            <ToggleButton text="500,000đ" styleClass="amount-toggle" selected="true"/>
+            <ToggleButton text="1,000,000đ" styleClass="amount-toggle"/>
+        </HBox>
+        <TextField fx:id="amountField" promptText="Nhập số tiền khác" styleClass="info-field" prefHeight="40.0"/>
+    </VBox>
+
+    <VBox spacing="15.0">
+        <Label text="2. Phương thức thanh toán" style="-fx-font-weight: bold;"/>
+        <VBox spacing="10.0">
+            <HBox spacing="15.0" styleClass="payment-option, selected-option" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-border-color: #2f80ed; -fx-border-radius: 8;">
+                <Label text="ZaloPay" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
+                <Label text="Fast payment via ZaloPay wallet" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <RadioButton selected="true"/>
+            </HBox>
+
+            <HBox spacing="15.0" alignment="CENTER_LEFT" styleClass="payment-option,  selected-option">
+                <Label text="🏦" style="-fx-font-size: 20px;"/>
+                <VBox HBox.hgrow="ALWAYS">
+                    <Label text="Bank Transfer" styleClass="payment-title"/>
+                    <Label text="Transfer via local bank account" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
+                </VBox>
+                <RadioButton/>
+            </HBox>
+        </VBox>
+    </VBox>
+
+    <Region VBox.vgrow="ALWAYS" />
+    <Button onAction="#handleConfirmDeposit" text="Xác nhận nạp tiền" styleClass="confirm-btn" maxWidth="Infinity" prefHeight="45.0"
+            style="-fx-background-color: #2f80ed; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;"/>
+</VBox>

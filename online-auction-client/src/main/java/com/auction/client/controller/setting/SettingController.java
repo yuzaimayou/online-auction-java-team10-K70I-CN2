@@ -22,6 +22,8 @@ public class SettingController {
 
     public static String targetTab = "ProfileInfo";
 
+    private static SettingController instance;
+
     @FXML
     private VBox dynamicContent;
     @FXML
@@ -40,6 +42,9 @@ public class SettingController {
     private VBox adminSection;
     @FXML
     private StackPane adminSignal;
+
+    public SettingController() { instance = this; }
+    public static SettingController getInstance() { return instance; }
 
     @FXML
     public void initialize() {
@@ -76,6 +81,7 @@ public class SettingController {
         targetTab = "ProfileInfo";
     }
 
+    public void setDynamicContent(String fxmlPath) { loadPage(fxmlPath); }
     private void loadPage(String fxmlPath) {
         dynamicContent.getChildren().clear();
         try {
