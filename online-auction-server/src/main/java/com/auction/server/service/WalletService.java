@@ -37,7 +37,7 @@ public class WalletService {
     public WalletService() {
         this.walletRepo = new WalletRepository();
         this.txLogRepo  = new WalletTransactionRepository();
-        this.itemRepo   = new ItemRepository();
+        this.itemRepo = ItemRepository.getInstance();
         this.bidRepo    = new BidRepository();
     }
 

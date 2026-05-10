@@ -19,15 +19,13 @@ public class BidService {
     private final BidRepository bidRepository;
     private final ItemRepository itemRepository;
     private final AutoBidResolver autoBidResolver;
-    private final WalletService walletService;          // ← wallet-aware bidding
     private final ConcurrentMap<String, Object> itemLocks;
 
     public BidService() {
-        this.bidRepository  = new BidRepository();
-        this.itemRepository = new ItemRepository();
+        this.bidRepository = new BidRepository();
+        this.itemRepository = ItemRepository.getInstance();
         this.autoBidResolver = new AutoBidResolver(PRICE_EPSILON);
-        this.walletService  = new WalletService();
-        this.itemLocks      = new ConcurrentHashMap<>();
+        this.itemLocks = new ConcurrentHashMap<>();
     }
 
     public boolean registerAutoBid(String itemId, String userId, double maxBid, double increment) {
@@ -42,7 +40,7 @@ public class BidService {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
-                Item item = itemRepository.findById(conn, itemId);
+                Item item = itemRepository.findById(itemId);
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
                     return false;
@@ -84,51 +82,72 @@ public class BidService {
         }
     }
 
-    /**
-     * Place a bid with full wallet money-freezing semantics.
-     *
-     * <p>Delegates to {@link WalletService#placeBid} which handles the entire
-     * freeze / unfreeze / update / log flow inside ONE database transaction.
-     * After a successful commit, auto-bid resolution and live broadcast run
-     * in a separate transaction (same pattern as before).
-     *
-     * @param bidTime optional ISO timestamp from client; uses server time when null
-     * @return true if the bid was accepted
-     */
     public boolean placeBid(String itemId, String userId, double bidPrice, String bidTime) {
         if (itemId == null || itemId.isBlank() || userId == null || userId.isBlank()) {
             return false;
         }
 
-        // ── Wallet-aware bid (freeze money, refund previous bidder, log) ───
-        WalletService.BidResult result = walletService.placeBid(itemId, userId, bidPrice);
-        if (!result.success) {
-            System.out.println("[BidService] Bid rejected: " + result.errorMessage);
-            return false;
-        }
+        synchronized (getItemLock(itemId)) {
+            try (Connection conn = DatabaseManager.getConnection()) {
+                conn.setAutoCommit(false);
 
-        // ── Auto-bid resolution (runs AFTER the committed bid) ────────────
-        try (Connection conn = DatabaseManager.getConnection()) {
-            conn.setAutoCommit(false);
-            runAutoBiddingRounds(conn, itemId, userId, bidPrice);
-            conn.commit();
-        } catch (Exception e) {
-            // Auto-bid failure does not roll back the primary bid
-            System.err.println("[BidService] Auto-bid round error: " + e.getMessage());
-        }
+                Item item = itemRepository.findById(itemId);
+                if (item == null || item.getSellerId().equals(userId)) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: item not found or user is the seller");
+                    return false;
+                }
 
-        // ── Broadcast to room ─────────────────────────────────────────────
-        try {
-            String resolvedBidTime = (bidTime == null || bidTime.isBlank())
-                    ? LocalDateTime.now().toString() : bidTime;
-            BidPayload newBidData = new BidPayload(itemId, userId, bidPrice, resolvedBidTime);
-            String jsonPayload = new com.google.gson.Gson().toJson(newBidData);
-            AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", jsonPayload);
-        } catch (Exception e) {
-            System.err.println("[BidService] Broadcast error: " + e.getMessage());
-        }
+                // [FIX] Kiểm tra xem phiên đấu giá đã hết thời gian chưa
+                LocalDateTime now = LocalDateTime.now();
+                if (now.isAfter(item.getEndTime())) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: auction has ended at " + item.getEndTime() + ", current time: " + now);
+                    return false;
+                }
 
-        return true;
+                double minAllowedPrice = item.getHighestCurrentPrice() + item.getBidStep();
+                if (bidPrice + PRICE_EPSILON < minAllowedPrice) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: bid price " + bidPrice + " is less than minimum allowed " + minAllowedPrice);
+                    return false;
+                }
+
+                String resolvedBidTime = (bidTime == null || bidTime.isBlank())
+                        ? LocalDateTime.now().toString()
+                        : bidTime;
+                boolean created = bidRepository.createBid(conn, itemId, userId, bidPrice, resolvedBidTime);
+                if (!created) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: failed to create bid record in database");
+                    return false;
+                }
+
+                if (!itemRepository.updateCurrentPrice(conn, itemId, bidPrice)) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: failed to update current price in database");
+                    return false;
+                }
+
+                runAutoBiddingRounds(conn, itemId, userId, bidPrice);
+                conn.commit();
+                try {
+                    BidPayload newBidData = new BidPayload(itemId, userId, bidPrice, resolvedBidTime);
+                    String jsonPayload = new com.google.gson.Gson().toJson(newBidData);
+
+                    AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", jsonPayload);
+                    System.out.println("Broadcasted new bid for item " + itemId + ": " + jsonPayload);
+                } catch (Exception e) {
+                    System.err.println("Failed to broadcast new bid for item " + itemId + ": " + e.getMessage());
+                }
+                return true;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                return false;
+            }
+        }
     }
 
     private void runAutoBiddingRounds(Connection conn, String itemId, String leadingUserId, double currentPrice) throws Exception {
@@ -164,4 +183,3 @@ public class BidService {
     }
 
 }
-

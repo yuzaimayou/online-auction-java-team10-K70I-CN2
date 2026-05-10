@@ -2,6 +2,7 @@ package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 
@@ -14,9 +15,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemRepository {
+    private static ItemRepository instance;
+
+    private ItemRepository() {
+    }
+
+    public static ItemRepository getInstance() {
+        if (instance == null) {
+            instance = new ItemRepository();
+        }
+        return instance;
+    }
+
     private Gson gson = new GsonUtil().getInstance();
 
-    // Cập nhật giá hiện tại và người đặt cao nhất trong 1 câu SQL (dùng trong transaction đặt giá)
     public boolean updateCurrentBidder(Connection conn, String itemId,
                                        double newPrice, String newBidderId) {
         String sql = """
@@ -36,19 +48,62 @@ public class ItemRepository {
         }
     }
 
-    // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
-    public boolean markEnded(Connection conn, String itemId) {
-        String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, itemId);
-            return stmt.executeUpdate() > 0;
+    private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
+        String id = rs.getString("id");
+        String name = rs.getString("name");
+        String category = rs.getString("category");
+        double currentPrice = rs.getDouble("current_price");
+        String thumbnailUrl = null;
+        String imagesData = rs.getString("image_path");
+
+        List<String> imagePaths = gson.fromJson(imagesData, List.class);
+        if (imagePaths != null && !imagePaths.isEmpty()) {
+            thumbnailUrl = imagePaths.get(0);
+        }
+
+        LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
+        LocalDateTime endTime = LocalDateTime.parse(rs.getString("end_time"));
+
+        ItemSummary itemSummary = new ItemSummary(
+                id,
+                name,
+                category,
+                currentPrice,
+                thumbnailUrl,
+                startTime,
+                endTime
+        );
+        return itemSummary;
+    }
+
+    private List<ItemSummary> executeSummaryQuery(String sql, Object... params) {
+        List<ItemSummary> summaries = new ArrayList<>();
+
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            // Set
+            for (int i = 0; i < params.length; i++) {
+                stmt.setObject(i + 1, params[i]);
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ItemSummary itemSummary = mapRowToItemSummary(rs);
+
+                    summaries.add(itemSummary);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+
+        return summaries;
     }
 
     public boolean createItem(Item item) {
+
         String sql = """
                 INSERT INTO items(
                     id,
@@ -71,6 +126,7 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
+
             stmt.setString(1, item.getId());
             stmt.setString(2, item.getName());
             stmt.setString(3, item.getDescription());
@@ -87,6 +143,7 @@ public class ItemRepository {
 
             stmt.executeUpdate();
             return true;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -105,8 +162,9 @@ public class ItemRepository {
                     end_time = ?, 
                     category = ?, 
                     bid_step = ?, 
-                    image_path = ?,
-                    status = ?
+                    images_path = ?,
+                    status=?,
+                
                 WHERE id = ?
                 """;
 
@@ -114,6 +172,7 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
+            // Set các tham số cần cập nhật (Thứ tự từ 1 đến 10)
             stmt.setString(1, item.getName());
             stmt.setString(2, item.getDescription());
             stmt.setDouble(3, item.getStartingPrice());
@@ -125,10 +184,15 @@ public class ItemRepository {
             stmt.setDouble(9, item.getBidStep());
             stmt.setString(10, gson.toJson(item.getImagesPath()));
             stmt.setString(11, item.getStatus());
+
+            // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
             stmt.setString(12, itemId);
 
+            // executeUpdate() trả về số dòng bị ảnh hưởng.
+            // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -136,18 +200,28 @@ public class ItemRepository {
     }
 
     public boolean deleteItem(String id) {
-        String sql = "DELETE FROM items WHERE id = ?";
+        String sql = """
+                DELETE FROM items
+                WHERE id = ?
+                """;
+
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
+            // Set tham số ID cần xóa
             stmt.setString(1, id);
-            return stmt.executeUpdate() > 0;
+
+            // Nếu xóa thành công (ID có tồn tại), rowsAffected sẽ > 0
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+
 
     public Item findById(String itemId) {
         String sql = "SELECT * FROM items WHERE id = ?";
@@ -198,6 +272,8 @@ public class ItemRepository {
             }
         }
 
+
+
         Item item = new Item(
                 rs.getString("name"),
                 rs.getString("description"),
@@ -216,63 +292,85 @@ public class ItemRepository {
         if (dbStatus != null) item.setStatus(dbStatus);
         return item;
     }
-
-    public List<Item> findAllBySellerId(String sellerID) {
-        List<Item> items = new ArrayList<>();
-        String sql = "SELECT * FROM items WHERE seller_id = ?";
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
-            stmt.setString(1, sellerID);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    items.add(mapRow(rs));
-                }
-            }
+    // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
+    public boolean markEnded(Connection conn, String itemId) {
+        String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return items;
     }
 
-    public List<Item> findAllItems() {
-        List<Item> items = new ArrayList<>();
-        String sql = "SELECT * FROM items";
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()
-        ) {
-            while (rs.next()) {
-                items.add(mapRow(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return items;
+
+
+    public List<ItemSummary> findAllBySellerId(String sellerID) {
+        String sql = """
+                SELECT id,
+                       name,
+                       category,
+                       current_price, 
+                       image_path,
+                       start_time,
+                       end_time
+                FROM items 
+                WHERE seller_id = ?
+                """;
+
+        return executeSummaryQuery(sql, sellerID);
+
+    }
+
+    public List<ItemSummary> findAllItems() {
+
+
+        String sql = """
+                SELECT id,
+                       name,
+                       category,
+                       current_price,
+                       image_path,
+                       start_time,
+                       end_time 
+                FROM items
+                """;
+
+        return executeSummaryQuery(sql);
+
     }
 
     public void updateCurrentPrice(String itemId, double newPrice) {
+
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
+
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
+
             stmt.setDouble(1, newPrice);
             stmt.setString(2, itemId);
+
             stmt.executeUpdate();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public boolean updateCurrentPrice(Connection conn, String itemId, double newPrice) {
+
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setDouble(1, newPrice);
             stmt.setString(2, itemId);
+
             return stmt.executeUpdate() > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -297,6 +395,11 @@ public class ItemRepository {
                     updatedId.add(rs.getString("id"));
                 }
             }
+
+            for (String id : updatedId) {
+
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -304,4 +407,5 @@ public class ItemRepository {
         }
         return updatedId;
     }
+
 }
