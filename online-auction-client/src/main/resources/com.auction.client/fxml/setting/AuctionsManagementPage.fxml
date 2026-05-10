@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+
+<VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card"
+      VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.setting.AuctionsManagementController"
+      stylesheets="@../../css/AuctionsManagementPage.css">
+
+    <padding>
+        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+    </padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label text="Auctions Management" styleClass="content-title"/>
+            <Label text="Review and manage all auction listings." styleClass="content-subtitle"/>
+        </VBox>
+        <HBox spacing="10.0">
+            <Button text="Filter" styleClass="secondary-btn"/>
+            <Button text="Export" styleClass="secondary-btn"/>
+        </HBox>
+    </HBox>
+
+    <TableView fx:id="auctionTable" VBox.vgrow="ALWAYS" styleClass="auction-table">
+        <columns>
+            <TableColumn fx:id="colItem" text="Item" prefWidth="300.0" />
+            <TableColumn fx:id="colSeller" text="Seller" prefWidth="150.0" />
+            <TableColumn fx:id="colCreatedAt" text="Created At" prefWidth="180.0" />
+            <TableColumn fx:id="colView" text="View" prefWidth="100.0" />
+            <TableColumn fx:id="colAction" text="Action" prefWidth="220.0" />
+        </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+        </columnResizePolicy>
+    </TableView>
+</VBox>

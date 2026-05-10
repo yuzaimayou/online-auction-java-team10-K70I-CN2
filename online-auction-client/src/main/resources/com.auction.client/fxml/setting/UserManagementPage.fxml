@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.controller.setting.UserManagementController"
+      stylesheets="@../../css/UserManagementPage.css">
+
+    <padding>
+        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+    </padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+            <Label text="Users Management" styleClass="content-title"/>
+            <Label text="Manage all registered users in the system." styleClass="content-subtitle"/>
+        </VBox>
+        <Button text="Filter" styleClass="filter-btn" />
+    </HBox>
+
+    <TextField fx:id="searchField" promptText="Search users..." styleClass="search-field" maxWidth="400.0"/>
+
+    <TableView fx:id="userTable" VBox.vgrow="ALWAYS" styleClass="user-table">
+        <columns>
+            <TableColumn fx:id="colUser" text="User" prefWidth="150.0" />
+            <TableColumn fx:id="colEmail" text="Email" prefWidth="250.0" />
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="120.0" />
+            <TableColumn fx:id="colRole" text="Role" prefWidth="120.0" />
+            <TableColumn fx:id="colJoinDate" text="Join Date" prefWidth="120.0" />
+            <TableColumn fx:id="colAction" text="Action" prefWidth="100.0" />
+        </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+        </columnResizePolicy>
+    </TableView>
+
+</VBox>
