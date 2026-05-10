@@ -26,6 +26,8 @@ import java.util.Locale;
 
 public class ItemCardHPController {
     private ItemSummary currentItem;
+    private Timeline timeline;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
 
     @FXML
     private StackPane imageContainer;
@@ -43,8 +45,6 @@ public class ItemCardHPController {
     private Label priceTitleLabel;
     @FXML
     private Label timeTitleLabel;
-    private Timeline timeline;
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
 
 
     @FXML
@@ -81,10 +81,8 @@ public class ItemCardHPController {
         double scaleX = containerW / w;
         double scaleY = containerH / h;
 
-        // Cover: Phải lấy tỷ lệ lớn hơn để đảm bảo lấp đầy toàn bộ khung
         double scale = Math.max(scaleX, scaleY);
 
-        // Set lại kích thước cho ảnh sau khi đã nhân tỷ lệ
         itemImage.setFitWidth(w * scale);
         itemImage.setFitHeight(h * scale);
     }
@@ -104,8 +102,8 @@ public class ItemCardHPController {
                     item.getThumbnailUrl(),
                     "images",
                     itemImage,
-                    200,
-                    200
+                    400,
+                    400
             );
         }
         updateUI();
@@ -161,7 +159,6 @@ public class ItemCardHPController {
         NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
         return "$ " + formatter.format(price) + " USD";
     }
-
     private String formatTimeLeft(LocalDateTime from, LocalDateTime to) {
         if (to == null || from == null) return "N/A";
 
@@ -176,7 +173,6 @@ public class ItemCardHPController {
     @FXML
     public void handleSwitchToItemPage(MouseEvent event) {
         try {
-            // Dừng timeline trước khi chuyển trang để tránh rò rỉ bộ nhớ
             if (timeline != null) timeline.stop();
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemPage.fxml"));
@@ -190,7 +186,6 @@ public class ItemCardHPController {
             Stage stage = (Stage) currentScene.getWindow();
             currentScene.setRoot(root);
             stage.setTitle(String.format("Online Auction System - %s", currentItem.getName()));
-
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Lỗi chuyển trang: " + e.getMessage());

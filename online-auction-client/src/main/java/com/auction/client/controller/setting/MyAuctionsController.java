@@ -31,37 +31,28 @@ public class MyAuctionsController {
     // Điều hướng
     @FXML
     private ToggleButton profileInfoBtn;
-
     @FXML
     private ToggleButton myAuctionsBtn;
-
     @FXML
     private ToggleButton historyBidBtn;
 
     // Bảng dữ liệu
     @FXML
     private TableView<Item> auctionTable;
-
     @FXML
     private TableColumn<Item, Item> itemCol;
-
     @FXML
     private TableColumn<Item, String> categoryCol;
-
     @FXML
     private TableColumn<Item, String> statusCol;
-
     @FXML
     private TableColumn<Item, String> priceCol;
-
     @FXML
     private TableColumn<Item, LocalDateTime> endTimeCol;
-
     @FXML
     private TableColumn<Item, Item> actionCol;
 
     private ItemsService itemsService = ItemsService.getInstance();
-    private final DateTimeFormatter multiLineFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy\nHH:mm a");
     private Gson gson = new GsonUtil().getInstance();
     private User loggedInUser = UserSession.getInstance().getLoggedInUser();
     private ObservableList<Item> masterData = FXCollections.observableArrayList();
@@ -74,28 +65,26 @@ public class MyAuctionsController {
         }
         auctionTable.setSelectionModel(null);
 
-        javafx.application.Platform.runLater(() -> {
-            javafx.scene.Node header = auctionTable.lookup(".column-header-background");
-            if (header != null) {
-                header.setMouseTransparent(true);
-            }
+        Platform.runLater(() -> {
+            var header = auctionTable.lookup(".column-header-background");
+            if (header != null) header.setMouseTransparent(true);
         });
         MyAuctionsTableHelper.setupTableColumns(
                 itemCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
                 this::handleSwitchToItemEdit,
-                this::handleDeleteItem // <-- Tham số Callback xóa
+                this::handleDeleteItem
         );
         displayItems();
     }
 
-    // Đổ dữ liệu
     private void displayItems() {
         itemsService.getAllFromSeller(loggedInUser.getId(), loggedInUser.getUsername())
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
 
-                        Type listType = new TypeToken<List<Item>>() {}.getType();
+                        Type listType = new TypeToken<List<Item>>() {
+                        }.getType();
                         List<Item> items = gson.fromJson(responseMessage.getData(), listType);
                         Platform.runLater(() -> {
                             masterData.setAll(items);
@@ -118,10 +107,6 @@ public class MyAuctionsController {
                 });
     }
 
-    private void handleEditItem(Item item) {
-        System.out.println("Đang chỉnh sửa: " + item.getName());
-    }
-
     // Event handlers
     @FXML
     public void handleSwitchToItemEdit(Item selectedItem) {
@@ -136,7 +121,6 @@ public class MyAuctionsController {
 
             SettingController.targetTab = "MyAuctions";
 
-
             Scene currentScene = auctionTable.getScene();
             Stage stage = (Stage) currentScene.getWindow();
 
@@ -148,6 +132,7 @@ public class MyAuctionsController {
             System.err.println("Không tìm thấy file ItemEdit.fxml! Kiểm tra lại đường dẫn.");
         }
     }
+
     private void handleDeleteItem(Item itemToDelete) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Xác nhận xóa");
@@ -194,5 +179,4 @@ public class MyAuctionsController {
                     });
         }
     }
-
-    }
+}
