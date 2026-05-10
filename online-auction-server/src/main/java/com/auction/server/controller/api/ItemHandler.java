@@ -64,15 +64,15 @@ public class ItemHandler implements HttpHandler {
     }
 
     private void createItem(HttpExchange exchange, ItemPayload productData, ResponseMessage response) throws IOException {
-        boolean created = itemService.addProduct(productData);
+        boolean created = itemService.addItem(productData);
 
         if (created) {
-            System.out.println("Product added successfully: " + productData.getProductName());
+            System.out.println("Product added successfully: " + productData.getItemName());
             response.setStatus("success");
             response.setMessage("Product added successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to add product: " + productData.getProductName());
+            System.out.println("Failed to add product: " + productData.getItemName());
             response.setStatus("error");
             response.setMessage("Failed to add product!");
             HttpResponseUtil.sendMessage(exchange, 500, response);
@@ -80,14 +80,14 @@ public class ItemHandler implements HttpHandler {
     }
 
     private void updateItem(HttpExchange exchange, ItemPayload productData, String itemId, ResponseMessage response) throws IOException {
-        boolean updated = itemService.updateProduct(productData, itemId);
+        boolean updated = itemService.updateItem(productData, itemId);
         if (updated) {
-            System.out.println("Product updated successfully: " + productData.getProductName());
+            System.out.println("Product updated successfully: " + productData.getItemName());
             response.setStatus("success");
             response.setMessage("Product updated successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to update product: " + productData.getProductName());
+            System.out.println("Failed to update product: " + productData.getItemName());
             response.setStatus("error");
             response.setMessage("Failed to update product!");
             HttpResponseUtil.sendMessage(exchange, 500, response);
@@ -95,7 +95,7 @@ public class ItemHandler implements HttpHandler {
     }
 
     private void deleteItem(HttpExchange exchange, String itemId, ResponseMessage response) throws IOException {
-        boolean deleted = itemService.deleteProduct(itemId);
+        boolean deleted = itemService.deleteItem(itemId);
         if (deleted) {
             System.out.println("Product deleted successfully: " + itemId);
             response.setStatus("success");

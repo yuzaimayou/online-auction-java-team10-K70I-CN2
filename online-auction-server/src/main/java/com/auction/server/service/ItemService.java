@@ -1,8 +1,9 @@
 package com.auction.server.service;
 
 import com.auction.server.repository.ItemRepository;
-import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.ItemSummary;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
@@ -12,15 +13,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemService {
-    private final ItemRepository itemRepository;
+    private static ItemService instance;
+
+    private final ItemRepository itemRepository = ItemRepository.getInstance();
     private Gson gson = GsonUtil.getInstance();
 
-    public ItemService() {
-
-        this.itemRepository = new ItemRepository();
+    public static ItemService getInstance() {
+        if (instance == null) {
+            instance = new ItemService();
+        }
+        return instance;
     }
 
-    public List<Item> getAllProductsBySeller(String sellerId) {
+    public List<ItemSummary> getAllItemsBySeller(String sellerId) {
         if (sellerId == null || sellerId.trim().isEmpty()) {
             return null; // Hoặc trả về list rỗng tùy logic của bạn
         }
@@ -28,38 +33,41 @@ public class ItemService {
         return itemRepository.findAllBySellerId(sellerId);
     }
 
+    public List<ItemSummary> getItems(String query) {
+        List<ItemSummary> items;
+        if (query == null) {
+            items = itemRepository.findAllItems();
+        } else if (query.contains("sellerId")) {
+            String sellerId = extractSellerId(query);
 
-    public Item setItem(ItemPayload productData) {
-        String productName = productData.getProductName();
-        String category = productData.getCategory();
-        LocalDateTime startTime = productData.getStartDateTime();
-        LocalDateTime endTime = productData.getEndDateTime();
-        String productDesc = productData.getProductDesc();
-        List<String[]> imagesConverted = productData.getImagesConverted();
-        Double initPrice = productData.getInitPrice();
-        Double bidStep = productData.getBidStep();
+            items = itemRepository.findAllBySellerId(sellerId);
+        } else {
+            items = null;
+        }
+        return items;
+    }
 
-        String userId = productData.getUserId();
+
+    public Item setItem(ItemPayload itemData) {
+        String itemName = itemData.getItemName();
+        String category = itemData.getCategory();
+        LocalDateTime startTime = itemData.getStartDateTime();
+        LocalDateTime endTime = itemData.getEndDateTime();
+        String itemDesc = itemData.getItemDesc();
+        List<String[]> imagesConverted = itemData.getImagesConverted();
+        Double initPrice = itemData.getInitPrice();
+        Double bidStep = itemData.getBidStep();
+
+        String userId = itemData.getUserId();
         List<String> imagesPath = new ArrayList<>();
         for (String[] image : imagesConverted) {
             String path = ImageUtil.convertBase64ToImg(image[0], image[1]);
             imagesPath.add(path);
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        if (startTime.isBefore(now)) {
-            throw new IllegalArgumentException("Start time cannot be in the past!");
-        }
-        if (endTime.isBefore(now)) {
-            throw new IllegalArgumentException("End time cannot be in the past!");
-        }
-        if (endTime.isBefore(startTime)) {
-            throw new IllegalArgumentException("End time must be after start time!");
-        }
-
         return new Item(
-                productName,
-                productDesc,
+                itemName,
+                itemDesc,
                 initPrice,
                 startTime,
                 endTime,
@@ -70,17 +78,38 @@ public class ItemService {
         );
     }
 
-    public boolean addProduct(ItemPayload productData) {
-        Item item = setItem(productData);
-        return itemRepository.createItem(item);
+    public boolean addItem(ItemPayload itemData) {
+        Item item = setItem(itemData);
+        boolean created = itemRepository.createItem(item);
+
+        if (created) {
+            System.out.println(item.getSellerId() + " created item: " + item.getName() + " with ID: " + item.getId());
+        }
+        return created;
     }
 
-    public boolean updateProduct(ItemPayload productData, String itemId) {
-        Item item = setItem(productData);
+    public Item getItem(String id) {
+        Item item = itemRepository.findById(id);
+        return item;
+    }
+
+    public boolean updateItem(ItemPayload itemData, String itemId) {
+        Item item = setItem(itemData);
         return itemRepository.updateItem(item, itemId);
     }
 
-    public boolean deleteProduct(String itemId) {
+    public boolean deleteItem(String itemId) {
         return itemRepository.deleteItem(itemId);
+    }
+
+    private String extractSellerId(String query) {
+        String[] params = query.split("&");
+        for (String param : params) {
+            String[] keyValue = param.split("=");
+            if (keyValue.length == 2 && "sellerId".equals(keyValue[0])) {
+                return keyValue[1];
+            }
+        }
+        return null;
     }
 }

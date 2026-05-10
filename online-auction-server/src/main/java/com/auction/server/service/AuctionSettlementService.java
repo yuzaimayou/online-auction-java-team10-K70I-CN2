@@ -18,7 +18,7 @@ public class AuctionSettlementService {
     private final WalletTransactionRepository txLogRepo;
 
     public AuctionSettlementService() {
-        this.itemRepo   = new ItemRepository();
+        this.itemRepo = ItemRepository.getInstance();
         this.walletRepo = new WalletRepository();
         this.txLogRepo  = new WalletTransactionRepository();
     }
