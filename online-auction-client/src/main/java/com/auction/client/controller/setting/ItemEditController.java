@@ -23,18 +23,21 @@ import java.time.format.DateTimeFormatter;
 
 public class ItemEditController {
 
-    @FXML
-    private Label lblMessage;
+    // thông tin và phân loại sản phẩm
     @FXML
     private TextField txtItemName;
     @FXML
     private ToggleGroup categoryGroup;
     @FXML
     private TextArea txtItemDesc;
+
+    // set up giá
     @FXML
     private TextField txtInitPrice;
     @FXML
     private TextField txtBidStep;
+
+    // Time
     @FXML
     private DatePicker startDateP;
     @FXML
@@ -44,6 +47,9 @@ public class ItemEditController {
     @FXML
     private ComboBox<String> cbEndTime;
 
+    // Phản hồi
+    @FXML private Label lblMessage;
+
     private String currentItemId;
     private final ItemsService itemsService = ItemsService.getInstance();
     private final Gson gson = new GsonBuilder()
@@ -52,7 +58,7 @@ public class ItemEditController {
 
     @FXML
     public void initialize() {
-        // 1. Khởi tạo danh sách giờ cho ComboBox
+        // Khởi tạo danh sách giờ cho ComboBox
         cbStartTime.getItems().clear();
         cbEndTime.getItems().clear();
         for (int hour = 0; hour < 24; hour++) {
@@ -63,7 +69,7 @@ public class ItemEditController {
             }
         }
 
-        // 2. Tự động giãn dòng cho TextArea Description
+        // Tự động giãn dòng cho TextArea Description
         if (txtItemDesc != null) {
             txtItemDesc.setWrapText(true);
             txtItemDesc.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -77,21 +83,17 @@ public class ItemEditController {
         }
     }
 
-    /**
-     * Hàm nhận dữ liệu Item từ màn hình trước để điền vào Form
-     */
+    // Lấy data item
     public void setEditData(Item item) {
         if (item == null) return;
 
         this.currentItemId = item.getId();
 
-        // Đổ dữ liệu text
         txtItemName.setText(item.getName() != null ? item.getName() : "");
         txtItemDesc.setText(item.getDescription() != null ? item.getDescription() : "");
         txtInitPrice.setText(String.valueOf(item.getStartingPrice()));
         txtBidStep.setText(String.valueOf(item.getBidStep()));
 
-        // Đổ dữ liệu Category
         if (item.getCategory() != null && categoryGroup != null) {
             for (Toggle toggle : categoryGroup.getToggles()) {
                 if (toggle.getUserData() != null && toggle.getUserData().toString().equalsIgnoreCase(item.getCategory())) {
@@ -101,7 +103,6 @@ public class ItemEditController {
             }
         }
 
-        // Đổ dữ liệu thời gian
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         if (item.getStartTime() != null) {
             startDateP.setValue(item.getStartTime().toLocalDate());
@@ -113,9 +114,7 @@ public class ItemEditController {
         }
     }
 
-    /**
-     * Hàm xử lý khi người dùng nhấn nút Save Changes
-     */
+    // xử lí hành động người dùng
     @FXML
     public void handleSaveChanges(ActionEvent event) {
         String itemName = txtItemName.getText().trim();
@@ -186,12 +185,10 @@ public class ItemEditController {
 
     @FXML
     public void handleClose() {
-        // Truyền ActionEvent null nếu gọi từ code nội bộ, hoặc đổi tham số Navigation
         NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions");
     }
 
     // --- HELPER METHODS ---
-
     private void showMessage(String message, Color color) {
         Platform.runLater(() -> {
             lblMessage.setTextFill(color);
