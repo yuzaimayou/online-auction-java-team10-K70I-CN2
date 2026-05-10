@@ -32,33 +32,73 @@ import java.util.List;
 
 public class ItemEditController {
 
-    @FXML private ImageView mainImageView;
-    @FXML private HBox imageContainer;
-    @FXML private Label lblItemTitle;
-    @FXML private Label lblStatusBadge;
-    @FXML private Label lblAuctionTime;
-    @FXML private Label lblAlert;
+    // Header
+    @FXML
+    private Label lblItemTitle;
+    @FXML
+    private Label lblItemCategory;
+    @FXML
+    private Label lblStatusBadge;
+    @FXML
+    private Label lblAuctionTime;
 
-    @FXML private Label lblItemCategory;
-    @FXML private TextField txtItemName;
-    @FXML private ToggleGroup categoryGroup;
-    @FXML private TextArea txtItemDesc;
+    // image
+    @FXML
+    private ImageView mainImageView;
+    @FXML
+    private HBox imageContainer;
 
-    @FXML private TextField txtInitPrice;
-    @FXML private TextField txtBidStep;
+    // ô nhập
+    @FXML
+    private TextField txtItemName;
+    @FXML
+    private TextArea txtItemDesc;
+    @FXML
+    private ToggleGroup categoryGroup;
+    @FXML
+    private TextField txtInitPrice;
+    @FXML
+    private TextField txtBidStep;
 
-    @FXML private DatePicker startDateP;
-    @FXML private ComboBox<String> cbStartTime;
-    @FXML private DatePicker endDateP;
-    @FXML private ComboBox<String> cbEndTime;
+    // Time
+    @FXML
+    private DatePicker startDateP;
+    @FXML
+    private ComboBox<String> cbStartTime;
+    @FXML
+    private DatePicker endDateP;
+    @FXML
+    private ComboBox<String> cbEndTime;
 
-    @FXML private Label lblMessage;
+    @FXML
+    private Label lblMessage;
 
     private String currentItemId;
     private Item currentItem;
     private final ItemsService itemsService = ItemsService.getInstance();
     private final Gson gson = GsonUtil.getInstance();
-    private String itemId;
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter FULL_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    @FXML
+    public void initialize() {
+        setupTimeComboBoxes();
+        setupAutoGrowTextArea();
+        setupDynamicListeners();
+    }
+    private void setupDynamicListeners() {
+        txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (lblItemTitle != null) lblItemTitle.setText(newVal);
+        });
+
+        if (categoryGroup != null) {
+            categoryGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && lblItemCategory != null) {
+                    lblItemCategory.setText(newVal.getUserData().toString());
+                }
+            });
+        }
+    }
     public void setItemId(String id) {
         this.currentItemId = id;
 
@@ -73,7 +113,6 @@ public class ItemEditController {
                 .thenAccept(responseBody -> {
                     ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
                     if ("success".equals(response.getStatus()) && response.getData() != null) {
-                        // Chuyển dữ liệu Json thành Object Item
                         Item item = gson.fromJson(response.getData(), Item.class);
 
                         this.currentItem = item;
@@ -85,33 +124,10 @@ public class ItemEditController {
                     return null;
                 });
     }
-
-    @FXML
-    public void initialize() {
-        setupTimeComboBoxes();
-        setupAutoGrowTextArea();
-
-        // Listener để cập nhật tiêu đề Header khi người dùng gõ tên mới
-        txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (lblItemTitle != null) lblItemTitle.setText(newVal);
-        });
-        if (categoryGroup != null) {
-            categoryGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal != null && lblItemCategory != null) {
-                    lblItemCategory.setText(newVal.getUserData().toString());
-                }
-            });
-        }
-    }
-
-    /**
-     * Quan trọng: Gọi hàm này từ Controller trang danh sách sản phẩm
-     */
-
     private void setEditData(Item item) {
         if (item == null) return;
 
-        // 1. Thông tin text
+        // Thông tin text
         txtItemName.setText(item.getName());
         lblItemTitle.setText(item.getName());
         txtItemDesc.setText(item.getDescription());
@@ -124,7 +140,7 @@ public class ItemEditController {
         }
         updateCategorySelection(item.getCategory());
 
-        // 4. Thời gian (DatePicker & ComboBox)
+        // Thời gian
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         if (item.getStartTime() != null) {
@@ -132,61 +148,11 @@ public class ItemEditController {
             cbStartTime.setValue(item.getStartTime().toLocalTime().format(timeFormatter));
             lblAuctionTime.setText("Auction starts at: " + item.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         }
-
         if (item.getEndTime() != null) {
             endDateP.setValue(item.getEndTime().toLocalDate());
             cbEndTime.setValue(item.getEndTime().toLocalTime().format(timeFormatter));
         }
-
-        // 5. Hình ảnh
         displayImages(item);
-    }
-
-    /**
-     * Logic để tự động chọn ToggleButton tương ứng với Category của Item
-     */
-    private void updateCategorySelection(String categoryName) {
-        if (categoryName == null || categoryGroup == null) return;
-
-        for (Toggle toggle : categoryGroup.getToggles()) {
-            if (toggle instanceof ToggleButton) {
-                // userData được set trong FXML (Fashion, Electronics,...)
-                String userData = (String) toggle.getUserData();
-                if (categoryName.equalsIgnoreCase(userData)) {
-                    categoryGroup.selectToggle(toggle);
-                    break;
-                }
-            }
-        }
-    }
-    private void displayImages(Item item) {
-        imageContainer.getChildren().clear();
-        List<String> images = item.getImagesPath();
-
-        if (images != null && !images.isEmpty()) {
-            ClientImageUtil.displayImage(images.get(0), "images", mainImageView, 320, 200);
-
-            for (String imgPath : images) {
-                StackPane thumbPane = new StackPane();
-                thumbPane.getStyleClass().add("img-thumbnail");
-
-                ImageView thumbView = new ImageView();
-                thumbView.setFitWidth(80);
-                thumbView.setFitHeight(60);
-                thumbView.setPreserveRatio(false); // Đảm bảo fill đầy khung thumbnail
-
-                ClientImageUtil.displayImage(imgPath, "images", thumbView, 80, 60);
-
-                thumbPane.getChildren().add(thumbView);
-                thumbPane.setOnMouseClicked(e -> {
-                    mainImageView.setImage(thumbView.getImage());
-                    imageContainer.getChildren().forEach(n -> n.getStyleClass().remove("active-thumbnail"));
-                    thumbPane.getStyleClass().add("active-thumbnail");
-                });
-
-                imageContainer.getChildren().add(thumbPane);
-            }
-        }
     }
 
     @FXML
@@ -196,13 +162,11 @@ public class ItemEditController {
             String desc = txtItemDesc.getText().trim();
             Toggle selectedCat = categoryGroup.getSelectedToggle();
 
-            // 1. Kiểm tra bỏ trống
             if (isAnyNull(name, desc, selectedCat, startDateP.getValue(), cbStartTime.getValue(), endDateP.getValue(), cbEndTime.getValue())) {
                 showMessage("Vui lòng điền đầy đủ các thông tin bắt buộc.", Color.RED);
                 return;
             }
 
-            // 2. Parse thời gian và Validate quy tắc (Start Time < End Time)
             LocalDateTime start = LocalDateTime.of(startDateP.getValue(), LocalTime.parse(cbStartTime.getValue()));
             LocalDateTime end = LocalDateTime.of(endDateP.getValue(), LocalTime.parse(cbEndTime.getValue()));
             LocalDateTime now = LocalDateTime.now();
@@ -216,7 +180,6 @@ public class ItemEditController {
                 return;
             }
 
-            // 3. Parse tiền và Validate (Giá > 0)
             double initPrice = Double.parseDouble(txtInitPrice.getText());
             double bidStep = Double.parseDouble(txtBidStep.getText());
 
@@ -273,11 +236,54 @@ public class ItemEditController {
             showMessage("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.", Color.RED);
         }
     }
+    @FXML
+    public void handleCancel(ActionEvent event) { handleClose(); }
+    @FXML
+    public void handleClose() { NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions"); }
 
-    // --- Giữ nguyên các hàm helper khác ---
-    @FXML public void handleCancel(ActionEvent event) { handleClose(); }
-    @FXML public void handleClose() { NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions"); }
+    // các hàm helper khác
+    private void updateCategorySelection(String categoryName) {
+        if (categoryName == null || categoryGroup == null) return;
 
+        for (Toggle toggle : categoryGroup.getToggles()) {
+            if (toggle instanceof ToggleButton) {
+                String userData = (String) toggle.getUserData();
+                if (categoryName.equalsIgnoreCase(userData)) {
+                    categoryGroup.selectToggle(toggle);
+                    break;
+                }
+            }
+        }
+    }
+    private void displayImages(Item item) {
+        imageContainer.getChildren().clear();
+        List<String> images = item.getImagesPath();
+
+        if (images != null && !images.isEmpty()) {
+            ClientImageUtil.displayImage(images.get(0), "images", mainImageView, 320, 200);
+
+            for (String imgPath : images) {
+                StackPane thumbPane = new StackPane();
+                thumbPane.getStyleClass().add("img-thumbnail");
+
+                ImageView thumbView = new ImageView();
+                thumbView.setFitWidth(80);
+                thumbView.setFitHeight(60);
+                thumbView.setPreserveRatio(false);
+
+                ClientImageUtil.displayImage(imgPath, "images", thumbView, 80, 60);
+
+                thumbPane.getChildren().add(thumbView);
+                thumbPane.setOnMouseClicked(e -> {
+                    mainImageView.setImage(thumbView.getImage());
+                    imageContainer.getChildren().forEach(n -> n.getStyleClass().remove("active-thumbnail"));
+                    thumbPane.getStyleClass().add("active-thumbnail");
+                });
+
+                imageContainer.getChildren().add(thumbPane);
+            }
+        }
+    }
     private void setupTimeComboBoxes() {
         for (int h = 0; h < 24; h++) {
             for (int m = 0; m < 60; m += 30) {
@@ -287,19 +293,16 @@ public class ItemEditController {
             }
         }
     }
-
     private void setupAutoGrowTextArea() {
         txtItemDesc.setWrapText(true);
         txtItemDesc.setPrefHeight(Region.USE_COMPUTED_SIZE);
     }
-
     private void showMessage(String msg, Color color) {
         Platform.runLater(() -> {
             lblMessage.setTextFill(color);
             lblMessage.setText(msg);
         });
     }
-
     private boolean isAnyNull(Object... objects) {
         for (Object o : objects) if (o == null || o.toString().isEmpty()) return true;
         return false;

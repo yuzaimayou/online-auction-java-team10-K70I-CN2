@@ -13,6 +13,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
@@ -20,13 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
 public class MyAuctionsTableHelper {
-
-    /**
-     * Hàm cấu hình toàn bộ các cột cho bảng Auction
-     *
-     * @param onEditAction   Cầu nối (Callback) để gọi hàm chuyển trang Edit bên Controller
-     * @param onDeleteAction Cầu nối để gọi hàm Xóa bên Controller (THÊM MỚI CHỖ NÀY)
-     */
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
     public static void setupTableColumns(
             TableColumn<Item, Item> itemCol,
             TableColumn<Item, String> categoryCol,
@@ -48,36 +44,27 @@ public class MyAuctionsTableHelper {
         // ITEM
         itemCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
         itemCol.setCellFactory(param -> new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+            private final Label nameLabel = new Label();
+            private final HBox container = new HBox(15, imageView, nameLabel);
+            {
+                imageView.setFitWidth(50);
+                imageView.setFitHeight(50);
+                imageView.setPreserveRatio(true);
+                nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #333333;");
+                container.setAlignment(Pos.CENTER_LEFT);
+            }
             @Override
             protected void updateItem(Item item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
-                    setText(null);
                 } else {
-                    // Tạo khung chứa ảnh
-                    ImageView imageView = new ImageView();
-                    imageView.setFitWidth(50); // Chỉnh chiều rộng ảnh thumbnail
-                    imageView.setFitHeight(50);
-                    imageView.setPreserveRatio(true);
-
-                    // GỌI HÀM TẢI ẢNH CỦA BẠN
-                    // Tham số "images" là tên thư mục chứa ảnh trên Server
+                    nameLabel.setText(item.getName());
                     if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
                         ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView, 200, 200);
                     }
-
-                    // Tên sản phẩm
-                    Label nameLabel = new Label(item.getName());
-                    nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #333333;");
-
-                    // Gộp ảnh và tên vào 1 hàng ngang (HBox)
-                    HBox hBox = new HBox(15); // Khoảng cách giữa ảnh và chữ là 15
-                    hBox.setAlignment(Pos.CENTER_LEFT);
-                    hBox.getChildren().addAll(imageView, nameLabel);
-
-                    setGraphic(hBox);
-                    setText(null);
+                    setGraphic(container);
                 }
             }
         });
@@ -169,42 +156,35 @@ public class MyAuctionsTableHelper {
         //  ACTION
         actionCol.setPrefWidth(220);
         actionCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
-        actionCol.setCellFactory(column -> new TableCell<Item, Item>() {
+        actionCol.setCellFactory(column -> new TableCell<>() {
+            private final Button editBtn = new Button("Edit");
+            private final Button viewBtn = new Button("View");
+            private final Button deleteBtn = new Button("Delete");
+            private final HBox container = new HBox(8, editBtn, viewBtn, deleteBtn);
+            private Item currentItem;
+
+            {
+                container.setAlignment(Pos.CENTER);
+                editBtn.getStyleClass().add("action-btn-edit");
+                viewBtn.getStyleClass().add("action-btn-view");
+                deleteBtn.getStyleClass().add("action-btn-delete");
+
+                editBtn.setMinWidth(Region.USE_PREF_SIZE);
+                viewBtn.setMinWidth(Region.USE_PREF_SIZE);
+                deleteBtn.setMinWidth(Region.USE_PREF_SIZE);
+
+                editBtn.setOnAction(e -> { if (onEditAction != null) onEditAction.accept(currentItem); });
+                deleteBtn.setOnAction(e -> { if (onDeleteAction != null) onDeleteAction.accept(currentItem); });
+            }
+
             @Override
             protected void updateItem(Item item, boolean empty) {
                 super.updateItem(item, empty);
+                this.currentItem = item;
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    HBox actions = new HBox(8);
-                    actions.setAlignment(Pos.CENTER);
-
-                    Button editBtn = new Button("Edit");
-                    editBtn.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
-                    editBtn.getStyleClass().add("action-btn-edit");
-                    editBtn.setOnAction(e -> {
-                        if (onEditAction != null) {
-                            onEditAction.accept(item);
-                        }
-                    });
-
-                    Button viewBtn = new Button("View");
-                    viewBtn.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
-                    viewBtn.getStyleClass().add("action-btn-view");
-
-                    Button deleteBtn = new Button("Delete");
-                    deleteBtn.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
-                    deleteBtn.getStyleClass().add("action-btn-delete");
-
-                    // THÊM SỰ KIỆN CHO NÚT DELETE: Truyền Item hiện tại ngược về Controller
-                    deleteBtn.setOnAction(e -> {
-                        if (onDeleteAction != null) {
-                            onDeleteAction.accept(item);
-                        }
-                    });
-
-                    actions.getChildren().addAll(editBtn, viewBtn, deleteBtn);
-                    setGraphic(actions);
+                    setGraphic(container);
                 }
             }
         });
