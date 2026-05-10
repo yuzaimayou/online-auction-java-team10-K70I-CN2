@@ -129,7 +129,7 @@
 
 /* Auction Card */
 /* Nội dung thông tin */
-.product-name {
+.item-name {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #1A1A1B;

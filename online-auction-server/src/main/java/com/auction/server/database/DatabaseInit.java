@@ -12,7 +12,11 @@ public class DatabaseInit {
                     id TEXT PRIMARY KEY,
                     username TEXT UNIQUE NOT NULL,
                     password TEXT NOT NULL,
-                    role TEXT NOT NULL
+                    role TEXT NOT NULL,
+                    isVerify BOOLEAN NOT NULL DEFAULT 0,
+                    email TEXT NOT NULL,
+                    balance REAL NOT NULL DEFAULT 0,
+                    frozen_balance REAL NOT NULL DEFAULT 0
                 );
                 """;
 
@@ -29,6 +33,9 @@ public class DatabaseInit {
                     category TEXT NOT NULL DEFAULT 'other',
                     bid_step REAL NOT NULL DEFAULT 1,
                     image_path TEXT NOT NULL DEFAULT '',
+                    create_at TEXT,
+                    top_player_id TEXT,
+                    FOREIGN KEY (top_player_id) REFERENCES users(id),
                     FOREIGN KEY (seller_id) REFERENCES users(id)
                 );
                 """;
@@ -101,47 +108,59 @@ public class DatabaseInit {
     private static void migrateUsersTable(Statement stmt) {
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN email TEXT");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN isVerify INTEGER NOT NULL DEFAULT 0");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         // Wallet columns
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN frozen_balance REAL NOT NULL DEFAULT 0");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private static void migrateItemsTable(Statement stmt) {
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN category TEXT NOT NULL DEFAULT 'other'");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN bid_step REAL NOT NULL DEFAULT 1");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN image_path TEXT NOT NULL DEFAULT ''");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'PENDING'");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN create_at TEXT");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         // Current highest bidder — NULL means no bids yet
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN current_bidder_id TEXT");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private static void migrateAutoBidsTable(Statement stmt) {
         try {
             stmt.execute("ALTER TABLE auto_bids ADD COLUMN registered_at TEXT NOT NULL DEFAULT ''");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             stmt.execute("ALTER TABLE auto_bids ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }
