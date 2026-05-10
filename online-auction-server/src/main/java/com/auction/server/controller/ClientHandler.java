@@ -77,6 +77,20 @@ public class ClientHandler implements Runnable {
 
             }
         } catch (IOException e) {
+            System.out.println("Client disconnected: " + username);
+        } finally {
+            closeResources();
+        }
+    }
+
+    private void closeResources() {
+        try {
+            com.auction.server.MainServer.activeClients.remove(this);
+            roomManager.removeClientFromAllRooms(this);
+            if (in != null) in.close();
+            if (out != null) out.close();
+            if (clientSocket != null) clientSocket.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

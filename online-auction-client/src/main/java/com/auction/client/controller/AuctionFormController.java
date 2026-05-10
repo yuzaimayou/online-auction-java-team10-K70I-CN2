@@ -30,6 +30,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -174,6 +175,19 @@ public class AuctionFormController {
 
         LocalDateTime startDateTime = LocalDateTime.of(startDate, parsedStartTime);
         LocalDateTime endDateTime = LocalDateTime.of(endDate, parsedEndTime);
+        LocalDateTime now = LocalDateTime.now();
+
+        if (startDateTime.isBefore(now)) {
+            lblMessage.setTextFill(Color.RED);
+            lblMessage.setText("Start time cannot be in the past.");
+            return;
+        }
+
+        if (endDateTime.isBefore(now)) {
+            lblMessage.setTextFill(Color.RED);
+            lblMessage.setText("End time cannot be in the past.");
+            return;
+        }
         if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
             lblMessage.setTextFill(Color.RED);
             lblMessage.setText("End time must be after the start time.");

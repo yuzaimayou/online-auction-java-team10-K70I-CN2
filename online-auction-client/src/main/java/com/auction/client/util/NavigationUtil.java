@@ -15,30 +15,28 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class NavigationUtil {
-
     private static Parent homePageRoot;
-
     private static HomePageController homePageController;
-
     public static void switchToOtpScreen(ActionEvent event, String registeredEmail) {
         try {
-            FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    NavigationUtil.class.getResource(
+                            "/com.auction.client/fxml/authenticator/Verify.fxml" )
+            );
             Node verifyNode = loader.load();
             VerifyController verifyController = loader.getController();
             verifyController.setEmail(registeredEmail);
-
-
             Node sourceNode = (Node) event.getSource();
-            StackPane dynamicContentArea = (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
+            StackPane dynamicContentArea =
+                    (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
 
             if (dynamicContentArea != null) {
-
                 dynamicContentArea.getChildren().clear();
                 dynamicContentArea.getChildren().add(verifyNode);
-
             } else {
                 System.err.println("Không tìm thấy StackPane dynamicContentArea");
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,18 +45,24 @@ public class NavigationUtil {
     public static void handleSwitchToHomePage(Label label) {
         try {
             System.out.println("Da chuyen sang trang chu");
-
-            if (homePageController == null) {
-                // Lấy đường dẫn file FXML (Đảm bảo đường dẫn này đúng với thư mục resources)
-                FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource("/com.auction.client/fxml/HomePage.fxml"));
+            if (homePageRoot == null || homePageController == null) {
+            FXMLLoader loader = new FXMLLoader(
+                    NavigationUtil.class.getResource(
+                            "/com.auction.client/fxml/HomePage.fxml")
+            );
                 homePageRoot = loader.load();
-
-                //Lay Controller
                 homePageController = loader.getController();
 
             } else {
-                homePageController.refreshItems();
+                // Các lần sau: Tái sử dụng UI cũ cho mượt
+                // NHƯNG PHẢI GỌI HÀM CẬP NHẬT TÊN NGƯỜI DÙNG
+                if (homePageController != null) {
+                    homePageController.refreshNavBarInfo(); // <-- Gọi hàm này để báo NavBar đổi tên
+                    homePageController.refreshItems();;   // Refresh sản phẩm như cũ
+                }
+
             }
+            // ============================================================
 
             Scene currentScene = label.getScene();
             Stage stage = (Stage) currentScene.getWindow();
@@ -67,10 +71,14 @@ public class NavigationUtil {
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Không tìm thấy file HomePage.fxml! Kiểm tra lại đường dẫn.");
+            System.err.println("Không tìm thấy file HomePage.fxml!");
         }
     }
 
+    public static void clearCache() {
+        homePageRoot = null;
+        homePageController = null;
+    }
 
     public static void handleSwitchToSetting(Label label) {
         handleSwitchToSetting(label, "");
@@ -78,15 +86,16 @@ public class NavigationUtil {
 
     public static void handleSwitchToSetting(Label label, String option) {
         try {
-            FXMLLoader loader = new FXMLLoader(NavigationUtil.class.getResource("/com.auction.client/fxml/setting/Setting.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    NavigationUtil.class.getResource(
+                            "/com.auction.client/fxml/setting/Setting.fxml"));
             Parent root = loader.load();
-
             SettingController settingController = loader.getController();
 
             Scene currentScene = label.getScene();
             Stage stage = (Stage) currentScene.getWindow();
             currentScene.setRoot(root);
-            stage.setTitle(String.format("%s - Profile Page", AppConfig.getAppName()));
+            stage.setTitle(String.format( "%s - Profile Page", AppConfig.getAppName()));
 
             if (option.equals("profile")) {
                 settingController.handleProfileInfo(new ActionEvent());

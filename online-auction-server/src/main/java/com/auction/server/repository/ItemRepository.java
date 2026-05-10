@@ -29,6 +29,26 @@ public class ItemRepository {
 
     private Gson gson = new GsonUtil().getInstance();
 
+
+    public boolean updateCurrentBidder(Connection conn, String itemId,
+                                       double newPrice, String newBidderId) {
+        String sql = """
+                UPDATE items
+                SET current_price     = ?,
+                    current_bidder_id = ?
+                WHERE id = ?
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, newPrice);
+            stmt.setString(2, newBidderId);
+            stmt.setString(3, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
         String name = rs.getString("name");
@@ -203,48 +223,38 @@ public class ItemRepository {
         }
     }
 
-
     public Item findById(String itemId) {
-
         String sql = "SELECT * FROM items WHERE id = ?";
-
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-
             stmt.setString(1, itemId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-
                 if (rs.next()) {
-                    String pathsData = rs.getString("image_path");
-                    List<String> imagePaths = gson.fromJson(pathsData, List.class);
-
-                    Item item = new Item(
-                            rs.getString("name"),
-                            rs.getString("description"),
-                            rs.getDouble("start_price"),
-                            rs.getDouble("current_price"),
-                            LocalDateTime.parse(rs.getString("start_time")),
-                            LocalDateTime.parse(rs.getString("end_time")),
-                            rs.getString("seller_id"),
-                            rs.getString("category"),
-                            rs.getDouble("bid_step"),
-                            imagePaths
-                    );
-                    item.setId(rs.getString("id"));
-                    return item;
+                    return mapRow(rs);
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
+    public Item findById(Connection conn, String itemId) {
+        String sql = "SELECT * FROM items WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     public List<ItemSummary> findAllBySellerId(String sellerID) {
         String sql = """
                 SELECT id,
@@ -263,8 +273,6 @@ public class ItemRepository {
     }
 
     public List<ItemSummary> findAllItems() {
-
-
         String sql = """
                 SELECT id,
                        name,
@@ -277,8 +285,58 @@ public class ItemRepository {
                 """;
 
         return executeSummaryQuery(sql);
-
     }
+
+
+    private Item mapRow(ResultSet rs) throws Exception {
+        String pathsData = rs.getString("image_path");
+        List<String> imagePaths = new ArrayList<>();
+        if (pathsData != null && !pathsData.isEmpty()) {
+            try {
+                // Try to parse as JSON list (new format)
+                imagePaths = gson.fromJson(pathsData, List.class);
+                if (imagePaths == null) {
+                    imagePaths = new ArrayList<>();
+                }
+            } catch (Exception e) {
+                // Fallback for old format (single string path)
+                imagePaths.add(pathsData);
+            }
+        }
+
+
+
+        Item item = new Item(
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDouble("start_price"),
+                rs.getDouble("current_price"),
+                LocalDateTime.parse(rs.getString("start_time")),
+                LocalDateTime.parse(rs.getString("end_time")),
+                rs.getString("seller_id"),
+                rs.getString("category"),
+                rs.getDouble("bid_step"),
+                imagePaths
+        );
+        item.setId(rs.getString("id"));
+        item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
+        String dbStatus = rs.getString("status");
+        if (dbStatus != null) item.setStatus(dbStatus);
+        return item;
+    }
+    // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
+    public boolean markEnded(Connection conn, String itemId) {
+        String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 
     public void updateCurrentPrice(String itemId, double newPrice) {
 

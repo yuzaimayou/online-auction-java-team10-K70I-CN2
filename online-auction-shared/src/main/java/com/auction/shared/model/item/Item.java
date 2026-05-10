@@ -51,6 +51,17 @@ public class Item extends Entity {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Error: Start time and end time cannot be null!");
         }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (startTime.isBefore(now)) {
+            throw new IllegalArgumentException("Error: Start time cannot be in the past!");
+        }
+
+        if (endTime.isBefore(now)) {
+            throw new IllegalArgumentException("Error: End time cannot be in the past!");
+        }
+
         if (endTime.isBefore(startTime)) {
             throw new IllegalArgumentException("Error: End time must be strictly after the start time!");
         }
