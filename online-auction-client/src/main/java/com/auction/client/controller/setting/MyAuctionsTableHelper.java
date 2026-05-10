@@ -45,7 +45,7 @@ public class MyAuctionsTableHelper {
         endTimeCol.setSortable(false);
         actionCol.setSortable(false);
 
-        // PRODUCT
+        // ITEM
         itemCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
         itemCol.setCellFactory(param -> new TableCell<>() {
             @Override

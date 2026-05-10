@@ -118,20 +118,26 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     public void initialize() {
-        Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
-        clip.setArcWidth(IMAGE_ARC);
-        clip.setArcHeight(IMAGE_ARC);
-        itemImage.setClip(clip);
+        try {
+            Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
+            clip.setArcWidth(IMAGE_ARC);
+            clip.setArcHeight(IMAGE_ARC);
+            itemImage.setClip(clip);
 
-        itemImage.setFitWidth(IMAGE_WIDTH);
-        itemImage.setFitHeight(IMAGE_HEIGHT);
-        itemImage.setPreserveRatio(false);
+            itemImage.setFitWidth(IMAGE_WIDTH);
+            itemImage.setFitHeight(IMAGE_HEIGHT);
+            itemImage.setPreserveRatio(false);
 
-        itemImage.imageProperty().addListener((obs, oldImg, newImg) -> {
-            if (newImg != null) {
-                applyObjectFitCover(newImg);
-            }
-        });
+            itemImage.imageProperty().addListener((obs, oldImg, newImg) -> {
+                if (newImg != null) {
+                    applyObjectFitCover(newImg);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error initializing ItemPageController: " + e.getMessage());
+        }
+
     }
 
     public void setItemId(String id) {
@@ -319,7 +325,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         if (images != null && !images.isEmpty()) {
             String mainImageUrl = images.get(0);
-            ClientImageUtil.displayImage(mainImageUrl, "images", itemImage, 200, 200);
+            ClientImageUtil.displayImage(mainImageUrl, "images", itemImage, IMAGE_WIDTH, IMAGE_HEIGHT);
 
             boolean isFirst = true;
 
@@ -351,7 +357,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                     }
                 });
 
-                ClientImageUtil.displayImage(imgPath, "images", thumbView, 200, 200);
+                ClientImageUtil.displayImage(imgPath, "images", thumbView, IMAGE_WIDTH, IMAGE_HEIGHT);
                 thumbPane.getChildren().add(thumbView);
 
                 thumbPane.setOnMouseClicked(e -> {
@@ -359,7 +365,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                     if (clickedImage != null) {
                         itemImage.setImage(clickedImage);
                     } else {
-                        ClientImageUtil.displayImage(imgPath, "images", itemImage, 200, 200);
+                        ClientImageUtil.displayImage(imgPath, "images", itemImage, THUMB_WIDTH, THUMB_HEIGHT);
                     }
                     thumbnailContainer.getChildren().forEach(node -> {
                         node.getStyleClass().remove("active-thumb");

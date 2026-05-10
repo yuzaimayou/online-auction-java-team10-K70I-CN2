@@ -192,6 +192,7 @@ public class ItemCardHPController {
             stage.setTitle(String.format("Online Auction System - %s", currentItem.getName()));
 
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("Lỗi chuyển trang: " + e.getMessage());
         }
     }

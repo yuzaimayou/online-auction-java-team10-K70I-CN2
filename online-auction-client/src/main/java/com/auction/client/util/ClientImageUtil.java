@@ -12,13 +12,13 @@ public class ClientImageUtil {
 
     public static void displayImage(String imageName, String source, ImageView imageId, double reqWidth, double reqHeight) {
         String imageUrl = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
-
-        Image fxImage = imageCache.computeIfAbsent(imageUrl, url -> {
+        String cacheKey = imageUrl + "_" + reqWidth + "x" + reqHeight;
+        Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
             try {
-                System.out.println("Loading new image: " + url);
-                return new Image(url, reqWidth, reqHeight, true, true);
+                System.out.println("Loading new image: " + imageUrl);
+                return new Image(imageUrl, reqWidth, reqHeight, true, true);
             } catch (Exception e) {
-                System.err.println("Failed to load image: " + url);
+                System.err.println("Failed to load image: " + imageUrl);
                 e.printStackTrace();
                 return null;
             }
