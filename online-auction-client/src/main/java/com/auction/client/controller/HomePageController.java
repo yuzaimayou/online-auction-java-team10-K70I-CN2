@@ -52,6 +52,8 @@ public class HomePageController {
     private VBox upcomingSection;
     @FXML
     private VBox endedSection;
+    @FXML
+    private NavBarController navBarController;
 
     private List<ItemSummary> masterItemList;
     private String currentCategory = "ALL";
@@ -62,7 +64,6 @@ public class HomePageController {
             applyFilter();
         });
         NetworkService.getInstance().leaveRoom();
-
         System.out.println("Đã vào trang chủ!");
 
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
@@ -78,8 +79,6 @@ public class HomePageController {
     @FXML
     private void getDataItemsAndDisplay() {
         System.out.println("Dang tien hanh lay du lieu");
-
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
                 .GET()
@@ -103,18 +102,17 @@ public class HomePageController {
                     }
                 });
     }
-
+    // Hàm để phân loại
     private void applyFilter() {
         if (masterItemList == null)
             return;
-
         String query = SearchStoreController.getSearchQuery().toLowerCase().trim();
 
         List<ItemSummary> filtered = masterItemList.stream()
                 .filter(item -> {
                     // Lọc theo Category
                     boolean matchesCategory = currentCategory.equals("ALL") ||
-                            (item.getCategory() != null && item.getCategory().toString().equalsIgnoreCase(currentCategory));
+                            (item.getCategory() != null && item.getCategory().equalsIgnoreCase(currentCategory));
 
                     // Lọc theo Search Query
                     boolean matchesSearch = query.isEmpty() ||
@@ -127,7 +125,7 @@ public class HomePageController {
         loadItemsToUI(filtered);
     }
 
-    @FXML
+
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
@@ -163,7 +161,6 @@ public class HomePageController {
                         endedAuctionsContainer.getChildren().add(cardBox);
                         endedCount++;
                     }
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -184,11 +181,9 @@ public class HomePageController {
         endedSection.setManaged(ended > 0);
     }
 
-
     @FXML
     private void handleCategoryClick(MouseEvent event) {
         VBox clicked = (VBox) event.getSource();
-
         String category = clicked.getId();
         boolean isReset = category.equalsIgnoreCase(currentCategory);
 
@@ -197,7 +192,6 @@ public class HomePageController {
         } else {
             currentCategory = category;
         }
-
         clicked.getParent().getChildrenUnmodifiable().forEach(node -> {
             node.getStyleClass().remove("active-category");
         });
@@ -205,7 +199,6 @@ public class HomePageController {
         if (!"ALL".equals(currentCategory)) {
             clicked.getStyleClass().add("active-category");
         }
-
         applyFilter();
     }
 
@@ -217,7 +210,7 @@ public class HomePageController {
             Parent root = loader.load();
             Node sourceNode = (Node) event.getSource();
 
-            AuctionFormController auctionFormController = loader.getController();
+            //AuctionFormController auctionFormController = loader.getController();
 
             Scene currentScene = sourceNode.getScene();
             Stage stage = (Stage) currentScene.getWindow();
@@ -241,6 +234,13 @@ public class HomePageController {
         });
 
         getDataItemsAndDisplay();
+    }
+    public void refreshNavBarInfo() {
+        if (navBarController != null) {
+            navBarController.refreshUserInfo();
+        } else {
+            System.out.println("Cảnh báo: Không kết nối được với NavBarController.");
+        }
     }
 }
 

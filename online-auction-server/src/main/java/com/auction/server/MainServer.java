@@ -36,7 +36,11 @@ public class MainServer {
             httpServer.createContext("/api/items", new ItemsHandler());
             httpServer.createContext("/api/items/", new ItemDetailHandler());
             //ngix da xu ly viec /images
-//            httpServer.createContext("/images", new StaticFileServer.ImageHandler());
+            //httpServer.createContext("/images", new StaticFileServer.ImageHandler());
+            // Wallet & settlement endpoints
+            httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());
+            httpServer.createContext("/api/auction/settle", new WalletHandler.SettleHandler());
+
 
             httpServer.setExecutor(Executors.newFixedThreadPool(50));
             httpServer.start();
@@ -48,10 +52,8 @@ public class MainServer {
         }
 
         //start socket server
-        try {
+        try (ServerSocket serverSocket = new ServerSocket(9090)) {
             System.out.println("Starting Socket server...");
-
-            ServerSocket serverSocket = new ServerSocket(9090);
             System.out.println("Socket server started on port 9090");
 
             while (true) {
@@ -62,13 +64,11 @@ public class MainServer {
                 activeClients.add(handler);
 
                 Thread clientThread = new Thread(handler);
-
                 clientThread.start();
             }
         } catch (Exception e) {
             System.err.println("Failed to start Socket server: " + e.getMessage());
             e.printStackTrace();
-
         }
 
     }

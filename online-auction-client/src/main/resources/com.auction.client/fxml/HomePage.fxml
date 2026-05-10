@@ -13,8 +13,7 @@
 <ScrollPane fx:id="mainScrollPane" fitToWidth="true" hbarPolicy="NEVER" prefHeight="850.0" prefWidth="1440.0"
             stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
-    <content>
-        <VBox styleClass="main-container" alignment="TOP_CENTER" maxWidth="Infinity">
+        <VBox styleClass="main-container" >
             <padding>
                 <Insets bottom="100.0" left="0.0" right="0.0" top="0.0"/>
             </padding>
@@ -116,31 +115,26 @@
                 </VBox>
             </FlowPane>
 
-            <VBox fx:id="ongoingSection" alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+            <VBox fx:id="ongoingSection" alignment="CENTER" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="ONGOING AUCTIONS"/>
                 <FlowPane fx:id="ongoingAuctionsContainer"
-                          alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
-                          styleClass="auctions-list"/>
+                          alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"/>
             </VBox>
 
-            <VBox fx:id="upcomingSection" alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+            <VBox fx:id="upcomingSection" alignment="CENTER" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="UPCOMING AUCTIONS"/>
-                <FlowPane fx:id="upcomingAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0"
-                          maxWidth="Infinity"
-                          styleClass="auctions-list"/>
+                <FlowPane fx:id="upcomingAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"/>
                 <VBox.margin>
                     <Insets top="30.0"/>
                 </VBox.margin>
             </VBox>
 
-            <VBox fx:id="endedSection" alignment="CENTER" styleClass="auctions-section" VBox.vgrow="ALWAYS">
+            <VBox fx:id="endedSection" alignment="CENTER" VBox.vgrow="ALWAYS">
                 <Label styleClass="section-title, gray-title" text="ENDED AUCTIONS"/>
-                <FlowPane fx:id="endedAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"
-                          styleClass="auctions-list"/>
+                <FlowPane fx:id="endedAuctionsContainer" alignment="CENTER" hgap="20.0" vgap="25.0" maxWidth="Infinity"/>
                 <VBox.margin>
                     <Insets top="30.0"/>
                 </VBox.margin>
             </VBox>
         </VBox>
-    </content>
 </ScrollPane>

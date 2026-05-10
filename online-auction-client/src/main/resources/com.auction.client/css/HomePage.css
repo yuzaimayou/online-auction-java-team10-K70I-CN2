@@ -7,15 +7,12 @@
 .main-container {
     -fx-background-color: white;
     -fx-padding: 0;
+    -fx-alignment: TOP_CENTER;
+    -fx-max-width: Infinity;
 }
 
 
 /* --- Explore Categories Section --- */
-.categories-section {
-    -fx-background-color: white;
-    -fx-padding: 30 0 40 0;
-}
-
 .section-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
@@ -131,6 +128,33 @@
 }
 
 /* Auction Card */
+/* Nội dung thông tin */
+.product-name {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1A1A1B;
+    -fx-pref-height: 55px;
+    -fx-min-height: 55px;
+    -fx-max-height: 55px;
+}
+
+/* Badge Trạng thái */
+.status-badge {
+    -fx-background-color: #E8F5E9;
+    -fx-text-fill: #2E7D32;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 10px;
+    -fx-background-radius: 5px;
+    -fx-max-width: 80px;
+    -fx-alignment: center;
+}
+
+.content-container {
+    -fx-padding: 10px;
+    -fx-spacing: 12px;
+}
+
 .auction-card {
     -fx-background-color: white;
     -fx-background-radius: 30px;
@@ -157,34 +181,6 @@
     -fx-min-height: 240px;
     -fx-mas-height: 280px;
     -fx-max-width: 240px;
-    -fx-alignment: center;
-}
-
-/* Nội dung thông tin */
-.content-container {
-    -fx-padding: 10px;
-    -fx-spacing: 12px;
-}
-
-.item-name {
-    -fx-font-size: 20px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1A1A1B;
-    -fx-pref-height: 55px;
-    -fx-min-height: 55px;
-    -fx-max-height: 55px;
-
-}
-
-/* Badge Trạng thái */
-.status-badge {
-    -fx-background-color: #E8F5E9;
-    -fx-text-fill: #2E7D32;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 4px 10px;
-    -fx-background-radius: 5px;
-    -fx-max-width: 80px;
     -fx-alignment: center;
 }
 

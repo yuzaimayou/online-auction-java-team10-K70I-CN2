@@ -1,0 +1,269 @@
+
+.back-btn {
+    -fx-background-color: transparent;
+     -fx-border-color: transparent;
+    -fx-text-fill: #111111;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+
+.back-btn:hover {
+    -fx-text-fill: #2563eb;
+
+}
+
+
+.sub-label {
+    -fx-text-fill: #7a828a;
+    -fx-font-size: 13px;
+}
+
+.section-header {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+}
+
+.amount-toggle {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-padding: 10 20;
+    -fx-min-width: 100;
+    -fx-cursor: hand;
+}
+
+.amount-toggle:selected {
+    -fx-border-color: #2f80ed;
+    -fx-background-color: #f4f8ff;
+    -fx-text-fill: #2f80ed;
+}
+
+.input-container {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-padding: 5 15;
+}
+
+.price-input {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.payment-option {
+    -fx-padding: 15;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.selected-option {
+    -fx-border-color: #2f80ed;
+}
+
+.payment-name { -fx-font-weight: bold; -fx-font-size: 14px; }
+.payment-desc { -fx-text-fill: #7a828a; -fx-font-size: 12px; }
+
+.confirm-deposit-btn {
+    -fx-background-color: #2f80ed;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.content-title {
+    -fx-font-weight: 800;
+    -fx-text-fill: #1976f3;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold; -
+}
+
+.sub-label {
+    -fx-text-fill: #7a828a;
+    -fx-font-size: 13px;
+}
+
+.section-header {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+.back-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-padding: 5 12;
+    -fx-cursor: hand;
+}
+
+.amount-toggle {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-padding: 10 15;
+    -fx-cursor: hand;
+}
+
+.amount-toggle:selected {
+    -fx-border-color: #2f80ed;
+    -fx-background-color: #f4f8ff;
+    -fx-text-fill: #2f80ed;
+}
+
+.payment-option {
+    -fx-padding: 15;
+    -fx-border-color: #eef1f5;
+    -fx-border-radius: 10;
+    -fx-background-color: white;
+    -fx-cursor: hand;
+}
+
+.selected-option {
+    -fx-border-color: #2f80ed;
+    -fx-border-width: 1.5;
+}
+
+.payment-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.zp-icon {
+    -fx-background-color: #00be00;
+    -fx-text-fill: white;
+    -fx-padding: 2 5;
+    -fx-background-radius: 4;
+    -fx-font-weight: bold;
+}
+
+.confirm-btn {
+    -fx-background-color: #2f80ed;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.confirm-btn:hover {
+    -fx-background-color: #1e6bd6;
+}
+/* Container chính */
+.deposit-container {
+    -fx-background-color: #ffffff;
+}
+
+/* Nút Back to Wallet */
+.btn-back-wallet {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 15;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.btn-back-wallet:hover {
+    -fx-background-color: #f8f9fa;
+}
+
+/* Tiêu đề */
+.main-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #007bff;
+}
+.sub-description {
+    -fx-text-fill: #6c757d;
+    -fx-font-size: 14px;
+}
+.step-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529;
+}
+
+/* ToggleButtons số tiền */
+.amount-btn {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 20;
+    -fx-text-fill: #495057;
+    -fx-cursor: hand;
+    -fx-min-width: 110;
+}
+.amount-btn:selected {
+    -fx-border-color: #007bff;
+    -fx-background-color: #e7f1ff;
+    -fx-text-fill: #007bff;
+    -fx-font-weight: bold;
+}
+
+/* Input TextField */
+.field-title {
+    -fx-font-size: 13px;
+    -fx-text-fill: #495057;
+}
+.input-amount-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 6;
+    -fx-padding: 12 40 12 15;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.currency-suffix {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529;
+}
+
+/* Thẻ thanh toán */
+.payment-card {
+    -fx-padding: 15;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e9ecef;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+.selected-card {
+    -fx-border-color: #007bff;
+    -fx-border-width: 1.5;
+}
+.payment-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #212529;
+}
+.payment-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6c757d;
+}
+
+/* Nút xác nhận cuối cùng */
+.btn-confirm-main {
+    -fx-background-color: #007bff;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+.btn-confirm-main:hover {
+    -fx-background-color: #0069d9;
+}
+
+.custom-separator {
+    -fx-padding: 10 0;
+}
