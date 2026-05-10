@@ -124,16 +124,20 @@ public class MyAuctionsController {
 
     // Event handlers
     @FXML
-    public void handleSwitchToItemEdit(ActionEvent event) {
+    public void handleSwitchToItemEdit(Item selectedItem) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml")
             );
             Parent root = loader.load();
+
+            ItemEditController editController = loader.getController();
+            editController.setItemId(selectedItem.getId());
+
             SettingController.targetTab = "MyAuctions";
 
-            Node sourceNode = (Node) event.getSource();
-            Scene currentScene = sourceNode.getScene();
+
+            Scene currentScene = auctionTable.getScene();
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);

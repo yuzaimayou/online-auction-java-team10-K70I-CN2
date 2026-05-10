@@ -39,6 +39,7 @@ public class ItemEditController {
     @FXML private Label lblAuctionTime;
     @FXML private Label lblAlert;
 
+    @FXML private Label lblItemCategory;
     @FXML private TextField txtItemName;
     @FXML private ToggleGroup categoryGroup;
     @FXML private TextArea txtItemDesc;
@@ -57,23 +58,8 @@ public class ItemEditController {
     private Item currentItem;
     private final ItemsService itemsService = ItemsService.getInstance();
     private final Gson gson = GsonUtil.getInstance();
-
-    @FXML
-    public void initialize() {
-        setupTimeComboBoxes();
-        setupAutoGrowTextArea();
-
-        // Listener để cập nhật tiêu đề Header khi người dùng gõ tên mới
-        txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (lblItemTitle != null) lblItemTitle.setText(newVal);
-        });
-    }
-
-    /**
-     * Quan trọng: Gọi hàm này từ Controller trang danh sách sản phẩm
-     */
+    private String itemId;
     public void setItemId(String id) {
-        if (id == null || id.isEmpty()) return;
         this.currentItemId = id;
 
         HttpClient httpClient = HttpClient.newHttpClient();
@@ -87,58 +73,92 @@ public class ItemEditController {
                 .thenAccept(responseBody -> {
                     ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
                     if ("success".equals(response.getStatus()) && response.getData() != null) {
+                        // Chuyển dữ liệu Json thành Object Item
                         Item item = gson.fromJson(response.getData(), Item.class);
-                        // Đẩy việc cập nhật UI lên JavaFX Thread
+
+                        this.currentItem = item;
                         Platform.runLater(() -> setEditData(item));
                     }
                 })
                 .exceptionally(ex -> {
                     ex.printStackTrace();
-                    showMessage("Error loading item data.", Color.RED);
                     return null;
                 });
     }
 
-    public void setEditData(Item item) {
-        if (item == null) return;
-        this.currentItem = item;
-        this.currentItemId = item.getId();
+    @FXML
+    public void initialize() {
+        setupTimeComboBoxes();
+        setupAutoGrowTextArea();
 
-        // 1. Header & TextFields
-        lblItemTitle.setText(item.getName());
-        lblStatusBadge.setText(item.getStatus().toString());
+        // Listener để cập nhật tiêu đề Header khi người dùng gõ tên mới
+        txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (lblItemTitle != null) lblItemTitle.setText(newVal);
+        });
+        if (categoryGroup != null) {
+            categoryGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && lblItemCategory != null) {
+                    lblItemCategory.setText(newVal.getUserData().toString());
+                }
+            });
+        }
+    }
+
+    /**
+     * Quan trọng: Gọi hàm này từ Controller trang danh sách sản phẩm
+     */
+
+    private void setEditData(Item item) {
+        if (item == null) return;
+
+        // 1. Thông tin text
         txtItemName.setText(item.getName());
+        lblItemTitle.setText(item.getName());
         txtItemDesc.setText(item.getDescription());
         txtInitPrice.setText(String.format("%.0f", item.getStartingPrice()));
         txtBidStep.setText(String.format("%.0f", item.getBidStep()));
+        lblStatusBadge.setText(item.getStatus().toString());
 
-        // 2. Images (Giống ItemPage)
+        if (lblItemCategory != null) {
+            lblItemCategory.setText(item.getCategory());
+        }
+        updateCategorySelection(item.getCategory());
+
+        // 4. Thời gian (DatePicker & ComboBox)
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        if (item.getStartTime() != null) {
+            startDateP.setValue(item.getStartTime().toLocalDate());
+            cbStartTime.setValue(item.getStartTime().toLocalTime().format(timeFormatter));
+            lblAuctionTime.setText("Auction starts at: " + item.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        }
+
+        if (item.getEndTime() != null) {
+            endDateP.setValue(item.getEndTime().toLocalDate());
+            cbEndTime.setValue(item.getEndTime().toLocalTime().format(timeFormatter));
+        }
+
+        // 5. Hình ảnh
         displayImages(item);
+    }
 
-        // 3. Category
-        if (item.getCategory() != null) {
-            for (Toggle toggle : categoryGroup.getToggles()) {
-                if (toggle.getUserData() != null &&
-                        toggle.getUserData().toString().equalsIgnoreCase(item.getCategory())) {
+    /**
+     * Logic để tự động chọn ToggleButton tương ứng với Category của Item
+     */
+    private void updateCategorySelection(String categoryName) {
+        if (categoryName == null || categoryGroup == null) return;
+
+        for (Toggle toggle : categoryGroup.getToggles()) {
+            if (toggle instanceof ToggleButton) {
+                // userData được set trong FXML (Fashion, Electronics,...)
+                String userData = (String) toggle.getUserData();
+                if (categoryName.equalsIgnoreCase(userData)) {
                     categoryGroup.selectToggle(toggle);
                     break;
                 }
             }
         }
-
-        // 4. Time
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        if (item.getStartTime() != null) {
-            startDateP.setValue(item.getStartTime().toLocalDate());
-            cbStartTime.setValue(item.getStartTime().toLocalTime().format(timeFormatter));
-            lblAuctionTime.setText("Starts at: " + item.getStartTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-        }
-        if (item.getEndTime() != null) {
-            endDateP.setValue(item.getEndTime().toLocalDate());
-            cbEndTime.setValue(item.getEndTime().toLocalTime().format(timeFormatter));
-        }
     }
-
     private void displayImages(Item item) {
         imageContainer.getChildren().clear();
         List<String> images = item.getImagesPath();
@@ -176,37 +196,81 @@ public class ItemEditController {
             String desc = txtItemDesc.getText().trim();
             Toggle selectedCat = categoryGroup.getSelectedToggle();
 
-            if (isAnyNull(name, desc, selectedCat, startDateP.getValue(), cbStartTime.getValue())) {
-                showMessage("Please fill all required fields.", Color.RED);
+            // 1. Kiểm tra bỏ trống
+            if (isAnyNull(name, desc, selectedCat, startDateP.getValue(), cbStartTime.getValue(), endDateP.getValue(), cbEndTime.getValue())) {
+                showMessage("Vui lòng điền đầy đủ các thông tin bắt buộc.", Color.RED);
                 return;
             }
 
+            // 2. Parse thời gian và Validate quy tắc (Start Time < End Time)
             LocalDateTime start = LocalDateTime.of(startDateP.getValue(), LocalTime.parse(cbStartTime.getValue()));
             LocalDateTime end = LocalDateTime.of(endDateP.getValue(), LocalTime.parse(cbEndTime.getValue()));
+            LocalDateTime now = LocalDateTime.now();
 
+            if (!start.isBefore(end)) {
+                showMessage("Thời gian kết thúc (End Time) phải sau thời gian bắt đầu.", Color.RED);
+                return;
+            }
+            if (end.isBefore(now)) {
+                showMessage("Thời gian kết thúc không thể ở trong quá khứ.", Color.RED);
+                return;
+            }
+
+            // 3. Parse tiền và Validate (Giá > 0)
+            double initPrice = Double.parseDouble(txtInitPrice.getText());
+            double bidStep = Double.parseDouble(txtBidStep.getText());
+
+            if (initPrice <= 0 || bidStep <= 0) {
+                showMessage("Giá khởi điểm và Bước giá phải lớn hơn 0.", Color.RED);
+                return;
+            }
+
+            // 4. Đóng gói Payload
             ItemPayload payload = new ItemPayload(
                     name,
                     selectedCat.getUserData().toString(),
                     desc,
-                    null, // Đã sửa: Truyền lại list ảnh của sản phẩm
+                    new java.util.ArrayList<String[]>(),
                     start,
                     end,
-                    Double.parseDouble(txtInitPrice.getText()),
-                    Double.parseDouble(txtBidStep.getText()),
+                    initPrice,
+                    bidStep,
                     currentItemId
             );
 
+            // 5. Khóa nút Save và Hiển thị trạng thái đang xử lý
+            Button btnSave = (Button) event.getSource();
+            btnSave.setDisable(true);
+            showMessage("Đang lưu thay đổi...", Color.BLUE);
+
+            // 6. Gửi request cập nhật lên Server
             itemsService.updateItem(gson.toJson(payload), currentItemId)
                     .thenAccept(res -> {
-                        if ("success".equals(res.getStatus())) {
-                            showMessage("Update Successful!", Color.GREEN);
-                            new PauseTransition(Duration.seconds(1)).setOnFinished(e -> handleClose());
-                        } else {
-                            showMessage(res.getMessage(), Color.RED);
-                        }
+                        Platform.runLater(() -> {
+                            btnSave.setDisable(false); // Mở khóa nút
+                            if ("success".equals(res.getStatus())) {
+                                showMessage("Cập nhật thành công!", Color.GREEN);
+                                // Tự động thoát về MyAuctionsPage sau 1 giây
+                                new PauseTransition(Duration.seconds(1)).setOnFinished(e -> handleClose());
+                            } else {
+                                showMessage("Lỗi từ server: " + res.getMessage(), Color.RED);
+                            }
+                        });
+                    })
+                    .exceptionally(ex -> {
+                        ex.printStackTrace();
+                        Platform.runLater(() -> {
+                            btnSave.setDisable(false);
+                            showMessage("Lỗi kết nối đến máy chủ. Vui lòng thử lại.", Color.RED);
+                        });
+                        return null;
                     });
+
+        } catch (NumberFormatException e) {
+            showMessage("Giá tiền và Bước giá phải là số hợp lệ.", Color.RED);
         } catch (Exception e) {
-            showMessage("Invalid input. Please check prices and dates.", Color.RED);
+            e.printStackTrace();
+            showMessage("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.", Color.RED);
         }
     }
 

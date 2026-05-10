@@ -34,7 +34,7 @@ public class MyAuctionsTableHelper {
             TableColumn<Item, String> priceCol,
             TableColumn<Item, LocalDateTime> endTimeCol,
             TableColumn<Item, Item> actionCol,
-            EventHandler<ActionEvent> onEditAction,
+            Consumer<Item> onEditAction,
             Consumer<Item> onDeleteAction) {
 
         //  TẮT TÍNH NĂNG SORT
@@ -182,7 +182,11 @@ public class MyAuctionsTableHelper {
                     Button editBtn = new Button("Edit");
                     editBtn.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
                     editBtn.getStyleClass().add("action-btn-edit");
-                    editBtn.setOnAction(onEditAction);
+                    editBtn.setOnAction(e -> {
+                        if (onEditAction != null) {
+                            onEditAction.accept(item);
+                        }
+                    });
 
                     Button viewBtn = new Button("View");
                     viewBtn.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
