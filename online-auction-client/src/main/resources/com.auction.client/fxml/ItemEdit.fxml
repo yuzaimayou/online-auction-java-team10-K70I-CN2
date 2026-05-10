@@ -107,7 +107,7 @@
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                                     <Label style="-fx-text-fill: #64748B; -fx-font-size: 16px;" text="🏷"/>
-                                    <Label styleClass="info-text-bold" text="Electronics"/>
+                                    <Label fx:id="lblItemCategory" styleClass="info-text-bold" text="Electronics"/>
                                 </HBox>
                                 <Label fx:id="lblAlert" styleClass="alert-bar"
                                        text="!  You just can edit this item before the auction starts" wrapText="true"/>
