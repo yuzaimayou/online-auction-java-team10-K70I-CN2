@@ -1,0 +1,138 @@
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 10, 0, 0, 2);
+}
+
+.content-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1976f3;
+}
+
+.content-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #7a828a;
+}
+
+.filter-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 6;
+    -fx-padding: 6 15;
+    -fx-text-fill: #444;
+    -fx-cursor: hand;
+}
+
+.search-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 8;
+    -fx-padding: 10;
+    -fx-font-size: 14px;
+}
+
+.user-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.user-table .column-header-background {
+    -fx-background-color: #f8f9fb;
+}
+
+.user-table .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 45;
+}
+
+.user-table .column-header .label {
+    -fx-text-fill: #7a828a;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.user-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: #f1f1f1;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 40;
+}
+/* Ẩn các hàng trống không có dữ liệu */
+.user-table .table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.user-table .table-row-cell:empty .table-cell {
+    -fx-border-color: transparent;
+}
+
+/* Custom ScrollBar - Giúp bảng cuộn trông hiện đại hơn */
+.user-table .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.user-table .scroll-bar:vertical .thumb {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 10;
+}
+
+/* Status Badges */
+.status-active {
+    -fx-background-color: #e6f7ef;
+    -fx-text-fill: #27ae60;
+    -fx-padding: 4 10;
+    -fx-background-radius: 4;
+}
+
+.status-suspended {
+    -fx-background-color: #ffebee;
+    -fx-text-fill: #eb5757;
+    -fx-padding: 4 10;
+    -fx-background-radius: 4;
+}
+
+/* Ban Button */
+.ban-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #ffebee;
+    -fx-text-fill: #eb5757;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+/* Chỉnh cục lăn  */
+.scroll-pane .scroll-bar:vertical {
+    -fx-pref-width: 8px;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0em;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #c1c1c1;
+    -fx-background-radius: 10px;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #a8a8a8;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-button,
+.scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0px;
+    -fx-padding: 0;
+}
+
+.scroll-pane .scroll-bar:vertical .increment-arrow,
+.scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}

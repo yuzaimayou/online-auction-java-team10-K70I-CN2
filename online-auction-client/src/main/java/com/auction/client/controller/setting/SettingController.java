@@ -25,6 +25,8 @@ public class SettingController {
     private static final String PATH_MY_AUCTIONS = "/com.auction.client/fxml/setting/MyAuctionsPage.fxml";
     private static final String PATH_HISTORY = "/com.auction.client/fxml/HistoryBidPage.fxml";
     private static final String PATH_LOGIN = "/com.auction.client/fxml/authenticator/Login.fxml";
+    private static final String PATH_USERS_MANAGEMENT = "/com.auction.client/fxml/setting/UserManagementPage.fxml";
+    private static final String PATH_AUCTIONS_MANAGEMENT = "/com.auction.client/fxml/setting/AuctionsManagementPage.fxml";
 
     // State
     public static String targetTab = "ProfileInfo";
@@ -112,15 +114,17 @@ public class SettingController {
     }
     @FXML
     public void handleProfileInfo(ActionEvent event) {
-        loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
+        loadPage(PATH_PROFILE);;
     }
     @FXML
     public void handleMyAuctions(ActionEvent event) {
-        loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
+        loadPage(PATH_MY_AUCTIONS);
     }
     @FXML
     public void handleHistoryBid(ActionEvent event) {
     }
+
+
     @FXML
     private void handleLogout(ActionEvent event) {
         UserSession.getInstance().cleanUserSession();
@@ -142,8 +146,11 @@ public class SettingController {
     }
     public void handleChangePassword(ActionEvent actionEvent) {
     }
+    @FXML
     public void handleUsersManagement(ActionEvent actionEvent) {
+        loadPage(PATH_USERS_MANAGEMENT);
     }
     public void handleAuctionsManagement(ActionEvent actionEvent) {
+        loadPage(PATH_AUCTIONS_MANAGEMENT);
     }
 }
