@@ -77,6 +77,20 @@ public class ClientHandler implements Runnable {
 
             }
         } catch (IOException e) {
+            System.out.println("Client disconnected: " + username);
+        } finally {
+            closeResources();
+        }
+    }
+
+    private void closeResources() {
+        try {
+            com.auction.server.MainServer.activeClients.remove(this);
+            roomManager.removeClientFromAllRooms(this);
+            if (in != null) in.close();
+            if (out != null) out.close();
+            if (clientSocket != null) clientSocket.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -86,9 +100,9 @@ public class ClientHandler implements Runnable {
             RoomPayload roomPayload = gson.fromJson(jsonPayload, RoomPayload.class);
             this.username = roomPayload.getToken();
             System.out.println("UserId: " + roomPayload.getToken());
-            System.out.println("ProductId: " + roomPayload.getProductId());
+            System.out.println("ItemId: " + roomPayload.getItemId());
 
-            currentRoomId = roomPayload.getProductId();
+            currentRoomId = roomPayload.getItemId();
             roomManager.joinRoom(currentRoomId, this);
             responseMessage.setStatus("join_room_success");
             responseMessage.setMessage("Joined room successfully");

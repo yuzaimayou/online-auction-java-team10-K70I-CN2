@@ -5,17 +5,16 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox maxWidth="Infinity" styleClass="header-section" stylesheets="@../css/NavBar.css"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.NavBarController">
-    <HBox alignment="CENTER" styleClass="top-bar">
+    <HBox styleClass="top-bar">
 
         <HBox alignment="CENTER_LEFT" spacing="25" HBox.hgrow="ALWAYS">
-            <HBox onMouseClicked="#handleSwitchToHome" style="-fx-cursor: hand" alignment="CENTER_LEFT" spacing="10"
+            <HBox onMouseClicked="#handleSwitchToHome" spacing="10"
                   styleClass="logo-container">
                 <Label styleClass="logo-icon" text="⚖"/>
                 <Label styleClass="logo-text" text="AUCTION"/>
@@ -25,21 +24,21 @@
             </HBox>
         </HBox>
 
-        <HBox alignment="CENTER" maxWidth="800.0" prefWidth="600.0" styleClass="search-bar" HBox.hgrow="ALWAYS">
+        <HBox styleClass="search-bar" HBox.hgrow="ALWAYS">
             <Label styleClass="search-icon" text="🔍"/>
             <TextField fx:id="searchField" promptText="Search for anything" styleClass="search-input" HBox.hgrow="ALWAYS"/>
         </HBox>
 
         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" onMouseClicked="#handleSwitchToSetting" spacing="12" style="-fx-cursor: hand">
-                <StackPane styleClass="profile-icon">
-                    <ImageView fx:id="profileImage" fitHeight="38.0" fitWidth="38.0" preserveRatio="true">
+                <StackPane styleClass="avatar-container">
+                    <ImageView fitHeight="28.0" fitWidth="28.0" preserveRatio="true">
                         <image>
                             <Image url="@../assets/default_avatar.png"/>
                         </image>
                     </ImageView>
                 </StackPane>
-                <Label fx:id="userName" styleClass="profile-name" text="User"/>
+                <Label fx:id="lblUserName" styleClass="profile-name" text="User"/>
             </HBox>
         </HBox>
     </HBox>

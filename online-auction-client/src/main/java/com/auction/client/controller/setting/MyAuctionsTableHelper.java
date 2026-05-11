@@ -1,7 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.util.ClientImageUtil;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
@@ -28,7 +28,7 @@ public class MyAuctionsTableHelper {
      * @param onDeleteAction Cầu nối để gọi hàm Xóa bên Controller (THÊM MỚI CHỖ NÀY)
      */
     public static void setupTableColumns(
-            TableColumn<Item, Item> productCol,
+            TableColumn<Item, Item> itemCol,
             TableColumn<Item, String> categoryCol,
             TableColumn<Item, String> statusCol,
             TableColumn<Item, String> priceCol,
@@ -38,16 +38,16 @@ public class MyAuctionsTableHelper {
             Consumer<Item> onDeleteAction) {
 
         //  TẮT TÍNH NĂNG SORT
-        productCol.setSortable(false);
+        itemCol.setSortable(false);
         categoryCol.setSortable(false);
         statusCol.setSortable(false);
         priceCol.setSortable(false);
         endTimeCol.setSortable(false);
         actionCol.setSortable(false);
 
-        // PRODUCT
-        productCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
-        productCol.setCellFactory(param -> new TableCell<>() {
+        // ITEM
+        itemCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
+        itemCol.setCellFactory(param -> new TableCell<>() {
             @Override
             protected void updateItem(Item item, boolean empty) {
                 super.updateItem(item, empty);
@@ -64,7 +64,7 @@ public class MyAuctionsTableHelper {
                     // GỌI HÀM TẢI ẢNH CỦA BẠN
                     // Tham số "images" là tên thư mục chứa ảnh trên Server
                     if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
-                        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView);
+                        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView, 200, 200);
                     }
 
                     // Tên sản phẩm

@@ -5,16 +5,18 @@
 
 .top-bar {
     -fx-padding: 0 0 0 0;
+    -fx-alignment: CENTER;
 }
 
 /* khung chứa logo và tên*/
 .logo-container {
     -fx-padding: 0 30 0 0;
+    -fx-cursor: hand
 }
 
 .logo-icon {
     -fx-font-size: 32px;
-    -fx-alignment: CENTER;
+    -fx-alignment: CENTER_LEFT;
     -fx-text-fill: #FBBF24;
 }
 
@@ -43,26 +45,15 @@
     -fx-text-fill: #FBBF24;
 }
 
-/*CATEGORY*/
-.categories-dropdown-active {
-    -fx-text-fill: #FBBF24;
-    -fx-border-color: #FBBF24;
-    -fx-border-width: 0 0 3 0;
-}
-
-.categories-dropdown {
-    -fx-font-size: 20px;
-    -fx-font-weight: bold;
-    -fx-text-fill: white;
-    -fx-cursor: hand;
-}
-
 /* Thanh tìm kiếm */
 .search-bar {
     -fx-background-color: #f1f3f5;
     -fx-background-radius: 20px;
     -fx-padding: 5 15 5 15;
     -fx-min-width: 300px;
+    -fx-alignment: center;
+    -fx-max-width: 800px;
+    -fx-pref-width: 600px;
 }
 
 .search-icon {
@@ -78,23 +69,20 @@
 }
 
 /* Profile */
-.profile-icon-container {
-    -fx-background-color: #0056b3;
-    -fx-background-radius: 50%;
-    -fx-min-width: 35px;
-    -fx-min-height: 35px;
-    -fx-max-width: 35px;
-    -fx-max-height: 35px;
-}
-
-.profile-icon {
-    -fx-text-fill: black;
-    -fx-font-size: 18px;
-}
-
 .profile-name {
     -fx-text-fill: white;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
+}
+
+.avatar-container {
+    -fx-background-color: #2f80ed;
+    -fx-background-radius: 999;
+    -fx-pref-height: 40px;
+    -fx-pref-width: 40px;
+    -fx-min-height: 40px;
+    -fx-min-width: 40px;
+    -fx-max-width: 40px;
+    -fx-max-height: 40px;
 }
 

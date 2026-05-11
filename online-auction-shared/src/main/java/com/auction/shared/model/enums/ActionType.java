@@ -3,8 +3,8 @@ package com.auction.shared.model.enums;
 public enum ActionType {
     LOGIN,
     REGISTER,
-    ADDPRODUCT,
-    GETDATAPRODUCT,
+    ADDITEM,
+    GETDATAITEM,
     BID,
     JOIN_ROOM,
     LEAVE_ROOM,

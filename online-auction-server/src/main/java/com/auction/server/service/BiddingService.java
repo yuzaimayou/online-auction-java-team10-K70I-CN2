@@ -2,7 +2,7 @@ package com.auction.server.service;
 
 import com.auction.shared.model.auction.Auction;
 import com.auction.shared.model.auction.BidTransaction;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.model.account.User;
 
 import java.time.LocalDateTime;

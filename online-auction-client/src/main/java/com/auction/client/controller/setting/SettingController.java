@@ -1,14 +1,18 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.Admin;
+import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -17,6 +21,8 @@ import java.io.IOException;
 public class SettingController {
 
     public static String targetTab = "ProfileInfo";
+
+    private static SettingController instance;
 
     @FXML
     private VBox dynamicContent;
@@ -28,15 +34,41 @@ public class SettingController {
     private ToggleButton myAuctionsBtn;
     @FXML
     private ToggleButton historyBidBtn;
+    @FXML
+    private Label lblUserName;
+
+    // ĐÃ THÊM: Map với FXML để quản lý ẩn/hiện
+    @FXML
+    private VBox adminSection;
+    @FXML
+    private StackPane adminSignal;
+
+    public SettingController() { instance = this; }
+    public static SettingController getInstance() { return instance; }
 
     @FXML
     public void initialize() {
+        User currentUser = UserSession.getInstance().getLoggedInUser();
+        if (currentUser != null && lblUserName != null) {
+            lblUserName.setText(currentUser.getUsername());
+            // Hiển thị Username hoặc FirstName tùy theo model của bạn
+            boolean isAdmin = currentUser.getUsername().equalsIgnoreCase("admin");
+
+            if (adminSignal != null) {
+                adminSignal.setVisible(isAdmin);
+                adminSignal.setManaged(isAdmin);
+            }
+
+            if (adminSection != null) {
+                adminSection.setVisible(isAdmin);
+                adminSection.setManaged(isAdmin);
+            }
+        }
         menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 menuGroup.selectToggle(oldToggle);
             }
         });
-
         if ("MyAuctions".equals(targetTab)) {
             myAuctionsBtn.setSelected(true);
             loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
@@ -49,6 +81,7 @@ public class SettingController {
         targetTab = "ProfileInfo";
     }
 
+    public void setDynamicContent(String fxmlPath) { loadPage(fxmlPath); }
     private void loadPage(String fxmlPath) {
         dynamicContent.getChildren().clear();
         try {
@@ -95,5 +128,17 @@ public class SettingController {
             System.err.println("Không tìm thấy file Login.fxml!");
             e.printStackTrace();
         }
+    }
+
+    public void handleMyBids(ActionEvent actionEvent) {
+    }
+
+    public void handleChangePassword(ActionEvent actionEvent) {
+    }
+
+    public void handleUsersManagement(ActionEvent actionEvent) {
+    }
+
+    public void handleAuctionsManagement(ActionEvent actionEvent) {
     }
 }

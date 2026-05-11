@@ -20,19 +20,32 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0.15, 0, 2);
 }
 
+/*Setting*/
 .avatar-outer {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #cfd5df;
-    -fx-border-width: 1.2;
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-    -fx-alignment: center;
-}
+     -fx-background-color: #ffffff;
+     -fx-border-color: #cfd5df;
+     -fx-border-width: 1.2;
+     -fx-border-radius: 999;
+     -fx-background-radius: 999;
+     -fx-alignment: center;
+     -fx-pref-height: 92px;
+     -fx-pref-width: 92px;
+     -fx-min-height: 92px;
+     -fx-min-width: 92px;
+     -fx-max-width: 92px;
+     -fx-max-height: 92px;
+ }
 
 .avatar-inner {
-    -fx-background-color: #2f80ed;
-    -fx-background-radius: 999;
-}
+     -fx-background-color: #2f80ed;
+     -fx-background-radius: 999;
+     -fx-pref-height: 64px;
+     -fx-pref-width: 64px;
+     -fx-min-height: 64px;
+     -fx-min-width: 64px;
+     -fx-max-width: 64px;
+     -fx-max-height: 64px;
+ }
 
 .user-name {
     -fx-font-size: 15px;
@@ -117,4 +130,91 @@
     -fx-font-size: 14px;
     -fx-font-weight: 700;
     -fx-text-fill: #1f73ff;
+}
+
+/* --- WALLET UI COMPONENTS --- */
+
+.wallet-card {
+    -fx-padding: 20;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-spacing: 4;
+}
+
+.wallet-label {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+}
+
+.wallet-sub {
+    -fx-font-size: 12px;
+    -fx-text-fill: #7a828a;
+}
+
+.wallet-amount {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-padding: 10 0 0 0;
+}
+
+/* Colors for Available Balance */
+.available-bg {
+    -fx-background-color: #f6fbf7;
+    -fx-border-color: #e2f0e5;
+}
+.available-text { -fx-text-fill: #27ae60; }
+
+/* Colors for Frozen Balance */
+.frozen-bg {
+    -fx-background-color: #fffaf2;
+    -fx-border-color: #fdf0d5;
+}
+.frozen-text { -fx-text-fill: #f39c12; }
+
+/* Colors for Total Balance */
+.total-bg {
+    -fx-background-color: #f4f8ff;
+    -fx-border-color: #e2ecff;
+}
+.total-text { -fx-text-fill: #2f80ed; }
+
+/* Loại bỏ border của ScrollPane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-viewport-fill: transparent;
+}
+
+/* Ẩn thanh cuộn ngang nếu không cần thiết */
+.scroll-pane .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-padding: -10;
+}
+
+
+/* Nút nạp tiền */
+.deposit-btn {
+    -fx-background-color: #2f63e0; /* Màu xanh đậm giống ảnh */
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18 8 18;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-border-color: transparent; /* Đảm bảo không có viền */
+    -fx-alignment: CENTER;
+}
+
+.deposit-btn:hover {
+    -fx-background-color: #2651b8; /* Hiệu ứng khi di chuột vào */
+}
+
+.deposit-btn:pressed {
+    -fx-background-color: #1e3f8f;
+}
+
+/* Tùy chỉnh khoảng cách cho Header ví */
+.deposit-btn .label {
+    -fx-padding: 0 5 0 0; /* Khoảng cách giữa icon và chữ */
 }
