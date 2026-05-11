@@ -4,27 +4,29 @@ import com.auction.shared.model.auction.Auction;
 import com.auction.shared.model.auction.BidTransaction;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
 
 /**
- * Service quản lý lịch sử bid và dữ liệu cho Price Curve
+ * Service quan ly lich su bid va du lieu cho Price Curve
  * Requirement 3.2.5: Bid History Visualization - Realtime Price Curve
  */
 public class BidHistoryService {
-    private BiddingService biddingService;
+    private final BiddingService biddingService;
 
     public BidHistoryService(BiddingService biddingService) {
         this.biddingService = biddingService;
     }
 
     /**
-     * Requirement 3.2.5: Lấy dữ liệu cho Price Curve
-     * Trục X: Thời gian (timestamp)
-     * Trục Y: Giá đấu hiện tại
+     * Requirement 3.2.5: Lay du lieu cho Price Curve
+     * Truc X: Thoi gian (timestamp)
+     * Truc Y: Gia dau hien tai
      */
     public List<PriceCurvePoint> getPriceCurveData(String auctionId) throws Exception {
         Auction auction = biddingService.getAuction(auctionId);
-        List<BidTransaction> bidHistory = auction.getBidHistory();
+        List<BidTransaction> bidHistory = new ArrayList<>(auction.getBidHistory());
 
         List<PriceCurvePoint> curveData = new ArrayList<>();
 
@@ -46,31 +48,11 @@ public class BidHistoryService {
     }
 
     /**
-     * Model cho Price Curve data point
-     */
-    public static class PriceCurvePoint {
-        public LocalDateTime timestamp;
-        public double price;
-        public String bidderId;
-
-        public PriceCurvePoint(LocalDateTime timestamp, double price, String bidderId) {
-            this.timestamp = timestamp;
-            this.price = price;
-            this.bidderId = bidderId;
-        }
-
-        @Override
-        public String toString() {
-            return timestamp + " | Price: VND" + price + " | Bidder: " + bidderId;
-        }
-    }
-
-    /**
-     * Requirement 3.2.5: Lấy lịch sử bid chi tiết
+     * Requirement 3.2.5: Lay lich su bid chi tiet
      */
     public List<BidHistoryDetail> getBidHistoryDetailed(String auctionId) throws Exception {
         Auction auction = biddingService.getAuction(auctionId);
-        List<BidTransaction> bidHistory = auction.getBidHistory();
+        List<BidTransaction> bidHistory = new ArrayList<>(auction.getBidHistory());
 
         List<BidHistoryDetail> details = new ArrayList<>();
 
@@ -94,76 +76,143 @@ public class BidHistoryService {
     }
 
     /**
+     * Lay thong ke bid
+     */
+    public BidStatistics getBidStatistics(String auctionId) throws Exception {
+        Auction auction = biddingService.getAuction(auctionId);
+        List<BidTransaction> bidHistory = new ArrayList<>(auction.getBidHistory());
+
+        if (bidHistory.isEmpty()) {
+            return new BidStatistics(0, 0, 0, 0);
+        }
+
+        DoubleSummaryStatistics stats = bidHistory.stream()
+                .mapToDouble(BidTransaction::getBidAmount)
+                .summaryStatistics();
+
+        return new BidStatistics(
+                (int) stats.getCount(),
+                stats.getMin(),
+                stats.getMax(),
+                stats.getAverage()
+        );
+    }
+
+    /**
+     * Model cho Price Curve data point
+     */
+    public static class PriceCurvePoint {
+        private final LocalDateTime timestamp;
+        private final double price;
+        private final String bidderId;
+
+        public PriceCurvePoint(LocalDateTime timestamp, double price, String bidderId) {
+            this.timestamp = timestamp;
+            this.price = price;
+            this.bidderId = bidderId;
+        }
+
+        public LocalDateTime getTimestamp() {
+            return timestamp;
+        }
+
+        public double getPrice() {
+            return price;
+        }
+
+        public String getBidderId() {
+            return bidderId;
+        }
+
+        @Override
+        public String toString() {
+            return timestamp + " | Price: VND" + price + " | Bidder: " + bidderId;
+        }
+    }
+
+    /**
      * Model cho bid history detail
      */
     public static class BidHistoryDetail {
-        public int bidNumber;
-        public String bidderId;
-        public double bidAmount;
-        public double priceIncrease;
-        public LocalDateTime bidTime;
-        public boolean isAutoBid;
+        private final int bidNumber;
+        private final String bidderId;
+        private final double bidAmount;
+        private final double priceIncrease;
+        private final LocalDateTime bidTime;
+        private final boolean autoBid;
 
         public BidHistoryDetail(int bidNumber, String bidderId, double bidAmount,
-                                double priceIncrease, LocalDateTime bidTime, boolean isAutoBid) {
+                                double priceIncrease, LocalDateTime bidTime, boolean autoBid) {
             this.bidNumber = bidNumber;
             this.bidderId = bidderId;
             this.bidAmount = bidAmount;
             this.priceIncrease = priceIncrease;
             this.bidTime = bidTime;
-            this.isAutoBid = isAutoBid;
+            this.autoBid = autoBid;
+        }
+
+        public int getBidNumber() {
+            return bidNumber;
+        }
+
+        public String getBidderId() {
+            return bidderId;
+        }
+
+        public double getBidAmount() {
+            return bidAmount;
+        }
+
+        public double getPriceIncrease() {
+            return priceIncrease;
+        }
+
+        public LocalDateTime getBidTime() {
+            return bidTime;
+        }
+
+        public boolean isAutoBid() {
+            return autoBid;
         }
 
         @Override
         public String toString() {
             return String.format("Bid #%d | Bidder: %s | Amount: $%.2f | +$%.2f | %s %s",
                     bidNumber, bidderId, bidAmount, priceIncrease, bidTime,
-                    isAutoBid ? "(Auto)" : "");
+                    autoBid ? "(Auto)" : "");
         }
-    }
-
-    /**
-     * Lấy thống kê bid
-     */
-    public BidStatistics getBidStatistics(String auctionId) throws Exception {
-        Auction auction = biddingService.getAuction(auctionId);
-        List<BidTransaction> bidHistory = auction.getBidHistory();
-
-        if (bidHistory.isEmpty()) {
-            return new BidStatistics(0, 0, 0, 0);
-        }
-
-        int totalBids = bidHistory.size();
-        double minBid = bidHistory.stream()
-                .mapToDouble(BidTransaction::getBidAmount)
-                .min()
-                .orElse(0);
-        double maxBid = bidHistory.stream()
-                .mapToDouble(BidTransaction::getBidAmount)
-                .max()
-                .orElse(0);
-        double avgBid = bidHistory.stream()
-                .mapToDouble(BidTransaction::getBidAmount)
-                .average()
-                .orElse(0);
-
-        return new BidStatistics(totalBids, minBid, maxBid, avgBid);
     }
 
     /**
      * Model cho bid statistics
      */
     public static class BidStatistics {
-        public int totalBids;
-        public double minBid;
-        public double maxBid;
-        public double avgBid;
+        private final int totalBids;
+        private final double minBid;
+        private final double maxBid;
+        private final double avgBid;
 
         public BidStatistics(int totalBids, double minBid, double maxBid, double avgBid) {
             this.totalBids = totalBids;
             this.minBid = minBid;
             this.maxBid = maxBid;
             this.avgBid = avgBid;
+        }
+
+        public int getTotalBids() {
+            return totalBids;
+        }
+
+        public double getMinBid() {
+            return minBid;
+        }
+
+        public double getMaxBid() {
+            return maxBid;
+        }
+
+        public double getAvgBid() {
+            return avgBid;
         }
 
         @Override
