@@ -114,6 +114,7 @@
                         </VBox>
 
                         <VBox spacing="10">
+                            <VBox fx:id="bidControlsContainer" spacing="10">
                             <Label fx:id="minimumBidLabel" styleClass="bid-title"
                                    text="Your last bid ( min next: $ 0 )"/>
                             <HBox spacing="10">
@@ -134,6 +135,12 @@
                             <Button fx:id="btnAutoBidToggle" maxWidth="Infinity" onAction="#toggleAutoBidForm"
                                     styleClass="btn-auto-bid" text="Auto Bid">
                             </Button>
+
+                            </VBox>
+
+                            <StackPane fx:id="statusOverlay" managed="false" visible="false">
+                                <Label fx:id="statusMessageLabel" styleClass="status-message-label" wrapText="true" alignment="CENTER"/>
+                            </StackPane>
 
                             <VBox fx:id="autoBidForm" managed="false" spacing="15" styleClass="auto-bid-panel"
                                   visible="false">
