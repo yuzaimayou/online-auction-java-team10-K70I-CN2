@@ -12,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -19,13 +20,22 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class SettingController {
+    //Constants
+    private static final String PATH_PROFILE = "/com.auction.client/fxml/setting/ProfilePage.fxml";
+    private static final String PATH_MY_AUCTIONS = "/com.auction.client/fxml/setting/MyAuctionsPage.fxml";
+    private static final String PATH_HISTORY = "/com.auction.client/fxml/HistoryBidPage.fxml";
+    private static final String PATH_LOGIN = "/com.auction.client/fxml/authenticator/Login.fxml";
+    private static final String PATH_USERS_MANAGEMENT = "/com.auction.client/fxml/setting/UserManagementPage.fxml";
+    private static final String PATH_AUCTIONS_MANAGEMENT = "/com.auction.client/fxml/setting/AuctionsManagementPage.fxml";
 
+    // State
     public static String targetTab = "ProfileInfo";
-
     private static SettingController instance;
 
     @FXML
     private VBox dynamicContent;
+    @FXML
+    private Label lblUserName;
     @FXML
     private ToggleButton profileInfoBtn;
     @FXML
@@ -34,10 +44,7 @@ public class SettingController {
     private ToggleButton myAuctionsBtn;
     @FXML
     private ToggleButton historyBidBtn;
-    @FXML
-    private Label lblUserName;
 
-    // ĐÃ THÊM: Map với FXML để quản lý ẩn/hiện
     @FXML
     private VBox adminSection;
     @FXML
@@ -48,97 +55,102 @@ public class SettingController {
 
     @FXML
     public void initialize() {
+        setupUserContext();
+        setupToggleGroupBehavior();
+        initialNavigation();
+    }
+    private void setupUserContext() {
         User currentUser = UserSession.getInstance().getLoggedInUser();
-        if (currentUser != null && lblUserName != null) {
-            lblUserName.setText(currentUser.getUsername());
-            // Hiển thị Username hoặc FirstName tùy theo model của bạn
-            boolean isAdmin = currentUser.getUsername().equalsIgnoreCase("admin");
+        if (currentUser != null) {
+            if (lblUserName != null) {
+                lblUserName.setText(currentUser.getUsername());
+            }
+            boolean isAdmin = "admin".equalsIgnoreCase(currentUser.getUsername());
 
             if (adminSignal != null) {
                 adminSignal.setVisible(isAdmin);
                 adminSignal.setManaged(isAdmin);
             }
-
             if (adminSection != null) {
                 adminSection.setVisible(isAdmin);
                 adminSection.setManaged(isAdmin);
             }
         }
-        menuGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+    }
+    private void setupToggleGroupBehavior() {
+        menuGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 menuGroup.selectToggle(oldToggle);
             }
         });
-        if ("MyAuctions".equals(targetTab)) {
-            myAuctionsBtn.setSelected(true);
-            loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
-        } else if ("HistoryBid".equals(targetTab)) {
-            historyBidBtn.setSelected(true);
-        } else {
-            profileInfoBtn.setSelected(true);
-            loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
+    }
+    private void initialNavigation() {
+        switch (targetTab) {
+            case "MyAuctions": myAuctionsBtn.setSelected(true);loadPage(PATH_MY_AUCTIONS);
+                break;
+            case "HistoryBid": historyBidBtn.setSelected(true);loadPage(PATH_HISTORY);
+                break;
+            default: profileInfoBtn.setSelected(true);loadPage(PATH_PROFILE);
+                break;
         }
         targetTab = "ProfileInfo";
     }
 
-    public void setDynamicContent(String fxmlPath) { loadPage(fxmlPath); }
+    public void setDynamicContent(String fxmlPath) {
+        loadPage(fxmlPath);
+    }
     private void loadPage(String fxmlPath) {
-        dynamicContent.getChildren().clear();
+
         try {
+            dynamicContent.getChildren().clear();
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent page = loader.load();
+            VBox.setVgrow(page, Priority.ALWAYS);
             dynamicContent.getChildren().add(page);
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Không tìm thấy file: " + fxmlPath);
         }
     }
+    @FXML
+    public void handleProfileInfo(ActionEvent event) {
+        loadPage(PATH_PROFILE);;
+    }
+    @FXML
+    public void handleMyAuctions(ActionEvent event) {
+        loadPage(PATH_MY_AUCTIONS);
+    }
+    @FXML
+    public void handleHistoryBid(ActionEvent event) {
+    }
+
 
     @FXML
     private void handleLogout(ActionEvent event) {
         UserSession.getInstance().cleanUserSession();
         handleSwitchToLogin(event);
-
     }
-
-    @FXML
-    public void handleProfileInfo(ActionEvent event) {
-        loadPage("/com.auction.client/fxml/setting/ProfilePage.fxml");
-    }
-
-    @FXML
-    public void handleMyAuctions(ActionEvent event) {
-        loadPage("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
-    }
-
-    @FXML
-    public void handleHistoryBid(ActionEvent event) {
-    }
-
     @FXML
     protected void handleSwitchToLogin(ActionEvent event) {
         try {
             Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
-
             javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
-
             stage.getScene().setRoot(loginRoot);
-
+            stage.setTitle("Login - Auction System");
         } catch (IOException e) {
             System.err.println("Không tìm thấy file Login.fxml!");
             e.printStackTrace();
         }
     }
-
     public void handleMyBids(ActionEvent actionEvent) {
     }
-
     public void handleChangePassword(ActionEvent actionEvent) {
     }
-
+    @FXML
     public void handleUsersManagement(ActionEvent actionEvent) {
+        loadPage(PATH_USERS_MANAGEMENT);
     }
-
     public void handleAuctionsManagement(ActionEvent actionEvent) {
+        loadPage(PATH_AUCTIONS_MANAGEMENT);
     }
 }

@@ -43,6 +43,14 @@ public class ItemDetailHandler implements HttpHandler {
     private void getItem(HttpExchange exchange, String itemId, ResponseMessage responseMessage) throws IOException {
         Item item = itemService.getItem(itemId);
         if (item != null) {
+            String query = exchange.getRequestURI().getQuery();
+            if (query != null) {
+                String userId = extractUserIdFromQuery(query);
+                if (userId != null) {
+                    double lastBid = itemService.getUserLastBid(itemId, userId);
+                    item.setMyLastBid(lastBid); // Gán giá trị vào object Item trước khi parse ra JSON
+                }
+            }
             String jsonPayload = gson.toJson(item);
             responseMessage.setStatus("success");
             responseMessage.setMessage("Get item details successfully");
@@ -53,6 +61,20 @@ public class ItemDetailHandler implements HttpHandler {
             responseMessage.setMessage("Item not found");
             HttpResponseUtil.sendMessage(exchange, 404, responseMessage);
         }
+    }
+
+    // Hàm tiện ích hỗ trợ trích xuất userId từ query string
+    private String extractUserIdFromQuery(String query) {
+        String[] params = query.split("&");
+
+        for (String param : params) {
+            String[] keyValue = param.split("=");
+
+            if (keyValue.length == 2 && "userId".equals(keyValue[0])) {
+                return keyValue[1];
+            }
+        }
+        return null;
     }
 
     private void updateItem(HttpExchange exchange, ItemPayload itemData, String itemId, ResponseMessage response) throws IOException {
