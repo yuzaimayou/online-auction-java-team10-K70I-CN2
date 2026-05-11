@@ -2,9 +2,8 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.image.Image?>
 <VBox prefHeight="2000.0" prefWidth="1440.0" styleClass="root-container"
       stylesheets="@../css/AuctionFormPage.css"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
@@ -223,7 +222,7 @@
                             </VBox>
                         </HBox>
 
-                        <Button onAction="#handleAddItem" maxWidth="Infinity" prefHeight="65.0"
+                        <Button fx:id="btnSubmit" onAction="#handleAddItem" maxWidth="Infinity" prefHeight="65.0"
                                 styleClass="add-button"
                                 text="Add Item"/>
                     </VBox>
