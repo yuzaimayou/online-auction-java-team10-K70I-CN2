@@ -45,7 +45,7 @@ public class VerifyService {
     private VerifyService() {
         System.out.println("==== KIỂM TRA ĐỌC FILE .ENV ====");
         System.out.println("Mail User: " + (username == null ? "BỊ NULL RỒI!" : username));
-        System.out.println("Mail Pass: " + (password == null ? "BỊ NULL RỒI!" : password));
+        System.out.println("Mail Pass: " + (password == null ? "BỊ NULL RỒI!" : "found password"));
         System.out.println("================================");
         //Config SMTP
         Properties props = new Properties();

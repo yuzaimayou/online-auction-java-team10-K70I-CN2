@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ItemService {
     private static ItemService instance;
@@ -38,17 +41,38 @@ public class ItemService {
     }
 
     public List<ItemSummary> getItems(String query) {
-        List<ItemSummary> items;
-        if (query == null) {
-            items = itemRepository.findAllItems();
-        } else if (query.contains("sellerId")) {
-            String sellerId = extractSellerId(query);
-
-            items = itemRepository.findAllBySellerId(sellerId);
-        } else {
-            items = null;
+        //lay toan bo san pham
+        if (query == null || query.trim().isEmpty()) {
+            return itemRepository.findAllItems();
         }
-        return items;
+
+        //lay cac san pham theo keyword
+        if (query.contains("search=")) {
+            try {
+                String input = extractParam(query, "search");
+                int page = 0;
+                if (query.contains("page=")) {
+                    try {
+                        page = Integer.parseInt(extractParam(query, "page"));
+                    } catch (NumberFormatException e) {
+                        page = 0;
+                        e.printStackTrace();
+                    }
+                }
+                return getItemsByKeyword(input, page);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        //lay san pham theo id
+        if (query.contains("sellerId")) {
+            String sellerId = extractParam(query, "sellerId");
+            return itemRepository.findAllBySellerId(sellerId);
+        }
+
+        return null;
     }
 
 
@@ -117,16 +141,29 @@ public class ItemService {
         return itemRepository.deleteItem(itemId);
     }
 
-    private String extractSellerId(String query) {
+    private List<ItemSummary> getItemsByKeyword(String input, int page) throws SQLException {
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+        List<String> keywords = Arrays.stream(input.trim().toLowerCase().split("\\s+"))
+                .filter(word -> !word.isEmpty())
+                .collect(Collectors.toList());
+        int offset = page * 10;
+        return itemRepository.searchItems(keywords, offset);
+    }
+
+
+    private String extractParam(String query, String keyParam) {
         String[] params = query.split("&");
         for (String param : params) {
             String[] keyValue = param.split("=");
-            if (keyValue.length == 2 && "sellerId".equals(keyValue[0])) {
+            if (keyValue.length == 2 && keyParam.equals(keyValue[0])) {
                 return keyValue[1];
             }
         }
         return null;
     }
+
     public double getUserLastBid(String itemId, String userId) {
         return itemRepository.getUserLastBid(itemId, userId);
     }
