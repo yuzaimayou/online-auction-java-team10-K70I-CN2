@@ -11,7 +11,7 @@
     -fx-background-color: #ffffff;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
 }
 
 .content-title {
@@ -58,7 +58,10 @@
     -fx-background-radius: 8;
 }
 
-.menu-toggle-btn:hover { -fx-text-fill: #2f63e0; }
+.menu-toggle-btn:hover {
+    -fx-text-fill: #2f63e0;
+}
+
 .menu-toggle-btn:selected {
     -fx-background-color: linear-gradient(to right, #3d65d8, #3f5fcc);
     -fx-text-fill: white;
@@ -83,7 +86,7 @@
 .search-field:focused {
     -fx-border-color: #3b82f6;
     -fx-background-color: #ffffff;
-    -fx-effect: dropshadow(three-pass-box, rgba(59,130,246,0.1), 5, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(59, 130, 246, 0.1), 5, 0, 0, 0);
 }
 
 .status-filter {
@@ -147,7 +150,7 @@
     -fx-border-color: transparent transparent #f1f5f9 transparent;
 }
 
-.auction-table .table-row-cell:selected, 
+.auction-table .table-row-cell:selected,
 .auction-table .table-row-cell:focused {
     -fx-background-color: #f8fafc; /* Màu xám rất nhạt thay vì xanh */
     -fx-background-insets: 0;
@@ -164,7 +167,7 @@
 }
 
 /* --- Nội dung chi tiết trong bảng --- */
-.product-name-label {
+.item-name-label {
     -fx-font-size: 14px;
     -fx-font-weight: 700;
     -fx-text-fill: #1e293b;
@@ -206,11 +209,30 @@
     -fx-font-weight: bold;
 }
 
-.cat-fashion { -fx-background-color: #fdf2f8; -fx-text-fill: #db2777; }
-.cat-electronics { -fx-background-color: #eff6ff; -fx-text-fill: #2563eb; }
-.cat-home { -fx-background-color: #f0fdf4; -fx-text-fill: #16a34a; }
-.cat-art { -fx-background-color: #faf5ff; -fx-text-fill: #9333ea; }
-.cat-jewelry { -fx-background-color: #fffbeb; -fx-text-fill: #d97706; }
+.cat-fashion {
+    -fx-background-color: #fdf2f8;
+    -fx-text-fill: #db2777;
+}
+
+.cat-electronics {
+    -fx-background-color: #eff6ff;
+    -fx-text-fill: #2563eb;
+}
+
+.cat-home {
+    -fx-background-color: #f0fdf4;
+    -fx-text-fill: #16a34a;
+}
+
+.cat-art {
+    -fx-background-color: #faf5ff;
+    -fx-text-fill: #9333ea;
+}
+
+.cat-jewelry {
+    -fx-background-color: #fffbeb;
+    -fx-text-fill: #d97706;
+}
 
 /* --- Action Buttons --- */
 .action-btn-edit {
@@ -251,7 +273,7 @@
 
 .action-btn-view:hover {
     -fx-background-color: #2563eb;
-    -fx-effect: dropshadow(three-pass-box, rgba(59,130,246,0.3), 8, 0, 0, 4);
+    -fx-effect: dropshadow(three-pass-box, rgba(59, 130, 246, 0.3), 8, 0, 0, 4);
     -fx-translate-y: -1px;
 }
 
@@ -309,13 +331,13 @@
     -fx-font-size: 11px;
     -fx-font-weight: normal;
     -fx-text-fill: #94a3b8; /* Màu xám nhẹ (Slate 400) */
-}ac
+}
+
 
 /* Đảm bảo cột có đủ không gian hiển thị */
 .end-time-column-style {
     -fx-alignment: CENTER-LEFT;
 }
-
 
 
 /* Giao diện tổng thể của hộp thoại */
@@ -324,7 +346,7 @@
     -fx-padding: 10px;
     -fx-border-radius: 15px;
     -fx-background-radius: 15px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 10, 0, 0, 5);
 }
 
 /* Header (Tiêu đề) */
@@ -339,7 +361,7 @@
     -fx-font-family: "Segoe UI", system-ui;
 }
 
-.dialog-pane:header .header-panel .label {
+.dialog-pane .header .header-panel .label {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #2c3e50;

@@ -3,8 +3,10 @@ package com.auction.client.controller.user;
 import com.auction.client.service.AuthService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
+import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -56,59 +58,75 @@ public class LoginController {
         authService.login(username, password)
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
-                        User loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+                        // --- ĐOẠN CODE ĐÃ ĐƯỢC SỬA LẠI ĐỂ FIX LỖI ROLE ---
+                                // 1. Đọc Data thành JsonObject để kiểm tra role trước
+                                JsonObject userData = gson.fromJson(responseMessage.getData(), JsonObject.class);
+                        String role = "";
+
+                        // Kiểm tra xem JSON có trường "role" không
+                        if (userData.has("role") && !userData.get("role").isJsonNull()) {
+                            role = userData.get("role").getAsString();
+                        }
+
+                        // 2. Khởi tạo User hoặc Admin tùy thuộc vào Role
+                        User loggedInUser;
+                        if ("Admin".equalsIgnoreCase(role)) {
+                            loggedInUser = gson.fromJson(responseMessage.getData(), Admin.class);
+                            System.out.println("Đã đăng nhập với quyền ADMIN!");
+                        } else {
+                            loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+                            System.out.println("Đã đăng nhập với quyền USER!");
+                        }
+
+                        UserSession.getInstance().cleanUserSession();
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
                         PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(2));
 
-                        if (loggedInUser.isVerify() == false) {
-                            javafx.application.Platform.runLater(() -> {
+                        if (!loggedInUser.isVerify()) { // Dùng ! Thay vì == false cho gọn
+                            Platform.runLater(() -> {
                                 lblMessage.setTextFill(Color.RED);
-                                lblMessage.setText("Account unverified. Please check your email for the OTP.");
+                                lblMessage.setText("Account unverified. Redirecting to Verify...");
                             });
-                            pause.setOnFinished(e -> {
-                                try {
-
-                                    FXMLLoader loader = new FXMLLoader(
-                                            getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml")
-                                    );
-
-                                    Parent verifyRoot = loader.load();
-
-                                    VerifyController verifyController = loader.getController();
-                                    verifyController.setEmail(loggedInUser.getEmail());
-
-                                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-                                    stage.getScene().setRoot(verifyRoot);
-
-                                } catch (IOException ex) {
-                                    ex.printStackTrace();
-                                }
-                            });
+                            pause.setOnFinished(e -> redirectToVerify(event, loggedInUser.getEmail()));
                             pause.play();
                             return;
                         }
+
                         Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.GREEN);
-                            lblMessage.setText(responseMessage.getMessage());
+                            lblMessage.setText("Login successful! Welcome " + loggedInUser.getUsername());
                         });
+
+                        // Chuyển về trang chủ
                         pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         pause.play();
                     } else {
-                        javafx.application.Platform.runLater(() -> {
+                        Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
                         });
                     }
                 })
                 .exceptionally(e -> {
-                    e.printStackTrace();
-                    javafx.application.Platform.runLater(() -> {
+                    Platform.runLater(() -> {
                         lblMessage.setTextFill(Color.RED);
                         lblMessage.setText("Failed to connect to server");
                     });
                     return null;
                 });
+    }
+
+    private void redirectToVerify(ActionEvent event, String email) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
+            Parent verifyRoot = loader.load();
+            VerifyController verifyController = loader.getController();
+            verifyController.setEmail(email);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.getScene().setRoot(verifyRoot);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @FXML

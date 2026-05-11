@@ -1,7 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.util.ClientImageUtil;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.ItemSummary;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -25,14 +25,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 public class ItemCardHPController {
-    private Item currentItem;
+    private ItemSummary currentItem;
 
     @FXML
     private StackPane imageContainer;
     @FXML
-    private ImageView productImage;
+    private ImageView itemImage;
     @FXML
-    private Label productNameLabel;
+    private Label itemNameLabel;
     @FXML
     private Label statusLabel;
     @FXML
@@ -56,9 +56,9 @@ public class ItemCardHPController {
         clip.setArcHeight(30);
         imageContainer.setClip(clip);
 
-        productImage.setPreserveRatio(false);
+        itemImage.setPreserveRatio(false);
 
-        productImage.imageProperty().addListener((observable, oldImage, newImage) -> {
+        itemImage.imageProperty().addListener((observable, oldImage, newImage) -> {
             if (newImage != null) {
                 newImage.widthProperty().addListener((obs, oldW, newW) -> applyObjectFitCover(newImage));
                 newImage.heightProperty().addListener((obs, oldH, newH) -> applyObjectFitCover(newImage));
@@ -85,11 +85,11 @@ public class ItemCardHPController {
         double scale = Math.max(scaleX, scaleY);
 
         // Set lại kích thước cho ảnh sau khi đã nhân tỷ lệ
-        productImage.setFitWidth(w * scale);
-        productImage.setFitHeight(h * scale);
+        itemImage.setFitWidth(w * scale);
+        itemImage.setFitHeight(h * scale);
     }
 
-    public void setData(Item item) {
+    public void setData(ItemSummary item) {
         this.currentItem = item;
 
         String name = item.getName();
@@ -97,10 +97,16 @@ public class ItemCardHPController {
             name = name.substring(0, 47) + "...";
         }
 
-        productNameLabel.setText(item.getName());
+        itemNameLabel.setText(name);
 
-        if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
-            ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", productImage);
+        if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().isEmpty()) {
+            ClientImageUtil.displayImage(
+                    item.getThumbnailUrl(),
+                    "images",
+                    itemImage,
+                    200,
+                    200
+            );
         }
         updateUI();
         startCountdown();
@@ -115,7 +121,7 @@ public class ItemCardHPController {
             statusLabel.setText("UPCOMING");
             statusLabel.setStyle("-fx-background-color: #fff3c4; -fx-text-fill: #eea504;");
             priceTitleLabel.setText("START PRICE");
-            priceLabel.setText(formatPrice(currentItem.getStartingPrice()));
+            priceLabel.setText(formatPrice(currentItem.getCurrentPrice()));
             endTimeLabel.setText(formatTimeLeft(now, currentItem.getStartTime()));
             timeTitleLabel.setText("Starts on " + currentItem.getStartTime().format(dateFormatter));
         }
@@ -124,7 +130,7 @@ public class ItemCardHPController {
             statusLabel.setText("LIVE");
             statusLabel.setStyle("-fx-background-color: #ecfdf5");
             priceTitleLabel.setText("CURRENT BID");
-            double displayPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
+            double displayPrice = currentItem.getCurrentPrice();
             priceLabel.setText(formatPrice(displayPrice));
             endTimeLabel.setText(formatTimeLeft(now, currentItem.getEndTime()));
             timeTitleLabel.setText("Ends on " + currentItem.getEndTime().format(dateFormatter));
@@ -134,7 +140,7 @@ public class ItemCardHPController {
             statusLabel.setText("ENDED");
             statusLabel.setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white;");
             priceTitleLabel.setText("FINAL PRICE");
-            double finalPrice = (currentItem.getHighestCurrentPrice() > 0) ? currentItem.getHighestCurrentPrice() : currentItem.getStartingPrice();
+            double finalPrice = currentItem.getCurrentPrice();
             priceLabel.setText(formatPrice(finalPrice));
             endTimeLabel.setText("Auction Ended");
             if (currentItem.getEndTime() != null) {
@@ -166,24 +172,27 @@ public class ItemCardHPController {
 
         return String.format("%02dd %02dh %02dm %02ds", days, hours, minutes, seconds);
     }
+
     @FXML
-    public void handleSwitchToProductPage(MouseEvent event) {
+    public void handleSwitchToItemPage(MouseEvent event) {
         try {
             // Dừng timeline trước khi chuyển trang để tránh rò rỉ bộ nhớ
             if (timeline != null) timeline.stop();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ProductPage.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemPage.fxml"));
             Parent root = loader.load();
 
-            ProductPageController productPageController = loader.getController();
-            productPageController.initData(this.currentItem);
+            ItemPageController itemPageController = loader.getController();
+            itemPageController.setItemId(currentItem.getId());
+            //itemPageController.initData(this.currentItem);
 
-            Scene currentScene = productNameLabel.getScene();
+            Scene currentScene = itemNameLabel.getScene();
             Stage stage = (Stage) currentScene.getWindow();
             currentScene.setRoot(root);
             stage.setTitle(String.format("Online Auction System - %s", currentItem.getName()));
 
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("Lỗi chuyển trang: " + e.getMessage());
         }
     }
