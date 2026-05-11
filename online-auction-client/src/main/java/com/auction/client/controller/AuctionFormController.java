@@ -50,8 +50,6 @@ public class AuctionFormController {
     @FXML
     private DatePicker endDateP;
     @FXML
-    private ImageView imageViewItem;
-    @FXML
     private ComboBox<String> cbStartTime;
     @FXML
     private ComboBox<String> cbEndTime;
@@ -69,19 +67,30 @@ public class AuctionFormController {
     private HBox imagesPreviewContainer;
     @FXML
     private VBox smallAddBtn;
-    private File selectedImageFile;
+    @FXML
+    private Button btnSubmit;
+
+
+    private static final int MAX_IMAGES = 5;
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+
+    private final ItemsService itemsService = ItemsService.getInstance();
+    private final List<File> selectedFiles = new ArrayList<>();
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
             .create();
-    private final ItemsService itemsService = ItemsService.getInstance();
     private boolean isSubmitting = false;
 
 
     @FXML
     public void initialize() {
+        setupTimeComboBoxes();
+        setupAutoResizingTextArea();
+        updateUI();
+    }
+    private void setupTimeComboBoxes() {
         cbStartTime.getItems().clear();
         cbEndTime.getItems().clear();
-
         for (int hour = 0; hour < 24; hour++) {
             for (int minute = 0; minute < 60; minute += 30) {
                 String time = String.format("%02d:%02d", hour, minute);
@@ -89,228 +98,96 @@ public class AuctionFormController {
                 cbEndTime.getItems().add(time);
             }
         }
-        cbStartTime.setValue("06:50");
-        cbEndTime.setValue("10:37");
-
-        // xuống dòng cho item desciption
+        cbStartTime.setValue("08:00");
+        cbEndTime.setValue("17:00");
+    }
+    private void setupAutoResizingTextArea() {
         txtItemDesc.setWrapText(true);
-        txtItemDesc.textProperty().addListener((observable, oldValue, newValue) -> {
-            javafx.scene.text.Text helper = new javafx.scene.text.Text();
-            helper.setText(newValue);
-            helper.setFont(txtItemDesc.getFont());
-
-            helper.setWrappingWidth(txtItemDesc.getWidth() - 40);
-
-            double textHeight = helper.getLayoutBounds().getHeight();
-            double newHeight = textHeight + 40;
-
-            txtItemDesc.setPrefHeight(Math.max(80, newHeight));
-        });
-
+        // Thay vì tính toán thủ công phức tạp, ta sử dụng thuộc tính tự co giãn cơ bản
+        txtItemDesc.setPrefRowCount(5);
     }
-
-
-    private boolean isAnyNull(Object... items) {
-        for (Object item : items) {
-            if (item == null) return true;
-        }
-        return false;
-    }
-
-    private Double convertNumeric(String str) {
-        if (str == null || str.isEmpty()) {
-            return null;
-        }
-        try {
-            double d = Double.parseDouble(str);
-            if (d <= 0) {
-                return -2.0;
-            }
-            return d;
-        } catch (NumberFormatException e) {
-            return -2.0;
-        }
-    }
-
-
     @FXML
     public void handleAddItem(ActionEvent event) {
-        if (isSubmitting) {
-            return;
-        }
+        if (isSubmitting) return;
 
-        String itemName = txtItemName.getText().trim();
-        String itemDesc = txtItemDesc.getText().trim();
-        Toggle selectedToggle = categoryGroup.getSelectedToggle();
-        String selectedCategory;
-        //time
-        LocalDate startDate = startDateP.getValue();
-        LocalDate endDate = endDateP.getValue();
-        String startTime = cbStartTime.getValue();
-        String endTime = cbEndTime.getValue();
-
-        //price
-        Double initPrice = convertNumeric(txtInitPrice.getText().trim());
-        Double bidStep = convertNumeric(txtBidStep.getText().trim());
-        //User id
-        String userId = UserSession.getInstance().getLoggedInUser().getId();
-
-        //Kiem tra
-        if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
-                || selectedFiles.isEmpty()) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Please fill in all required fields.");
-            return;
-        }
-        if (initPrice == -2 || bidStep == -2) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Price must be a positive number.");
-            return;
-        }
-        //Xu ly thoi gian
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-
-        LocalTime parsedStartTime = LocalTime.parse(startTime, timeFormatter);
-        LocalTime parsedEndTime = LocalTime.parse(endTime, timeFormatter);
-
-        LocalDateTime startDateTime = LocalDateTime.of(startDate, parsedStartTime);
-        LocalDateTime endDateTime = LocalDateTime.of(endDate, parsedEndTime);
-        LocalDateTime now = LocalDateTime.now();
-
-        if (startDateTime.isBefore(now)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Start time cannot be in the past.");
-            return;
-        }
-
-        if (endDateTime.isBefore(now)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("End time cannot be in the past.");
-            return;
-        }
-        if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("End time must be after the start time.");
-            return;
-        }
-        //Xu ly phan loai san pham
-        selectedCategory = selectedToggle.getUserData().toString();
-        //Xu ly hinh anh
-        List<String[]> imagesConverted = new ArrayList<>();
         try {
-            if (selectedFiles != null && !selectedFiles.isEmpty()) {
-                for (File file : selectedFiles) {
-                    String[] base64 = ImageUtil.convertImgToBase64(file);
-                    if (base64 != null) {
-                        imagesConverted.add(base64);
-                    }
-                }
-            }
-            if (imagesConverted == null) {
-                lblMessage.setTextFill(Color.RED);
-                lblMessage.setText("Image processing failed.");
-                return;
-            }
-        } catch (IOException e) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Error processing images.");
-            e.printStackTrace();
-        }
+            // 1. Thu thập và Validate dữ liệu
+            ItemPayload payload = validateAndBuildPayload();
+            if (payload == null) return;
 
-        ItemPayload payload = new ItemPayload(itemName, selectedCategory, itemDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
-        String jsonPayload = gson.toJson(payload);
-        isSubmitting = true;
+            // 2. Chuyển đổi trạng thái UI (Loading)
+            setFormDisabled(true);
+            isSubmitting = true;
+            showMessage("Processing your item...", Color.BLUE);
 
-        Platform.runLater(() -> {
-            btnChooseImage.setDisable(true);
-
-            Button clickedButton = (Button) event.getSource();
-            clickedButton.setDisable(true);
-            clickedButton.setText("Creating...");
-        });
-        itemsService.createItem(jsonPayload)
-                .thenAccept(responseMessage -> {
-                    if ("success".equals(responseMessage.getStatus())) {
-                        Platform.runLater(() -> {
-                            lblMessage.setTextFill(Color.GREEN);
-                            lblMessage.setText(responseMessage.getMessage());
-                        });
-                        PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-                        pause.setOnFinished(e -> handleSwitchToHomePage());
-                        pause.play();
-                    } else {
-
-                        isSubmitting = false;
-
-                        Platform.runLater(() -> {
-
-                            lblMessage.setTextFill(Color.RED);
-                            lblMessage.setText(responseMessage.getMessage());
-
-                            btnChooseImage.setDisable(false);
-
-                            Button clickedButton = (Button) event.getSource();
-                            clickedButton.setDisable(false);
-                            clickedButton.setText("Add Item");
-                        });
-                    }
-                })
-                .exceptionally(e -> {
-
-                    e.printStackTrace();
-
-                    isSubmitting = false;
-
-                    Platform.runLater(() -> {
-
-                        lblMessage.setTextFill(Color.RED);
-                        lblMessage.setText("Failed to connect to server");
-
-                        btnChooseImage.setDisable(false);
-
-                        Button clickedButton = (Button) event.getSource();
-                        clickedButton.setDisable(false);
-                        clickedButton.setText("Add Item");
+            // 3. Gửi API
+            itemsService.createItem(gson.toJson(payload))
+                    .thenAccept(res -> Platform.runLater(() -> {
+                        if ("success".equals(res.getStatus())) {
+                            showMessage(res.getMessage(), Color.GREEN);
+                            new PauseTransition(Duration.seconds(1)).setOnFinished(e -> handleSwitchToHomePage());
+                        } else {
+                            handleFailure(res.getMessage());
+                        }
+                    }))
+                    .exceptionally(ex -> {
+                        Platform.runLater(() -> handleFailure("Connection failed: " + ex.getMessage()));
+                        return null;
                     });
 
-                    return null;
-                });
-    }
-
-    public void handleSwitchToHomePage() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
-            Parent root = loader.load();
-
-            HomePageController homePageController = loader.getController();
-            Scene currentScene = lblMessage.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-
-            currentScene.setRoot(root);
-            stage.setTitle(String.format("%s - Homepage", AppConfig.getAppName()));
-
-            PauseTransition refreshDelay =
-                    new PauseTransition(Duration.seconds(0.5));
-
-            refreshDelay.setOnFinished(event -> {
-                homePageController.refreshItems();
-            });
-
-            refreshDelay.play();
-
-        } catch (IOException e) {
+        } catch (Exception e) {
+            handleFailure("An unexpected error occurred.");
             e.printStackTrace();
-            System.err.println("The HomePage.fxml file was not found! Please check the path again.");
         }
     }
+    private ItemPayload validateAndBuildPayload() throws IOException {
+        String name = txtItemName.getText().trim();
+        String desc = txtItemDesc.getText().trim();
+        Toggle cat = categoryGroup.getSelectedToggle();
 
-    private List<File> selectedFiles = new ArrayList<>();
-    private final int MAX_IMAGES = 5;
+        Double initPrice = parseNumeric(txtInitPrice.getText());
+        Double bidStep = parseNumeric(txtBidStep.getText());
 
+        // Kiểm tra trống
+        if (isAnyEmpty(name, desc, cat, startDateP.getValue(), endDateP.getValue(),
+                cbStartTime.getValue(), cbEndTime.getValue()) || selectedFiles.isEmpty()) {
+            showMessage("Please fill in all fields and upload at least one image.", Color.RED);
+            return null;
+        }
+
+        // Kiểm tra giá
+        if (initPrice <= 0 || bidStep <= 0) {
+            showMessage("Prices must be greater than zero.", Color.RED);
+            return null;
+        }
+
+        // Xử lý thời gian
+        LocalDateTime start = LocalDateTime.of(startDateP.getValue(), LocalTime.parse(cbStartTime.getValue(), TIME_FORMAT));
+        LocalDateTime end = LocalDateTime.of(endDateP.getValue(), LocalTime.parse(cbEndTime.getValue(), TIME_FORMAT));
+        LocalDateTime now = LocalDateTime.now();
+
+        if (start.isBefore(now)) {
+            showMessage("Start time cannot be in the past.", Color.RED);
+            return null;
+        }
+        if (!end.isAfter(start)) {
+            showMessage("End time must be after start time.", Color.RED);
+            return null;
+        }
+
+        // Chuyển đổi ảnh sang Base64
+        List<String[]> imagesBase64 = new ArrayList<>();
+        for (File file : selectedFiles) {
+            String[] b64 = ImageUtil.convertImgToBase64(file);
+            if (b64 != null) imagesBase64.add(b64);
+        }
+
+        return new ItemPayload(name, cat.getUserData().toString(), desc, imagesBase64,
+                start, end, initPrice, bidStep, UserSession.getInstance().getLoggedInUser().getId());
+    }
     public void handleChooseImage() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.webp"));
-
         List<File> files = fileChooser.showOpenMultipleDialog(dragDropArea.getScene().getWindow());
 
         if (files != null) {
@@ -323,83 +200,101 @@ public class AuctionFormController {
             }
 
             selectedFiles.addAll(files);
-
-            lblMessage.setText("");
             updateUI();
         }
     }
-
     private void updateUI() {
-        if (selectedFiles.isEmpty()) {
-            dragDropArea.setVisible(true);
-            dragDropArea.setManaged(true);
-            imagesPreviewContainer.setVisible(false);
-            imagesPreviewContainer.setManaged(false);
-        } else {
-            dragDropArea.setVisible(false);
-            dragDropArea.setManaged(false);
-            imagesPreviewContainer.setVisible(true);
-            imagesPreviewContainer.setManaged(true);
+        boolean hasImages = !selectedFiles.isEmpty();
+        dragDropArea.setVisible(!hasImages);
+        dragDropArea.setManaged(!hasImages);
+        imagesPreviewContainer.setVisible(hasImages);
+        imagesPreviewContainer.setManaged(hasImages);
 
-            imagesPreviewContainer.getChildren().removeIf(node -> node != smallAddBtn);
-
-            for (File file : selectedFiles) {
-                imagesPreviewContainer.getChildren().add(imagesPreviewContainer.getChildren().indexOf(smallAddBtn), createImageCard(file));
-            }
-
-            smallAddBtn.setVisible(selectedFiles.size() < MAX_IMAGES);
+        imagesPreviewContainer.getChildren().removeIf(node -> node != smallAddBtn);
+        for (File file : selectedFiles) {
+            imagesPreviewContainer.getChildren().add(imagesPreviewContainer.getChildren().indexOf(smallAddBtn), createImageCard(file));
         }
+        smallAddBtn.setVisible(selectedFiles.size() < MAX_IMAGES);
     }
-
     private StackPane createImageCard(File file) {
         StackPane card = new StackPane();
-        card.setPickOnBounds(false);
-
-        double fixedWidth = 150;
-        double fixedHeight = 120;
-
-        VBox imageContainer = new VBox();
-        imageContainer.getStyleClass().add("image-border-container");
-        imageContainer.setAlignment(Pos.CENTER);
-        imageContainer.setMinWidth(fixedWidth);
-        imageContainer.setMaxWidth(fixedWidth);
-        imageContainer.setMinHeight(fixedHeight);
-        imageContainer.setMaxHeight(fixedHeight);
-
-        ImageView iv = new ImageView();
-        Image img = new Image(file.toURI().toString());
-
-        iv.setImage(img);
+        ImageView iv = new ImageView(new Image(file.toURI().toString()));
+        iv.setFitWidth(150);
+        iv.setFitHeight(120);
         iv.setPreserveRatio(true);
 
-        double imgRatio = img.getWidth() / img.getHeight();
-        double containerRatio = fixedWidth / fixedHeight;
+        VBox imgWrapper = new VBox(iv);
+        imgWrapper.getStyleClass().add("image-border-container");
+        imgWrapper.setAlignment(Pos.CENTER);
+        imgWrapper.setPrefSize(150, 120);
 
-        if (imgRatio > containerRatio) {
-            iv.setFitHeight(fixedHeight);
-        } else {
-            iv.setFitWidth(fixedWidth);
-        }
+        Rectangle clip = new Rectangle(150, 120);
+        clip.setArcWidth(20); clip.setArcHeight(20);
+        imgWrapper.setClip(clip);
 
-        Rectangle clip = new Rectangle(fixedWidth, fixedHeight);
-        clip.setArcWidth(20);
-        clip.setArcHeight(20);
-        imageContainer.setClip(clip);
-
-        imageContainer.getChildren().add(iv);
-
-        Button btnDelete = new Button("✕");
-        btnDelete.getStyleClass().add("delete-photo-btn");
-
-        StackPane.setAlignment(btnDelete, Pos.TOP_RIGHT);
-
-        btnDelete.setOnAction(e -> {
+        Button btnDel = new Button("✕");
+        btnDel.getStyleClass().add("delete-photo-btn");
+        btnDel.setOnAction(e -> {
             selectedFiles.remove(file);
             updateUI();
         });
 
-        card.getChildren().addAll(imageContainer, btnDelete);
-
+        StackPane.setAlignment(btnDel, Pos.TOP_RIGHT);
+        card.getChildren().addAll(imgWrapper, btnDel);
         return card;
     }
+
+    private void handleFailure(String message) {
+        isSubmitting = false;
+        setFormDisabled(false);
+        showMessage(message, Color.RED);
+    }
+
+    private void setFormDisabled(boolean disabled) {
+        // Khóa toàn bộ các controls chính
+        btnSubmit.setDisable(disabled);
+        btnSubmit.setText(disabled ? "Creating..." : "Add Item");
+        btnChooseImage.setDisable(disabled);
+        txtItemName.setDisable(disabled);
+        txtItemDesc.setDisable(disabled);
+    }
+
+    private void showMessage(String msg, Color color) {
+        lblMessage.setTextFill(color);
+        lblMessage.setText(msg);
+    }
+
+    private Double parseNumeric(String str) {
+        try { return Double.parseDouble(str); }
+        catch (Exception e) { return -1.0; }
+    }
+
+    private boolean isAnyEmpty(Object... vals) {
+        for (Object v : vals) if (v == null || v.toString().trim().isEmpty()) return true;
+        return false;
+    }
+
+    public void handleSwitchToHomePage() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
+            Parent root = loader.load();
+
+            HomePageController homePageController = loader.getController();
+            Scene currentScene = lblMessage.getScene();
+            Stage stage = (Stage) currentScene.getWindow();
+            currentScene.setRoot(root);
+            stage.setTitle(String.format("%s - Homepage", AppConfig.getAppName()));
+
+            PauseTransition refreshDelay =
+                    new PauseTransition(Duration.seconds(0.5));
+            refreshDelay.setOnFinished(event -> {
+                homePageController.refreshItems();
+            });
+            refreshDelay.play();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("The HomePage.fxml file was not found! Please check the path again.");
+        }
+    }
+
 }

@@ -62,7 +62,7 @@
                         <HBox spacing="40.0">
                             <VBox spacing="15.0">
                                 <StackPane styleClass="image-main-wrapper">
-                                    <ImageView fitHeight="200.0" fitWidth="320.0" pickOnBounds="true"
+                                    <ImageView fx:id="mainImageView" fitHeight="200.0" fitWidth="320.0" pickOnBounds="true"
                                                preserveRatio="false">
                                         <image>
                                             <Image url="@../assets/macbook.jpg"/>
@@ -97,19 +97,19 @@
                             </VBox>
 
                             <VBox spacing="15.0" HBox.hgrow="ALWAYS">
-                                <Label styleClass="item-title-large" text="Macbook Pro 13inch"/>
+                                <Label fx:id="lblItemTitle" styleClass="item-title-large" text="Macbook Pro 13inch"/>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
-                                    <Label styleClass="badge-upcoming" text="Upcoming Auction"/>
+                                    <Label fx:id="lblStatusBadge" styleClass="badge-upcoming" text="Upcoming Auction"/>
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                                     <Label style="-fx-text-fill: #64748B; -fx-font-size: 16px;" text="🕒"/>
-                                    <Label styleClass="info-text-bold" text="Auction starts in: 2d 16h 45m"/>
+                                    <Label fx:id="lblAuctionTime" styleClass="info-text-bold" text="Auction starts in: 2d 16h 45m"/>
                                 </HBox>
                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                                     <Label style="-fx-text-fill: #64748B; -fx-font-size: 16px;" text="🏷"/>
-                                    <Label styleClass="info-text-bold" text="Electronics"/>
+                                    <Label fx:id="lblItemCategory" styleClass="info-text-bold" text="Electronics"/>
                                 </HBox>
-                                <Label styleClass="alert-bar"
+                                <Label fx:id="lblAlert" styleClass="alert-bar"
                                        text="!  You just can edit this item before the auction starts" wrapText="true"/>
                             </VBox>
                         </HBox>
@@ -155,7 +155,7 @@
                                             </ImageView>
                                         </graphic>
                                     </ToggleButton>
-                                    <Label styleClass="category-text" text="Electronics"/>
+                                    <Label fx:id="lblCategoryInfo" styleClass="category-text" text="Electronics"/>
                                 </VBox>
                                 <VBox alignment="CENTER" spacing="10.0">
                                     <ToggleButton fx:id="btnHome" userData="Home" styleClass="category-btn"
@@ -280,8 +280,8 @@
                             <VBox.margin>
                                 <Insets top="20.0"/>
                             </VBox.margin>
-                            <Button prefHeight="60.0" styleClass="btn-cancel-modern" text="Cancel"/>
-                            <Button prefHeight="60.0" styleClass="btn-save-modern" text="Save Changes"/>
+                            <Button fx:id="btnCancel" onAction="#handleCancel" prefHeight="60.0" styleClass="btn-cancel-modern" text="Cancel"/>
+                            <Button fx:id="btnSave" onAction="#handleSaveChanges" prefHeight="60.0" styleClass="btn-save-modern" text="Save Changes"/>
                         </HBox>
 
                     </VBox>
