@@ -1,6 +1,6 @@
 package com.auction.shared.model.account;
 
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import java.util.List;
 
 public class User extends Person {
     protected double balance;
+    protected double frozenBalance;  // Money held against current highest bid
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
     protected List<Double> reviewScores; // Keep track of all reviews
     protected String email;
@@ -46,6 +47,22 @@ public class User extends Person {
             throw new IllegalArgumentException("Error: Balance cannot be negative!");
         }
         this.balance = balance;
+    }
+
+    public double getFrozenBalance() {
+        return frozenBalance;
+    }
+
+    public void setFrozenBalance(double frozenBalance) {
+        if (frozenBalance < 0) {
+            throw new IllegalArgumentException("Error: Frozen balance cannot be negative!");
+        }
+        this.frozenBalance = frozenBalance;
+    }
+
+    /** Returns the spendable balance (excludes frozen funds). */
+    public double getAvailableBalance() {
+        return balance;
     }
 
     public double getRating() {
@@ -146,7 +163,7 @@ public class User extends Person {
             throw new IllegalStateException("Error: User " + this.username + " has insufficient rating (" + String.format("%.2f", this.rating) + ") to list new items. Required: 2.0+");
         }
 
-        System.out.println("Success: User " + this.username + " just listed a new product: " + itemName);
+        System.out.println("Success: User " + this.username + " just listed a new item: " + itemName);
     }
 
     /**

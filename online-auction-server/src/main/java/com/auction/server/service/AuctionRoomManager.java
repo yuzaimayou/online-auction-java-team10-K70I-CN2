@@ -21,20 +21,20 @@ public class AuctionRoomManager {
         return instance;
     }
 
-    public void joinRoom(String productId, ClientHandler client) {
-        rooms.computeIfAbsent(productId, k -> new CopyOnWriteArrayList<>()).add(client);
-        System.out.println("Client " + client.getUsername() + " joined room for product " + productId);
-        //broadcastRoomInfo(productId);
+    public void joinRoom(String itemId, ClientHandler client) {
+        rooms.computeIfAbsent(itemId, k -> new CopyOnWriteArrayList<>()).add(client);
+        System.out.println("Client " + client.getUsername() + " joined room for item " + itemId);
+        //broadcastRoomInfo(itemId);
     }
 
-    public void broadcastToRoom(String productId, String message, String dataPayload) {
-        List<ClientHandler> currentRoom = rooms.get(productId);
+    public void broadcastToRoom(String itemId, String message, String dataPayload) {
+        List<ClientHandler> currentRoom = rooms.get(itemId);
         if (currentRoom != null && !currentRoom.isEmpty()) {
             ResponseMessage response = new ResponseMessage();
             response.setStatus("success");
             response.setMessage(message);
             response.setData(dataPayload);
-            System.out.println("Broadcasting message to room " + productId + ": " + message);
+            System.out.println("Broadcasting message to room " + itemId + ": " + message);
 
             String jsonMessage = new Gson().toJson(response);
 
@@ -42,29 +42,29 @@ public class AuctionRoomManager {
                 client.sendMessage(jsonMessage);
             }
         } else {
-            System.out.println("No clients in room " + productId + " to broadcast message: " + message);
+            System.out.println("No clients in room " + itemId + " to broadcast message: " + message);
         }
     }
 
-    public void leaveRoom(String productId, ClientHandler client) {
-        List<ClientHandler> currentRoom = rooms.get(productId);
+    public void leaveRoom(String itemId, ClientHandler client) {
+        List<ClientHandler> currentRoom = rooms.get(itemId);
         if (currentRoom != null) {
             currentRoom.remove(client);
-            System.out.println("Client " + client.getUsername() + " left room for product " + productId);
-            if (rooms.isEmpty()) {
-                rooms.remove(productId);
+            System.out.println("Client " + client.getUsername() + " left room for item " + itemId);
+            if (currentRoom.isEmpty()) {
+                rooms.remove(itemId);
             }
         }
     }
 
     public void removeClientFromAllRooms(ClientHandler client) {
-        for (String productId : rooms.keySet()) {
-            leaveRoom(productId, client);
+        for (String itemId : rooms.keySet()) {
+            leaveRoom(itemId, client);
         }
     }
 
-//    public void broadcastRoomInfo(String productId) {
-//        List<ClientHandler> currentRoom = rooms.get(productId);
+//    public void broadcastRoomInfo(String itemId) {
+//        List<ClientHandler> currentRoom = rooms.get(itemId);
 //        if (currentRoom != null) {
 //            // Rút trích danh sách username
 //            List<String> activeUsers = currentRoom.stream()
@@ -72,7 +72,7 @@ public class AuctionRoomManager {
 //                    .toList();
 //
 //            String jsonUsers = new Gson().toJson(activeUsers);
-//            broadcastToRoom(productId, "UPDATE_PARTICIPANTS", jsonUsers);
+//            broadcastToRoom(itemId, "UPDATE_PARTICIPANTS", jsonUsers);
 //        }
 //    }
 }

@@ -3,102 +3,128 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox prefHeight="1024.0" prefWidth="1440.0"
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<VBox prefHeight="700.0" prefWidth="1100.0"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.setting.SettingController"
-      stylesheets="@../../css/ProfilePage.css"
+      stylesheets="@../../css/Setting.css"
       styleClass="page-root">
-
 
     <fx:define>
         <ToggleGroup fx:id="menuGroup"/>
     </fx:define>
     <!-- Navbar -->
     <fx:include fx:id="navBar" source="../NavBar.fxml"/>
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background-color: transparent; -fx-background: #f3f4f7; -fx-border-color: transparent;">
+        <content>
+            <HBox styleClass="page-background" alignment="TOP_CENTER">
+                <padding>
+                    <Insets left="40.0" right="40.0" bottom="20.0"/>
+                </padding>
+                <VBox spacing="0.0" alignment="TOP_CENTER" HBox.hgrow="ALWAYS" maxWidth="1400.0">
+                    <Region prefHeight="60.0" minHeight="40.0" maxHeight="80.0"/>
 
-    <!-- Main content area -->
-    <HBox prefHeight="760.0" prefWidth="1440.0" styleClass="page-background">
+                    <HBox spacing="32.0" alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
 
-        <!-- Left spacing -->
-        <Region prefWidth="90.0" minWidth="90.0" maxWidth="90.0"/>
+                        <!-- Sidebar -->
+                        <VBox prefWidth="300.0" minWidth="300.0" maxWidth="300.0"
+                              minHeight="-Infinity" maxHeight="-Infinity" spacing="18.0" VBox.vgrow="ALWAYS"
+                              styleClass="sidebar-card">
+                            <padding>
+                                <Insets top="28.0" right="24.0" bottom="28.0" left="24.0"/>
+                            </padding>
 
-        <!-- Main center block -->
-        <VBox spacing="0.0" alignment="TOP_CENTER" HBox.hgrow="ALWAYS">
+                            <VBox alignment="CENTER" spacing="12.0">
+                                <AnchorPane maxWidth="-Infinity">
+                                    <StackPane styleClass="avatar-outer" maxHeight="92" maxWidth="92">
+                                        <StackPane styleClass="avatar-inner" maxHeight="64" maxWidth="64"/>
+                                        <ImageView fitHeight="45.0" fitWidth="45.0" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../../assets/default_avatar.png"/>
+                                            </image>
+                                        </ImageView>
+                                    </StackPane>
 
+                                    <StackPane fx:id="adminSignal" AnchorPane.bottomAnchor="0.0"
+                                               AnchorPane.rightAnchor="0.0"
+                                               prefHeight="32.0" prefWidth="32.0"
+                                               style="-fx-background-color: #fff3b0; -fx-background-radius: 50; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 5, 0, 0, 1);">
+                                        <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../../assets/adm_sig.png"/>
+                                            </image>
+                                        </ImageView>
+                                    </StackPane>
+                                </AnchorPane>
+                                <Label fx:id="lblUserName" text="Duc Anh" styleClass="user-name"/>
+                            </VBox>
 
-            <!-- Top spacing -->
-            <Region prefHeight="60.0" minHeight="60.0" maxHeight="60.0"/>
+                            <VBox spacing="8.0" VBox.vgrow="ALWAYS">
+                                <Label text="MAIN" styleClass="section-label">
+                                    <VBox.margin>
+                                        <Insets top="10" left="4" bottom="4"/>
+                                    </VBox.margin>
+                                </Label>
 
-            <!-- Content row -->
-            <HBox spacing="32.0" alignment="TOP_LEFT">
+                                <ToggleButton fx:id="profileInfoBtn" mnemonicParsing="false"
+                                              prefHeight="42.0" prefWidth="252.0" selected="true"
+                                              styleClass="menu-toggle-btn" text="Profile Info"
+                                              toggleGroup="$menuGroup" onAction="#handleProfileInfo"/>
 
+                                <ToggleButton fx:id="myAuctionsBtn" mnemonicParsing="false"
+                                              prefHeight="42.0" prefWidth="252.0"
+                                              styleClass="menu-toggle-btn" text="My Auctions"
+                                              toggleGroup="$menuGroup" onAction="#handleMyAuctions"/>
 
-                <!-- Sidebar -->
-                <VBox prefWidth="300.0"
-                      minWidth="300.0"
-                      maxWidth="300.0"
-                      prefHeight="430.0"
-                      spacing="18.0"
-                      styleClass="sidebar-card">
-                    <padding>
-                        <Insets top="28.0" right="24.0" bottom="28.0" left="24.0"/>
-                    </padding>
+                                <ToggleButton fx:id="myBidsBtn" mnemonicParsing="false"
+                                              prefHeight="42.0" prefWidth="252.0"
+                                              styleClass="menu-toggle-btn" text="My Bids"
+                                              toggleGroup="$menuGroup" onAction="#handleMyBids"/>
 
-                    <!-- Avatar -->
-                    <VBox alignment="CENTER" spacing="12.0">
-                        <StackPane prefHeight="92.0"
-                                   prefWidth="92.0"
-                                   minHeight="92.0"
-                                   minWidth="92.0"
-                                   maxHeight="92.0"
-                                   maxWidth="92.0"
-                                   styleClass="avatar-outer">
-                            <StackPane prefHeight="64.0"
-                                       prefWidth="64.0"
-                                       minHeight="64.0"
-                                       minWidth="64.0"
-                                       maxHeight="64.0"
-                                       maxWidth="64.0"
-                                       styleClass="avatar-inner"/>
-                        </StackPane>
+                                <ToggleButton fx:id="changePasswordBtn" mnemonicParsing="false"
+                                              prefHeight="42.0" prefWidth="252.0"
+                                              styleClass="menu-toggle-btn" text="Change Password"
+                                              toggleGroup="$menuGroup" onAction="#handleChangePassword"/>
 
-                        <Label text="Duc Anh" styleClass="user-name"/>
-                    </VBox>
+                                <VBox fx:id="adminSection" spacing="8.0">
+                                    <Label text="ADMIN PANEL" styleClass="section-label">
+                                        <VBox.margin>
+                                            <Insets top="10" left="4"/>
+                                        </VBox.margin>
+                                    </Label>
+                                    <ToggleButton fx:id="usersManagementBtn" mnemonicParsing="false"
+                                                  prefHeight="42.0" prefWidth="252.0"
+                                                  styleClass="menu-toggle-btn" text="Users Management"
+                                                  toggleGroup="$menuGroup" onAction="#handleUsersManagement"/>
+                                    <ToggleButton fx:id="auctionsManagementBtn" mnemonicParsing="false"
+                                                  prefHeight="42.0" prefWidth="252.0"
+                                                  styleClass="menu-toggle-btn" text="Auctions Management"
+                                                  toggleGroup="$menuGroup" onAction="#handleAuctionsManagement"/>
 
-                    <!-- Menu -->
-                    <VBox spacing="12.0">
-                        <ToggleButton fx:id="profileInfoBtn" mnemonicParsing="false"
-                                      prefHeight="46.0" prefWidth="252.0" selected="true"
-                                      styleClass="menu-toggle-btn" text="Profile Info"
-                                      toggleGroup="$menuGroup" onAction="#handleProfileInfo"/>
+                                    <ToggleButton fx:id="historyBidsBtn" mnemonicParsing="false"
+                                                  prefHeight="42.0" prefWidth="252.0"
+                                                  styleClass="menu-toggle-btn" text="History Bids"
+                                                  toggleGroup="$menuGroup" onAction="#handleHistoryBid"/>
+                                </VBox>
+                                <Region VBox.vgrow="ALWAYS"/>
+                                <Separator styleClass="menu-separator"/>
+                                <ToggleButton fx:id="logoutBtn" mnemonicParsing="false"
+                                              onAction="#handleLogout" prefHeight="42.0"
+                                              prefWidth="252.0" styleClass="logout-toggle-btn"
+                                              text="Logout" toggleGroup="$menuGroup"/>
+                            </VBox>
+                        </VBox>
 
-                        <ToggleButton fx:id="myAuctionsBtn" mnemonicParsing="false"
-                                      prefHeight="42.0" prefWidth="252.0"
-                                      styleClass="menu-toggle-btn" text="My Auctions"
-                                      toggleGroup="$menuGroup" onAction="#handleMyAuctions"/>
-
-                        <ToggleButton fx:id="historyBidBtn" mnemonicParsing="false"
-                                      prefHeight="42.0" prefWidth="252.0"
-                                      styleClass="menu-toggle-btn" text="History Bid"
-                                      toggleGroup="$menuGroup" onAction="#handleHistoryBid"/>
-
-                        <ToggleButton fx:id="logoutBtn" mnemonicParsing="false"
-                                      onAction="#handleLogout" prefHeight="42.0"
-                                      prefWidth="252.0" styleClass="logout-toggle-btn"
-                                      text="Logout" toggleGroup="$menuGroup"/>
-                    </VBox>
-                </VBox>
-
-                <!-- Right content card -->
-                <VBox fx:id="dynamicContent">
-                    <fx:include source="ProfilePage.fxml"/>
+                        <!-- Right content card -->
+                        <VBox fx:id="dynamicContent" HBox.hgrow="ALWAYS">
+                            <fx:include source="ProfilePage.fxml"/>
+                        </VBox>
+                    </HBox>
                 </VBox>
             </HBox>
-
-            <Region VBox.vgrow="ALWAYS"/>
-        </VBox>
-        <!-- Right spacing -->
-        <Region prefWidth="90.0" minWidth="90.0" maxWidth="90.0"/>
-    </HBox>
+        </content>
+    </ScrollPane>
 </VBox>

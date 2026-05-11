@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.stage.Stage;
@@ -15,17 +16,21 @@ import java.io.IOException;
 
 public class ProfilePageController {
     @FXML private TextField emailField;
-    @FXML private TextField firstNameField; // Tạm thời dùng hiển thị Username vào đây
-    @FXML private TextField lastNameField;
+    @FXML private TextField userNameField; // Tạm thời dùng hiển thị Username vào đây
+    @FXML private TextField roleUserField;
 
     @FXML
     private ToggleButton profileInfoBtn;
-
     @FXML
     private ToggleButton myAuctionsBtn;
-
     @FXML
     private ToggleButton historyBidBtn;
+    @FXML
+    private Label availableBalanceLabel;
+    @FXML
+    private Label frozenBalanceLabel;
+    @FXML
+    private Label totalBalanceLabel;
 
     @FXML
     public void initialize() {
@@ -34,6 +39,7 @@ public class ProfilePageController {
         }
 
         displayUserData();
+        displayWalletData();
     }
 
     private void displayUserData() {
@@ -43,15 +49,27 @@ public class ProfilePageController {
             if (emailField != null) {
                 emailField.setText(currentUser.getEmail());
             }
-            if (firstNameField != null) {
-                firstNameField.setText(currentUser.getUsername());
+            if (userNameField != null) {
+                userNameField.setText(currentUser.getUsername());
             }
-            if (lastNameField != null) {
-                lastNameField.setText("User Account");
+            if (roleUserField != null) {
+                if ("admin".equalsIgnoreCase(currentUser.getUsername())) {
+                    roleUserField.setText("Admin Account");
+                } else {
+                    roleUserField.setText("User Account");
+                }
             }
-
-            lockFields(emailField, firstNameField, lastNameField);
+            lockFields(emailField, userNameField, roleUserField);
         }
+    }
+
+    // hiển thị số dư ví
+    private void displayWalletData() {
+        // Giả lập dữ liệu ví
+        double available = 700.00;
+        availableBalanceLabel.setText(String.format("$%,.2f", available));
+        frozenBalanceLabel.setText("$300.00");
+        totalBalanceLabel.setText("$1,000.00");
     }
 
     private void lockFields(TextField... fields) {
@@ -90,6 +108,13 @@ public class ProfilePageController {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    @FXML
+    private void handleDepositAction(ActionEvent event) {
+        // ĐỔI TRANG TRONG VÙNG BÊN PHẢI
+        if (SettingController.getInstance() != null) {
+            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/DepositPage.fxml");
         }
     }
 }

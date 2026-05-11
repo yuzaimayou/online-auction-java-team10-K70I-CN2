@@ -4,7 +4,7 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -41,7 +41,7 @@ public class MyAuctionsController {
     @FXML
     private TableView<Item> auctionTable;
     @FXML
-    private TableColumn<Item, Item> productCol;
+    private TableColumn<Item, Item> itemCol;
     @FXML
     private TableColumn<Item, String> categoryCol;
     @FXML
@@ -71,11 +71,11 @@ public class MyAuctionsController {
         });
 
         // ================= GỌI HELPER ĐỂ SETUP BẢNG =================
-        // [CHỈNH SỬA] Truyền thêm this::handleDeleteProduct vào tham số cuối cùng
+        // [CHỈNH SỬA] Truyền thêm this::handleDeleteItem vào tham số cuối cùng
         MyAuctionsTableHelper.setupTableColumns(
-                productCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
-                this::handleSwitchToProductEdit,
-                this::handleDeleteProduct // <-- Tham số Callback xóa
+                itemCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
+                this::handleSwitchToItemEdit,
+                this::handleDeleteItem // <-- Tham số Callback xóa
         );
 
         displayItems();
@@ -87,7 +87,7 @@ public class MyAuctionsController {
     }
 
     // [THÊM MỚI] Hàm xử lý logic xóa sản phẩm
-    private void handleDeleteProduct(Item itemToDelete) {
+    private void handleDeleteItem(Item itemToDelete) {
         // 1. Hiển thị cảnh báo xác nhận
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Xác nhận xóa");
@@ -189,10 +189,10 @@ public class MyAuctionsController {
     }
 
     @FXML
-    public void handleSwitchToProductEdit(ActionEvent event) {
+    public void handleSwitchToItemEdit(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/ProductEdit.fxml")
+                    getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml")
             );
             Parent root = loader.load();
             SettingController.targetTab = "MyAuctions";
@@ -202,11 +202,11 @@ public class MyAuctionsController {
             Stage stage = (Stage) currentScene.getWindow();
 
             currentScene.setRoot(root);
-            stage.setTitle(String.format("%s - Product Edit", AppConfig.getAppName()));
+            stage.setTitle(String.format("%s - Item Edit", AppConfig.getAppName()));
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Không tìm thấy file ProductEdit.fxml! Kiểm tra lại đường dẫn.");
+            System.err.println("Không tìm thấy file ItemEdit.fxml! Kiểm tra lại đường dẫn.");
         }
     }
 
