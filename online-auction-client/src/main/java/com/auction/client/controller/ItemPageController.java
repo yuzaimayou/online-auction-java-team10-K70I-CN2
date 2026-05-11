@@ -32,6 +32,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -44,8 +45,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     private static final double IMAGE_ARC = 20.0;
     private static final double THUMB_WIDTH = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
-    private static final Map<String, Double> userLastBidSession = new ConcurrentHashMap<>();
-
     @FXML
     private Label itemNameLabel;
     @FXML
@@ -102,7 +101,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     private String itemId;
     private Item item;
     private Timeline timeline;
-    private double myLastBid = 0;
+    private double myLastBid = 0.0;
     private final long AUTO_BID_DELAY = 50;
 
     private final User user = UserSession.getInstance().getLoggedInUser();
@@ -142,9 +141,10 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     public void setItemId(String id) {
         this.itemId = id;
+        String currentUserId = UserSession.getInstance().getLoggedInUser().getId();
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), id)))
+                .uri(URI.create(String.format("%s/api/items/%s?userId=%s", AppConfig.getHttpUrl(), id, currentUserId)))
                 .GET()
                 .build();
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -166,7 +166,8 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
     public void initData(Item item) {
         this.item = item;
-        this.myLastBid = userLastBidSession.getOrDefault(item.getId(), 0.0);
+        this.myLastBid = item.getMyLastBid();
+
         displayDataItem(item);
         connectToRealTimeBidding();
         if (item.getSellerId().equals(user.getId())) {
@@ -204,7 +205,6 @@ public class ItemPageController implements NetworkService.MessageListener {
                     // Nếu người vừa đặt giá thành công là chính user này, cập nhật myLastBid
                     if (user.getId().equals(bidPayload.getUserId())) {
                         myLastBid = bidPayload.getBidPrice();
-                        userLastBidSession.put(item.getId(), myLastBid);
                     }
                     updateMinimumBidLabel();
 
@@ -296,7 +296,6 @@ public class ItemPageController implements NetworkService.MessageListener {
         // Nếu mình đã là người cao nhất thì không cần bid thêm
         if (user.getId().equals(lastBidderId)) {
             myLastBid = serverCurrentPrice;
-            userLastBidSession.put(item.getId(), myLastBid);
             userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
             return;
         }
@@ -403,9 +402,18 @@ public class ItemPageController implements NetworkService.MessageListener {
         currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
         startPriceLabel.setText(String.valueOf(item.getStartingPrice()));
         bidStepLabel.setText(String.valueOf(item.getBidStep()));
-        startTimeLabel.setText(String.valueOf(item.getStartTime()));
-        endTimeLabel.setText(String.valueOf(item.getEndTime()));
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        if (item.getStartTime() != null) {
+            startTimeLabel.setText(item.getStartTime().format(formatter));
+        } else {
+            startTimeLabel.setText("N/A");
+        }
+        if (item.getEndTime() != null) {
+            endTimeLabel.setText(item.getEndTime().format(formatter));
+        } else {
+            endTimeLabel.setText("N/A");
+        }
         startCountdown();
         updateMinimumBidLabel();
     }

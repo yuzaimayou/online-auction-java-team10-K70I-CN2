@@ -304,8 +304,6 @@ public class ItemRepository {
             }
         }
 
-
-
         Item item = new Item(
                 rs.getString("name"),
                 rs.getString("description"),
@@ -404,5 +402,22 @@ public class ItemRepository {
         }
         return updatedId;
     }
-
+    public double getUserLastBid(String itemId, String userId) {
+        String sql = "SELECT MAX(bid_price) AS highest_bid FROM bids WHERE item_id = ? AND user_id = ?";
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, itemId);
+            stmt.setString(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("highest_bid");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
 }
