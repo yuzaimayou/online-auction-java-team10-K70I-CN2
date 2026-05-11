@@ -112,4 +112,7 @@ public class ItemService {
         }
         return null;
     }
+    public double getUserLastBid(String itemId, String userId) {
+        return itemRepository.getUserLastBid(itemId, userId);
+    }
 }
