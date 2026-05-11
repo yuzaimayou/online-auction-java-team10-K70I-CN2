@@ -389,7 +389,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         if (images != null && !images.isEmpty()) {
             String mainImageUrl = images.get(0);
-            ClientImageUtil.displayImage(mainImageUrl, "images", itemImage, IMAGE_WIDTH, IMAGE_HEIGHT);
+            ClientImageUtil.displayImage(mainImageUrl, "images", itemImage, IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2);
 
             boolean isFirst = true;
 

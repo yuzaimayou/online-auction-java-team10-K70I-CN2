@@ -77,6 +77,10 @@ public class Item extends Entity {
             throw new IllegalArgumentException("Error: Bid step must be greater than 0!");
         }
 
+        if (bidStep > startingPrice) {
+            throw new IllegalArgumentException("Error: Bid step cannot be greater than starting price!");
+        }
+
         if (imagesPath == null || imagesPath.isEmpty()) {
             throw new IllegalArgumentException("Error: Image path cannot be null or empty!");
         }
