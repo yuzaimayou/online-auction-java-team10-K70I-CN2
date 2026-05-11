@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+<ScrollPane fitToWidth="true" stylesheets="@../css/ItemPage.css" xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.ItemPageController">
+    <content>
+        <VBox styleClass="main-container">
+
+            <fx:include fx:id="navBar" source="NavBar.fxml"/>
+
+            <HBox alignment="TOP_CENTER" spacing="40" style="-fx-padding: 40 60 40 60;">
+
+                <VBox maxWidth="750" spacing="25" HBox.hgrow="ALWAYS">
+                    <StackPane minHeight="450" maxHeight="450" prefHeight="450" prefWidth="700"
+                               styleClass="main-image-container">
+                        <ImageView fx:id="itemImage" pickOnBounds="true" StackPane.alignment="CENTER"/>
+                    </StackPane>
+
+                    <HBox fx:id="thumbnailContainer" alignment="CENTER_LEFT" spacing="15">
+                    </HBox>
+                    <Label fx:id="itemNameLabel" styleClass="item-title" text="NAME ITEM" wrapText="true"/>
+
+                    <VBox spacing="17.0" styleClass="description-container" VBox.vgrow="NEVER" maxWidth="Infinity">
+
+                        <Label styleClass="sub-section-title" text="Description"/>
+                        <Separator/>
+
+                        <Label fx:id="itemDesLabel" alignment="TOP_LEFT"
+                               maxWidth="Infinity"
+                               styleClass="description-body" text="description item" wrapText="true"/>
+                    </VBox>
+                </VBox>
+
+                <VBox maxWidth="380" minWidth="380" spacing="20">
+
+                    <VBox styleClass="auction-info-card">
+                        <VBox alignment="CENTER" spacing="5">
+                            <Label style="-fx-text-fill: #888888; -fx-font-size: 16px;" text="Time Left:"/>
+                            <HBox alignment="CENTER" spacing="15" styleClass="timer-container">
+                                <VBox alignment="CENTER">
+                                    <Label fx:id="daysLabel" styleClass="timer-num" text="00"/>
+                                    <Label styleClass="timer-unit" text="DAYS"/>
+                                </VBox>
+                                <VBox alignment="CENTER">
+                                    <Label fx:id="hoursLabel" styleClass="timer-num" text="00"/>
+                                    <Label styleClass="timer-unit" text="HOURS"/>
+                                </VBox>
+                                <VBox alignment="CENTER">
+                                    <Label fx:id="minsLabel" styleClass="timer-num" text="00"/>
+                                    <Label styleClass="timer-unit" text="MINUTES"/>
+                                </VBox>
+                                <VBox alignment="CENTER">
+                                    <Label fx:id="secsLabel" styleClass="timer-num" text="00"/>
+                                    <Label styleClass="timer-unit" text="SECONDS"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <Separator/>
+
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
+                            <Circle fill="#2D55FF" radius="12"/>
+                            <Label fx:id="sellerLabel" style="-fx-font-weight: bold; -fx-font-size: 14px;"
+                                   text="Seller: Huu Nhat"/>
+                        </HBox>
+
+                        <VBox spacing="15.0">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #888888;"
+                                       text="Current Bid:"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="currentPriceLabel"
+                                       style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4A835D;"
+                                       text="000"/>
+                            </HBox>
+
+                            <Separator/>
+
+                            <GridPane hgap="10" vgap="10">
+                                <Label styleClass="text-info" text="Starting Price:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="0"/>
+                                <Label fx:id="startPriceLabel" styleClass="info-value-bold" text="20.000.000 VNĐ"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                                <Label styleClass="text-info" text="Increment Amount:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="1"/>
+                                <Label fx:id="bidStepLabel" styleClass="info-value-bold" text="100.000VNĐ"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                                <Label styleClass="text-info" text="Starts at:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="2"/>
+                                <Label fx:id="startTimeLabel" styleClass="info-value-bold" text="28/03/2026 18:00PM"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                                <Label styleClass="text-info" text="Ends at:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="3"/>
+                                <Label fx:id="endTimeLabel" styleClass="info-value-bold" text="28/03/2026 18:00PM"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="130"/>
+                                    <ColumnConstraints hgrow="ALWAYS" halignment="RIGHT"/>
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints/>
+                                    <RowConstraints/>
+                                    <RowConstraints/>
+                                    <RowConstraints/>
+                                </rowConstraints>
+                            </GridPane>
+                        </VBox>
+
+                        <VBox spacing="10">
+                            <Label fx:id="minimumBidLabel" styleClass="bid-title"
+                                   text="Your last bid ( min next: $ 0 )"/>
+                            <HBox spacing="10">
+                                <Button maxWidth="Infinity" styleClass="bid-suggest-btn" text="100.000"
+                                        HBox.hgrow="ALWAYS"/>
+                                <Button maxWidth="Infinity" styleClass="bid-suggest-btn" text="200.000"
+                                        HBox.hgrow="ALWAYS"/>
+                            </HBox>
+
+                            <TextField fx:id="bidAmountField" promptText="Enter bid " styleClass="bid-input"/>
+                            <Button fx:id="submitBid" maxWidth="Infinity" onAction="#bidHandle"
+                                    styleClass="btn-place-bid" text="Place Bid">
+                                <font>
+                                    <Font size="18.0"/>
+                                </font>
+                            </Button>
+
+                            <Button fx:id="btnAutoBidToggle" maxWidth="Infinity" onAction="#toggleAutoBidForm"
+                                    styleClass="btn-auto-bid" text="Auto Bid">
+                            </Button>
+
+                            <VBox fx:id="autoBidForm" managed="false" spacing="15" styleClass="auto-bid-panel"
+                                  visible="false">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <ImageView fitHeight="30" fitWidth="30">
+                                        <Image url="@../assets/robot_icon.png"/>
+                                    </ImageView>
+                                    <Label styleClass="auto-bid-header" text="Auto Bid"/>
+                                </HBox>
+
+                                <VBox spacing="5">
+                                    <Label styleClass="input-label" text="Max Bid"/>
+                                    <TextField fx:id="maxBidField" promptText="Nhập giá tối đa"
+                                               styleClass="auto-bid-text-field"/>
+                                </VBox>
+
+                                <VBox spacing="5">
+                                    <Label styleClass="input-label" text="Bid Amount"/>
+                                    <TextField fx:id="autoBidStepField" promptText="Nhập bước nhảy"
+                                               styleClass="auto-bid-text-field"/>
+                                </VBox>
+
+                                <Label styleClass="auto-bid-info" text="Hệ thống sẽ tự động đấu giá đến tối đa bạn đặt"
+                                       wrapText="true"/>
+
+                                <Button maxWidth="Infinity" onAction="#startAutoBid" styleClass="btn-place-bid"
+                                        text="Start"/>
+                            </VBox>
+
+                            <VBox fx:id="autoBidActiveStatus" managed="false" spacing="10" visible="false">
+                                <VBox styleClass="auto-bid-active-panel">
+                                    <HBox alignment="CENTER_LEFT" spacing="10">
+                                        <ImageView fitHeight="30" fitWidth="30">
+                                            <Image url="@../assets/robot_icon.png"/>
+                                        </ImageView>
+                                        <Label styleClass="auto-bid-header" text="Auto Bid đang hoạt động"/>
+                                    </HBox>
+                                    <Label fx:id="userCurrentBidLabel" styleClass="user-current-bid"
+                                           text="Your current bid: 0 VNĐ"/>
+                                    <Label styleClass="auto-bid-info"
+                                           text="! Hệ thống sẽ tự động đấu giá đến tối đa bạn đặt"/>
+                                </VBox>
+                                <Button maxWidth="Infinity" onAction="#stopAutoBid" styleClass="btn-cancel-auto-bid"
+                                        text="Cancel Auto Bid"/>
+                            </VBox>
+                        </VBox>
+                    </VBox>
+
+                    <VBox styleClass="auction-info-card">
+                        <Label style="-fx-font-weight: bold; -fx-font-size: 15px;" text="History Bids"/>
+                        <VBox spacing="10">
+                            <HBox alignment="CENTER_LEFT">
+                                <VBox HBox.hgrow="ALWAYS">
+                                    <Label styleClass="bidder-name-text" text="Khanh Van"/>
+                                    <Label style="-fx-font-size: 11px; -fx-text-fill: #999;"
+                                           text="20:00:40 01/04/2026"/>
+                                </VBox>
+                                <Label styleClass="price-green" text="20.500.000"/>
+                            </HBox>
+                            <Hyperlink alignment="CENTER" maxWidth="Infinity" styleClass="see-more-link"
+                                       text="See All Bids (13) ⌵"/>
+                        </VBox>
+                    </VBox>
+
+                </VBox>
+            </HBox>
+        </VBox>
+    </content>
+</ScrollPane>

@@ -4,7 +4,7 @@ import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.shared.model.payloads.BidPayload;
-import com.auction.shared.model.product.Item;
+import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
@@ -23,7 +23,7 @@ public class BidService {
 
     public BidService() {
         this.bidRepository = new BidRepository();
-        this.itemRepository = new ItemRepository();
+        this.itemRepository = ItemRepository.getInstance();
         this.autoBidResolver = new AutoBidResolver(PRICE_EPSILON);
         this.itemLocks = new ConcurrentHashMap<>();
     }
@@ -40,7 +40,7 @@ public class BidService {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
-                Item item = itemRepository.findById(conn, itemId);
+                Item item = itemRepository.findById(itemId);
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
                     return false;
@@ -91,7 +91,7 @@ public class BidService {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
-                Item item = itemRepository.findById(conn, itemId);
+                Item item = itemRepository.findById(itemId);
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
                     System.out.println("Bid rejected: item not found or user is the seller");
@@ -183,4 +183,3 @@ public class BidService {
     }
 
 }
-

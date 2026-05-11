@@ -11,6 +11,7 @@ server {
 
         expires 0; # Ở môi trường dev, tắt cache để sửa ảnh là thấy ngay
         add_header Cache-Control "no-cache";
+        autoindex off;
     }
 
     # 2. XỬ LÝ WEBSOCKET (CỔNG 9090)

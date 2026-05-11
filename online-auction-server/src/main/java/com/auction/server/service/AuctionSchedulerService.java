@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class AuctionSchedulerService {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private final ItemRepository itemRepository = new ItemRepository();
+    private final ItemRepository itemRepository = ItemRepository.getInstance();
     private final MainServer server;
 
     public AuctionSchedulerService(MainServer server) {

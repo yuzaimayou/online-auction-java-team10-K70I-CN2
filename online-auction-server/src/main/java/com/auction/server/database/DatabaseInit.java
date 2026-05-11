@@ -12,7 +12,11 @@ public class DatabaseInit {
                     id TEXT PRIMARY KEY,
                     username TEXT UNIQUE NOT NULL,
                     password TEXT NOT NULL,
-                    role TEXT NOT NULL
+                    role TEXT NOT NULL,
+                    isVerify BOOLEAN NOT NULL DEFAULT 0,
+                    email TEXT NOT NULL,
+                    balance REAL NOT NULL DEFAULT 0,
+                    frozen_balance REAL NOT NULL DEFAULT 0
                 );
                 """;
 
@@ -29,6 +33,9 @@ public class DatabaseInit {
                     category TEXT NOT NULL DEFAULT 'other',
                     bid_step REAL NOT NULL DEFAULT 1,
                     image_path TEXT NOT NULL DEFAULT '',
+                    create_at TEXT,
+                    top_player_id TEXT,
+                    FOREIGN KEY (top_player_id) REFERENCES users(id),
                     FOREIGN KEY (seller_id) REFERENCES users(id)
                 );
                 """;
@@ -60,15 +67,34 @@ public class DatabaseInit {
                 );
                 """;
 
+        // Wallet transaction ledger — immutable audit log.
+        // Types: DEPOSIT, FREEZE_BID, UNFREEZE_BID, AUCTION_PAYMENT
+        String walletTransactionsTable = """
+                CREATE TABLE IF NOT EXISTS wallet_transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    amount REAL NOT NULL,
+                    balance_before REAL NOT NULL,
+                    balance_after REAL NOT NULL,
+                    reference_id TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                );
+                """;
+
         try (
                 Connection conn = DatabaseManager.getConnection();
                 Statement stmt = conn.createStatement()
         ) {
-
+            stmt.execute("PRAGMA journal_mode=WAL;");  // Better concurrency for SQLite
             stmt.execute(usersTable);
             stmt.execute(itemsTable);
             stmt.execute(bidsTable);
             stmt.execute(autoBidsTable);
+            stmt.execute(walletTransactionsTable);
+
+            migrateUsersTable(stmt);
             migrateItemsTable(stmt);
             migrateAutoBidsTable(stmt);
 
@@ -77,8 +103,29 @@ public class DatabaseInit {
         }
     }
 
+    // ---- Migration helpers (safe ALTER TABLE — ignored if column already exists) ----
+
+    private static void migrateUsersTable(Statement stmt) {
+        try {
+            stmt.execute("ALTER TABLE users ADD COLUMN email TEXT");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE users ADD COLUMN isVerify INTEGER NOT NULL DEFAULT 0");
+        } catch (Exception ignored) {
+        }
+        // Wallet columns
+        try {
+            stmt.execute("ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE users ADD COLUMN frozen_balance REAL NOT NULL DEFAULT 0");
+        } catch (Exception ignored) {
+        }
+    }
+
     private static void migrateItemsTable(Statement stmt) {
-        // Keep backward compatibility with databases created before new item columns existed.
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN category TEXT NOT NULL DEFAULT 'other'");
         } catch (Exception ignored) {
@@ -91,10 +138,22 @@ public class DatabaseInit {
             stmt.execute("ALTER TABLE items ADD COLUMN image_path TEXT NOT NULL DEFAULT ''");
         } catch (Exception ignored) {
         }
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'PENDING'");
+        } catch (Exception ignored) {
+        }
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN create_at TEXT");
+        } catch (Exception ignored) {
+        }
+        // Current highest bidder — NULL means no bids yet
+        try {
+            stmt.execute("ALTER TABLE items ADD COLUMN current_bidder_id TEXT");
+        } catch (Exception ignored) {
+        }
     }
 
     private static void migrateAutoBidsTable(Statement stmt) {
-        // Keep backward compatibility for DBs that had partial auto-bid schema.
         try {
             stmt.execute("ALTER TABLE auto_bids ADD COLUMN registered_at TEXT NOT NULL DEFAULT ''");
         } catch (Exception ignored) {

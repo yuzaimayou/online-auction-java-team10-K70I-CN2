@@ -1,0 +1,161 @@
+.page-root {
+    -fx-font-family: "Arial";
+}
+
+.page-background {
+    -fx-background-color: #f3f4f7;
+}
+
+.sidebar-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0.15, 0, 2);
+}
+
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0.15, 0, 2);
+}
+
+/*Setting*/
+.avatar-outer {
+     -fx-background-color: #ffffff;
+     -fx-border-color: #cfd5df;
+     -fx-border-width: 1.2;
+     -fx-border-radius: 999;
+     -fx-background-radius: 999;
+     -fx-alignment: center;
+     -fx-pref-height: 92px;
+     -fx-pref-width: 92px;
+     -fx-min-height: 92px;
+     -fx-min-width: 92px;
+     -fx-max-width: 92px;
+     -fx-max-height: 92px;
+ }
+
+.avatar-inner {
+     -fx-background-color: #2f80ed;
+     -fx-background-radius: 999;
+     -fx-pref-height: 64px;
+     -fx-pref-width: 64px;
+     -fx-min-height: 64px;
+     -fx-min-width: 64px;
+     -fx-max-width: 64px;
+     -fx-max-height: 64px;
+    }
+
+ }
+
+.user-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #111111;
+}
+
+.menu-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #121212;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 26;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.logout-toggle-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #121212;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 26;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.logout-toggle-btn:hover {
+    -fx-text-fill: #ff0000;
+}
+
+.menu-toggle-btn:hover {
+    -fx-text-fill: #2f63e0;
+}
+
+.menu-toggle-btn:selected {
+    -fx-background-color: linear-gradient(to right, #3d65d8, #3f5fcc);
+    -fx-text-fill: white;
+}
+
+.menu-toggle-btn:selected:hover {
+    -fx-background-color: linear-gradient(to right, #355bcc, #3856c2);
+    -fx-text-fill: white;
+}
+
+.content-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1976f3;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #666b75;
+}
+
+.info-field {
+    -fx-pref-height: 45;
+    -fx-background-color: #eef1f5;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8 ;
+    -fx-padding: 0 15 ;
+}
+
+.edit-profile-btn-styled {
+    -fx-background-color: #1976f3;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 25;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+.edit-profile-btn-styled:hover {
+    -fx-background-color: #1565c0;
+}
+
+.info-field:focused {
+    -fx-background-color: #eef1f5;
+    -fx-border-color: #4a7df0;
+    -fx-border-width: 1.2;
+}
+
+.edit-profile-btn {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1f73ff;
+}
+
+/* Styling cho dòng tiêu đề category: MAIN, ADMIN PANEL */
+.section-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #7b8794;
+}
+
+/* Styling cho đường kẻ separator trước nút Logout */
+.menu-separator {
+    -fx-padding: 8 0 8 0;
+}
+
+.menu-separator .line {
+    -fx-border-color: #eef1f5;
+    -fx-border-width: 1.5 0 0 0;
+}
