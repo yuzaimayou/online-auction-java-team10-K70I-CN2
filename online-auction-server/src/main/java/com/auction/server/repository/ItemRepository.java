@@ -433,6 +433,7 @@ public class ItemRepository {
         }
         return updatedId;
     }
+
     public double getUserLastBid(String itemId, String userId) {
         String sql = "SELECT MAX(bid_price) AS highest_bid FROM bids WHERE item_id = ? AND user_id = ?";
         try (
