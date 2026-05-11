@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
 import com.auction.server.repository.ItemRepository;
+import com.auction.server.util.StringUtil;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
@@ -49,7 +50,8 @@ public class ItemService {
         //lay cac san pham theo keyword
         if (query.contains("search=")) {
             try {
-                String input = extractParam(query, "search");
+                String input = StringUtil.removeAccents(extractParam(query, "search"));
+
                 int page = 0;
                 if (query.contains("page=")) {
                     try {
