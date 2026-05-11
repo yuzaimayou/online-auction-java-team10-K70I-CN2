@@ -98,6 +98,13 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label secsLabel;
 
+    @FXML
+    private VBox bidControlsContainer;
+    @FXML
+    private StackPane statusOverlay;
+    @FXML
+    private Label statusMessageLabel;
+
     private String itemId;
     private Item item;
     private Timeline timeline;
@@ -170,10 +177,53 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         displayDataItem(item);
         connectToRealTimeBidding();
+        updateUIByStatus();
+
         if (item.getSellerId().equals(user.getId())) {
-            bidAmountField.setDisable(true);
-            submitBid.setDisable(true);
+            bidControlsContainer.setDisable(true);
             btnAutoBidToggle.setDisable(true);
+            statusOverlay.setVisible(true);
+            statusOverlay.setManaged(true);
+            statusMessageLabel.setText("You are the owner of this item");
+        }
+    }
+
+    private void updateUIByStatus() {
+        if (item == null) return;
+
+        String status = item.getStatus().toString().toUpperCase();
+        boolean isOwner = item.getSellerId().equals(user.getId());
+
+        bidControlsContainer.setVisible(false);
+        bidControlsContainer.setManaged(false);
+        statusOverlay.setVisible(true);
+        statusOverlay.setManaged(true);
+
+        statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
+
+        if (isOwner) {
+            statusMessageLabel.setText("👤 You are the owner of this item");
+            return;
+        }
+        switch (status) {
+            case "ONGOING":
+
+                bidControlsContainer.setVisible(true);
+                bidControlsContainer.setManaged(true);
+                statusOverlay.setVisible(false);
+                statusOverlay.setManaged(false);
+
+                break;
+
+            case "UPCOMING":
+                statusMessageLabel.setText("⏳ This auction hasn't started yet");
+                statusMessageLabel.getStyleClass().add("status-upcoming");
+                break;
+
+            case "ENDED":
+                statusMessageLabel.setText("🚫 This auction has ended");
+                statusMessageLabel.getStyleClass().add("status-ended");
+                break;
         }
     }
     private void connectToRealTimeBidding() {
@@ -476,35 +526,22 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime targetTime = null;
-        String statusText = "Time Left:";
 
         // upcoming
         if (item.getStartTime() != null && now.isBefore(item.getStartTime())) {
             targetTime = item.getStartTime();
-            statusText = "Starts in:";
-        }
-        // ongoing
-        else if (item.getEndTime() != null && now.isBefore(item.getEndTime())) {
+        } else if (item.getEndTime() != null && now.isBefore(item.getEndTime())) {
             targetTime = item.getEndTime();
-            statusText = "Time Left:";
         }
-
-        if (timeStatusLabel != null) {
-            timeStatusLabel.setText(statusText);
-        }
-        // ended
-        if (targetTime == null || !now.isBefore(targetTime)) {
+        if (targetTime == null || now.isAfter(targetTime)) {
             updateTimerLabels(0, 0, 0, 0);
-            if (timeStatusLabel != null) {
-                timeStatusLabel.setText("Ended");
-            }
+            updateUIByStatus(); // Gọi lại để ẩn/hiện bảng bid
             if (timeline != null) timeline.stop();
         } else {
             long days = ChronoUnit.DAYS.between(now, targetTime);
             long hours = ChronoUnit.HOURS.between(now, targetTime) % 24;
             long minutes = ChronoUnit.MINUTES.between(now, targetTime) % 60;
             long seconds = ChronoUnit.SECONDS.between(now, targetTime) % 60;
-
             updateTimerLabels(days, hours, minutes, seconds);
         }
     }
