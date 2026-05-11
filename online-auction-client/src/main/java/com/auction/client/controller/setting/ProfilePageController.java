@@ -15,16 +15,23 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class ProfilePageController {
-    @FXML private TextField emailField;
-    @FXML private TextField userNameField; // Tạm thời dùng hiển thị Username vào đây
-    @FXML private TextField roleUserField;
+    // user info
+    @FXML
+    private TextField emailField;
+    @FXML
+    private TextField userNameField;
+    @FXML
+    private TextField roleUserField;
 
+    // Sidebar
     @FXML
     private ToggleButton profileInfoBtn;
     @FXML
     private ToggleButton myAuctionsBtn;
     @FXML
     private ToggleButton historyBidBtn;
+
+    //w allet
     @FXML
     private Label availableBalanceLabel;
     @FXML
@@ -37,7 +44,6 @@ public class ProfilePageController {
         if (profileInfoBtn != null) {
             profileInfoBtn.setSelected(true);
         }
-
         displayUserData();
         displayWalletData();
     }
@@ -81,38 +87,24 @@ public class ProfilePageController {
             }
         }
     }
-
     @FXML
     private void handleProfileInfo(ActionEvent event) {
         profileInfoBtn.setSelected(true);
     }
-
     @FXML
     private void handleMyAuctions(ActionEvent event) {
-        switchScene("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
+        if (SettingController.getInstance() != null) {
+            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
+        }
     }
-
     @FXML
     private void handleHistoryBid(ActionEvent event) {
-        switchScene("/com.auction.client/fxml/HistoryBidPage.fxml");
-    }
-
-    private void switchScene(String fxmlPath) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Parent root = loader.load();
-
-            if (profileInfoBtn != null && profileInfoBtn.getScene() != null) {
-                Stage stage = (Stage) profileInfoBtn.getScene().getWindow();
-                stage.getScene().setRoot(root);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (SettingController.getInstance() != null) {
+            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/HistoryBidPage.fxml");
         }
     }
     @FXML
     private void handleDepositAction(ActionEvent event) {
-        // ĐỔI TRANG TRONG VÙNG BÊN PHẢI
         if (SettingController.getInstance() != null) {
             SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/DepositPage.fxml");
         }

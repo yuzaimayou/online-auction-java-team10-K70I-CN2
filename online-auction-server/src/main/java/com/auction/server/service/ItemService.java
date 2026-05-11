@@ -8,6 +8,10 @@ import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +103,17 @@ public class ItemService {
     }
 
     public boolean deleteItem(String itemId) {
+        List<String> fileNames = itemRepository.getImgName(itemId);
+        for (String fileName : fileNames) {
+            Path filePath = Paths.get("dataBase", "images", fileName);
+            try {
+                Files.delete(filePath);
+                System.out.println("Deleted image file: " + filePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
         return itemRepository.deleteItem(itemId);
     }
 
@@ -111,5 +126,8 @@ public class ItemService {
             }
         }
         return null;
+    }
+    public double getUserLastBid(String itemId, String userId) {
+        return itemRepository.getUserLastBid(itemId, userId);
     }
 }

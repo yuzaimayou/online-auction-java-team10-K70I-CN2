@@ -255,6 +255,7 @@ public class ItemRepository {
         }
         return null;
     }
+
     public List<ItemSummary> findAllBySellerId(String sellerID) {
         String sql = """
                 SELECT id,
@@ -287,6 +288,35 @@ public class ItemRepository {
         return executeSummaryQuery(sql);
     }
 
+    public List<String> getImgName(String itemId) {
+        String sql = """
+                SELECT image_path
+                FROM items
+                WHERE id = ?
+                """;
+        List<String> imagePaths = new ArrayList<>();
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+        ) {
+            stmt.setString(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String pathsData = rs.getString("image_path");
+
+                    if (pathsData != null && !pathsData.isEmpty()) {
+                        imagePaths = gson.fromJson(pathsData, List.class);
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return imagePaths;
+    }
+
 
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString("image_path");
@@ -303,7 +333,6 @@ public class ItemRepository {
                 imagePaths.add(pathsData);
             }
         }
-
 
 
         Item item = new Item(
@@ -324,6 +353,7 @@ public class ItemRepository {
         if (dbStatus != null) item.setStatus(dbStatus);
         return item;
     }
+
     // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
     public boolean markEnded(Connection conn, String itemId) {
         String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
@@ -335,7 +365,6 @@ public class ItemRepository {
             return false;
         }
     }
-
 
 
     public void updateCurrentPrice(String itemId, double newPrice) {
@@ -404,5 +433,22 @@ public class ItemRepository {
         }
         return updatedId;
     }
-
+    public double getUserLastBid(String itemId, String userId) {
+        String sql = "SELECT MAX(bid_price) AS highest_bid FROM bids WHERE item_id = ? AND user_id = ?";
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, itemId);
+            stmt.setString(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("highest_bid");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
 }

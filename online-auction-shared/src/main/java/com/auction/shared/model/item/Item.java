@@ -21,6 +21,7 @@ public class Item extends Entity {
     private String currentTopPLayerId;
     private String status;
     private LocalDateTime create_at;
+    private double myLastBid = 0.0;
 
 
     // Constructor khi tạo item mới
@@ -74,6 +75,10 @@ public class Item extends Entity {
         }
         if (bidStep <= 0) {
             throw new IllegalArgumentException("Error: Bid step must be greater than 0!");
+        }
+
+        if (bidStep > startingPrice) {
+            throw new IllegalArgumentException("Error: Bid step cannot be greater than starting price!");
         }
 
         if (imagesPath == null || imagesPath.isEmpty()) {
@@ -210,6 +215,10 @@ public class Item extends Entity {
     public LocalDateTime getCreate_at() {
         return create_at;
     }
+
+    public double getMyLastBid() { return myLastBid; }
+
+    public void setMyLastBid(double myLastBid) { this.myLastBid = myLastBid; }
 
     public void printItemDetails() {
 
