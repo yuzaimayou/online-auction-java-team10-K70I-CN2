@@ -38,6 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.auction.shared.model.auction.BidTransaction;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import java.util.Comparator;
+
 
 public class ItemPageController implements NetworkService.MessageListener {
     private static final double IMAGE_WIDTH = 700.0;
@@ -71,6 +77,12 @@ public class ItemPageController implements NetworkService.MessageListener {
     private HBox thumbnailContainer;
     @FXML
     private Label minimumBidLabel;
+    @FXML
+    private VBox historyBidContainer;
+    @FXML
+    private Label totalBidsLabel;
+    @FXML
+    private Hyperlink viewAllBidsLink;
 
     // Auto Bid UI
     @FXML
@@ -178,6 +190,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         displayDataItem(item);
         connectToRealTimeBidding();
         updateUIByStatus();
+        loadBidHistory();
 
         if (item.getSellerId().equals(user.getId())) {
             bidControlsContainer.setDisable(true);
@@ -260,6 +273,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
                     // Kích hoạt logic Auto Bid nếu đang bật
                     handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
+                    loadBidHistory();
                 } else {
                     System.err.println("Failed to parse updated item from response: " + jsonPayload);
                 }
@@ -267,8 +281,89 @@ public class ItemPageController implements NetworkService.MessageListener {
                 System.out.println("Received message: " + response.getMessage());
             }
         });
-
     }
+
+    private void loadBidHistory() {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(AppConfig.getHttpUrl() + "/api/bids/history/" + itemId))
+                .GET()
+                .build();
+
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(body -> {
+                    ResponseMessage res = gson.fromJson(body, ResponseMessage.class);
+                    if ("success".equals(res.getStatus())) {
+                        java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<BidTransaction>>(){}.getType();
+                        List<BidTransaction> bids = gson.fromJson(res.getData(), listType);
+                        Platform.runLater(() -> renderBidHistory(bids));
+                    }
+                });
+    }
+
+    // --- CHỈNH SỬA 4: Logic Render (Tối đa 8 người) ---
+    private void renderBidHistory(List<BidTransaction> bids) {
+        historyBidContainer.getChildren().clear();
+        if (bids == null || bids.isEmpty()) {
+            totalBidsLabel.setText("0 bids");
+            return;
+        }
+
+        // Sắp xếp giá cao nhất lên đầu
+        bids.sort( Comparator.comparing(BidTransaction::getBidTime) .reversed() );
+
+        int totalCount = bids.size();
+        totalBidsLabel.setText(totalCount + " bids");
+
+        // Chỉ lấy tối đa 8 người
+        int displayLimit = Math.min(totalCount, 8);
+        for (int i = 0; i < displayLimit; i++) {
+            historyBidContainer.getChildren().add(createBidRow(i + 1, bids.get(i)));
+        }
+
+        // Hiện nút "View all" nếu nhiều hơn 8
+        boolean hasMore = totalCount > 8;
+        viewAllBidsLink.setVisible(hasMore);
+        viewAllBidsLink.setManaged(hasMore);
+        if (hasMore) viewAllBidsLink.setText("View all bids (" + totalCount + ") →");
+    }
+
+    // Hàm tạo UI cho từng dòng bid (giống ảnh mẫu)
+    private HBox createBidRow(int index, BidTransaction bid) {
+        HBox row = new HBox(15);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        row.getStyleClass().add("history-row"); // Bạn cần định nghĩa class này trong CSS
+
+        Label lblIndex = new Label(String.valueOf(index));
+        lblIndex.getStyleClass().add("history-index");
+
+        Circle avatar = new Circle(15, Color.web("#e0e0e0"));
+        if (bid.getBidderId().equals(user.getId())) avatar.setFill(Color.web("#2D55FF"));
+
+        VBox info = new VBox(2);
+        String name = bid.getBidderId().equals(user.getId()) ? bid.getBidderId() + " (You)" : bid.getBidderId();
+        Label lblName = new Label(name);
+        lblName.setStyle("-fx-font-weight: bold;");
+
+        Label lblTime = new Label(bid.getBidTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
+        info.getChildren().addAll(lblName, lblTime);
+        HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
+
+        Label lblPrice = new Label(String.format("$ %.1f", bid.getBidAmount()));
+        lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold;");
+
+        row.getChildren().addAll(lblIndex, avatar, info, lblPrice);
+        return row;
+    }
+
+    @FXML
+    private void handleViewAllBids() {
+        System.out.println("Redirecting to full history for item: " + itemId);
+        // Chuyển hướng sang trang Full History tại đây
+    }
+
 
     public void bidHandle() {
         if (!checkBiddableStatus()) {
@@ -442,7 +537,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         itemDesLabel.setWrapText(true);
         itemDesLabel.setMaxWidth(Double.MAX_VALUE);
         itemDesLabel.prefWidthProperty().bind(
-        itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
+                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
         );
 
         itemDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
