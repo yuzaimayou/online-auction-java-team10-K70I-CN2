@@ -1,7 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.util.ClientImageUtil;
-import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.ItemSummary;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
@@ -24,14 +24,15 @@ public class MyAuctionsTableHelper {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
     public static void setupTableColumns(
-            TableColumn<Item, Item> itemCol,
-            TableColumn<Item, String> categoryCol,
-            TableColumn<Item, String> statusCol,
-            TableColumn<Item, String> priceCol,
-            TableColumn<Item, LocalDateTime> endTimeCol,
-            TableColumn<Item, Item> actionCol,
-            Consumer<Item> onEditAction,
-            Consumer<Item> onDeleteAction) {
+            TableColumn<ItemSummary, ItemSummary> itemCol,
+            TableColumn<ItemSummary, String> categoryCol,
+            TableColumn<ItemSummary, String> statusCol,
+            TableColumn<ItemSummary, String> priceCol,
+            TableColumn<ItemSummary, LocalDateTime> endTimeCol,
+            TableColumn<ItemSummary, ItemSummary> actionCol,
+            Consumer<ItemSummary> onEditAction,
+            Consumer<ItemSummary> onDeleteAction,
+            Consumer<ItemSummary> onViewAction) {
 
         //  TẮT TÍNH NĂNG SORT
         itemCol.setSortable(false);
@@ -43,7 +44,7 @@ public class MyAuctionsTableHelper {
 
         // ITEM
         itemCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
-        itemCol.setCellFactory(param -> new TableCell<>() {
+        itemCol.setCellFactory(param -> new TableCell<ItemSummary, ItemSummary>() {
             private final ImageView imageView = new ImageView();
             private final Label nameLabel = new Label();
             private final HBox container = new HBox(15, imageView, nameLabel);
@@ -51,18 +52,22 @@ public class MyAuctionsTableHelper {
                 imageView.setFitWidth(50);
                 imageView.setFitHeight(50);
                 imageView.setPreserveRatio(true);
+                imageView.setSmooth(true);
                 nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #333333;");
                 container.setAlignment(Pos.CENTER_LEFT);
+
             }
             @Override
-            protected void updateItem(Item item, boolean empty) {
+            protected void updateItem(ItemSummary item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
+                    imageView.setImage(null);
                 } else {
                     nameLabel.setText(item.getName());
-                    if (item.getImagesPath() != null && !item.getImagesPath().isEmpty()) {
-                        ClientImageUtil.displayImage(item.getImagesPath().get(0), "images", imageView, 200, 200);
+                    imageView.setImage(null);
+                    if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().isBlank()) {
+                        ClientImageUtil.displayImage(item.getThumbnailUrl(), "images", imageView, 50, 50);
                     }
                     setGraphic(container);
                 }
@@ -71,7 +76,7 @@ public class MyAuctionsTableHelper {
 
         // CATEGORY
         categoryCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategory()));
-        categoryCol.setCellFactory(column -> new TableCell<Item, String>() {
+        categoryCol.setCellFactory(column -> new TableCell<ItemSummary, String>() {
             @Override
             protected void updateItem(String category, boolean empty) {
                 super.updateItem(category, empty);
@@ -94,14 +99,14 @@ public class MyAuctionsTableHelper {
 
         //  STATUS
         statusCol.setCellValueFactory(cellData -> {
-            Item item = cellData.getValue();
+            ItemSummary item = cellData.getValue();
             LocalDateTime now = LocalDateTime.now();
             String status = "Ongoing";
             if (now.isBefore(item.getStartTime())) status = "Upcoming";
             else if (now.isAfter(item.getEndTime())) status = "Ended";
             return new SimpleStringProperty(status);
         });
-        statusCol.setCellFactory(column -> new TableCell<Item, String>() {
+        statusCol.setCellFactory(column -> new TableCell<ItemSummary, String>() {
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
@@ -124,7 +129,7 @@ public class MyAuctionsTableHelper {
 
         //  END TIME
         endTimeCol.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue().getEndTime()));
-        endTimeCol.setCellFactory(column -> new TableCell<Item, LocalDateTime>() {
+        endTimeCol.setCellFactory(column -> new TableCell<ItemSummary, LocalDateTime>() {
             private final Label dateLabel = new Label();
             private final Label timeLabel = new Label();
             private final VBox container = new VBox(dateLabel, timeLabel);
@@ -156,12 +161,12 @@ public class MyAuctionsTableHelper {
         //  ACTION
         actionCol.setPrefWidth(220);
         actionCol.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
-        actionCol.setCellFactory(column -> new TableCell<>() {
+        actionCol.setCellFactory(column -> new TableCell<ItemSummary, ItemSummary>() {
             private final Button editBtn = new Button("Edit");
             private final Button viewBtn = new Button("View");
             private final Button deleteBtn = new Button("Delete");
             private final HBox container = new HBox(8, editBtn, viewBtn, deleteBtn);
-            private Item currentItem;
+            private ItemSummary currentItem;
 
             {
                 container.setAlignment(Pos.CENTER);
@@ -173,12 +178,13 @@ public class MyAuctionsTableHelper {
                 viewBtn.setMinWidth(Region.USE_PREF_SIZE);
                 deleteBtn.setMinWidth(Region.USE_PREF_SIZE);
 
+                viewBtn.setOnAction(e -> { if (onViewAction != null) onViewAction.accept(currentItem); });
                 editBtn.setOnAction(e -> { if (onEditAction != null) onEditAction.accept(currentItem); });
                 deleteBtn.setOnAction(e -> { if (onDeleteAction != null) onDeleteAction.accept(currentItem); });
             }
 
             @Override
-            protected void updateItem(Item item, boolean empty) {
+            protected void updateItem(ItemSummary item, boolean empty) {
                 super.updateItem(item, empty);
                 this.currentItem = item;
                 if (empty || item == null) {
