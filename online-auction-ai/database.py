@@ -1,10 +1,18 @@
 import os
 import sqlite3
+import struct
 
+import numpy as np
 import sqlite_vec
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+# Hàm chuyển đổi mảng số thành nhị phân siêu tốc
+def serialize_f32(vector):
+    flat_vector = np.array(vector).flatten().astype(np.float32)
+    return struct.pack(f"{len(flat_vector)}f", *flat_vector)
 
 
 def get_db_connection():
@@ -24,6 +32,7 @@ def init_vector_db():
             item_id TEXT PRIMARY KEY,
             embedding FLOAT[768]
         )
+    
     """)
     db.commit()
     db.close()
@@ -40,6 +49,6 @@ def search_similar_items(query_vector, top_k=4):
                       FROM vec_items v
                                JOIN items i ON v.item_id = i.id
                       ORDER BY distance ASC LIMIT ?
-                      """, [str(query_vector), top_k]).fetchall()
+                      """, [serialize_f32(query_vector), top_k]).fetchall()
     db.close()
     return rows
