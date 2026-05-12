@@ -118,10 +118,10 @@
                                 <Label fx:id="minimumBidLabel" styleClass="bid-title"
                                        text="Your last bid ( min next: $ 0 )"/>
                                 <HBox spacing="10">
-                                    <Button maxWidth="Infinity" styleClass="bid-suggest-btn" text="100.000"
-                                            HBox.hgrow="ALWAYS"/>
-                                    <Button maxWidth="Infinity" styleClass="bid-suggest-btn" text="200.000"
-                                            HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="btnSuggestStep1" maxWidth="Infinity" styleClass="bid-suggest-btn" text="100.000"
+                                            HBox.hgrow="ALWAYS" onAction="#handleSuggestStep1"/>
+                                    <Button fx:id="btnSuggestStep2" maxWidth="Infinity" styleClass="bid-suggest-btn" text="200.000"
+                                            HBox.hgrow="ALWAYS" onAction="#handleSuggestStep2"/>
                                 </HBox>
 
                                 <TextField fx:id="bidAmountField" promptText="Enter bid " styleClass="bid-input"/>

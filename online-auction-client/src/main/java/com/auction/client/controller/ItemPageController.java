@@ -66,6 +66,10 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label bidStepLabel;
     @FXML
+    private Button btnSuggestStep1;
+    @FXML
+    private Button btnSuggestStep2;
+    @FXML
     private Label startTimeLabel;
     @FXML
     private Label endTimeLabel;
@@ -559,6 +563,8 @@ public class ItemPageController implements NetworkService.MessageListener {
         } else {
             endTimeLabel.setText("N/A");
         }
+        if (btnSuggestStep1 != null) btnSuggestStep1.setText(String.format("$ %.0f", item.getBidStep()));
+        if (btnSuggestStep2 != null) btnSuggestStep2.setText(String.format("$ %.0f", item.getBidStep() * 2));
         startCountdown();
         updateMinimumBidLabel();
     }
@@ -653,5 +659,21 @@ public class ItemPageController implements NetworkService.MessageListener {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void handleSuggestStep1() {
+        if (item == null) return;
+        // Giá gợi ý = Giá hiện tại + Bước nhảy (bidStep)
+        double suggestedPrice = item.getCurrentPrice() + item.getBidStep();
+        bidAmountField.setText(String.format("%.0f", suggestedPrice));
+    }
+
+    @FXML
+    private void handleSuggestStep2() {
+        if (item == null) return;
+        // Giá gợi ý = Giá hiện tại + (Bước nhảy * 2)
+        double suggestedPrice = item.getCurrentPrice() + (item.getBidStep() * 2);
+        bidAmountField.setText(String.format("%.0f", suggestedPrice));
     }
 }
