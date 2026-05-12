@@ -38,7 +38,7 @@ def init_vector_db():
     db.close()
 
 
-def search_similar_items(query_vector, top_k=4):
+def search_similar_items(query_vector, top_k=10):
     db = get_db_connection()
     # Sử dụng hàm vec_distance_cosine để tìm các sản phẩm gần nhất
     rows = db.execute("""
