@@ -33,7 +33,8 @@ public class HomePageController {
     //network
     private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
-
+    private List<ItemSummary> masterItemList;
+    private String currentCategory = "ALL";
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_2)
             .build();
@@ -54,9 +55,6 @@ public class HomePageController {
     private VBox endedSection;
     @FXML
     private NavBarController navBarController;
-
-    private List<ItemSummary> masterItemList;
-    private String currentCategory = "ALL";
 
     @FXML
     public void initialize() {
@@ -102,7 +100,6 @@ public class HomePageController {
                     }
                 });
     }
-    // Hàm để phân loại
     private void applyFilter() {
         if (masterItemList == null)
             return;
@@ -124,8 +121,6 @@ public class HomePageController {
 
         loadItemsToUI(filtered);
     }
-
-
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
@@ -168,9 +163,7 @@ public class HomePageController {
             updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
         });
     }
-
     private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
-
         ongoingSection.setVisible(ongoing > 0);
         ongoingSection.setManaged(ongoing > 0);
 
@@ -181,6 +174,7 @@ public class HomePageController {
         endedSection.setManaged(ended > 0);
     }
 
+    // event handlers
     @FXML
     private void handleCategoryClick(MouseEvent event) {
         VBox clicked = (VBox) event.getSource();
@@ -201,7 +195,6 @@ public class HomePageController {
         }
         applyFilter();
     }
-
 
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
@@ -224,15 +217,14 @@ public class HomePageController {
         }
     }
 
+    // utilities
     public void refreshItems() {
-
         System.out.println("Refreshing homepage items...");
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
             upcomingAuctionsContainer.getChildren().clear();
             endedAuctionsContainer.getChildren().clear();
         });
-
         getDataItemsAndDisplay();
     }
     public void refreshNavBarInfo() {
