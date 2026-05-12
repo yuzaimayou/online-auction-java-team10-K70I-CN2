@@ -66,10 +66,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label bidStepLabel;
     @FXML
-    private Button btnSuggestStep1;
-    @FXML
-    private Button btnSuggestStep2;
-    @FXML
     private Label startTimeLabel;
     @FXML
     private Label endTimeLabel;
@@ -120,6 +116,10 @@ public class ItemPageController implements NetworkService.MessageListener {
     private StackPane statusOverlay;
     @FXML
     private Label statusMessageLabel;
+    @FXML
+    private Button btnSuggestStep1;
+    @FXML
+    private Button btnSuggestStep2;
 
     private String itemId;
     private Item item;
@@ -660,7 +660,6 @@ public class ItemPageController implements NetworkService.MessageListener {
         alert.setContentText(content);
         alert.showAndWait();
     }
-
     @FXML
     private void handleSuggestStep1() {
         if (item == null) return;
