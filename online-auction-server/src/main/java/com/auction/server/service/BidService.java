@@ -106,6 +106,13 @@ public class BidService {
                     return false;
                 }
 
+                String currentLeader = bidRepository.findCurrentLeader(conn, itemId);
+                if (currentLeader != null && currentLeader.equals(userId)) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: current leader cannot bid again until outbid");
+                    return false;
+                }
+
                 double minAllowedPrice = item.getHighestCurrentPrice() + item.getBidStep();
                 if (bidPrice + PRICE_EPSILON < minAllowedPrice) {
                     conn.rollback();

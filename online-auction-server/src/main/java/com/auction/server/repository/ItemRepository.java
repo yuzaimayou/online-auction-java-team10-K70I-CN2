@@ -1,6 +1,7 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
+import com.auction.server.util.StringUtil;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
@@ -50,6 +51,7 @@ public class ItemRepository {
     }
 
     private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
+
         String id = rs.getString("id");
         String name = rs.getString("name");
         String category = rs.getString("category");
@@ -119,17 +121,20 @@ public class ItemRepository {
                     bid_step,
                     image_path,
                     status,
-                    create_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    create_at,
+                    search_name
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """;
 
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
+            String name = item.getName();
+            String search_name = StringUtil.removeAccents(name);
 
             stmt.setString(1, item.getId());
-            stmt.setString(2, item.getName());
+            stmt.setString(2, name);
             stmt.setString(3, item.getDescription());
             stmt.setDouble(4, item.getStartingPrice());
             stmt.setDouble(5, item.getHighestCurrentPrice());
@@ -141,6 +146,7 @@ public class ItemRepository {
             stmt.setString(11, gson.toJson(item.getImagesPath()));
             stmt.setString(12, item.getStatus());
             stmt.setString(13, item.getCreate_at().toString());
+            stmt.setString(14, search_name);
 
             stmt.executeUpdate();
             return true;
@@ -165,6 +171,7 @@ public class ItemRepository {
                     bid_step = ?, 
                     images_path = ?,
                     status=?,
+                    search_name
                 
                 WHERE id = ?
                 """;
@@ -185,9 +192,10 @@ public class ItemRepository {
             stmt.setDouble(9, item.getBidStep());
             stmt.setString(10, gson.toJson(item.getImagesPath()));
             stmt.setString(11, item.getStatus());
+            stmt.setString(12, StringUtil.removeAccents(item.getName()));
 
             // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
-            stmt.setString(12, itemId);
+            stmt.setString(13, itemId);
 
             // executeUpdate() trả về số dòng bị ảnh hưởng.
             // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
@@ -317,6 +325,35 @@ public class ItemRepository {
         return imagePaths;
     }
 
+    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
+        List<ItemSummary> items = new ArrayList<>();
+        //khoi tao cau lenh sql dong
+        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE ");
+        for (int i = 0; i < keywords.size(); i++) {
+            sql.append("LOWER(search_name) LIKE ?");
+            if (i < keywords.size() - 1) sql.append(" AND ");
+        }
+        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
+        System.out.println(sql.toString());
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql.toString())
+        ) {
+            //gan tham so cho cau lenh sql
+            for (int i = 0; i < keywords.size(); i++) {
+                stmt.setString(i + 1, "%" + keywords.get(i) + "%");
+            }
+            stmt.setInt(keywords.size() + 1, offset);
+            System.out.println(stmt.toString());
+            //thuc thi cau lenh
+            ResultSet rs = stmt.executeQuery();
+            //chuyen doi du lieu
+            while (rs.next()) {
+                items.add(mapRowToItemSummary(rs));
+            }
+        }
+        return items;
+    }
 
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString("image_path");
@@ -433,6 +470,7 @@ public class ItemRepository {
         }
         return updatedId;
     }
+
     public double getUserLastBid(String itemId, String userId) {
         String sql = "SELECT MAX(bid_price) AS highest_bid FROM bids WHERE item_id = ? AND user_id = ?";
         try (

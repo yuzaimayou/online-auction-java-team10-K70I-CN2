@@ -65,6 +65,26 @@ public class BidRepository {
         }
     }
 
+    public String findCurrentLeader(Connection conn, String itemId) throws Exception {
+        String sql = """
+        SELECT user_id
+        FROM bids
+        WHERE item_id = ?
+        ORDER BY bid_time DESC
+        LIMIT 1
+        """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("user_id");
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean createBid(Connection conn, String itemId, String userId, double bidPrice, String bidTime) {
 
         String sql = "INSERT INTO bids(item_id,user_id,bid_price,bid_time) VALUES(?,?,?,?)";
