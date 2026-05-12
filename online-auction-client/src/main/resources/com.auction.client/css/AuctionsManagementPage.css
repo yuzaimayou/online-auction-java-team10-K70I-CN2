@@ -1,0 +1,130 @@
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 10, 0, 0, 2);
+}
+
+.content-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1976f3;
+}
+
+.content-subtitle {
+    -fx-text-fill: #7a828a;
+    -fx-font-size: 13px;
+}
+
+.secondary-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 6;
+    -fx-padding: 6 15;
+    -fx-text-fill: #444444;
+    -fx-cursor: hand;
+}
+
+/* Table View Styling */
+.auction-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.action-column-cell {
+    -fx-alignment: CENTER ;
+}
+
+.auction-table .column-header-background {
+    -fx-background-color: #f8f9fb;
+}
+
+.auction-table .column-header {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 20;
+}
+
+.auction-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 20;
+}
+
+.auction-table .table-row-cell:filled:selected {
+    -fx-background-color: #f8f9fb;
+    -fx-table-cell-border-color: transparent;
+}
+.auction-table .column-header {
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-color: transparent;
+    -fx-size: 45;
+    -fx-border-color: #f1f1f1;
+    -fx-border-width: 0 0 1 0;
+}
+
+.auction-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 15;
+}
+
+.auction-table .column-header .label {
+    -fx-text-fill: #7a828a;
+    -fx-font-weight: bold;
+}
+
+.auction-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: #f1f1f1;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 50;
+}
+
+.auction-table .table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.auction-table .table-row-cell:empty .table-cell {
+    -fx-border-color: transparent;
+}
+
+.action-column-cell {
+    -fx-alignment: CENTER;
+}
+
+.accept-btn {
+    -fx-background-color: #e6f7ef;
+    -fx-text-fill: #27ae60;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 5 10;
+}
+
+.reject-btn {
+    -fx-background-color: #ffebee;
+    -fx-text-fill: #eb5757;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 5 10;
+}
+
+.view-link {
+    -fx-text-fill: #1976f3;
+    -fx-underline: false;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.pagination-btn {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-min-width: 32;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.pagination-btn-active {
+    -fx-background-color: #1976f3;
+    -fx-text-fill: white;
+    -fx-border-color: #1976f3;
+}

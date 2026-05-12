@@ -24,13 +24,13 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class LoginController {
+    private static final String FXML_REGISTER = "/com.auction.client/fxml/authenticator/Register.fxml";
+    private static final String FXML_VERIFY = "/com.auction.client/fxml/authenticator/Verify.fxml";
 
     @FXML
     private TextField txtUsername;
-
     @FXML
     private PasswordField txtPassword;
-
     @FXML
     private Label lblMessage;
 
@@ -39,7 +39,6 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-
     }
 
     @FXML
@@ -82,7 +81,7 @@ public class LoginController {
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
                         PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(2));
 
-                        if (!loggedInUser.isVerify()) { // Dùng ! Thay vì == false cho gọn
+                        if (!loggedInUser.isVerify()) {
                             Platform.runLater(() -> {
                                 lblMessage.setTextFill(Color.RED);
                                 lblMessage.setText("Account unverified. Redirecting to Verify...");

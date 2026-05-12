@@ -29,7 +29,6 @@ public class NavBarController {
         }
     }
     public void handleSwitchToHome() {
-
         searchField.textProperty().unbindBidirectional(SearchStoreController.searchQueryProperty());
 
         SearchStoreController.reset();

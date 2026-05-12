@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
 import com.auction.server.repository.ItemRepository;
+import com.auction.server.util.StringUtil;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
@@ -8,9 +9,16 @@ import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ItemService {
     private static ItemService instance;
@@ -34,17 +42,39 @@ public class ItemService {
     }
 
     public List<ItemSummary> getItems(String query) {
-        List<ItemSummary> items;
-        if (query == null) {
-            items = itemRepository.findAllItems();
-        } else if (query.contains("sellerId")) {
-            String sellerId = extractSellerId(query);
-
-            items = itemRepository.findAllBySellerId(sellerId);
-        } else {
-            items = null;
+        //lay toan bo san pham
+        if (query == null || query.trim().isEmpty()) {
+            return itemRepository.findAllItems();
         }
-        return items;
+
+        //lay cac san pham theo keyword
+        if (query.contains("search=")) {
+            try {
+                String input = StringUtil.removeAccents(extractParam(query, "search"));
+
+                int page = 0;
+                if (query.contains("page=")) {
+                    try {
+                        page = Integer.parseInt(extractParam(query, "page"));
+                    } catch (NumberFormatException e) {
+                        page = 0;
+                        e.printStackTrace();
+                    }
+                }
+                return getItemsByKeyword(input, page);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        //lay san pham theo id
+        if (query.contains("sellerId")) {
+            String sellerId = extractParam(query, "sellerId");
+            return itemRepository.findAllBySellerId(sellerId);
+        }
+
+        return null;
     }
 
 
@@ -99,17 +129,44 @@ public class ItemService {
     }
 
     public boolean deleteItem(String itemId) {
+        List<String> fileNames = itemRepository.getImgName(itemId);
+        for (String fileName : fileNames) {
+            Path filePath = Paths.get("dataBase", "images", fileName);
+            try {
+                Files.delete(filePath);
+                System.out.println("Deleted image file: " + filePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
         return itemRepository.deleteItem(itemId);
     }
 
-    private String extractSellerId(String query) {
+    private List<ItemSummary> getItemsByKeyword(String input, int page) throws SQLException {
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+        List<String> keywords = Arrays.stream(input.trim().toLowerCase().split("\\s+"))
+                .filter(word -> !word.isEmpty())
+                .collect(Collectors.toList());
+        int offset = page * 10;
+        return itemRepository.searchItems(keywords, offset);
+    }
+
+
+    private String extractParam(String query, String keyParam) {
         String[] params = query.split("&");
         for (String param : params) {
             String[] keyValue = param.split("=");
-            if (keyValue.length == 2 && "sellerId".equals(keyValue[0])) {
+            if (keyValue.length == 2 && keyParam.equals(keyValue[0])) {
                 return keyValue[1];
             }
         }
         return null;
+    }
+
+    public double getUserLastBid(String itemId, String userId) {
+        return itemRepository.getUserLastBid(itemId, userId);
     }
 }
