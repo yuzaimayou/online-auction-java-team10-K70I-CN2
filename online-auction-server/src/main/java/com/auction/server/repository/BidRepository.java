@@ -65,12 +65,12 @@ public class BidRepository {
         }
     }
 
-    public String findCurrentLeader(Connection conn, String itemId) throws Exception {
+    public String findLastBidder(Connection conn, String itemId) throws Exception {
         String sql = """
         SELECT user_id
         FROM bids
         WHERE item_id = ?
-        ORDER BY bid_time DESC
+        ORDER BY bid_time DESC, id DESC
         LIMIT 1
         """;
 
