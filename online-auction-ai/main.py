@@ -1,39 +1,49 @@
-import sqlite3
+import os
+import shutil
 
-import sqlite_vec
-from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 
-# Load biến môi trường từ file .env
-load_dotenv()
+from database import init_vector_db, search_similar_items, get_db_connection
+from engine import SigLIPEngine
 
-app = FastAPI(
-    title="Auction AI Microservice",
-    description="Dịch vụ AI xử lý ảnh và gợi ý sản phẩm"
-)
+app = FastAPI()
+engine = SigLIPEngine()
 
 
-@app.get("/")
-def health_check():
-    try:
-        # Khởi tạo một kết nối SQLite tạm trên RAM để test
-        db = sqlite3.connect(':memory:')
+@app.on_event("startup")
+async def startup_event():
+    init_vector_db()
 
-        # Cho phép tải extension và load sqlite-vec
-        db.enable_load_extension(True)
-        sqlite_vec.load(db)
-        db.enable_load_extension(False)
 
-        # Query thử version của sqlite-vec để xác nhận đã load thành công
-        vec_version = db.execute("select vec_version()").fetchone()[0]
+@app.post("/index-product/{item_id}")
+async def index_product(item_id: str, file: UploadFile = File(...)):
+    # 1. Lưu ảnh tạm thời
+    temp_path = f"temp_{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
-        return {
-            "status": "success",
-            "message": "AI Microservice đang chạy ngon lành!",
-            "sqlite_vec_version": vec_version
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+    # 2. Tạo vector từ ảnh
+    embedding = engine.encode_image(temp_path)
+
+    # 3. Lưu vào Vector DB
+    db = get_db_connection()
+    db.execute("INSERT OR REPLACE INTO vec_items(item_id, embedding) VALUES (?, ?)",
+               [item_id, str(embedding)])
+    db.commit()
+    db.close()
+
+    os.remove(temp_path)
+    return {"status": "indexed", "item_id": item_id}
+
+
+@app.get("/recommend")
+async def recommend(prompt: str):
+    # Tìm kiếm sản phẩm dựa trên mô tả văn bản của người dùng
+    query_vec = engine.encode_text(prompt)
+    results = search_similar_items(query_vec)
+
+    formatted_results = [
+        {"id": r[0], "name": r[1], "price": r[2], "similarity": 1 - r[3]}
+        for r in results
+    ]
+    return {"recommendations": formatted_results}
