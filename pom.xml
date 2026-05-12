@@ -12,7 +12,6 @@
         <module>online-auction-client</module>
         <module>online-auction-server</module>
         <module>online-auction-shared</module>
-        <module>online-auction-ai</module>
     </modules>
 
     <properties>
