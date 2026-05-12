@@ -4,7 +4,7 @@ import struct
 from typing import Annotated
 
 import numpy as np
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form, Request
 
 from database import init_vector_db, search_similar_items, get_db_connection
 from engine import SigLIPEngine
@@ -35,14 +35,49 @@ def serialize_f32(vector):
     return struct.pack(f"{len(flat_vector)}f", *flat_vector)
 
 
+@app.post("/debug-index-product/{item_id}")
+async def debug_index_product(item_id: str, request: Request):
+    print("========== DEBUG REQUEST ==========")
+    print("item_id:", item_id)
+
+    print("\n--- HEADERS ---")
+    for key, value in request.headers.items():
+        print(f"{key}: {value}")
+
+    body = await request.body()
+
+    print("\n--- RAW BODY LENGTH ---")
+    print(len(body))
+
+    print("\n--- RAW BODY PREVIEW ---")
+    try:
+        print(body[:3000].decode("utf-8", errors="replace"))
+    except Exception as e:
+        print("Cannot decode body:", e)
+        print(body[:3000])
+
+    print("========== END DEBUG ==========")
+
+    return {
+        "status": "debug ok",
+        "item_id": item_id,
+        "content_type": request.headers.get("content-type"),
+        "body_length": len(body),
+        "body_preview": body[:1000].decode("utf-8", errors="replace")
+    }
+
+
 @app.post("/index-product/{item_id}")
 async def index_product(
         item_id: str,
-        # CÚ PHÁP CHUẨN FASTAPI: Khai báo rõ là File và thêm description
-        files: Annotated[
-            list[UploadFile], File(description="Multiple files as UploadFile")
-        ]
+        name: Annotated[str, Form()],  # Nhận thêm tên từ Form
+        description: Annotated[str, Form()],
+        files: Annotated[list[UploadFile], File(description="Multiple files as UploadFile")]
 ):
+    print("item_id:", item_id)
+    print("name:", name)
+    print("description:", description)
+    print("files:", [file.filename for file in files])
     if (len(files) > 5):
         return {"status": "error", "message": "Chỉ được phép tải lên tối đa 5 ảnh"}
 
@@ -61,18 +96,30 @@ async def index_product(
         os.remove(temp_path)
 
     # NẾU CÓ NHIỀU ẢNH -> Tính trung bình cộng. NẾU CÓ 1 ẢNH -> Giữ nguyên.
-    final_embedding = average_embeddings(all_embeddings)
+    imgs_embedding = average_embeddings(all_embeddings)
+
+    # tao vector cho phần mô tả văn bản (để AI có thể so sánh Chữ và Ảnh)
+    full_text = f"Name: {name}. Description: {description}"
+    text_emb = engine.encode_text(full_text)
+
+    # Hợp nhất Đa phương thức (Multimodal Fusion)
+    final_embedding = (np.array(imgs_embedding) + np.array(text_emb)) / 2
 
     # Ép kiểu nhị phân để lưu DB (Sử dụng lại hàm serialize_f32 bạn đã viết)
     embedding_bytes = serialize_f32(final_embedding)
 
     # Lưu 1 vector duy nhất vào Database
+    # Lưu vào Database (Xóa cũ - Ghi mới để tránh lỗi Unique)
     db = get_db_connection()
-    db.execute("DELETE FROM vec_items WHERE item_id = ?", [item_id])
-    db.execute("INSERT OR REPLACE INTO vec_items(item_id, embedding) VALUES (?, ?)",
-               [item_id, embedding_bytes])
-    db.commit()
-    db.close()
+    try:
+        db.execute("DELETE FROM vec_items WHERE item_id = ?", [item_id])
+        db.execute("INSERT OR REPLACE INTO vec_items(item_id, embedding) VALUES (?, ?)",
+                   [item_id, embedding_bytes])
+        db.commit()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 
     return {
         "status": "indexed",
