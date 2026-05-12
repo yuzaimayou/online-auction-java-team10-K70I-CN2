@@ -1,0 +1,15 @@
+# Web Framework cho Microservice
+fastapi
+uvicorn[standard]
+
+# Vector Database (Extension cho SQLite)
+sqlite-vec
+
+# AI Models (SigLIP) & Xử lý ảnh
+transformers
+torch
+torchvision
+Pillow
+
+# Đọc file cấu hình .env
+python-dotenv
