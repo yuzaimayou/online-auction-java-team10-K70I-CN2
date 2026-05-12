@@ -106,13 +106,6 @@ public class BidService {
                     return false;
                 }
 
-                String currentLeader = bidRepository.findCurrentLeader(conn, itemId);
-                if (currentLeader != null && currentLeader.equals(userId)) {
-                    conn.rollback();
-                    System.out.println("Bid rejected: current leader cannot bid again until outbid");
-                    return false;
-                }
-
                 String lastBidder = bidRepository.findLastBidder(conn, itemId);
                 if (lastBidder != null && lastBidder.equals(userId)) {
                     conn.rollback();
