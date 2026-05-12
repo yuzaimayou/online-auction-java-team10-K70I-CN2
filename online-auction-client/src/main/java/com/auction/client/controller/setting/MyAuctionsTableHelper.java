@@ -49,8 +49,8 @@ public class MyAuctionsTableHelper {
             private final Label nameLabel = new Label();
             private final HBox container = new HBox(15, imageView, nameLabel);
             {
-                imageView.setFitWidth(50);
-                imageView.setFitHeight(50);
+                imageView.setFitWidth(70);
+                imageView.setFitHeight(70);
                 imageView.setPreserveRatio(true);
                 imageView.setSmooth(true);
                 nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #333333;");
@@ -67,7 +67,10 @@ public class MyAuctionsTableHelper {
                     nameLabel.setText(item.getName());
                     imageView.setImage(null);
                     if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().isBlank()) {
-                        ClientImageUtil.displayImage(item.getThumbnailUrl(), "images", imageView, 50, 50);
+                        ClientImageUtil.displayImage(
+                                item.getThumbnailUrl(),
+                                "images", imageView,
+                                400, 400);
                     }
                     setGraphic(container);
                 }

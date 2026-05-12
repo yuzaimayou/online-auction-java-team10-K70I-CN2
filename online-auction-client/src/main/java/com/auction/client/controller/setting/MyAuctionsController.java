@@ -20,6 +20,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -86,7 +88,8 @@ public class MyAuctionsController {
                     if ("success".equals(responseMessage.getStatus())) {
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
 
-                        Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
+                        Type listType = new TypeToken<List<ItemSummary>>() {
+                        }.getType();
                         List<ItemSummary> items = gson.fromJson(responseMessage.getData(), listType);
                         Platform.runLater(() -> {
                             masterData.setAll(items);
@@ -136,24 +139,15 @@ public class MyAuctionsController {
             System.err.println("Không tìm thấy file ItemEdit.fxml! Kiểm tra lại đường dẫn.");
         }
     }
+
     @FXML
     public void handleViewItem(ItemSummary selectedItem) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemDetail.fxml"));
-            Parent root = loader.load();
-
-            com.auction.client.controller.setting.ItemDetailPageController detailController = loader.getController();
-
-            detailController.loadItemData(selectedItem.getId());
-
-            Scene currentScene = auctionTable.getScene();
-            currentScene.setRoot(root);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (selectedItem != null) {
+            navigateToDetail(selectedItem.getId());
         }
     }
 
-        private void handleDeleteItem(ItemSummary itemToDelete) {
+    private void handleDeleteItem(ItemSummary itemToDelete) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Xác nhận xóa");
         alert.setHeaderText("Xóa sản phẩm: " + itemToDelete.getName());
@@ -197,6 +191,35 @@ public class MyAuctionsController {
                         });
                         return null;
                     });
+        }
+    }
+    private void navigateToDetail(String itemId) {
+        try {
+            // 1. Tải file FXML của trang Detail
+            // Lưu ý: Đảm bảo đường dẫn này chính xác với cấu trúc thư mục của bạn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/ItemDetail.fxml"));
+            Parent detailPage = loader.load();
+
+            // 2. Lấy Controller của trang Detail để gọi hàm load dữ liệu (tạm thời để đó)
+            ItemDetailPageController detailController = loader.getController();
+            detailController.loadItemData(itemId);
+
+            // 3. Quan trọng: Lấy instance của SettingController để truy cập vùng dynamicContent
+            // Và thay thế nội dung hiện tại bằng trang detailPage
+            SettingController mainSetting = SettingController.getInstance();
+            if (mainSetting != null) {
+                VBox contentArea = mainSetting.getDynamicContent();
+
+                // Đảm bảo trang mới co giãn theo chiều rộng/cao
+                VBox.setVgrow(detailPage, Priority.ALWAYS);
+
+                // Thay thế nội dung
+                contentArea.getChildren().setAll(detailPage);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi khi chuyển sang trang chi tiết: " + e.getMessage());
         }
     }
 }
