@@ -68,6 +68,7 @@ async def index_product(
 
     # Lưu 1 vector duy nhất vào Database
     db = get_db_connection()
+    db.execute("DELETE FROM vec_items WHERE item_id = ?", [item_id])
     db.execute("INSERT OR REPLACE INTO vec_items(item_id, embedding) VALUES (?, ?)",
                [item_id, embedding_bytes])
     db.commit()
