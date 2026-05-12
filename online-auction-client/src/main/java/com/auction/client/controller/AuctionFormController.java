@@ -62,13 +62,13 @@ public class AuctionFormController {
     @FXML
     private TextField txtBidStep;
     @FXML
-    private Button btnChooseImage;
-    @FXML
     private VBox dragDropArea;
     @FXML
     private HBox imagesPreviewContainer;
     @FXML
     private VBox smallAddBtn;
+    @FXML
+    private Button btnSubmit;
     private File selectedImageFile;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -222,11 +222,11 @@ public class AuctionFormController {
         isSubmitting = true;
 
         Platform.runLater(() -> {
-            btnChooseImage.setDisable(true);
+            smallAddBtn.setDisable(true);
+            smallAddBtn.setOpacity(0.5);
 
-            Button clickedButton = (Button) event.getSource();
-            clickedButton.setDisable(true);
-            clickedButton.setText("Creating...");
+            btnSubmit.setDisable(true);
+            btnSubmit.setText("Creating...");
         });
         itemsService.createItem(jsonPayload)
                 .thenAccept(responseMessage -> {
@@ -247,7 +247,8 @@ public class AuctionFormController {
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
 
-                            btnChooseImage.setDisable(false);
+                            smallAddBtn.setDisable(false);
+                            smallAddBtn.setOpacity(1);
 
                             Button clickedButton = (Button) event.getSource();
                             clickedButton.setDisable(false);
@@ -266,11 +267,11 @@ public class AuctionFormController {
                         lblMessage.setTextFill(Color.RED);
                         lblMessage.setText("Failed to connect to server");
 
-                        btnChooseImage.setDisable(false);
+                        smallAddBtn.setDisable(false);
+                        smallAddBtn.setOpacity(1);
 
-                        Button clickedButton = (Button) event.getSource();
-                        clickedButton.setDisable(false);
-                        clickedButton.setText("Add Item");
+                        btnSubmit.setDisable(false);
+                        btnSubmit.setText("Add Item");
                     });
 
                     return null;
