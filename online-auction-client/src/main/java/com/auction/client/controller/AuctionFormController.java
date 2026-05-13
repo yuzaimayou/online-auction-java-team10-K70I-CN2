@@ -38,6 +38,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.auction.client.service.ToastService;
+
 public class AuctionFormController {
     @FXML
     private Label lblMessage;
@@ -158,13 +160,13 @@ public class AuctionFormController {
         //Kiem tra
         if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
                 || selectedFiles.isEmpty()) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Please fill in all required fields.");
+            ToastService.showInfo(
+                    lblMessage.getScene(), "Please fill in all required fields.");
             return;
         }
         if (initPrice == -2 || bidStep == -2) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Price must be a positive number.");
+            ToastService.showInfo(
+                    lblMessage.getScene(), "Price must be a positive number.");
             return;
         }
         //Xu ly thoi gian
@@ -178,19 +180,19 @@ public class AuctionFormController {
         LocalDateTime now = LocalDateTime.now();
 
         if (startDateTime.isBefore(now)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Start time cannot be in the past.");
+            ToastService.showError(
+                    lblMessage.getScene(),"Start time cannot be in the past.");
             return;
         }
 
         if (endDateTime.isBefore(now)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("End time cannot be in the past.");
+            ToastService.showError(
+                    lblMessage.getScene(),"End time cannot be in the past.");
             return;
         }
         if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("End time must be after the start time.");
+            ToastService.showError(
+                    lblMessage.getScene(),"End time must be after the start time.");
             return;
         }
         //Xu ly phan loai san pham
@@ -207,13 +209,13 @@ public class AuctionFormController {
                 }
             }
             if (imagesConverted == null) {
-                lblMessage.setTextFill(Color.RED);
-                lblMessage.setText("Image processing failed.");
+                ToastService.showInfo(
+                        lblMessage.getScene(),"Image processing failed.");
                 return;
             }
         } catch (IOException e) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Error processing images.");
+            ToastService.showInfo(
+                    lblMessage.getScene(),"Error processing images.");
             e.printStackTrace();
         }
 
@@ -232,8 +234,10 @@ public class AuctionFormController {
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         Platform.runLater(() -> {
-                            lblMessage.setTextFill(Color.GREEN);
-                            lblMessage.setText(responseMessage.getMessage());
+                            ToastService.showSuccess(
+                                    lblMessage.getScene(),
+                                    responseMessage.getMessage()
+                            );
                         });
                         PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
                         pause.setOnFinished(e -> handleSwitchToHomePage());

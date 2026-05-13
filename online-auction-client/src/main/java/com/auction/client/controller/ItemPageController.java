@@ -6,6 +6,7 @@ import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
@@ -14,8 +15,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.util.Duration;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -24,9 +27,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Duration;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -34,16 +37,10 @@ import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.auction.shared.model.auction.BidTransaction;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import java.util.Comparator;
-
 
 public class ItemPageController implements NetworkService.MessageListener {
     private static final double IMAGE_WIDTH = 700.0;
@@ -51,6 +48,10 @@ public class ItemPageController implements NetworkService.MessageListener {
     private static final double IMAGE_ARC = 20.0;
     private static final double THUMB_WIDTH = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
+    private final long AUTO_BID_DELAY = 50;
+
+
+    // item information
     @FXML
     private Label itemNameLabel;
     @FXML
@@ -69,14 +70,20 @@ public class ItemPageController implements NetworkService.MessageListener {
     private Label startTimeLabel;
     @FXML
     private Label endTimeLabel;
+
+    // BID CONTROL
     @FXML
     private TextField bidAmountField;
     @FXML
     private Button submitBid;
     @FXML
-    private HBox thumbnailContainer;
-    @FXML
     private Label minimumBidLabel;
+    @FXML
+    private Button btnSuggestStep1;
+    @FXML
+    private Button btnSuggestStep2;
+
+    // BID HISTORY
     @FXML
     private VBox historyBidContainer;
     @FXML
@@ -84,7 +91,12 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Hyperlink viewAllBidsLink;
 
-    // Auto Bid UI
+
+   // IMAGE THUMBNAIL
+    @FXML
+    private HBox thumbnailContainer;
+
+   // AUTO BID
     @FXML
     private VBox autoBidForm;
     @FXML
@@ -98,7 +110,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnAutoBidToggle;
 
-    // Time
+   // COUNTDOWN TIMER
     @FXML
     private Label timeStatusLabel;
     @FXML
@@ -110,22 +122,19 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label secsLabel;
 
+   //STATUS OVERLAY
     @FXML
     private VBox bidControlsContainer;
     @FXML
     private StackPane statusOverlay;
     @FXML
     private Label statusMessageLabel;
-    @FXML
-    private Button btnSuggestStep1;
-    @FXML
-    private Button btnSuggestStep2;
+
 
     private String itemId;
     private Item item;
     private Timeline timeline;
     private double myLastBid = 0.0;
-    private final long AUTO_BID_DELAY = 50;
 
     private final User user = UserSession.getInstance().getLoggedInUser();
     private NetworkService network = NetworkService.getInstance();
@@ -205,6 +214,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
+   // UI STATE MANAGEMENT
     private void updateUIByStatus() {
         if (item == null) return;
 
@@ -243,6 +253,8 @@ public class ItemPageController implements NetworkService.MessageListener {
                 break;
         }
     }
+
+    // REALTIME BIDDING
     private void connectToRealTimeBidding() {
         network.setListener(this);
 
@@ -287,6 +299,106 @@ public class ItemPageController implements NetworkService.MessageListener {
         });
     }
 
+    public void bidHandle() {
+        String inputAmount = bidAmountField.getText().trim();
+        if (inputAmount.isEmpty()) {
+            System.out.println("Please enter a bid amount.");
+            return;
+        }
+        try {
+            double bidAmount = Double.parseDouble(inputAmount);
+            String roomId = item.getId();
+
+            network.sendBid(roomId, user.getId(), bidAmount, "");
+            System.out.println("Bid sent: " + bidAmount);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid bid amount. Please enter a numeric value.");
+        }
+    }
+    @FXML
+    private void handleSuggestStep1() {
+        if (item == null) return;
+        double suggestedPrice = item.getCurrentPrice() + item.getBidStep();
+        bidAmountField.setText(String.format("%.0f", suggestedPrice));
+    }
+
+    @FXML
+    private void handleSuggestStep2() {
+        if (item == null) return;
+        double suggestedPrice = item.getCurrentPrice() + (item.getBidStep() * 2);
+        bidAmountField.setText(String.format("%.0f", suggestedPrice));
+    }
+
+    // AUTO BID
+    @FXML
+    private void toggleAutoBidForm() {
+        boolean isVisible = autoBidForm.isVisible();
+        autoBidForm.setVisible(!isVisible);
+        autoBidForm.setManaged(!isVisible);
+    }
+
+    @FXML
+    private void startAutoBid() {
+        try {
+            maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
+            autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
+
+            if (maxBidAmount <= item.getCurrentPrice()) {
+                System.out.println("Max bid phải lớn hơn giá hiện tại!");
+                return;
+            }
+            isAutoBidActive = true;
+
+            myLastBid = item.getCurrentPrice();
+            updateAutoBidUI(true);
+
+            handleAutoBidLogic(item.getCurrentPrice(), null);
+        } catch (NumberFormatException e) {
+            System.out.println("Vui lòng nhập số hợp lệ cho Auto Bid");
+        }
+    }
+    @FXML
+    private void stopAutoBid() {
+        isAutoBidActive = false;
+        updateAutoBidUI(false);
+    }
+    private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
+        if (!isAutoBidActive) return;
+
+        if (user.getId().equals(lastBidderId)) {
+            myLastBid = serverCurrentPrice;
+            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
+            return;
+        }
+
+        double myNextBid = serverCurrentPrice + autoBidIncremental;
+
+        if (myNextBid <= maxBidAmount) {
+            long now = System.currentTimeMillis();
+            if (now - lastAutoBidTime < AUTO_BID_DELAY) return;
+            lastAutoBidTime = now;
+            network.sendBid(item.getId(), user.getId(), myNextBid, "");
+            myLastBid = myNextBid;
+            System.out.println("Auto Bid thực hiện đặt giá: " + myNextBid);
+            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ", myNextBid));
+        } else {
+            System.out.println("Giá đã vượt quá hạn mức Max Bid của bạn!");
+            stopAutoBid();
+        }
+    }
+    private void updateAutoBidUI(boolean active) {
+        autoBidForm.setVisible(false);
+        autoBidForm.setManaged(false);
+
+        autoBidActiveStatus.setVisible(active);
+        autoBidActiveStatus.setManaged(active);
+
+        btnAutoBidToggle.setVisible(!active);
+        btnAutoBidToggle.setManaged(!active);
+        submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
+    }
+
+    // BID HISTORY
     private void loadBidHistory() {
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -305,39 +417,30 @@ public class ItemPageController implements NetworkService.MessageListener {
                     }
                 });
     }
-
-    // --- CHỈNH SỬA 4: Logic Render (Tối đa 8 người) ---
     private void renderBidHistory(List<BidTransaction> bids) {
         historyBidContainer.getChildren().clear();
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
             return;
         }
-
-        // Sắp xếp giá cao nhất lên đầu
         bids.sort( Comparator.comparing(BidTransaction::getBidTime) .reversed() );
 
         int totalCount = bids.size();
         totalBidsLabel.setText(totalCount + " bids");
 
-        // Chỉ lấy tối đa 8 người
         int displayLimit = Math.min(totalCount, 8);
         for (int i = 0; i < displayLimit; i++) {
             historyBidContainer.getChildren().add(createBidRow(i + 1, bids.get(i)));
         }
-
-        // Hiện nút "View all" nếu nhiều hơn 8
         boolean hasMore = totalCount > 8;
         viewAllBidsLink.setVisible(hasMore);
         viewAllBidsLink.setManaged(hasMore);
         if (hasMore) viewAllBidsLink.setText("View all bids (" + totalCount + ") →");
     }
-
-    // Hàm tạo UI cho từng dòng bid (giống ảnh mẫu)
     private HBox createBidRow(int index, BidTransaction bid) {
         HBox row = new HBox(15);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        row.getStyleClass().add("history-row"); // Bạn cần định nghĩa class này trong CSS
+        row.getStyleClass().add("history-row");
 
         Label lblIndex = new Label(String.valueOf(index));
         lblIndex.getStyleClass().add("history-index");
@@ -369,119 +472,8 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
 
-    public void bidHandle() {
-        if (!checkBiddableStatus()) {
-            return;
-        }
-        String inputAmount = bidAmountField.getText().trim();
-        if (inputAmount.isEmpty()) {
-            System.out.println("Please enter a bid amount.");
-            return;
-        }
-        try {
-            double bidAmount = Double.parseDouble(inputAmount);
-            String roomId = item.getId();
 
-            network.sendBid(roomId, user.getId(), bidAmount, "");
-            System.out.println("Bid sent: " + bidAmount);
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid bid amount. Please enter a numeric value.");
-        }
-    }
-
-    private boolean checkBiddableStatus() {
-        String status = item.getStatus().toString().toUpperCase();
-        if (status.equals("UPCOMING")) {
-            showAlert(Alert.AlertType.WARNING, "Không thể đấu giá", "Sản phẩm này chưa tới thời gian đấu giá (Upcoming).");
-            return false;
-        } else if (status.equals("ENDED")) {
-            showAlert(Alert.AlertType.WARNING, "Không thể đấu giá", "Cuộc đấu giá cho sản phẩm này đã kết thúc (Ended).");
-            return false;
-        }
-        return true;
-    }
-
-
-    // Auto bid logic
-    @FXML
-    private void toggleAutoBidForm() {
-        boolean isVisible = autoBidForm.isVisible();
-        autoBidForm.setVisible(!isVisible);
-        autoBidForm.setManaged(!isVisible);
-    }
-
-    @FXML
-    private void startAutoBid() {
-        if (!checkBiddableStatus()) {
-            return;
-        }
-        try {
-            maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
-            autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
-
-            if (maxBidAmount <= item.getCurrentPrice()) {
-                System.out.println("Max bid phải lớn hơn giá hiện tại!");
-                return;
-            }
-            isAutoBidActive = true;
-
-            myLastBid = item.getCurrentPrice();
-            updateAutoBidUI(true);
-
-            handleAutoBidLogic(item.getCurrentPrice(), null);
-        } catch (NumberFormatException e) {
-            System.out.println("Vui lòng nhập số hợp lệ cho Auto Bid");
-        }
-    }
-    @FXML
-    private void stopAutoBid() {
-        isAutoBidActive = false;
-        updateAutoBidUI(false);
-    }
-    // Tự động tính toán giá khi có giá mới
-    private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
-        if (!isAutoBidActive) return;
-
-        // Nếu mình đã là người cao nhất thì không cần bid thêm
-        if (user.getId().equals(lastBidderId)) {
-            myLastBid = serverCurrentPrice;
-            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
-            return;
-        }
-
-        // Tính toán giá tiếp theo của mình
-        double myNextBid = serverCurrentPrice + autoBidIncremental;
-
-        if (myNextBid <= maxBidAmount) {
-            long now = System.currentTimeMillis();
-            if (now - lastAutoBidTime < AUTO_BID_DELAY) return; // chống spam
-            lastAutoBidTime = now;
-            network.sendBid(item.getId(), user.getId(), myNextBid, "");
-            myLastBid = myNextBid;
-            System.out.println("Auto Bid thực hiện đặt giá: " + myNextBid);
-            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ", myNextBid));
-        } else {
-            System.out.println("Giá đã vượt quá hạn mức Max Bid của bạn!");
-            stopAutoBid();
-        }
-    }
-
-    // Cập nhật hiển thị giao diện chuyển đổi trạng thái
-    private void updateAutoBidUI(boolean active) {
-        autoBidForm.setVisible(false);
-        autoBidForm.setManaged(false);
-
-        autoBidActiveStatus.setVisible(active);
-        autoBidActiveStatus.setManaged(active);
-
-        btnAutoBidToggle.setVisible(!active);
-        btnAutoBidToggle.setManaged(!active);
-
-        // Disable nút đặt giá tay khi đang chạy auto để tránh xung đột
-        submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
-    }
-
-    // display utils
+    // DISPLAY & IMAGE HANDLING
     private void displayDataItem(Item item) {
         thumbnailContainer.getChildren().clear();
         List<String> images = item.getImagesPath();
@@ -612,7 +604,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         });
     }
 
-    // timer & countdown
+    // TIMER $ COUNTDOWN
     private void startCountdown() {
         if (timeline != null) {
             timeline.stop();
@@ -646,33 +638,10 @@ public class ItemPageController implements NetworkService.MessageListener {
             updateTimerLabels(days, hours, minutes, seconds);
         }
     }
-
     private void updateTimerLabels(long d, long h, long m, long s) {
         if (daysLabel != null) daysLabel.setText(String.format("%02d", d));
         if (hoursLabel != null) hoursLabel.setText(String.format("%02d", h));
         if (minsLabel != null) minsLabel.setText(String.format("%02d", m));
         if (secsLabel != null) secsLabel.setText(String.format("%02d", s));
-    }
-    private void showAlert(Alert.AlertType alertType, String title, String content) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
-    }
-    @FXML
-    private void handleSuggestStep1() {
-        if (item == null) return;
-        // Giá gợi ý = Giá hiện tại + Bước nhảy (bidStep)
-        double suggestedPrice = item.getCurrentPrice() + item.getBidStep();
-        bidAmountField.setText(String.format("%.0f", suggestedPrice));
-    }
-
-    @FXML
-    private void handleSuggestStep2() {
-        if (item == null) return;
-        // Giá gợi ý = Giá hiện tại + (Bước nhảy * 2)
-        double suggestedPrice = item.getCurrentPrice() + (item.getBidStep() * 2);
-        bidAmountField.setText(String.format("%.0f", suggestedPrice));
     }
 }

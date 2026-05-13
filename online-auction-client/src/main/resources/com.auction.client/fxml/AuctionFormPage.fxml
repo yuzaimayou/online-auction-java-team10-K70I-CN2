@@ -4,10 +4,11 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<StackPane xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.auction.client.controller.AuctionFormController">
 <VBox prefHeight="2000.0" prefWidth="1440.0" styleClass="root-container"
-      stylesheets="@../css/AuctionFormPage.css"
-      xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.AuctionFormController">
+      stylesheets="@../css/AuctionFormPage.css">
 
     <fx:include fx:id="navBar" source="NavBar.fxml"/>
 
@@ -233,3 +234,4 @@
 
     </StackPane>
 </VBox>
+</StackPane>
