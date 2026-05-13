@@ -281,17 +281,49 @@ public class ItemRepository {
 
     }
 
-    public List<ItemSummary> findAllItems() {
+    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
+        List<ItemSummary> items = new ArrayList<>();
+        //khoi tao cau lenh sql dong
+        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE ");
+        for (int i = 0; i < keywords.size(); i++) {
+            sql.append("LOWER(search_name) LIKE ?");
+            if (i < keywords.size() - 1) sql.append(" AND ");
+        }
+        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
+        System.out.println(sql.toString());
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql.toString())
+        ) {
+            //gan tham so cho cau lenh sql
+            for (int i = 0; i < keywords.size(); i++) {
+                stmt.setString(i + 1, "%" + keywords.get(i) + "%");
+            }
+            stmt.setInt(keywords.size() + 1, offset);
+            System.out.println(stmt.toString());
+            //thuc thi cau lenh
+            ResultSet rs = stmt.executeQuery();
+            //chuyen doi du lieu
+            while (rs.next()) {
+                items.add(mapRowToItemSummary(rs));
+            }
+        }
+        return items;
+    }
+
+    public List<ItemSummary> findAllItems(String sortOrder, int offset) {
         String sql = """
-                SELECT id,
-                       name,
-                       category,
-                       current_price,
-                       image_path,
-                       start_time,
-                       end_time 
-                FROM items
-                """;
+                             SELECT id,
+                                    name,
+                                    category,
+                                    current_price,
+                                    image_path,
+                                    start_time,
+                                    end_time 
+                             FROM items
+                             ORDER BY """ + sortOrder + """
+                             LIMIT 20 OFFSET ?
+                             """;
 
         return executeSummaryQuery(sql);
     }
@@ -325,35 +357,6 @@ public class ItemRepository {
         return imagePaths;
     }
 
-    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
-        List<ItemSummary> items = new ArrayList<>();
-        //khoi tao cau lenh sql dong
-        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE ");
-        for (int i = 0; i < keywords.size(); i++) {
-            sql.append("LOWER(search_name) LIKE ?");
-            if (i < keywords.size() - 1) sql.append(" AND ");
-        }
-        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
-        System.out.println(sql.toString());
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql.toString())
-        ) {
-            //gan tham so cho cau lenh sql
-            for (int i = 0; i < keywords.size(); i++) {
-                stmt.setString(i + 1, "%" + keywords.get(i) + "%");
-            }
-            stmt.setInt(keywords.size() + 1, offset);
-            System.out.println(stmt.toString());
-            //thuc thi cau lenh
-            ResultSet rs = stmt.executeQuery();
-            //chuyen doi du lieu
-            while (rs.next()) {
-                items.add(mapRowToItemSummary(rs));
-            }
-        }
-        return items;
-    }
 
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString("image_path");

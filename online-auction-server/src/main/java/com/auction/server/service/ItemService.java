@@ -41,10 +41,28 @@ public class ItemService {
         return itemRepository.findAllBySellerId(sellerId);
     }
 
+    //Lay nhieu item
     public List<ItemSummary> getItems(String query) {
-        //lay toan bo san pham
-        if (query == null || query.trim().isEmpty()) {
-            return itemRepository.findAllItems();
+        int page = 0;
+        if (query.contains("page=")) {
+            try {
+                page = Integer.parseInt(extractParam(query, "page"));
+            } catch (NumberFormatException e) {
+                page = 0;
+                e.printStackTrace();
+            }
+        }
+
+        String sortOrder = "end_time ASC";
+        if (query.contains("sort=")) {
+            String sortParam = extractParam(query, "sort");
+            if ("newest".equalsIgnoreCase(sortParam)) {
+                sortOrder = "start_time DESC";
+            } else if ("price_low".equalsIgnoreCase(sortParam)) {
+                sortOrder = "current_price ASC";
+            } else if ("price_high".equalsIgnoreCase(sortParam)) {
+                sortOrder = "current_price DESC";
+            }
         }
 
         //lay cac san pham theo keyword
@@ -52,7 +70,6 @@ public class ItemService {
             try {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
 
-                int page = 0;
                 if (query.contains("page=")) {
                     try {
                         page = Integer.parseInt(extractParam(query, "page"));
@@ -74,7 +91,11 @@ public class ItemService {
             return itemRepository.findAllBySellerId(sellerId);
         }
 
-        return null;
+        //lay toan bo san pham
+//        if (query == null || query.trim().isEmpty()) {
+//            return itemRepository.findAllItems(page);
+//        }
+        return itemRepository.findAllItems(sortOrder, page);
     }
 
 
