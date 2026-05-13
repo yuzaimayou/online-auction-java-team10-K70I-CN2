@@ -1,23 +1,23 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.service.ItemsService;
+import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
-import com.auction.client.util.AppConfig;
-import com.auction.shared.message.ResponseMessage;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
 import java.time.format.DateTimeFormatter;
 
 public class ItemDetailPageController {
@@ -48,6 +48,7 @@ public class ItemDetailPageController {
 
     /**
      * Hàm này được gọi từ MyAuctionsController để truyền ID sang
+     *
      * @param itemId ID của sản phẩm cần xem chi tiết
      */
     public void loadItemData(String itemId) {
@@ -62,8 +63,9 @@ public class ItemDetailPageController {
                     ResponseMessage response =
                             gson.fromJson(responseBody, ResponseMessage.class);
                     if ("success".equals(response.getStatus())) {
+                        JsonElement jsonElement = gson.toJsonTree(response.getData());
                         Item fullItem =
-                                gson.fromJson(response.getData(), Item.class);
+                                gson.fromJson(jsonElement, Item.class);
                         Platform.runLater(() ->
                                 displayItemDetails(fullItem)
                         );

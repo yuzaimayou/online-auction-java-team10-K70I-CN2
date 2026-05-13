@@ -46,6 +46,9 @@ public class ItemService {
 
     //Lay nhieu item
     public List<ItemSummary> getItems(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return itemRepository.findAllItems("s", 0);
+        }
         int page = 0;
         if (query.contains("page=")) {
             try {
@@ -94,10 +97,9 @@ public class ItemService {
             return itemRepository.findAllBySellerId(sellerId);
         }
 
-        //lay toan bo san pham
-//        if (query == null || query.trim().isEmpty()) {
-//            return itemRepository.findAllItems(page);
-//        }
+
+        List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page);
+        System.out.println("Fetched " + items.size() + " items with sort order: ");
         return itemRepository.findAllItems(sortOrder, page);
     }
 
