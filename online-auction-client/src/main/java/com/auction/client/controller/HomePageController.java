@@ -7,6 +7,7 @@ import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -88,8 +89,10 @@ public class HomePageController {
                     try {
                         ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
                         if ("success".equals(res.getStatus())) {
-                            Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
-                            List<ItemSummary> dataItems = gson.fromJson(res.getData(), listType);
+                            Type listType = new TypeToken<List<ItemSummary>>() {
+                            }.getType();
+                            JsonElement jsonElement = gson.toJsonTree(res.getData());
+                            List<ItemSummary> dataItems = gson.fromJson(jsonElement, listType);
                             Platform.runLater(() -> {
                                 this.masterItemList = dataItems;
                                 applyFilter();
@@ -112,6 +115,7 @@ public class HomePageController {
                     return null;
                 });
     }
+
     private void applyFilter() {
         if (masterItemList == null)
             return;
@@ -133,6 +137,7 @@ public class HomePageController {
 
         loadItemsToUI(filtered);
     }
+
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
         Platform.runLater(() -> {
             ongoingAuctionsContainer.getChildren().clear();
@@ -175,6 +180,7 @@ public class HomePageController {
             updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
         });
     }
+
     private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
         ongoingSection.setVisible(ongoing > 0);
         ongoingSection.setManaged(ongoing > 0);
@@ -239,6 +245,7 @@ public class HomePageController {
         });
         getDataItemsAndDisplay();
     }
+
     public void refreshNavBarInfo() {
         if (navBarController != null) {
             navBarController.refreshUserInfo();

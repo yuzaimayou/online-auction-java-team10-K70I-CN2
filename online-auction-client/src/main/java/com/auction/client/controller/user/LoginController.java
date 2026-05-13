@@ -5,7 +5,9 @@ import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
+import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -17,7 +19,6 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -35,7 +36,7 @@ public class LoginController {
     private Label lblMessage;
 
     private AuthService authService = AuthService.getInstance();
-    private Gson gson = new Gson();
+    private Gson gson = GsonUtil.getInstance();
 
     @FXML
     public void initialize() {
@@ -58,8 +59,10 @@ public class LoginController {
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         // --- ĐOẠN CODE ĐÃ ĐƯỢC SỬA LẠI ĐỂ FIX LỖI ROLE ---
-                                // 1. Đọc Data thành JsonObject để kiểm tra role trước
-                                JsonObject userData = gson.fromJson(responseMessage.getData(), JsonObject.class);
+                        // 1. Đọc Data thành JsonObject để kiểm tra role trước
+                        JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
+                        JsonObject userData = jsonElement.getAsJsonObject();
+                        System.out.println("Received user data: " + userData.toString());
                         String role = "";
 
                         // Kiểm tra xem JSON có trường "role" không
@@ -70,10 +73,10 @@ public class LoginController {
                         // 2. Khởi tạo User hoặc Admin tùy thuộc vào Role
                         User loggedInUser;
                         if ("Admin".equalsIgnoreCase(role)) {
-                            loggedInUser = gson.fromJson(responseMessage.getData(), Admin.class);
+                            loggedInUser = gson.fromJson(jsonElement, Admin.class);
                             System.out.println("Đã đăng nhập với quyền ADMIN!");
                         } else {
-                            loggedInUser = gson.fromJson(responseMessage.getData(), User.class);
+                            loggedInUser = gson.fromJson(jsonElement, User.class);
                             System.out.println("Đã đăng nhập với quyền USER!");
                         }
 
@@ -107,6 +110,7 @@ public class LoginController {
                     }
                 })
                 .exceptionally(e -> {
+                    e.printStackTrace();
                     Platform.runLater(() -> {
                         lblMessage.setTextFill(Color.RED);
                         lblMessage.setText("Failed to connect to server");

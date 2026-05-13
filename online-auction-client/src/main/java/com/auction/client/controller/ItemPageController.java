@@ -12,12 +12,11 @@ import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.util.Duration;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -31,6 +30,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -40,8 +41,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ItemPageController implements NetworkService.MessageListener {
     private static final double IMAGE_WIDTH = 700.0;
@@ -93,11 +92,11 @@ public class ItemPageController implements NetworkService.MessageListener {
     private Hyperlink viewAllBidsLink;
 
 
-   // IMAGE THUMBNAIL
+    // IMAGE THUMBNAIL
     @FXML
     private HBox thumbnailContainer;
 
-   // AUTO BID
+    // AUTO BID
     @FXML
     private VBox autoBidForm;
     @FXML
@@ -111,7 +110,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnAutoBidToggle;
 
-   // COUNTDOWN TIMER
+    // COUNTDOWN TIMER
     @FXML
     private Label timeStatusLabel;
     @FXML
@@ -123,7 +122,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label secsLabel;
 
-   //STATUS OVERLAY
+    //STATUS OVERLAY
     @FXML
     private VBox bidControlsContainer;
     @FXML
@@ -185,7 +184,8 @@ public class ItemPageController implements NetworkService.MessageListener {
                 .thenAccept(responseBody -> {
                     ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
                     if ("success".equals(response.getStatus()) && response.getData() != null) {
-                        Item item = gson.fromJson(response.getData(), Item.class);
+                        JsonElement jsonElement = gson.toJsonTree(response.getData());
+                        Item item = gson.fromJson(jsonElement, Item.class);
                         Platform.runLater(() -> initData(item));
                         System.out.println("Item data loaded successfully for item ID: " + id);
                     } else {
@@ -197,6 +197,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                     return null;
                 });
     }
+
     public void initData(Item item) {
         this.item = item;
         this.myLastBid = item.getMyLastBid();
@@ -215,7 +216,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
-   // UI STATE MANAGEMENT
+    // UI STATE MANAGEMENT
     private void updateUIByStatus() {
         if (item == null) return;
 
@@ -275,10 +276,10 @@ public class ItemPageController implements NetworkService.MessageListener {
         System.out.println(response);
         Platform.runLater(() -> {
             if ("success".equals(response.getStatus()) && "NEW_BID".equals(response.getMessage())) {
-                String jsonPayload = response.getData();
-                BidPayload bidPayload = gson.fromJson(jsonPayload, BidPayload.class);
+                JsonElement jsonElement = gson.toJsonTree(response.getData());
+                BidPayload bidPayload = gson.fromJson(jsonElement, BidPayload.class);
                 if (bidPayload != null) {
-                    System.out.println("Received new bid update: " + jsonPayload);
+                    System.out.println("Received new bid update: " + jsonElement);
                     item.setCurrentPrice(bidPayload.getBidPrice());
                     currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
 
@@ -292,7 +293,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                     handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
                     loadBidHistory();
                 } else {
-                    System.err.println("Failed to parse updated item from response: " + jsonPayload);
+                    System.err.println("Failed to parse updated item from response: " + jsonElement);
                 }
             } else {
                 System.out.println("Received message: " + response.getMessage());
@@ -322,6 +323,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             ToastService.showError(bidAmountField.getScene(), "Invalid price format.");
         }
     }
+
     @FXML
     private void handleSuggestStep1() {
         if (item == null) return;
@@ -368,11 +370,13 @@ public class ItemPageController implements NetworkService.MessageListener {
             ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
     }
+
     @FXML
     private void stopAutoBid() {
         isAutoBidActive = false;
         updateAutoBidUI(false);
     }
+
     private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
         if (!isAutoBidActive) return;
 
@@ -399,6 +403,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             );
         }
     }
+
     private void updateAutoBidUI(boolean active) {
         autoBidForm.setVisible(false);
         autoBidForm.setManaged(false);
@@ -424,19 +429,22 @@ public class ItemPageController implements NetworkService.MessageListener {
                 .thenAccept(body -> {
                     ResponseMessage res = gson.fromJson(body, ResponseMessage.class);
                     if ("success".equals(res.getStatus())) {
-                        java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<BidTransaction>>(){}.getType();
-                        List<BidTransaction> bids = gson.fromJson(res.getData(), listType);
+                        java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<BidTransaction>>() {
+                        }.getType();
+                        JsonElement jsonElement = gson.toJsonTree(res.getData());
+                        List<BidTransaction> bids = gson.fromJson(jsonElement, listType);
                         Platform.runLater(() -> renderBidHistory(bids));
                     }
                 });
     }
+
     private void renderBidHistory(List<BidTransaction> bids) {
         historyBidContainer.getChildren().clear();
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
             return;
         }
-        bids.sort( Comparator.comparing(BidTransaction::getBidTime) .reversed() );
+        bids.sort(Comparator.comparing(BidTransaction::getBidTime).reversed());
 
         int totalCount = bids.size();
         totalBidsLabel.setText(totalCount + " bids");
@@ -450,6 +458,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         viewAllBidsLink.setManaged(hasMore);
         if (hasMore) viewAllBidsLink.setText("View all bids (" + totalCount + ") →");
     }
+
     private HBox createBidRow(int index, BidTransaction bid) {
         HBox row = new HBox(15);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -483,7 +492,6 @@ public class ItemPageController implements NetworkService.MessageListener {
         System.out.println("Redirecting to full history for item: " + itemId);
         // Chuyển hướng sang trang Full History tại đây
     }
-
 
 
     // DISPLAY & IMAGE HANDLING
@@ -573,6 +581,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         startCountdown();
         updateMinimumBidLabel();
     }
+
     private void updateMinimumBidLabel() {
         if (item != null && minimumBidLabel != null) {
             double minimumNextBid = item.getCurrentPrice() + item.getBidStep();
@@ -580,9 +589,11 @@ public class ItemPageController implements NetworkService.MessageListener {
             minimumBidLabel.setText(String.format("Your last bid: $ %.0f ( min next: $ %.0f ) ", myLastBid, minimumNextBid));
         }
     }
+
     private void applyObjectFitCover(Image img) {
         applyObjectFitCoverToImageView(itemImage, img, IMAGE_WIDTH, IMAGE_HEIGHT);
     }
+
     private void applyObjectFitCoverToImageView(ImageView imageView, Image img, double targetW, double targetH) {
         if (img == null || imageView == null) return;
         if (img.getProgress() < 1.0) {
@@ -627,6 +638,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.playFromStart();
     }
+
     private void updateTimeDisplay() {
         if (item == null) return;
 
@@ -651,6 +663,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             updateTimerLabels(days, hours, minutes, seconds);
         }
     }
+
     private void updateTimerLabels(long d, long h, long m, long s) {
         if (daysLabel != null) daysLabel.setText(String.format("%02d", d));
         if (hoursLabel != null) hoursLabel.setText(String.format("%02d", h));

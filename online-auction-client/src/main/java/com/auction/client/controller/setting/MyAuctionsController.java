@@ -3,20 +3,17 @@ package com.auction.client.controller.setting;
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
-import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -27,7 +24,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,7 +86,8 @@ public class MyAuctionsController {
 
                         Type listType = new TypeToken<List<ItemSummary>>() {
                         }.getType();
-                        List<ItemSummary> items = gson.fromJson(responseMessage.getData(), listType);
+                        JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
+                        List<ItemSummary> items = gson.fromJson(jsonElement, listType);
                         Platform.runLater(() -> {
                             masterData.setAll(items);
                             auctionTable.setItems(masterData);
@@ -193,6 +190,7 @@ public class MyAuctionsController {
                     });
         }
     }
+
     private void navigateToDetail(String itemId) {
         try {
             // 1. Tải file FXML của trang Detail
