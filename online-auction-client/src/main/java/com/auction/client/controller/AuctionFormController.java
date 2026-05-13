@@ -30,7 +30,6 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -222,7 +221,7 @@ public class AuctionFormController {
         isSubmitting = true;
 
         Platform.runLater(() -> {
-            btnChooseImage.setDisable(true);
+            //btnChooseImage.setDisable(true);
 
             Button clickedButton = (Button) event.getSource();
             clickedButton.setDisable(true);
@@ -247,7 +246,7 @@ public class AuctionFormController {
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
 
-                            btnChooseImage.setDisable(false);
+                            //btnChooseImage.setDisable(false);
 
                             Button clickedButton = (Button) event.getSource();
                             clickedButton.setDisable(false);
