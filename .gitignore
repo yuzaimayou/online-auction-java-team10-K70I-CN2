@@ -44,3 +44,5 @@ build/
 
 /online-auction-server/dataBase/*
 !/online-auction-server/dataBase/.gitkeep
+###env###
+.env
