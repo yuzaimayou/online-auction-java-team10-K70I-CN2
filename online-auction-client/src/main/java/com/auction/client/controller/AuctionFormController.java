@@ -164,14 +164,23 @@ public class AuctionFormController {
                     lblMessage.getScene(), "Please fill in all required fields.");
             return;
         }
-        if (initPrice == -2 || bidStep == -2) {
+        if (initPrice == -2 ) {
             ToastService.showInfo(
                     lblMessage.getScene(), "Price must be a positive number.");
             return;
         }
+        if (bidStep == -2) {
+            ToastService.showInfo(
+                    lblMessage.getScene(), "Bid steps must be a positive number.");
+            return;
+        }
+        if (bidStep > initPrice) {
+            ToastService.showError(
+                    lblMessage.getScene(), "Bid step cannot be greater than the starting price!");
+            return;
+        }
         //Xu ly thoi gian
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-
         LocalTime parsedStartTime = LocalTime.parse(startTime, timeFormatter);
         LocalTime parsedEndTime = LocalTime.parse(endTime, timeFormatter);
 
@@ -192,7 +201,7 @@ public class AuctionFormController {
         }
         if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
             ToastService.showError(
-                    lblMessage.getScene(),"End time must be after the start time.");
+                    lblMessage.getScene(),"End time must be strictly after the start time.");
             return;
         }
         //Xu ly phan loai san pham
@@ -210,12 +219,12 @@ public class AuctionFormController {
             }
             if (imagesConverted == null) {
                 ToastService.showInfo(
-                        lblMessage.getScene(),"Image processing failed.");
+                        lblMessage.getScene(),"Image processing failed. Please try again.");
                 return;
             }
         } catch (IOException e) {
             ToastService.showInfo(
-                    lblMessage.getScene(),"Error processing images.");
+                    lblMessage.getScene(),"Error processing images: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -235,9 +244,7 @@ public class AuctionFormController {
                     if ("success".equals(responseMessage.getStatus())) {
                         Platform.runLater(() -> {
                             ToastService.showSuccess(
-                                    lblMessage.getScene(),
-                                    responseMessage.getMessage()
-                            );
+                                    lblMessage.getScene(), responseMessage.getMessage());
                         });
                         PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
                         pause.setOnFinished(e -> handleSwitchToHomePage());
@@ -248,8 +255,8 @@ public class AuctionFormController {
 
                         Platform.runLater(() -> {
 
-                            lblMessage.setTextFill(Color.RED);
-                            lblMessage.setText(responseMessage.getMessage());
+                            ToastService.showInfo(
+                                    lblMessage.getScene(),responseMessage.getMessage());
 
                             smallAddBtn.setDisable(false);
                             smallAddBtn.setOpacity(1);
@@ -268,8 +275,8 @@ public class AuctionFormController {
 
                     Platform.runLater(() -> {
 
-                        lblMessage.setTextFill(Color.RED);
-                        lblMessage.setText("Failed to connect to server");
+                        ToastService.showInfo(
+                                lblMessage.getScene(),"Failed to connect to server. Please submit again");
 
                         smallAddBtn.setDisable(false);
                         smallAddBtn.setOpacity(1);
