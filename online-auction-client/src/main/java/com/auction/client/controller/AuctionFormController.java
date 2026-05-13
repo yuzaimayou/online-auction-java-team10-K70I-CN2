@@ -30,12 +30,15 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.auction.client.service.ToastService;
 
 public class AuctionFormController {
     @FXML
@@ -61,13 +64,13 @@ public class AuctionFormController {
     @FXML
     private TextField txtBidStep;
     @FXML
-    private Button btnChooseImage;
-    @FXML
     private VBox dragDropArea;
     @FXML
     private HBox imagesPreviewContainer;
     @FXML
     private VBox smallAddBtn;
+    @FXML
+    private Button btnSubmit;
     private File selectedImageFile;
     private Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -157,18 +160,27 @@ public class AuctionFormController {
         //Kiem tra
         if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
                 || selectedFiles.isEmpty()) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Please fill in all required fields.");
+            ToastService.showInfo(
+                    lblMessage.getScene(), "Please fill in all required fields.");
             return;
         }
-        if (initPrice == -2 || bidStep == -2) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Price must be a positive number.");
+        if (initPrice == -2 ) {
+            ToastService.showInfo(
+                    lblMessage.getScene(), "Price must be a positive number.");
+            return;
+        }
+        if (bidStep == -2) {
+            ToastService.showInfo(
+                    lblMessage.getScene(), "Bid steps must be a positive number.");
+            return;
+        }
+        if (bidStep > initPrice) {
+            ToastService.showError(
+                    lblMessage.getScene(), "Bid step cannot be greater than the starting price!");
             return;
         }
         //Xu ly thoi gian
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-
         LocalTime parsedStartTime = LocalTime.parse(startTime, timeFormatter);
         LocalTime parsedEndTime = LocalTime.parse(endTime, timeFormatter);
 
@@ -177,19 +189,19 @@ public class AuctionFormController {
         LocalDateTime now = LocalDateTime.now();
 
         if (startDateTime.isBefore(now)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Start time cannot be in the past.");
+            ToastService.showError(
+                    lblMessage.getScene(),"Start time cannot be in the past.");
             return;
         }
 
         if (endDateTime.isBefore(now)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("End time cannot be in the past.");
+            ToastService.showError(
+                    lblMessage.getScene(),"End time cannot be in the past.");
             return;
         }
         if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("End time must be after the start time.");
+            ToastService.showError(
+                    lblMessage.getScene(),"End time must be strictly after the start time.");
             return;
         }
         //Xu ly phan loai san pham
@@ -206,13 +218,13 @@ public class AuctionFormController {
                 }
             }
             if (imagesConverted == null) {
-                lblMessage.setTextFill(Color.RED);
-                lblMessage.setText("Image processing failed.");
+                ToastService.showInfo(
+                        lblMessage.getScene(),"Image processing failed. Please try again.");
                 return;
             }
         } catch (IOException e) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Error processing images.");
+            ToastService.showInfo(
+                    lblMessage.getScene(),"Error processing images: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -221,18 +233,18 @@ public class AuctionFormController {
         isSubmitting = true;
 
         Platform.runLater(() -> {
-            //btnChooseImage.setDisable(true);
+            smallAddBtn.setDisable(true);
+            smallAddBtn.setOpacity(0.5);
 
-            Button clickedButton = (Button) event.getSource();
-            clickedButton.setDisable(true);
-            clickedButton.setText("Creating...");
+            btnSubmit.setDisable(true);
+            btnSubmit.setText("Creating...");
         });
         itemsService.createItem(jsonPayload)
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         Platform.runLater(() -> {
-                            lblMessage.setTextFill(Color.GREEN);
-                            lblMessage.setText(responseMessage.getMessage());
+                            ToastService.showSuccess(
+                                    lblMessage.getScene(), responseMessage.getMessage());
                         });
                         PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
                         pause.setOnFinished(e -> handleSwitchToHomePage());
@@ -243,10 +255,11 @@ public class AuctionFormController {
 
                         Platform.runLater(() -> {
 
-                            lblMessage.setTextFill(Color.RED);
-                            lblMessage.setText(responseMessage.getMessage());
+                            ToastService.showInfo(
+                                    lblMessage.getScene(),responseMessage.getMessage());
 
-                            //btnChooseImage.setDisable(false);
+                            smallAddBtn.setDisable(false);
+                            smallAddBtn.setOpacity(1);
 
                             Button clickedButton = (Button) event.getSource();
                             clickedButton.setDisable(false);
@@ -262,14 +275,14 @@ public class AuctionFormController {
 
                     Platform.runLater(() -> {
 
-                        lblMessage.setTextFill(Color.RED);
-                        lblMessage.setText("Failed to connect to server");
+                        ToastService.showInfo(
+                                lblMessage.getScene(),"Failed to connect to server. Please submit again");
 
-                        btnChooseImage.setDisable(false);
+                        smallAddBtn.setDisable(false);
+                        smallAddBtn.setOpacity(1);
 
-                        Button clickedButton = (Button) event.getSource();
-                        clickedButton.setDisable(false);
-                        clickedButton.setText("Add Item");
+                        btnSubmit.setDisable(false);
+                        btnSubmit.setText("Add Item");
                     });
 
                     return null;

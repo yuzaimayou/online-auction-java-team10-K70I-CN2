@@ -153,4 +153,8 @@ public class SettingController {
     public void handleAuctionsManagement(ActionEvent actionEvent) {
         loadPage(PATH_AUCTIONS_MANAGEMENT);
     }
+
+    public VBox getDynamicContent() {
+        return dynamicContent;
+    }
 }
