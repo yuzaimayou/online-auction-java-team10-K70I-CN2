@@ -1,5 +1,6 @@
 package com.auction.server.service;
 
+import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.util.StringUtil;
 import com.auction.shared.model.item.Item;
@@ -18,12 +19,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class ItemService {
     private static ItemService instance;
 
     private final ItemRepository itemRepository = ItemRepository.getInstance();
+    private final AiServiceClient aiServiceClient = AiServiceClient.getInstance();
     private Gson gson = GsonUtil.getInstance();
 
     public static ItemService getInstance() {
@@ -135,6 +138,16 @@ public class ItemService {
 
         if (created) {
             System.out.println(item.getSellerId() + " created item: " + item.getName() + " with ID: " + item.getId());
+            CompletableFuture.runAsync(() -> {
+                try {
+                    List<Path> imagePaths = item.getImagesPath().stream()
+                            .map(name -> Paths.get("dataBase", "images", name))
+                            .collect(Collectors.toList());
+                    aiServiceClient.embeddingProduct(item.getId(), item.getName(), item.getDescription(), imagePaths);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
         return created;
     }
