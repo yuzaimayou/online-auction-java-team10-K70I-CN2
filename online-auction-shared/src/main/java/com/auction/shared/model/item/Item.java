@@ -183,6 +183,13 @@ public class Item extends Entity {
         return endTime;
     }
 
+    public void setEndTime(LocalDateTime endTime) {
+        if (endTime == null) {
+            throw new IllegalArgumentException("Error: End time cannot be null!");
+        }
+        this.endTime = endTime;
+    }
+
     public double getStartingPrice() {
         return startingPrice;
     }

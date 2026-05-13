@@ -106,6 +106,13 @@ public class BidService {
                     return false;
                 }
 
+                String lastBidder = bidRepository.findLastBidder(conn, itemId);
+                if (lastBidder != null && lastBidder.equals(userId)) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: same user cannot bid consecutively");
+                    return false;
+                }
+
                 double minAllowedPrice = item.getHighestCurrentPrice() + item.getBidStep();
                 if (bidPrice + PRICE_EPSILON < minAllowedPrice) {
                     conn.rollback();

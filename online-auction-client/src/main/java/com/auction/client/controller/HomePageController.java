@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.service.ToastService;
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.ItemSummary;
@@ -84,20 +85,31 @@ public class HomePageController {
         httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
                 .thenApply(java.net.http.HttpResponse::body)
                 .thenAccept(responseBody -> {
-                    ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
-                    if ("success".equals(res.getStatus())) {
-                        System.out.println(res.getMessage());
-
-                        Type listType = new TypeToken<List<ItemSummary>>() {
-                        }.getType();
-                        List<ItemSummary> dataItems = gson.fromJson(res.getData(), listType);
-                        javafx.application.Platform.runLater(() -> {
-                            this.masterItemList = dataItems;
-                            applyFilter();
-                        });
-                    } else {
-                        System.out.println(res.getMessage());
+                    try {
+                        ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
+                        if ("success".equals(res.getStatus())) {
+                            Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
+                            List<ItemSummary> dataItems = gson.fromJson(res.getData(), listType);
+                            Platform.runLater(() -> {
+                                this.masterItemList = dataItems;
+                                applyFilter();
+                            });
+                        } else {
+                            Platform.runLater(() ->
+                                    ToastService.showError(mainScrollPane.getScene(), "Lỗi: " + res.getMessage())
+                            );
+                        }
+                    } catch (Exception e) {
+                        Platform.runLater(() ->
+                                ToastService.showError(mainScrollPane.getScene(), "Dữ liệu máy chủ không phản hồi đúng định dạng.")
+                        );
                     }
+                })
+                .exceptionally(e -> {
+                    Platform.runLater(() ->
+                            ToastService.showError(mainScrollPane.getScene(), "Không thể kết nối tới Server. Vui lòng thử lại!")
+                    );
+                    return null;
                 });
     }
     private void applyFilter() {
@@ -231,7 +243,7 @@ public class HomePageController {
         if (navBarController != null) {
             navBarController.refreshUserInfo();
         } else {
-            System.out.println("Cảnh báo: Không kết nối được với NavBarController.");
+            System.out.println("Cảnh báo: Không kết nối được với NavBarController..");
         }
     }
 }
