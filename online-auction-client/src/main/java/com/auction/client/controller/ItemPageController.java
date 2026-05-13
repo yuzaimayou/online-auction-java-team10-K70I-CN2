@@ -194,6 +194,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 })
                 .exceptionally(ex -> {
                     System.err.println("Error fetching item data: " + ex.getMessage());
+                    ex.printStackTrace();
                     return null;
                 });
     }
