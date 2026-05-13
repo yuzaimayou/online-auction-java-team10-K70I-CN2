@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.service.ToastService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
@@ -302,17 +303,23 @@ public class ItemPageController implements NetworkService.MessageListener {
     public void bidHandle() {
         String inputAmount = bidAmountField.getText().trim();
         if (inputAmount.isEmpty()) {
-            System.out.println("Please enter a bid amount.");
+            ToastService.showInfo(bidAmountField.getScene(), "Please enter a bid amount.");
             return;
         }
         try {
             double bidAmount = Double.parseDouble(inputAmount);
-            String roomId = item.getId();
+            double minRequired = item.getCurrentPrice() + item.getBidStep();
 
-            network.sendBid(roomId, user.getId(), bidAmount, "");
-            System.out.println("Bid sent: " + bidAmount);
+            // Kiểm tra logic giá trước khi gửi lên server để giảm tải
+            if (bidAmount < minRequired) {
+                ToastService.showError(bidAmountField.getScene(),
+                        String.format("Bid must be at least $ %.1f", minRequired));
+                return;
+            }
+            network.sendBid(item.getId(), user.getId(), bidAmount, "");
+            bidAmountField.clear();
         } catch (NumberFormatException e) {
-            System.out.println("Invalid bid amount. Please enter a numeric value.");
+            ToastService.showError(bidAmountField.getScene(), "Invalid price format.");
         }
     }
     @FXML
@@ -344,17 +351,21 @@ public class ItemPageController implements NetworkService.MessageListener {
             autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
 
             if (maxBidAmount <= item.getCurrentPrice()) {
-                System.out.println("Max bid phải lớn hơn giá hiện tại!");
+                ToastService.showInfo(maxBidField.getScene(), "Please fill in all Auto-Bid fields.");
+                return;
+            }
+            if (autoBidIncremental < item.getBidStep()) {
+                ToastService.showError(maxBidField.getScene(),
+                        "Your step must be at least " + item.getBidStep());
                 return;
             }
             isAutoBidActive = true;
-
             myLastBid = item.getCurrentPrice();
             updateAutoBidUI(true);
-
+            ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
             handleAutoBidLogic(item.getCurrentPrice(), null);
         } catch (NumberFormatException e) {
-            System.out.println("Vui lòng nhập số hợp lệ cho Auto Bid");
+            ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
     }
     @FXML
@@ -382,8 +393,10 @@ public class ItemPageController implements NetworkService.MessageListener {
             System.out.println("Auto Bid thực hiện đặt giá: " + myNextBid);
             userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ", myNextBid));
         } else {
-            System.out.println("Giá đã vượt quá hạn mức Max Bid của bạn!");
             stopAutoBid();
+            Platform.runLater(() ->
+                    ToastService.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!")
+            );
         }
     }
     private void updateAutoBidUI(boolean active) {
