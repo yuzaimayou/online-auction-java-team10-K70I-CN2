@@ -56,11 +56,21 @@
 /*login*/
 .login-image-bg {
     -fx-background-image: url("../assets/Signin.png");
+    -fx-background-repeat: no-repeat;
+
+    /* SCALE: 'cover' giúp ảnh luôn lấp đầy khung mà không bị méo */
+    -fx-background-size: cover;
+
+    /* POSITION: Luôn lấy tâm ảnh làm điểm gốc để hiển thị */
+    -fx-background-position: center center;
 }
 
 /*register*/
 .register-image-bg {
     -fx-background-image: url("../assets/Signup.png");
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-background-position: center center;
 }
 
 #registerSubmit {

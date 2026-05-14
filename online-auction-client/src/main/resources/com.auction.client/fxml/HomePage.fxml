@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 
 
+<?import javafx.scene.layout.Pane?>
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.auction.client.controller.HomePageController">
@@ -139,6 +140,7 @@
                     <Insets top="30.0"/>
                 </VBox.margin>
             </VBox>
+            <Pane prefHeight="100.0" minHeight="100.0" maxWidth="Infinity" />
         </VBox>
 </ScrollPane>
         </StackPane>
