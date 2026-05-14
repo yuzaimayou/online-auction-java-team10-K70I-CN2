@@ -39,7 +39,7 @@ public class MainClient extends Application {
             Parent root = loader.load();
 
             // Khởi tạo Scene với kích thước mặc định nhưng cho phép thay đổi
-            Scene scene = new Scene(root, 1440, 900);
+            Scene scene = new Scene(root, 1200, 800);
 
             primaryStage.setTitle("Hệ thống Đấu giá Trực tuyến - Đăng nhập");
             primaryStage.setScene(scene);
