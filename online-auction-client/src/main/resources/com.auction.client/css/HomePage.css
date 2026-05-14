@@ -19,11 +19,6 @@
     -fx-background-color: white;
 }
 
-.main-container {
-    -fx-background-color: white;
-    -fx-min-height: -fx-compute-pref-height;
-}
-
 /* --- Explore Categories Section --- */
 .section-title {
     -fx-font-size: 24px;

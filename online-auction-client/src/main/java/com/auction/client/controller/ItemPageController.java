@@ -145,6 +145,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     private double maxBidAmount = 0;
     private double autoBidIncremental = 0;
     private long lastAutoBidTime = 0;
+    private String lastBidderId = "";
 
 
     @FXML
@@ -202,6 +203,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     public void initData(Item item) {
         this.item = item;
         this.myLastBid = item.getMyLastBid();
+
 
         displayDataItem(item);
         connectToRealTimeBidding();
@@ -281,6 +283,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 BidPayload bidPayload = gson.fromJson(jsonElement, BidPayload.class);
                 if (bidPayload != null) {
                     System.out.println("Received new bid update: " + jsonElement);
+                    this.lastBidderId = bidPayload.getUserId();
                     item.setCurrentPrice(bidPayload.getBidPrice());
                     currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
 
@@ -289,8 +292,6 @@ public class ItemPageController implements NetworkService.MessageListener {
                         myLastBid = bidPayload.getBidPrice();
                     }
                     updateMinimumBidLabel();
-
-                    // Kích hoạt logic Auto Bid nếu đang bật
                     handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
                     loadBidHistory();
                 } else {
@@ -303,6 +304,12 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     public void bidHandle() {
+        if (user.getId().equals(lastBidderId)) {
+            ToastService.showInfo(bidAmountField.getScene(),
+                    "You are already the highest bidder. You cannot bid against yourself!");
+            return;
+        }
+
         String inputAmount = bidAmountField.getText().trim();
         if (inputAmount.isEmpty()) {
             ToastService.showInfo(bidAmountField.getScene(), "Please enter a bid amount.");

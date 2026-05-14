@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.util.ClientImageUtil;
+import com.auction.client.util.NavigationUtil;
 import com.auction.shared.model.item.ItemSummary;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -159,6 +160,7 @@ public class ItemCardHPController {
         NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
         return "$ " + formatter.format(price) + " USD";
     }
+
     private String formatTimeLeft(LocalDateTime from, LocalDateTime to) {
         if (to == null || from == null) return "N/A";
 
@@ -172,23 +174,12 @@ public class ItemCardHPController {
 
     @FXML
     public void handleSwitchToItemPage(MouseEvent event) {
-        try {
-            if (timeline != null) timeline.stop();
+        if (timeline != null) timeline.stop();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemPage.fxml"));
-            Parent root = loader.load();
-
-            ItemPageController itemPageController = loader.getController();
-            itemPageController.setItemId(currentItem.getId());
-            //itemPageController.initData(this.currentItem);
-
-            Scene currentScene = itemNameLabel.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-            currentScene.setRoot(root);
-            stage.setTitle(String.format("Online Auction System - %s", currentItem.getName()));
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi chuyển trang: " + e.getMessage());
-        }
+        NavigationUtil.handleSwitchToItemPage(
+                itemNameLabel,
+                currentItem.getId(),
+                currentItem.getName()
+        );
     }
 }
