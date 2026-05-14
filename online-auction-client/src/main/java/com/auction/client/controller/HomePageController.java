@@ -13,12 +13,15 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -74,8 +77,23 @@ public class HomePageController {
         });
 
         getDataItemsAndDisplay();
+        setupChatAI();
     }
 
+    private void setupChatAI() {
+        ChatBoxAiController aiWidget = new ChatBoxAiController();
+        StackPane root = (StackPane) mainScrollPane.getParent();
+
+        Node bubble = aiWidget.getBubble();
+        Node chatBox = aiWidget.getChatBox();
+
+        root.getChildren().addAll(chatBox, bubble);
+        StackPane.setAlignment(bubble, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(bubble, new javafx.geometry.Insets(0, 30, 30, 0));
+
+        StackPane.setAlignment(chatBox, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(chatBox, new javafx.geometry.Insets(0, 30, 30, 0));
+    }
     @FXML
     private void getDataItemsAndDisplay() {
         System.out.println("Dang tien hanh lay du lieu");
