@@ -33,28 +33,37 @@ public class MainClient extends Application {
         try {
             loadInterFonts();
 
-            // TẢI TRỰC TIẾP LOGIN.FXML (Bây giờ đã bao gồm cả ảnh bên trái)
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
             Parent root = loader.load();
 
-            // Khởi tạo Scene với kích thước mặc định nhưng cho phép thay đổi
-            Scene scene = new Scene(root, 1200, 800);
+            // 1. Lấy thông số màn hình của người dùng
+            javafx.geometry.Rectangle2D screenBounds = javafx.stage.Screen.getPrimary().getVisualBounds();
+
+            // 2. Thiết lập kích thước mở đầu nhỏ gọn (ví dụ: 60% màn hình)
+            // Thay vì Scene(root, 600, 300) quá nhỏ so với Form
+            double initialWidth = screenBounds.getWidth() * 0.8;
+            double initialHeight = screenBounds.getHeight() * 0.75;
+            Scene scene = new Scene(root, initialWidth, initialHeight);
 
             primaryStage.setTitle("Hệ thống Đấu giá Trực tuyến - Đăng nhập");
             primaryStage.setScene(scene);
 
-            // BẬT RESIZABLE ĐỂ GIAO DIỆN LINH HOẠT
             primaryStage.setResizable(true);
 
-            // Đặt kích thước tối thiểu để không bị vỡ layout
-            primaryStage.setMinWidth(1000);
-            primaryStage.setMinHeight(700);
+            // 3. QUAN TRỌNG: Hạ thấp MinWidth/MinHeight để nó không tự động bung to
+            // Nếu để 1000x700 thì máy nào màn hình bé nó sẽ chiếm gần hết màn hình
+            primaryStage.setMinWidth(900);
+            primaryStage.setMinHeight(740);
+
+            // Đảm bảo không bật Maximized
+            primaryStage.setMaximized(false);
+
+            // Căn giữa cửa sổ khi hiện ra
+            primaryStage.centerOnScreen();
 
             primaryStage.show();
 
         } catch (IOException e) {
-            System.err.println("Lỗi: Không thể tải file FXML!");
             e.printStackTrace();
         }
     }
