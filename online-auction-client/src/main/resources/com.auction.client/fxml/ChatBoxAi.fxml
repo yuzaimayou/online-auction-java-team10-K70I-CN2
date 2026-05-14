@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<VBox fx:id="chatWindowContainer"
+      prefWidth="350.0" prefHeight="500.0"
+      maxWidth="350.0" maxHeight="500.0"
+      spacing="0"
+      styleClass="chat-container"
+      stylesheets="@../css/ChatBoxAi.css"
+      xmlns:fx="http://javafx.com/fxml">
+
+    <HBox prefHeight="50.0" minHeight="50.0" styleClass="chat-header" alignment="CENTER_LEFT">
+        <padding>
+            <Insets left="15.0" right="10.0" />
+        </padding>
+        <Label text="✦" style="-fx-text-fill: white; -fx-font-size: 18;"/>
+        <Label text="Auction AI" styleClass="header-text" style="-fx-padding: 0 0 0 10;"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button text="—" styleClass="window-control-btn"/>
+        <Button text="✕" styleClass="window-control-btn"/>
+    </HBox>
+
+    <ScrollPane fx:id="chatScroll" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="chat-scroll">
+        <VBox fx:id="messageArea" spacing="15" style="-fx-padding: 15;">
+        </VBox>
+    </ScrollPane>
+
+    <VBox spacing="10" style="-fx-padding: 10;">
+        <FlowPane hgap="5" vgap="5">
+            <Button text="Create an auction" styleClass="suggest-btn"/>
+            <Button text="How to bid?" styleClass="suggest-btn"/>
+        </FlowPane>
+        <HBox spacing="5" alignment="CENTER">
+            <TextField promptText="Type your message..." styleClass="chat-input" HBox.hgrow="ALWAYS"/>
+            <Button styleClass="send-btn" text="➔"/>
+        </HBox>
+    </VBox>
+</VBox>
