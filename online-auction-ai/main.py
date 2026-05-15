@@ -4,10 +4,16 @@ import struct
 from typing import Annotated
 
 import numpy as np
-from fastapi import FastAPI, UploadFile, File, Form, Request
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.params import Query
+from sentence_transformers import SentenceTransformer
 
+from chunking import chunk_markdown_file
 from database import init_vector_db, search_similar_items, get_db_connection
 from engine import SigLIPEngine
+
+# Load mô hình chuyên trị Text siêu nhẹ (Chạy lần đầu sẽ mất vài chục giây tải model về)
+text_embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
 app = FastAPI()
 engine = SigLIPEngine()
@@ -35,36 +41,76 @@ def serialize_f32(vector):
     return struct.pack(f"{len(flat_vector)}f", *flat_vector)
 
 
-@app.post("/debug-index-product/{item_id}")
-async def debug_index_product(item_id: str, request: Request):
-    print("========== DEBUG REQUEST ==========")
-    print("item_id:", item_id)
-
-    print("\n--- HEADERS ---")
-    for key, value in request.headers.items():
-        print(f"{key}: {value}")
-
-    body = await request.body()
-
-    print("\n--- RAW BODY LENGTH ---")
-    print(len(body))
-
-    print("\n--- RAW BODY PREVIEW ---")
+@app.post("/index-docs")
+async def index_documents(file: UploadFile = File(...)):
+    db = get_db_connection()
     try:
-        print(body[:3000].decode("utf-8", errors="replace"))
+        # 1. Đọc nội dung file Markdown
+        content_bytes = await file.read()
+        text_content = content_bytes.decode('utf-8')
+        doc_name = file.filename
+        # 2. Băm nhỏ văn bản
+        chunks = chunk_markdown_file(text_content)
+        # 3. Quét từng đoạn, nhúng Vector và Lưu DB
+        for i, chunk_text in enumerate(chunks):
+            chunk_id = f"doc_{doc_name}_chunk_{i}"
+
+            # Nhúng đoạn văn bản thành Vector bằng SigLIP
+            emb = text_embedder.encode(chunk_text)
+            emb_bytes = serialize_f32(emb)
+
+            # Lưu vào bảng Vector (để AI tìm kiếm)
+            db.execute("INSERT OR REPLACE INTO vec_docs(chunk_id, embedding) VALUES (?, ?)",
+                       [chunk_id, emb_bytes])
+
+            # Lưu vào bảng Text (để trả về cho Java)
+            db.execute("INSERT OR REPLACE INTO docs_info(chunk_id, doc_name, content) VALUES (?, ?, ?)",
+                       [chunk_id, doc_name, chunk_text])
+
+        db.commit()
+        return {
+            "status": "success",
+            "message": f"Đã nhúng thành công file {doc_name} thành {len(chunks)} đoạn."
+        }
     except Exception as e:
-        print("Cannot decode body:", e)
-        print(body[:3000])
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 
-    print("========== END DEBUG ==========")
 
-    return {
-        "status": "debug ok",
-        "item_id": item_id,
-        "content_type": request.headers.get("content-type"),
-        "body_length": len(body),
-        "body_preview": body[:1000].decode("utf-8", errors="replace")
-    }
+@app.post("/search_docs")
+async def search_docs(query: str = Query(...), top_k: int = 3):
+    # 1. Nhúng câu hỏi của User thành Vector
+    query_vector = engine.encode_text(query)
+    query_bytes = serialize_f32(query_vector)
+
+    db = get_db_connection()
+    try:
+        # 2. INNER JOIN giữa bảng Vector và bảng Text để lấy ngay nội dung chữ
+        rows = db.execute("""
+                          SELECT d.content, d.doc_name, vec_distance_cosine(v.embedding, ?) as distance
+                          FROM vec_docs v
+                                   INNER JOIN docs_info d ON v.chunk_id = d.chunk_id
+                          ORDER BY distance ASC LIMIT ?
+                          """, [query_bytes, top_k]).fetchall()
+
+        results = []
+        for row in rows:
+            content = row[0]
+            doc_name = row[1]
+            similarity = 1.0 - row[2]
+
+            # Chỉ lấy những đoạn có độ tương đồng đủ tốt (có thể tinh chỉnh ngưỡng này)
+            if similarity > 0.15:
+                results.append({
+                    "doc_name": doc_name,
+                    "content": content,
+                    "similarity": similarity
+                })
+
+        return {"results": results}
+    finally:
+        db.close()
 
 
 @app.post("/index-product/{item_id}")
@@ -103,7 +149,7 @@ async def index_product(
     text_emb = engine.encode_text(full_text)
 
     # Hợp nhất Đa phương thức (Multimodal Fusion)
-    final_embedding = (np.array(imgs_embedding) + np.array(text_emb)) / 2
+    final_embedding = (np.array(imgs_embedding) * 8 + np.array(text_emb) * 2) / 10
 
     # Ép kiểu nhị phân để lưu DB (Sử dụng lại hàm serialize_f32 bạn đã viết)
     embedding_bytes = serialize_f32(final_embedding)
@@ -135,7 +181,7 @@ async def recommend(prompt: str):
     results = search_similar_items(query_vec)
 
     formatted_results = [
-        {"id": r[0], "name": r[1], "price": r[2], "similarity": 1 - r[3]}
+        {"id": r[0], "similarity": 1 - r[1]}
         for r in results
     ]
     return {"recommendations": formatted_results}
