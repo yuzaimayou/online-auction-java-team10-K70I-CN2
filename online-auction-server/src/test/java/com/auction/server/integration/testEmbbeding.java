@@ -15,7 +15,7 @@ public class testEmbbeding {
         DatabaseManager.init();
         DatabaseInit.init();
         AiServiceClient aiServiceClient = AiServiceClient.getInstance();
-        Item item = ItemRepository.getInstance().findById("f92a7118-b9d8-4f29-8ed2-d52d50e33a85");
+        Item item = ItemRepository.getInstance().findById("0a84be16-e35e-4970-bd43-2cd870159092");
         List<Path> imagePaths = item.getImagesPath().stream()
                 .map(name -> Paths.get("dataBase", "images", name))
                 .collect(Collectors.toList());

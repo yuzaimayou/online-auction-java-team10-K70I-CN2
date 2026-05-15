@@ -34,6 +34,28 @@ def init_vector_db():
         )
     
     """)
+    # 2. Bảng lưu Vector Tài liệu HDSD
+    db.execute("""
+        CREATE VIRTUAL TABLE IF NOT EXISTS vec_docs USING vec0(
+            chunk_id TEXT PRIMARY KEY,
+            embedding float[384]
+        );
+    """)
+
+    # 3. Bảng chuẩn SQLite lưu nội dung chữ của tài liệu
+    db.execute("""
+               CREATE TABLE IF NOT EXISTS docs_info
+               (
+                   chunk_id
+                   TEXT
+                   PRIMARY
+                   KEY,
+                   doc_name
+                   TEXT,
+                   content
+                   TEXT
+               );
+               """)
     db.commit()
     db.close()
 
@@ -42,12 +64,9 @@ def search_similar_items(query_vector, top_k=10):
     db = get_db_connection()
     # Sử dụng hàm vec_distance_cosine để tìm các sản phẩm gần nhất
     rows = db.execute("""
-                      SELECT v.item_id,
-                             i.name,
-                             i.current_price,
+                      SELECT item_id,
                              vec_distance_cosine(v.embedding, ?) as distance
                       FROM vec_items v
-                               JOIN items i ON v.item_id = i.id
                       ORDER BY distance ASC LIMIT ?
                       """, [serialize_f32(query_vector), top_k]).fetchall()
     db.close()
