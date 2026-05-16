@@ -8,6 +8,7 @@ import com.auction.shared.model.payloads.BidPayload;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.util.ArrayList;  // [SỬA #2] thêm import
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -45,8 +46,6 @@ public class BidService {
                     conn.rollback();
                     return false;
                 }
-
-                // [FIX] Kiểm tra xem phiên đấu giá đã hết thời gian chưa
                 LocalDateTime now = LocalDateTime.now();
                 if (now.isAfter(item.getEndTime())) {
                     conn.rollback();
@@ -66,7 +65,7 @@ public class BidService {
                         userId,
                         maxBid,
                         increment,
-                        LocalDateTime.now().toString()
+                        now.toString()
                 );
 
                 if (!registered) {
@@ -98,7 +97,6 @@ public class BidService {
                     return false;
                 }
 
-                // [FIX] Kiểm tra xem phiên đấu giá đã hết thời gian chưa
                 LocalDateTime now = LocalDateTime.now();
                 if (now.isAfter(item.getEndTime())) {
                     conn.rollback();
@@ -121,8 +119,9 @@ public class BidService {
                 }
 
                 String resolvedBidTime = (bidTime == null || bidTime.isBlank())
-                        ? LocalDateTime.now().toString()
+                        ? now.toString()
                         : bidTime;
+
                 boolean created = bidRepository.createBid(conn, itemId, userId, bidPrice, resolvedBidTime);
                 if (!created) {
                     conn.rollback();
@@ -136,39 +135,50 @@ public class BidService {
                     return false;
                 }
 
-                runAutoBiddingRounds(conn, itemId, userId, bidPrice);
+                List<BidPayload> autoBidResults = runAutoBiddingRounds(conn, itemId, userId, bidPrice);
+
                 conn.commit();
+
                 try {
                     BidPayload newBidData = new BidPayload(itemId, userId, bidPrice, resolvedBidTime);
-
                     AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", newBidData);
                     System.out.println("Broadcasted new bid for item " + itemId + ": " + newBidData);
                 } catch (Exception e) {
                     System.err.println("Failed to broadcast new bid for item " + itemId + ": " + e.getMessage());
                 }
+
+                for (BidPayload autoBid : autoBidResults) {
+                    try {
+                        AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", autoBid);
+                        System.out.println("Broadcasted auto-bid for item " + itemId + ": " + autoBid);
+                    } catch (Exception e) {
+                        System.err.println("Failed to broadcast auto-bid for item " + itemId + ": " + e.getMessage());
+                    }
+                }
+
                 return true;
 
             } catch (Exception e) {
                 e.printStackTrace();
-
                 return false;
             }
         }
     }
-
-    private void runAutoBiddingRounds(Connection conn, String itemId, String leadingUserId, double currentPrice) throws Exception {
+    private List<BidPayload> runAutoBiddingRounds(Connection conn, String itemId,
+                                                  String leadingUserId, double currentPrice) throws Exception {
+        List<BidPayload> results = new ArrayList<>();
         String currentLeader = leadingUserId;
         double livePrice = currentPrice;
 
         for (int round = 0; round < AUTO_BID_MAX_ROUNDS; round++) {
             List<BidRepository.AutoBidConfig> autoBids = bidRepository.findActiveAutoBids(conn, itemId);
             if (autoBids.isEmpty()) {
-                return;
+                break;
             }
 
             AutoBidResolver.ResolvedAutoBid candidate = autoBidResolver.selectNextBid(autoBids, currentLeader, livePrice);
             if (candidate == null) {
-                return;
+                break;
             }
 
             String bidTime = LocalDateTime.now().toString();
@@ -179,13 +189,16 @@ public class BidService {
                 throw new Exception("Failed to update current price after auto bid");
             }
 
+            results.add(new BidPayload(itemId, candidate.userId(), candidate.bidPrice(), bidTime));
+
             livePrice = candidate.bidPrice();
             currentLeader = candidate.userId();
         }
+
+        return results;
     }
 
     private Object getItemLock(String itemId) {
         return itemLocks.computeIfAbsent(itemId, ignored -> new Object());
     }
-
 }

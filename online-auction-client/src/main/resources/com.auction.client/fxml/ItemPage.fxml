@@ -9,12 +9,9 @@
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.auction.client.controller.ItemPageController">
+    <VBox styleClass="main-container">
+    <fx:include fx:id="navBar" source="NavBar.fxml"/>
     <ScrollPane fitToWidth="true" stylesheets="@../css/ItemPage.css">
-
-        <VBox styleClass="main-container">
-
-            <fx:include fx:id="navBar" source="NavBar.fxml"/>
-
             <HBox alignment="TOP_CENTER" spacing="40" style="-fx-padding: 40 60 40 60;">
 
                 <VBox maxWidth="750" spacing="25" HBox.hgrow="ALWAYS">
@@ -216,6 +213,7 @@
 
                 </VBox>
             </HBox>
-        </VBox>
+
     </ScrollPane>
+    </VBox>
 </StackPane>

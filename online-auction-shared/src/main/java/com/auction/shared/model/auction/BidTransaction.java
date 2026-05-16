@@ -14,6 +14,7 @@ public class BidTransaction {
     private LocalDateTime bidTime;
     private boolean isAutoBid;
 
+    public BidTransaction() {}
     public BidTransaction(String transactionId, String auctionId, String bidderId,
                           double bidAmount, LocalDateTime bidTime) {
         // [ERROR HANDLING] Validate all parameters
