@@ -71,45 +71,51 @@ public class MyAuctionsController {
         });
         MyAuctionsTableHelper.setupTableColumns(
                 itemCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
-                this::handleSwitchToItemEdit, // Action 1: Edit
-                this::handleDeleteItem,       // Action 2: Delete
+                this::handleSwitchToItemEdit,
+                this::handleDeleteItem,
                 this::handleViewItem
         );
         displayItems();
     }
 
     private void displayItems() {
-        itemsService.getAllFromSeller(loggedInUser.getId(), loggedInUser.getUsername())
+
+        itemsService.getAllFromSeller(loggedInUser.getId())
+
                 .thenAccept(responseMessage -> {
+
                     if ("success".equals(responseMessage.getStatus())) {
+
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
 
-                        Type listType = new TypeToken<List<ItemSummary>>() {
-                        }.getType();
+                        Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
                         JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
                         List<ItemSummary> items = gson.fromJson(jsonElement, listType);
+
                         Platform.runLater(() -> {
                             masterData.setAll(items);
                             auctionTable.setItems(masterData);
 
                             if (!items.isEmpty()) {
-                                System.out.println("Tên sản phẩm đầu tiên: " + items.get(0).getName());
+                                System.out.println("Tên sản phẩm đầu tiên: " + items.get(0).getName()
+                                );
                             } else {
                                 System.out.println("Không có sản phẩm nào của người bán này.");
                             }
                         });
+
                     } else {
                         System.err.println("Lỗi khi lấy danh sách sản phẩm: " + responseMessage.getMessage());
                     }
                 })
+
                 .exceptionally(e -> {
                     e.printStackTrace();
                     System.err.println("Lỗi khi gửi yêu cầu lấy danh sách sản phẩm: " + e.getMessage());
+
                     return null;
                 });
     }
-
-    // Event handlers
 
     // Event handlers
     @FXML
@@ -193,25 +199,18 @@ public class MyAuctionsController {
 
     private void navigateToDetail(String itemId) {
         try {
-            // 1. Tải file FXML của trang Detail
-            // Lưu ý: Đảm bảo đường dẫn này chính xác với cấu trúc thư mục của bạn
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/ItemDetail.fxml"));
             Parent detailPage = loader.load();
 
-            // 2. Lấy Controller của trang Detail để gọi hàm load dữ liệu (tạm thời để đó)
             ItemDetailPageController detailController = loader.getController();
             detailController.loadItemData(itemId);
 
-            // 3. Quan trọng: Lấy instance của SettingController để truy cập vùng dynamicContent
-            // Và thay thế nội dung hiện tại bằng trang detailPage
             SettingController mainSetting = SettingController.getInstance();
             if (mainSetting != null) {
                 VBox contentArea = mainSetting.getDynamicContent();
 
-                // Đảm bảo trang mới co giãn theo chiều rộng/cao
                 VBox.setVgrow(detailPage, Priority.ALWAYS);
 
-                // Thay thế nội dung
                 contentArea.getChildren().setAll(detailPage);
             }
 

@@ -1,5 +1,6 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
 import com.auction.client.util.AppConfig;
@@ -132,6 +133,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
 
     private String itemId;
+    private final ItemsService itemsService = ItemsService.getInstance();
     private Item item;
     private Timeline timeline;
     private double myLastBid = 0.0;
@@ -174,32 +176,22 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     public void setItemId(String id) {
         this.itemId = id;
-        String currentUserId = UserSession.getInstance().getLoggedInUser().getId();
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s?userId=%s", AppConfig.getHttpUrl(), id, currentUserId)))
-                .GET()
-                .build();
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
-                    if ("success".equals(response.getStatus()) && response.getData() != null) {
-                        JsonElement jsonElement = gson.toJsonTree(response.getData());
-                        Item item = gson.fromJson(jsonElement, Item.class);
-                        Platform.runLater(() -> initData(item));
-                        System.out.println("Item data loaded successfully for item ID: " + id);
-                    } else {
-                        System.err.println("Failed to load item data: " + response.getMessage());
-                    }
-                })
+
+        String currentUserId = user.getId();
+        itemsService.getItemById(id, currentUserId)
+                .thenAccept(item -> {
+                    Platform.runLater(() -> initData(item));})
                 .exceptionally(ex -> {
-                    System.err.println("Error fetching item data: " + ex.getMessage());
-                    ex.printStackTrace();
+                    Platform.runLater(() -> {System.err.println("Failed to load item");
+                        ex.printStackTrace();
+                        ToastService.showError(
+                                itemNameLabel.getScene(), "Failed to load item data"
+                        );
+                    });
+
                     return null;
                 });
     }
-
     public void initData(Item item) {
         this.item = item;
         this.myLastBid = item.getMyLastBid();
@@ -462,23 +454,29 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     // BID HISTORY
     private void loadBidHistory() {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(AppConfig.getHttpUrl() + "/api/bids/history/" + itemId))
-                .GET()
-                .build();
 
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(body -> {
-                    ResponseMessage res = gson.fromJson(body, ResponseMessage.class);
-                    if ("success".equals(res.getStatus())) {
-                        java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<BidTransaction>>() {
-                        }.getType();
-                        JsonElement jsonElement = gson.toJsonTree(res.getData());
-                        List<BidTransaction> bids = gson.fromJson(jsonElement, listType);
-                        Platform.runLater(() -> renderBidHistory(bids));
-                    }
+        itemsService.getBidHistory(itemId)
+
+                .thenAccept(bids -> {
+
+                    Platform.runLater(() -> {
+                        renderBidHistory(bids);
+                    });
+
+                })
+
+                .exceptionally(ex -> {
+
+                    Platform.runLater(() -> {
+                        ex.printStackTrace();
+
+                        ToastService.showError(
+                                historyBidContainer.getScene(),
+                                "Failed to load bid history"
+                        );
+                    });
+
+                    return null;
                 });
     }
 
