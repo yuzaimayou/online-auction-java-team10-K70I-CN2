@@ -361,7 +361,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
 
             if (maxBidAmount <= item.getCurrentPrice()) {
-                ToastService.showInfo(maxBidField.getScene(), "Please fill in all Auto-Bid fields.");
+                ToastService.showInfo(maxBidField.getScene(), "Max bid must be greater than current price.");
                 return;
             }
             if (autoBidIncremental < item.getBidStep()) {
@@ -369,11 +369,12 @@ public class ItemPageController implements NetworkService.MessageListener {
                         "Your step must be at least " + item.getBidStep());
                 return;
             }
+            network.sendAutoBidRegister(item.getId(), user.getId(), maxBidAmount, autoBidIncremental);
+
             isAutoBidActive = true;
-            myLastBid = item.getCurrentPrice();
             updateAutoBidUI(true);
             ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
-            handleAutoBidLogic(item.getCurrentPrice(), null);
+
         } catch (NumberFormatException e) {
             ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
@@ -383,35 +384,28 @@ public class ItemPageController implements NetworkService.MessageListener {
     private void stopAutoBid() {
         isAutoBidActive = false;
         updateAutoBidUI(false);
+
     }
 
     private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
         if (!isAutoBidActive) return;
 
         if (user.getId().equals(lastBidderId)) {
-            myLastBid = serverCurrentPrice;
-            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
-            return;
-        }
-
-        double myNextBid = serverCurrentPrice + autoBidIncremental;
-
-        if (myNextBid <= maxBidAmount) {
-            long now = System.currentTimeMillis();
-            if (now - lastAutoBidTime < AUTO_BID_DELAY) return;
-            lastAutoBidTime = now;
-            network.sendBid(item.getId(), user.getId(), myNextBid, "");
-            myLastBid = myNextBid;
-            System.out.println("Auto Bid thực hiện đặt giá: " + myNextBid);
-            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ", myNextBid));
-        } else {
+            userCurrentBidLabel.setText(
+                    String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
+        } else if (serverCurrentPrice >= maxBidAmount) {
             stopAutoBid();
             Platform.runLater(() ->
-                    ToastService.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!")
+                    ToastService.showInfo(userCurrentBidLabel.getScene(),
+                            "Auto-bid stopped: Max limit reached!")
             );
+        } else {
+            userCurrentBidLabel.setText(
+                    String.format("Your current bid: %.0f VNĐ", serverCurrentPrice));
         }
     }
 
+    // Giữ nguyên
     private void updateAutoBidUI(boolean active) {
         autoBidForm.setVisible(false);
         autoBidForm.setManaged(false);

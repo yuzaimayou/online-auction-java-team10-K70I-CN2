@@ -83,12 +83,7 @@
                                               prefHeight="42.0" prefWidth="252.0"
                                               styleClass="menu-toggle-btn" text="My Bids"
                                               toggleGroup="$menuGroup" onAction="#handleMyBids"/>
-
-                                <ToggleButton fx:id="changePasswordBtn" mnemonicParsing="false"
-                                              prefHeight="42.0" prefWidth="252.0"
-                                              styleClass="menu-toggle-btn" text="Change Password"
-                                              toggleGroup="$menuGroup" onAction="#handleChangePassword"/>
-
+                                
                                 <VBox fx:id="adminSection" spacing="8.0">
                                     <Label text="ADMIN PANEL" styleClass="section-label">
                                         <VBox.margin>
