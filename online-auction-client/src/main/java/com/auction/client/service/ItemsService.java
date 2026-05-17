@@ -1,5 +1,6 @@
 package com.auction.client.service;
 
+import com.auction.shared.model.item.ItemSummary;
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.auction.BidTransaction;
@@ -19,9 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public class ItemsService {
-
     private static volatile ItemsService instance;
-
     private final HttpClient httpClient;
     private final Gson gson;
 
@@ -31,17 +30,13 @@ public class ItemsService {
     }
 
     public static ItemsService getInstance() {
-
         if (instance == null) {
-
             synchronized (ItemsService.class) {
-
                 if (instance == null) {
                     instance = new ItemsService();
                 }
             }
         }
-
         return instance;
     }
 
@@ -50,18 +45,14 @@ public class ItemsService {
             String itemId,
             String userId
     ) {
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/items/%s?userId=%s",
                                         AppConfig.getHttpUrl(),
-                                        itemId,
-                                        userId
-                                )
+                                        itemId, userId)
                         )
                 )
                 .GET()
                 .build();
-
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()
                 )
                 .thenApply(HttpResponse::body)
@@ -76,7 +67,6 @@ public class ItemsService {
                     }
 
                     JsonElement jsonElement = gson.toJsonTree(response.getData());
-
                     return gson.fromJson(
                             jsonElement,
                             Item.class
@@ -88,22 +78,17 @@ public class ItemsService {
     public CompletableFuture<ResponseMessage> getAllFromSeller(
             String sellerId
     ) {
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/items?sellerId=%s",
                                         AppConfig.getHttpUrl(),
-                                        sellerId
-                                )
+                                        sellerId)
                         )
                 )
                 .GET()
                 .build();
 
-        return httpClient.sendAsync(
-                        request,
-                        HttpResponse.BodyHandlers.ofString()
-                )
-                .thenApply(response ->
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()
+                ).thenApply(response ->
                         gson.fromJson(
                                 response.body(),
                                 ResponseMessage.class
@@ -112,26 +97,17 @@ public class ItemsService {
     }
 
     // CREATE ITEM
-    public CompletableFuture<ResponseMessage> createItem(
-            String jsonPayload
-    ) {
+    public CompletableFuture<ResponseMessage> createItem(String jsonPayload) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format(
-                                        "%s/api/items",
-                                        AppConfig.getHttpUrl()
+                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl()
                                 )
                         )
                 )
                 .header("Content-Type", "application/json")
-                .POST(
-                        HttpRequest.BodyPublishers.ofString(jsonPayload)
-                )
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                 .build();
 
-        return httpClient.sendAsync(
-                        request,
-                        HttpResponse.BodyHandlers.ofString()
-                )
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response ->
                         gson.fromJson(
                                 response.body(),
@@ -146,9 +122,7 @@ public class ItemsService {
             String itemId
     ) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s",
-                                        AppConfig.getHttpUrl(),
-                                        itemId
+                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId
                                 )
                         )
                 )
@@ -169,17 +143,14 @@ public class ItemsService {
             String itemId
     ) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId)
-                        )
-                )
+                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId)))
                 .DELETE()
                 .build();
 
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()
                 )
                 .thenApply(response ->
-                        gson.fromJson(response.body(), ResponseMessage.class
-                        )
+                        gson.fromJson(response.body(), ResponseMessage.class)
                 );
     }
 
@@ -189,9 +160,7 @@ public class ItemsService {
             String itemId
     ) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/bids/history/%s", AppConfig.getHttpUrl(), itemId)
-                        )
-                )
+                .uri(URI.create(String.format("%s/api/bids/history/%s", AppConfig.getHttpUrl(), itemId)))
                 .GET()
                 .build();
 
@@ -201,21 +170,67 @@ public class ItemsService {
                 )
                 .thenApply(HttpResponse::body)
                 .thenApply(body -> {
-
                     ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
 
                     if (!"success".equals(response.getStatus()) || response.getData() == null) {
-
                         throw new RuntimeException(
                                 response.getMessage()
                         );
                     }
 
                     Type listType = new TypeToken<List<BidTransaction>>() {}.getType();
-
                     JsonElement jsonElement = gson.toJsonTree(response.getData());
                     return gson.fromJson(jsonElement, listType
                     );
+                });
+    }
+    public CompletableFuture<List<ItemSummary>> getItems(
+            String search,
+            String category
+    ) {
+
+        StringBuilder url = new StringBuilder(
+                String.format("%s/api/items?", AppConfig.getHttpUrl())
+        );
+
+        boolean hasParam = false;
+        if (search != null && !search.isBlank()) {
+            url.append("search=").append(search.trim());
+            hasParam = true;
+        }
+
+        if (category != null &&
+                !category.equalsIgnoreCase("ALL")) {
+            if (hasParam) {
+                url.append("&");
+            }
+            url.append("category=").append(category);
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url.toString()))
+                .GET()
+                .build();
+
+        return httpClient.sendAsync(
+                        request,
+                        HttpResponse.BodyHandlers.ofString()
+                )
+                .thenApply(HttpResponse::body)
+                .thenApply(body -> {
+                    ResponseMessage response =
+                            gson.fromJson(body, ResponseMessage.class);
+
+                    if (!"success".equals(response.getStatus())) {
+                        throw new RuntimeException(
+                                response.getMessage()
+                        );
+                    }
+                    Type listType =
+                            new TypeToken<List<ItemSummary>>() {}.getType();
+                    JsonElement jsonElement =
+                            gson.toJsonTree(response.getData());
+                    return gson.fromJson(jsonElement, listType);
                 });
     }
 }

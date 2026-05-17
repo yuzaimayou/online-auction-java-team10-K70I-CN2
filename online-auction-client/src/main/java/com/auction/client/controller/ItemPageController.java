@@ -195,11 +195,14 @@ public class ItemPageController implements NetworkService.MessageListener {
     public void initData(Item item) {
         this.item = item;
         this.myLastBid = item.getMyLastBid();
+        this.lastBidderId = item.getCurrentTopPLayerId();
 
-
+        item.setStatus(resolveRealtimeStatus());
         displayDataItem(item);
-        connectToRealTimeBidding();
+
+        // cập nhật UI NGAY lập tức
         updateUIByStatus();
+        connectToRealTimeBidding();
         loadBidHistory();
 
         if (item.getSellerId().equals(user.getId())) {
@@ -210,33 +213,33 @@ public class ItemPageController implements NetworkService.MessageListener {
             statusMessageLabel.setText("You are the owner of this item");
         }
     }
-
     // UI STATE MANAGEMENT
     private void updateUIByStatus() {
         if (item == null) return;
-
-        String status = item.getStatus().toString().toUpperCase();
-        boolean isOwner = item.getSellerId().equals(user.getId());
+        String status = resolveRealtimeStatus();
+        item.setStatus(status);
+        boolean isOwner =
+                item.getSellerId().equals(user.getId());
 
         bidControlsContainer.setVisible(false);
         bidControlsContainer.setManaged(false);
+
         statusOverlay.setVisible(true);
         statusOverlay.setManaged(true);
 
         statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
-
         if (isOwner) {
-            statusMessageLabel.setText("👤 You are the owner of this item");
+            statusMessageLabel.setText("👤 You are the owner of this item"
+            );
             return;
         }
-        switch (status) {
-            case "ONGOING":
 
+        switch (status.toUpperCase()) {
+            case "ONGOING":
                 bidControlsContainer.setVisible(true);
                 bidControlsContainer.setManaged(true);
                 statusOverlay.setVisible(false);
                 statusOverlay.setManaged(false);
-
                 break;
 
             case "UPCOMING":
@@ -257,7 +260,6 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         String userId = UserSession.getInstance().getLoggedInUser().getId();
         String itemId = item.getId();
-
         boolean connected = network.connectToAuctionRoom(itemId, userId);
         if (connected) {
             System.out.println("Connected to auction room for item: " + itemId);
@@ -276,10 +278,13 @@ public class ItemPageController implements NetworkService.MessageListener {
                 if (bidPayload != null) {
                     System.out.println("Received new bid update: " + jsonElement);
                     this.lastBidderId = bidPayload.getUserId();
+                    item.setCurrentTopPLayerId(bidPayload.getUserId());
                     item.setCurrentPrice(bidPayload.getBidPrice());
-                    currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
 
-                    // Nếu người vừa đặt giá thành công là chính user này, cập nhật myLastBid
+                    currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice())
+                    );
+                    updateUIByStatus();
+
                     if (user.getId().equals(bidPayload.getUserId())) {
                         myLastBid = bidPayload.getBidPrice();
                     }
@@ -296,9 +301,20 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     public void bidHandle() {
-        if (user.getId().equals(lastBidderId)) {
-            ToastService.showInfo(bidAmountField.getScene(),
-                    "You are already the highest bidder. You cannot bid against yourself!");
+        String status = resolveRealtimeStatus();
+
+        if (!"ONGOING".equalsIgnoreCase(status)) {
+            ToastService.showError(
+                    bidAmountField.getScene(),
+                    "Auction is not active."
+            );
+            return;
+        }
+        if (user.getId().equals(item.getCurrentTopPLayerId())) {
+            ToastService.showInfo(
+                    bidAmountField.getScene(),
+                    "You are already the highest bidder."
+            );
             return;
         }
 
@@ -348,6 +364,12 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     private void startAutoBid() {
+        String status = resolveRealtimeStatus();
+
+        if (!"ONGOING".equalsIgnoreCase(status)) {
+            ToastService.showError(maxBidField.getScene(), "Auction is not active.");
+            return;
+        }
         try {
             maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
             autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
@@ -418,8 +440,11 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
+        if (!"ONGOING".equalsIgnoreCase(resolveRealtimeStatus())) {
+            stopAutoBid();
+            return;
+        }
         if (!isAutoBidActive) return;
-
         if (user.getId().equals(lastBidderId)) {
             userCurrentBidLabel.setText(
                     String.format("Your current bid: $ %.0f (Leading)", serverCurrentPrice));
@@ -454,28 +479,17 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     // BID HISTORY
     private void loadBidHistory() {
-
         itemsService.getBidHistory(itemId)
-
                 .thenAccept(bids -> {
-
                     Platform.runLater(() -> {
                         renderBidHistory(bids);
                     });
-
                 })
-
                 .exceptionally(ex -> {
-
                     Platform.runLater(() -> {
                         ex.printStackTrace();
-
-                        ToastService.showError(
-                                historyBidContainer.getScene(),
-                                "Failed to load bid history"
-                        );
+                        ToastService.showError(historyBidContainer.getScene(), "Failed to load bid history");
                     });
-
                     return null;
                 });
     }
@@ -486,7 +500,6 @@ public class ItemPageController implements NetworkService.MessageListener {
             totalBidsLabel.setText("0 bids");
             return;
         }
-        bids.sort(Comparator.comparing(BidTransaction::getBidTime).reversed());
 
         int totalCount = bids.size();
         totalBidsLabel.setText(totalCount + " bids");
@@ -602,10 +615,17 @@ public class ItemPageController implements NetworkService.MessageListener {
         itemDesLabel.setMinHeight(Region.USE_PREF_SIZE);
         itemNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
-        currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
-        startPriceLabel.setText(String.valueOf(item.getStartingPrice()));
-        bidStepLabel.setText(String.valueOf(item.getBidStep()));
+        currentPriceLabel.setText(
+                String.format("$ %.0f", item.getCurrentPrice())
+        );
 
+        startPriceLabel.setText(
+                String.format("$ %.0f", item.getStartingPrice())
+        );
+
+        bidStepLabel.setText(
+                String.format("$ %.0f", item.getBidStep())
+        );
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         if (item.getStartTime() != null) {
             startTimeLabel.setText(item.getStartTime().format(formatter));
@@ -626,7 +646,12 @@ public class ItemPageController implements NetworkService.MessageListener {
     private void updateMinimumBidLabel() {
         if (item != null && minimumBidLabel != null) {
             double minimumNextBid = item.getCurrentPrice() + item.getBidStep();
-            minimumBidLabel.setText(String.format("Your last bid: $ %.0f ( min next: $ %.0f ) ", myLastBid, minimumNextBid));
+
+            minimumBidLabel.setText(
+                    String.format("Your last bid: $ %.0f (Min next: $ %.0f)",
+                            myLastBid,
+                            minimumNextBid)
+            );
         }
     }
 
@@ -682,26 +707,33 @@ public class ItemPageController implements NetworkService.MessageListener {
     private void updateTimeDisplay() {
         if (item == null) return;
 
+        String status = resolveRealtimeStatus();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime targetTime = null;
 
-        // upcoming
-        if (item.getStartTime() != null && now.isBefore(item.getStartTime())) {
+        if ("UPCOMING".equalsIgnoreCase(status)) {
             targetTime = item.getStartTime();
-        } else if (item.getEndTime() != null && now.isBefore(item.getEndTime())) {
+        } else if ("ONGOING".equalsIgnoreCase(status)) {
             targetTime = item.getEndTime();
+
         }
         if (targetTime == null || now.isAfter(targetTime)) {
-            updateTimerLabels(0, 0, 0, 0);
-            updateUIByStatus(); // Gọi lại để ẩn/hiện bảng bid
-            if (timeline != null) timeline.stop();
-        } else {
-            long days = ChronoUnit.DAYS.between(now, targetTime);
-            long hours = ChronoUnit.HOURS.between(now, targetTime) % 24;
-            long minutes = ChronoUnit.MINUTES.between(now, targetTime) % 60;
-            long seconds = ChronoUnit.SECONDS.between(now, targetTime) % 60;
-            updateTimerLabels(days, hours, minutes, seconds);
+            String realtimeStatus = resolveRealtimeStatus();
+            item.setStatus(realtimeStatus);
+            updateUIByStatus();
+            updateTimerLabels(0,0,0,0);
+            if (timeline != null) {
+                timeline.stop();
+            }
+            return;
         }
+
+        long days = ChronoUnit.DAYS.between(now, targetTime);
+        long hours = ChronoUnit.HOURS.between(now, targetTime) % 24;
+        long minutes = ChronoUnit.MINUTES.between(now, targetTime) % 60;
+        long seconds = ChronoUnit.SECONDS.between(now, targetTime) % 60;
+
+        updateTimerLabels(days, hours, minutes, seconds);
     }
 
     private void updateTimerLabels(long d, long h, long m, long s) {
@@ -709,5 +741,18 @@ public class ItemPageController implements NetworkService.MessageListener {
         if (hoursLabel != null) hoursLabel.setText(String.format("%02d", h));
         if (minsLabel != null) minsLabel.setText(String.format("%02d", m));
         if (secsLabel != null) secsLabel.setText(String.format("%02d", s));
+    }
+    private String resolveRealtimeStatus() {
+        if (item == null) {
+            return "ENDED";
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(item.getStartTime())) {
+            return "UPCOMING";
+        }
+        if (!now.isBefore(item.getEndTime())) {
+            return "ENDED";
+        }
+        return "ONGOING";
     }
 }

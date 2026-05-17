@@ -1,6 +1,7 @@
 package com.auction.shared.model.item;
 
 import com.auction.shared.model.base.Entity;
+import com.auction.shared.model.enums.AuctionStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,7 +20,7 @@ public class Item extends Entity {
     private double bidStep;
     private List<String> imagesPath;
     private String currentTopPLayerId;
-    private String status;
+    private AuctionStatus status;
     private LocalDateTime create_at;
     private double myLastBid = 0.0;
 
@@ -97,14 +98,23 @@ public class Item extends Entity {
         this.imagesPath = imagesPath;
         this.create_at = LocalDateTime.now();
 
-        if (LocalDateTime.now().isBefore(startTime)) {
+   /*     if (LocalDateTime.now().isBefore(startTime)) {
             this.status = "PENDING";
         } else if (LocalDateTime.now().isBefore(endTime) || LocalDateTime.now().isEqual(startTime)) {
-            this.status = "LIVE";
-        } else if (LocalDateTime.now().isAfter(endTime) || LocalDateTime.now().isEqual(endTime)) {
-            this.status = "ENDED";
+            this.status = AuctionStatus.UPCOMING;
+        } else if (LocalDateTime.now().isAfter(endTime)) {
+            this.status = AuctionStatus.ENDED;
         } else {
-            this.status = "ERROR";
+            this.status = AuctionStatus.ONGOING;
+        }
+    } */
+
+        if (LocalDateTime.now().isBefore(startTime)) {
+            this.status = AuctionStatus.UPCOMING;
+        } else if (LocalDateTime.now().isAfter(endTime)) {
+            this.status = AuctionStatus.ENDED;
+        } else {
+            this.status = AuctionStatus.ONGOING;
         }
     }
 
@@ -215,10 +225,24 @@ public class Item extends Entity {
 //        return status;
 //    }
 
-    public void setStatus(String status) {
+    public void setStatus(AuctionStatus status) {
         this.status = status;
     }
 
+    // overload cho String từ database
+    public void setStatus(String status) {
+        this.status = AuctionStatus.fromString(status);
+    }
+
+    // dùng cho repository/client cũ
+    public String getStatus() {
+        return status != null ? status.name() : "UPCOMING";
+    }
+
+    // dùng nếu muốn lấy enum thật
+    public AuctionStatus getAuctionStatus() {
+        return status;
+    }
     public LocalDateTime getCreate_at() {
         return create_at;
     }
@@ -242,16 +266,5 @@ public class Item extends Entity {
         System.out.println("End time: " + endTime);
     }
 
-    public String getStatus() {
-        LocalDateTime now = LocalDateTime.now();
-
-        if (now.isBefore(startTime)) {
-            return "UPCOMING";
-        } else if (now.isAfter(endTime)) {
-            return "ENDED";
-        } else {
-            return "ONGOING";
-        }
-    }
 }
 

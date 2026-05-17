@@ -1,6 +1,7 @@
 package com.auction.shared.model.item;
 
 import java.time.LocalDateTime;
+import com.auction.shared.model.enums.AuctionStatus;
 
 public class ItemSummary {
     private String id;
@@ -10,8 +11,8 @@ public class ItemSummary {
     private String thumbnailUrl;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-
-    public ItemSummary(String id, String name, String category, double currentPrice, String thumbnailUrl, LocalDateTime startTime, LocalDateTime endTime) {
+    private AuctionStatus status;
+    public ItemSummary(String id, String name, String category, double currentPrice, String thumbnailUrl, LocalDateTime startTime, LocalDateTime endTime, AuctionStatus status) {
         this.id = id;
         this.name = name;
         this.category = category;
@@ -19,6 +20,7 @@ public class ItemSummary {
         this.thumbnailUrl = thumbnailUrl;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.status = status;
     }
 
     public String getId() {
@@ -50,16 +52,8 @@ public class ItemSummary {
         return startTime;
     }
 
-    public String getStatus() {
-        LocalDateTime now = LocalDateTime.now();
-
-        if (now.isBefore(startTime)) {
-            return "UPCOMING";
-        } else if (now.isAfter(endTime)) {
-            return "ENDED";
-        } else {
-            return "ONGOING";
-        }
+    public AuctionStatus getStatus() {
+        return status;
     }
 
 }
