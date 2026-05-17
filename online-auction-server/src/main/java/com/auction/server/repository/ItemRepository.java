@@ -1,6 +1,7 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.server.util.StringUtil;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
@@ -18,6 +19,7 @@ import java.util.List;
 public class ItemRepository {
     private static ItemRepository instance;
 
+
     private ItemRepository() {
     }
 
@@ -29,7 +31,6 @@ public class ItemRepository {
     }
 
     private Gson gson = new GsonUtil().getInstance();
-
 
     public boolean updateCurrentBidder(Connection conn, String itemId,
                                        double newPrice, String newBidderId) {
@@ -56,27 +57,38 @@ public class ItemRepository {
         String name = rs.getString("name");
         String category = rs.getString("category");
         double currentPrice = rs.getDouble("current_price");
+
         String thumbnailUrl = null;
+
         String imagesData = rs.getString("image_path");
 
         List<String> imagePaths = gson.fromJson(imagesData, List.class);
+
         if (imagePaths != null && !imagePaths.isEmpty()) {
             thumbnailUrl = imagePaths.get(0);
         }
 
-        LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
-        LocalDateTime endTime = LocalDateTime.parse(rs.getString("end_time"));
+        LocalDateTime startTime =
+                LocalDateTime.parse(rs.getString("start_time"));
 
-        ItemSummary itemSummary = new ItemSummary(
+        LocalDateTime endTime =
+                LocalDateTime.parse(rs.getString("end_time"));
+
+        AuctionStatus status =
+                AuctionStatus.valueOf(
+                        rs.getString("status").toUpperCase()
+                );
+
+        return new ItemSummary(
                 id,
                 name,
                 category,
                 currentPrice,
                 thumbnailUrl,
                 startTime,
-                endTime
+                endTime,
+                status
         );
-        return itemSummary;
     }
 
     private List<ItemSummary> executeSummaryQuery(String sql, Object... params) {
@@ -311,19 +323,48 @@ public class ItemRepository {
         return items;
     }
 
-    public List<ItemSummary> findAllItems(String sortOrder, int offset) {
-        String sql = """
-                SELECT id,
-                       name,
-                       category,
-                       current_price,
-                       image_path,
-                       start_time,
-                       end_time 
-                FROM items
-                """;
+    public List<ItemSummary> findAllItems(
+            String sortOrder,
+            int page,
+            String category,
+            String status
+    ) {
 
-        return executeSummaryQuery(sql);
+        int limit = 20;
+        int offset = page * limit;
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT id,
+               name,
+               category,
+               current_price,
+               image_path,
+               start_time,
+               end_time,
+               status
+        FROM items
+        WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (category != null && !category.isBlank()) {
+            sql.append(" AND LOWER(category) = LOWER(?)");
+            params.add(category);
+        }
+
+        if (status != null && !status.isBlank()) {
+            sql.append(" AND UPPER(status) = UPPER(?)");
+            params.add(status);
+        }
+
+        sql.append(" ORDER BY ").append(sortOrder);
+        sql.append(" LIMIT ? OFFSET ?");
+
+        params.add(limit);
+        params.add(offset);
+
+        return executeSummaryQuery(sql.toString(), params.toArray());
     }
 
     public List<String> getImgName(String itemId) {
@@ -442,34 +483,55 @@ public class ItemRepository {
     }
 
     public List<String> updateStatus() {
-        List<String> updatedId = new ArrayList<>();
-        String selectEndedSql = "SELECT id FROM items WHERE status = 'ONGOING' AND datetime(end_time) <= datetime('now','localtime')";
-        String selectLiveSql = "SELECT id FROM items WHERE status = 'UPCOMING' AND datetime(start_time) <= datetime('now','localtime')";
+
+        List<String> updatedIds = new ArrayList<>();
+
+        String updateUpcomingToOngoing = """
+        UPDATE items
+        SET status = 'ONGOING'
+        WHERE status = 'UPCOMING'
+          AND datetime(start_time) <= datetime('now','localtime')
+          AND datetime(end_time) > datetime('now','localtime')
+    """;
+
+        String updateOngoingToEnded = """
+        UPDATE items
+        SET status = 'ENDED'
+        WHERE status = 'ONGOING'
+          AND datetime(end_time) <= datetime('now','localtime')
+    """;
+
+        String getChangedIds = """
+        SELECT id
+        FROM items
+        WHERE status IN ('ONGOING', 'ENDED')
+    """;
 
         try (Connection conn = DatabaseManager.getConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(selectEndedSql);
-                 ResultSet rs = ps.executeQuery()) {
+
+            try (PreparedStatement ps = conn.prepareStatement(updateUpcomingToOngoing)) {
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(updateOngoingToEnded)) {
+                ps.executeUpdate();
+            }
+
+            try (
+                    PreparedStatement ps = conn.prepareStatement(getChangedIds);
+                    ResultSet rs = ps.executeQuery()
+            ) {
+
                 while (rs.next()) {
-                    updatedId.add(rs.getString("id"));
+                    updatedIds.add(rs.getString("id"));
                 }
             }
-            try (PreparedStatement ps = conn.prepareStatement(selectLiveSql);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    updatedId.add(rs.getString("id"));
-                }
-            }
 
-            for (String id : updatedId) {
-
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return updatedId;
+
+        return updatedIds;
     }
 
     public double getUserLastBid(String itemId, String userId) {

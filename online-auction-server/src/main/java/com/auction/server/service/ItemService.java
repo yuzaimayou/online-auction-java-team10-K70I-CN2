@@ -20,11 +20,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ItemService {
     private static ItemService instance;
-
+    private final ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor();
     private final ItemRepository itemRepository = ItemRepository.getInstance();
     private final AiServiceClient aiServiceClient = AiServiceClient.getInstance();
     private Gson gson = GsonUtil.getInstance();
@@ -46,63 +50,95 @@ public class ItemService {
 
     //Lay nhieu item
     public List<ItemSummary> getItems(String query) {
-        if (query == null || query.trim().isEmpty()) {
-            return itemRepository.findAllItems("s", 0);
-        }
+
         int page = 0;
-        if (query.contains("page=")) {
-            try {
-                page = Integer.parseInt(extractParam(query, "page"));
-            } catch (NumberFormatException e) {
-                page = 0;
-                e.printStackTrace();
-            }
-        }
+        String category = null;
+        String status = null;
 
-        String sortOrder = "end_time ASC";
-        if (query.contains("sort=")) {
-            String sortParam = extractParam(query, "sort");
-            if ("newest".equalsIgnoreCase(sortParam)) {
-                sortOrder = "start_time DESC";
-            } else if ("price_low".equalsIgnoreCase(sortParam)) {
-                sortOrder = "current_price ASC";
-            } else if ("price_high".equalsIgnoreCase(sortParam)) {
-                sortOrder = "current_price DESC";
-            }
-        }
+        String sortOrder = "create_at DESC";
 
-        //lay cac san pham theo keyword
-        if (query.contains("search=")) {
-            try {
-                String input = StringUtil.removeAccents(extractParam(query, "search"));
+        if (query != null && !query.isBlank()) {
 
-                if (query.contains("page=")) {
-                    try {
-                        page = Integer.parseInt(extractParam(query, "page"));
-                    } catch (NumberFormatException e) {
-                        page = 0;
-                        e.printStackTrace();
-                    }
+            if (query.contains("page=")) {
+                try {
+                    page = Integer.parseInt(extractParam(query, "page"));
+                } catch (Exception ignored) {
                 }
-                return getItemsByKeyword(input, page);
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
 
+            if (query.contains("category=")) {
+                category = extractParam(query, "category");
+            }
+
+            if (query.contains("status=")) {
+                status = extractParam(query, "status");
+            }
+
+            if (query.contains("sort=")) {
+
+                String sort = extractParam(query, "sort");
+
+                switch (sort) {
+
+                    case "price_low" ->
+                            sortOrder = "current_price ASC";
+
+                    case "price_high" ->
+                            sortOrder = "current_price DESC";
+
+                    case "newest" ->
+                            sortOrder = "create_at DESC";
+
+                    default ->
+                            sortOrder = "end_time ASC";
+                }
+            }
+
+            if (query.contains("search=")) {
+
+                try {
+
+                    String input = StringUtil.removeAccents(
+                            extractParam(query, "search")
+                    );
+
+                    return getItemsByKeyword(input, page);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (query.contains("sellerId=")) {
+
+                String sellerId = extractParam(query, "sellerId");
+
+                return itemRepository.findAllBySellerId(sellerId);
+            }
         }
 
-        //lay san pham theo id
-        if (query.contains("sellerId")) {
-            String sellerId = extractParam(query, "sellerId");
-            return itemRepository.findAllBySellerId(sellerId);
-        }
-
-
-        List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page);
-        System.out.println("Fetched " + items.size() + " items with sort order: ");
-        return itemRepository.findAllItems(sortOrder, page);
+        return itemRepository.findAllItems(
+                sortOrder,
+                page,
+                category,
+                status
+        );
     }
 
+    public void startAuctionStatusUpdater() {
+
+        scheduler.scheduleAtFixedRate(() -> {
+
+            try {
+
+                itemRepository.updateStatus();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }, 0, 1, TimeUnit.SECONDS);
+    }
 
     public Item setItem(ItemPayload itemData) {
         String itemName = itemData.getItemName();

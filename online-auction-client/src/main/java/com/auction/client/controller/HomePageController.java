@@ -1,44 +1,37 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.NetworkService;
+import com.auction.client.service.ItemsService;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.client.service.ToastService;
-import com.auction.client.util.AppConfig;
-import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class HomePageController {
 
     //network
     private NetworkService network = NetworkService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
-    private List<ItemSummary> masterItemList;
+    private final ItemsService itemsService =
+            ItemsService.getInstance();
     private String currentCategory = "ALL";
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_2)
@@ -64,8 +57,7 @@ public class HomePageController {
     @FXML
     public void initialize() {
         SearchStoreController.searchQueryProperty().addListener((obs, oldVal, newVal) -> {
-            applyFilter();
-        });
+            fetchItemsFromServer();});
         NetworkService.getInstance().leaveRoom();
         System.out.println("Đã vào trang chủ!");
 
@@ -75,70 +67,37 @@ public class HomePageController {
             upcomingAuctionsContainer.setPrefWidth(width);
             endedAuctionsContainer.setPrefWidth(width);
         });
-
         getDataItemsAndDisplay();
     }
-
     @FXML
     private void getDataItemsAndDisplay() {
-        System.out.println("Dang tien hanh lay du lieu");
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
-                .GET()
-                .build();
-        httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
-                .thenApply(java.net.http.HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    try {
-                        ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
-                        if ("success".equals(res.getStatus())) {
-                            Type listType = new TypeToken<List<ItemSummary>>() {
-                            }.getType();
-                            JsonElement jsonElement = gson.toJsonTree(res.getData());
-                            List<ItemSummary> dataItems = gson.fromJson(jsonElement, listType);
-                            Platform.runLater(() -> {
-                                this.masterItemList = dataItems;
-                                applyFilter();
-                            });
-                        } else {
-                            Platform.runLater(() ->
-                                    ToastService.showError(mainScrollPane.getScene(), "Lỗi: " + res.getMessage())
-                            );
-                        }
-                    } catch (Exception e) {
-                        Platform.runLater(() ->
-                                ToastService.showError(mainScrollPane.getScene(), "Dữ liệu máy chủ không phản hồi đúng định dạng.")
-                        );
-                    }
+        fetchItemsFromServer();
+    }
+    private void fetchItemsFromServer() {
+        String search = SearchStoreController.getSearchQuery();
+        itemsService.getItems(search, currentCategory)
+                .thenAccept(items -> {
+                    Platform.runLater(() -> {loadItemsToUI(items);});
                 })
                 .exceptionally(e -> {
-                    Platform.runLater(() ->
-                            ToastService.showError(mainScrollPane.getScene(), "Không thể kết nối tới Server. Vui lòng thử lại!")
-                    );
+                    Platform.runLater(() -> {
+                        ToastService.showError(
+                                mainScrollPane.getScene(), "Không thể tải danh sách sản phẩm!");
+                    });
+                    e.printStackTrace();
                     return null;
                 });
     }
+    private AuctionStatus resolveRealtimeStatus(ItemSummary item) {
+        LocalDateTime now = LocalDateTime.now();
 
-    private void applyFilter() {
-        if (masterItemList == null)
-            return;
-        String query = SearchStoreController.getSearchQuery().toLowerCase().trim();
-
-        List<ItemSummary> filtered = masterItemList.stream()
-                .filter(item -> {
-                    // Lọc theo Category
-                    boolean matchesCategory = currentCategory.equals("ALL") ||
-                            (item.getCategory() != null && item.getCategory().equalsIgnoreCase(currentCategory));
-
-                    // Lọc theo Search Query
-                    boolean matchesSearch = query.isEmpty() ||
-                            (item.getName() != null && item.getName().toLowerCase().contains(query));
-
-                    return matchesCategory && matchesSearch;
-                })
-                .collect(Collectors.toList());
-
-        loadItemsToUI(filtered);
+        if (now.isBefore(item.getStartTime())) {
+            return AuctionStatus.UPCOMING;
+        }
+        if (now.isAfter(item.getEndTime())) {
+            return AuctionStatus.ENDED;
+        }
+        return AuctionStatus.ONGOING;
     }
 
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
@@ -163,13 +122,12 @@ public class HomePageController {
                     ItemCardHPController cardHPController = fxmlLoader.getController();
                     cardHPController.setData(item);
 
-                    String status = (item.getStatus() != null)
-                            ? item.getStatus().toString().toUpperCase() : "";
+                    AuctionStatus status = resolveRealtimeStatus(item);
 
-                    if (status.contains("ONGOING") || status.contains("LIVE")) {
+                    if (status == AuctionStatus.ONGOING) {
                         ongoingAuctionsContainer.getChildren().add(cardBox);
                         ongoingCount++;
-                    } else if (status.contains("UPCOMING")) {
+                    } else if (status == AuctionStatus.UPCOMING) {
                         upcomingAuctionsContainer.getChildren().add(cardBox);
                         upcomingCount++;
                     } else {
@@ -214,7 +172,7 @@ public class HomePageController {
         if (!"ALL".equals(currentCategory)) {
             clicked.getStyleClass().add("active-category");
         }
-        applyFilter();
+        fetchItemsFromServer();
     }
 
     @FXML

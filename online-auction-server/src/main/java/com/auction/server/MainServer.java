@@ -5,6 +5,7 @@ import com.auction.server.controller.ClientHandler;
 import com.auction.server.controller.api.*;
 import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
+import com.auction.server.service.ItemService;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -24,7 +25,7 @@ public class MainServer {
         // tao database
         DatabaseManager.init();
         DatabaseInit.init();
-
+        ItemService.getInstance().startAuctionStatusUpdater();
         //start http server
         try {
             System.out.println("Starting HTTP server...");

@@ -36,7 +36,7 @@ public class Auction {
 
         this.auctionId = auctionId;
         this.item = item;
-        this.status = AuctionStatus.OPEN;
+        this.status = AuctionStatus.UPCOMING;
         this.winnerId = null;
         this.finalPrice = item.getStartingPrice();
         this.createdAt = LocalDateTime.now();
@@ -90,7 +90,7 @@ public class Auction {
      */
     public boolean isActive() {
         LocalDateTime now = LocalDateTime.now();
-        return status == AuctionStatus.RUNNING &&
+        return status == AuctionStatus.ONGOING &&
                 now.isAfter(item.getStartTime()) &&
                 now.isBefore(item.getEndTime());
     }
@@ -101,7 +101,7 @@ public class Auction {
      */
     public void startAuction() throws Exception {
         // [ERROR HANDLING] Kiểm tra trạng thái hiện tại
-        if (status != AuctionStatus.OPEN) {
+        if (status != AuctionStatus.UPCOMING) {
             throw new Exception("Error: Auction is not in OPEN status! Current: " + status);
         }
 
@@ -112,7 +112,7 @@ public class Auction {
                     "Scheduled: " + item.getStartTime());
         }
 
-        this.status = AuctionStatus.RUNNING;
+        this.status = AuctionStatus.ONGOING;
         this.startedAt = now;
         System.out.println("Auction " + auctionId + " started for item: " + item.getName());
     }
@@ -154,7 +154,7 @@ public class Auction {
      */
     public void endAuction() throws Exception {
         // [ERROR HANDLING] Kiểm tra trạng thái
-        if (status != AuctionStatus.RUNNING) {
+        if (status != AuctionStatus.ONGOING) {
             throw new Exception("Error: Auction is not running! Current status: " + status);
         }
 
@@ -184,7 +184,7 @@ public class Auction {
         }
 
         // Requirement 3.1.4: Chuyển trạng thái RUNNING → FINISHED
-        this.status = AuctionStatus.FINISHED;
+        this.status = AuctionStatus.ENDED;
         this.endedAt = now;
         System.out.println("Auction " + auctionId + " has finished");
     }
@@ -193,7 +193,7 @@ public class Auction {
      * Requirement 3.1.4: Chuyển trạng thái FINISHED → PAID
      */
     public void markAsPaid() throws Exception {
-        if (status != AuctionStatus.FINISHED) {
+        if (status != AuctionStatus.ENDED) {
             throw new Exception("Error: Auction must be FINISHED to mark as PAID! Current: " + status);
         }
 
