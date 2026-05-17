@@ -6,7 +6,7 @@
 <?import javafx.geometry.Insets?>
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.controller.ToastController"
+      fx:controller="com.auction.client.controller.common.ToastController"
       alignment="CENTER_LEFT"
       spacing="10"
       fillHeight="false"

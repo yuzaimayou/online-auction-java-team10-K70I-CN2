@@ -26,29 +26,34 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ItemService {
-    private static ItemService instance;
+    // [FIX BUG #9] Thêm volatile để double-checked locking hoạt động đúng trên multi-core CPU.
+    private static volatile ItemService instance;
     private final ScheduledExecutorService scheduler =
             Executors.newSingleThreadScheduledExecutor();
     private final ItemRepository itemRepository = ItemRepository.getInstance();
     private final AiServiceClient aiServiceClient = AiServiceClient.getInstance();
     private Gson gson = GsonUtil.getInstance();
 
+    // [FIX BUG #9] getInstance() trước đây không thread-safe — hai thread có thể tạo 2 instance khác nhau.
+    // Dùng double-checked locking với volatile để đảm bảo chỉ có đúng 1 instance.
     public static ItemService getInstance() {
         if (instance == null) {
-            instance = new ItemService();
+            synchronized (ItemService.class) {
+                if (instance == null) {
+                    instance = new ItemService();
+                }
+            }
         }
         return instance;
     }
 
     public List<ItemSummary> getAllItemsBySeller(String sellerId) {
         if (sellerId == null || sellerId.trim().isEmpty()) {
-            return null; // Hoặc trả về list rỗng tùy logic của bạn
+            return null;
         }
-        // Gọi hàm từ ItemRepository
         return itemRepository.findAllBySellerId(sellerId);
     }
 
-    //Lay nhieu item
     public List<ItemSummary> getItems(String query) {
 
         int page = 0;

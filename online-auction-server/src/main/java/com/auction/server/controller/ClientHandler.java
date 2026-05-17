@@ -144,10 +144,10 @@ public class ClientHandler implements Runnable {
         );
 
         if (created) {
-            System.out.println("Bid placed successfully for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
+            System.out.println("Bid placed successfully for item " + bidData.getItemId() + " by auth " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
 
         } else {
-            System.out.println("Failed to place bid for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
+            System.out.println("Failed to place bid for item " + bidData.getItemId() + " by auth " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
             response.setStatus("FAIL");
             response.setMessage("Failed to place bid");
         }

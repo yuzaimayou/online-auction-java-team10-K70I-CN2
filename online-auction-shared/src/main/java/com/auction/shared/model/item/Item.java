@@ -98,17 +98,6 @@ public class Item extends Entity {
         this.imagesPath = imagesPath;
         this.create_at = LocalDateTime.now();
 
-   /*     if (LocalDateTime.now().isBefore(startTime)) {
-            this.status = "PENDING";
-        } else if (LocalDateTime.now().isBefore(endTime) || LocalDateTime.now().isEqual(startTime)) {
-            this.status = AuctionStatus.UPCOMING;
-        } else if (LocalDateTime.now().isAfter(endTime)) {
-            this.status = AuctionStatus.ENDED;
-        } else {
-            this.status = AuctionStatus.ONGOING;
-        }
-    } */
-
         if (LocalDateTime.now().isBefore(startTime)) {
             this.status = AuctionStatus.UPCOMING;
         } else if (LocalDateTime.now().isAfter(endTime)) {
@@ -118,8 +107,11 @@ public class Item extends Entity {
         }
     }
 
-    // Constructor khi load tu database
-    public Item(String name, String description,
+    // [FIX BUG #5] Constructor khi load từ database:
+    // Trước đây gọi super(UUID.randomUUID().toString()) khiến item có UUID sai
+    // trong khoảng thời gian giữa construction và lúc ItemRepository.mapRow() gọi setId().
+    // Nay truyền thẳng id từ DB vào super() để đảm bảo ID luôn đúng ngay từ đầu.
+    public Item(String id, String name, String description,
                 double startingPrice, double currentPrice,
                 LocalDateTime startTime, LocalDateTime endTime,
                 String sellerId,
@@ -127,7 +119,7 @@ public class Item extends Entity {
                 double bidStep,
                 List<String> imagesPath) {
 
-        super(UUID.randomUUID().toString());
+        super(id); // [FIX BUG #5] dùng id thật từ DB thay vì UUID mới
 
         this.name = name;
         this.description = description;
@@ -221,10 +213,6 @@ public class Item extends Entity {
         currentTopPLayerId = playerId;
     }
 
-//    public String getStatus() {
-//        return status;
-//    }
-
     public void setStatus(AuctionStatus status) {
         this.status = status;
     }
@@ -267,4 +255,3 @@ public class Item extends Entity {
     }
 
 }
-

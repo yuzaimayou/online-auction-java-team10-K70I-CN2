@@ -28,98 +28,82 @@ import java.util.List;
 import java.util.Optional;
 
 public class MyAuctionsController {
-    // Điều hướng
-    @FXML
-    private ToggleButton profileInfoBtn;
-    @FXML
-    private ToggleButton myAuctionsBtn;
-    @FXML
-    private ToggleButton historyBidBtn;
 
-    // Bảng dữ liệu
-    @FXML
-    private TableView<ItemSummary> auctionTable;
-    @FXML
-    private TableColumn<ItemSummary, ItemSummary> itemCol;
-    @FXML
-    private TableColumn<ItemSummary, String> categoryCol;
-    @FXML
-    private TableColumn<ItemSummary, String> statusCol;
-    @FXML
-    private TableColumn<ItemSummary, String> priceCol;
-    @FXML
-    private TableColumn<ItemSummary, LocalDateTime> endTimeCol;
-    @FXML
-    private TableColumn<ItemSummary, ItemSummary> actionCol;
+    // ── FXML fields ────────────────────────────────────────────────────────────
+    // FIX [dead code]: xoá các ToggleButton navigation thừa — việc điều hướng
+    // sidebar đã được SettingController xử lý, nested controller không cần lặp lại
+    @FXML private TableView<ItemSummary>              auctionTable;
+    @FXML private TableColumn<ItemSummary, ItemSummary> itemCol;
+    @FXML private TableColumn<ItemSummary, String>    categoryCol;
+    @FXML private TableColumn<ItemSummary, String>    statusCol;
+    @FXML private TableColumn<ItemSummary, String>    priceCol;
+    @FXML private TableColumn<ItemSummary, LocalDateTime> endTimeCol;
+    @FXML private TableColumn<ItemSummary, ItemSummary> actionCol;
 
-    private ItemsService itemsService = ItemsService.getInstance();
-    private Gson gson = new GsonUtil().getInstance();
-    private User loggedInUser = UserSession.getInstance().getLoggedInUser();
-    private ObservableList<ItemSummary> masterData = FXCollections.observableArrayList();
+    // ── Dependencies ───────────────────────────────────────────────────────────
+    private final ItemsService itemsService = ItemsService.getInstance();
+    private final Gson         gson         = GsonUtil.getInstance();
+    private final User         loggedInUser = UserSession.getInstance().getLoggedInUser();
+    private final ObservableList<ItemSummary> masterData = FXCollections.observableArrayList();
 
-
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
-        if (myAuctionsBtn != null) {
-            myAuctionsBtn.setSelected(true);
-        }
         auctionTable.setSelectionModel(null);
-
         Platform.runLater(() -> {
             var header = auctionTable.lookup(".column-header-background");
             if (header != null) header.setMouseTransparent(true);
         });
+
         MyAuctionsTableHelper.setupTableColumns(
                 itemCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
                 this::handleSwitchToItemEdit,
                 this::handleDeleteItem,
                 this::handleViewItem
         );
+
         displayItems();
     }
 
+    // ── Data loading ───────────────────────────────────────────────────────────
     private void displayItems() {
+        if (loggedInUser == null) return;
 
         itemsService.getAllFromSeller(loggedInUser.getId())
-
                 .thenAccept(responseMessage -> {
-
-                    if ("success".equals(responseMessage.getStatus())) {
-
-                        System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
-
-                        Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
-                        JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
-                        List<ItemSummary> items = gson.fromJson(jsonElement, listType);
-
-                        Platform.runLater(() -> {
-                            masterData.setAll(items);
-                            auctionTable.setItems(masterData);
-
-                            if (!items.isEmpty()) {
-                                System.out.println("Tên sản phẩm đầu tiên: " + items.get(0).getName()
-                                );
-                            } else {
-                                System.out.println("Không có sản phẩm nào của người bán này.");
-                            }
-                        });
-
-                    } else {
-                        System.err.println("Lỗi khi lấy danh sách sản phẩm: " + responseMessage.getMessage());
+                    if (!"success".equals(responseMessage.getStatus())) {
+                        // FIX [error handling]: hiển thị Alert thay vì chỉ log stderr
+                        Platform.runLater(() -> showError(
+                                "Failed to load auctions",
+                                responseMessage.getMessage()
+                        ));
+                        return;
                     }
-                })
 
+                    Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
+                    JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
+                    List<ItemSummary> items = gson.fromJson(jsonElement, listType);
+
+                    Platform.runLater(() -> {
+                        masterData.setAll(items);
+                        auctionTable.setItems(masterData);
+                    });
+                })
                 .exceptionally(e -> {
                     e.printStackTrace();
-                    System.err.println("Lỗi khi gửi yêu cầu lấy danh sách sản phẩm: " + e.getMessage());
-
+                    // FIX [error handling]: alert thay vì System.err
+                    Platform.runLater(() -> showError(
+                            "Connection error",
+                            "Could not reach the server. Please check your connection."
+                    ));
                     return null;
                 });
     }
 
-    // Event handlers
+    // ── Event handlers ─────────────────────────────────────────────────────────
     @FXML
     public void handleSwitchToItemEdit(ItemSummary selectedItem) {
+        if (selectedItem == null) return;
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml")
@@ -128,95 +112,90 @@ public class MyAuctionsController {
 
             ItemEditController editController = loader.getController();
             editController.setItemId(selectedItem.getId());
-
             SettingController.targetTab = "MyAuctions";
 
             Scene currentScene = auctionTable.getScene();
             Stage stage = (Stage) currentScene.getWindow();
-
             currentScene.setRoot(root);
             stage.setTitle(String.format("%s - Item Edit", AppConfig.getAppName()));
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Không tìm thấy file ItemEdit.fxml! Kiểm tra lại đường dẫn.");
+            showError("Navigation error", "Could not open Item Edit page.");
         }
     }
 
     @FXML
     public void handleViewItem(ItemSummary selectedItem) {
-        if (selectedItem != null) {
-            navigateToDetail(selectedItem.getId());
-        }
+        if (selectedItem != null) navigateToDetail(selectedItem.getId());
     }
 
     private void handleDeleteItem(ItemSummary itemToDelete) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Xác nhận xóa");
-        alert.setHeaderText("Xóa sản phẩm: " + itemToDelete.getName());
-        alert.setContentText("Bạn có chắc chắn muốn xóa hoàn toàn sản phẩm này không?");
+        if (itemToDelete == null) return;
 
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm delete");
+        confirm.setHeaderText("Delete: " + itemToDelete.getName());
+        confirm.setContentText("This action cannot be undone. Are you sure?");
 
-            itemsService.deleteItem(itemToDelete.getId())
-                    .thenAccept(responseMessage -> {
-                        javafx.application.Platform.runLater(() -> {
-                            if ("success".equals(responseMessage.getStatus())) {
-                                System.out.println("Xóa sản phẩm thành công trên server!");
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) return;
 
-                                masterData.remove(itemToDelete);
-
-                                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                                success.setTitle("Thành công");
-                                success.setHeaderText(null);
-                                success.setContentText("Đã xóa sản phẩm thành công!");
-                                success.show();
-                            } else {
-                                // Lỗi từ server
-                                System.err.println("Lỗi từ server khi xóa: " + responseMessage.getMessage());
-                                Alert error = new Alert(Alert.AlertType.ERROR);
-                                error.setTitle("Lỗi xóa sản phẩm");
-                                error.setHeaderText(null);
-                                error.setContentText("Không thể xóa sản phẩm: " + responseMessage.getMessage());
-                                error.show();
-                            }
-                        });
-                    })
-                    .exceptionally(e -> {
-                        e.printStackTrace();
-                        javafx.application.Platform.runLater(() -> {
-                            Alert error = new Alert(Alert.AlertType.ERROR);
-                            error.setTitle("Lỗi kết nối");
-                            error.setHeaderText(null);
-                            error.setContentText("Lỗi khi kết nối với server để xóa sản phẩm.");
-                            error.show();
-                        });
-                        return null;
-                    });
-        }
+        itemsService.deleteItem(itemToDelete.getId())
+                .thenAccept(responseMessage -> Platform.runLater(() -> {
+                    if ("success".equals(responseMessage.getStatus())) {
+                        masterData.remove(itemToDelete);
+                        showInfo("Item deleted successfully.");
+                    } else {
+                        // FIX [error handling]: tách riêng từng nhánh lỗi
+                        showError("Delete failed", responseMessage.getMessage());
+                    }
+                }))
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    Platform.runLater(() ->
+                            showError("Connection error", "Could not reach the server to delete item."));
+                    return null;
+                });
     }
 
     private void navigateToDetail(String itemId) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/ItemDetail.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com.auction.client/fxml/setting/ItemDetail.fxml")
+            );
             Parent detailPage = loader.load();
 
             ItemDetailPageController detailController = loader.getController();
             detailController.loadItemData(itemId);
 
             SettingController mainSetting = SettingController.getInstance();
-            if (mainSetting != null) {
-                VBox contentArea = mainSetting.getDynamicContent();
+            if (mainSetting == null) return;
 
-                VBox.setVgrow(detailPage, Priority.ALWAYS);
-
-                contentArea.getChildren().setAll(detailPage);
-            }
+            VBox contentArea = mainSetting.getDynamicContent();
+            VBox.setVgrow(detailPage, Priority.ALWAYS);
+            contentArea.getChildren().setAll(detailPage);
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Lỗi khi chuyển sang trang chi tiết: " + e.getMessage());
+            showError("Navigation error", "Could not open item detail page.");
         }
+    }
+
+    // ── UI helpers ─────────────────────────────────────────────────────────────
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message != null ? message : "An unknown error occurred.");
+        alert.show();
+    }
+
+    private void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.show();
     }
 }

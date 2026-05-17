@@ -8,7 +8,7 @@ import com.auction.shared.model.payloads.BidPayload;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.ArrayList;  // [SỬA #2] thêm import
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -93,7 +93,7 @@ public class BidService {
                 Item item = itemRepository.findById(itemId);
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
-                    System.out.println("Bid rejected: item not found or user is the seller");
+                    System.out.println("Bid rejected: item not found or auth is the seller");
                     return false;
                 }
 
@@ -107,7 +107,7 @@ public class BidService {
                 String lastBidder = bidRepository.findLastBidder(conn, itemId);
                 if (lastBidder != null && lastBidder.equals(userId)) {
                     conn.rollback();
-                    System.out.println("Bid rejected: same user cannot bid consecutively");
+                    System.out.println("Bid rejected: same auth cannot bid consecutively");
                     return false;
                 }
 
@@ -129,9 +129,12 @@ public class BidService {
                     return false;
                 }
 
-                if (!itemRepository.updateCurrentPrice(conn, itemId, bidPrice)) {
+                // [FIX BUG #6] Trước đây gọi updateCurrentPrice() chỉ cập nhật current_price,
+                // bỏ quên trường current_bidder_id → getCurrentTopPLayerId() luôn trả về null/stale.
+                // Nay dùng updateCurrentBidder() để cập nhật cả price lẫn bidder_id cùng lúc.
+                if (!itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId)) {
                     conn.rollback();
-                    System.out.println("Bid rejected: failed to update current price in database");
+                    System.out.println("Bid rejected: failed to update current price/bidder in database");
                     return false;
                 }
 
@@ -164,6 +167,7 @@ public class BidService {
             }
         }
     }
+
     private List<BidPayload> runAutoBiddingRounds(Connection conn, String itemId,
                                                   String leadingUserId, double currentPrice) throws Exception {
         List<BidPayload> results = new ArrayList<>();
@@ -185,8 +189,11 @@ public class BidService {
             if (!bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime)) {
                 throw new Exception("Failed to create auto bid");
             }
-            if (!itemRepository.updateCurrentPrice(conn, itemId, candidate.bidPrice())) {
-                throw new Exception("Failed to update current price after auto bid");
+
+            // [FIX BUG #6] Tương tự placeBid: dùng updateCurrentBidder() thay vì updateCurrentPrice()
+            // để current_bidder_id được cập nhật theo người đặt auto-bid.
+            if (!itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId())) {
+                throw new Exception("Failed to update current price/bidder after auto bid");
             }
 
             results.add(new BidPayload(itemId, candidate.userId(), candidate.bidPrice(), bidTime));

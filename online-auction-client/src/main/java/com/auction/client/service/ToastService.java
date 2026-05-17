@@ -1,6 +1,6 @@
 package com.auction.client.service;
 
-import com.auction.client.controller.ToastController;
+import com.auction.client.controller.common.ToastController;
 import javafx.animation.*;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;

@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 
 <HBox id="auth-page" alignment="CENTER"
-      fx:controller="com.auction.client.controller.user.VerifyController" xmlns="http://javafx.com/javafx/25"
+      fx:controller="com.auction.client.controller.auth.VerifyController" xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1">
     <stylesheets>
         <URL value="@../../css/AuthPage.css"/>
