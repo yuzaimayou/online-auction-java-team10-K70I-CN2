@@ -1,6 +1,7 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
 
 import java.sql.Connection;
@@ -10,7 +11,7 @@ import java.util.UUID;
 
 public class UserRepository {
 
-    // Tạo user mới với số dư mặc định
+    // Tạo auth mới với số dư mặc định
     public boolean createUser(String username, String password, String role, String email) {
 
         String sql = """
@@ -70,7 +71,7 @@ public class UserRepository {
         }
     }
 
-    // Tìm user theo id (dùng trong transaction ví)
+    // Tìm auth theo id (dùng trong transaction ví)
     public User findById(Connection conn, String userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -140,17 +141,33 @@ public class UserRepository {
         return null;
     }
 
-    // Convert ResultSet -> User (Gần như đầy đủ các trường ví)
     private User mapRow(ResultSet rs) throws Exception {
-        User user = new User(
-                rs.getString("id"),
-                rs.getString("username"),
-                rs.getString("password"),
-                rs.getString("email"),
-                rs.getBoolean("isVerify"));
+        String role = rs.getString("role"); // Đọc role từ DB
+
+        User user;
+
+        if ("Admin".equalsIgnoreCase(role)) {
+            Admin admin = new Admin(
+                    rs.getString("id"),
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("email"),
+                    rs.getBoolean("isVerify")
+            );
+            user = admin;
+        } else {
+            user = new User(
+                    rs.getString("id"),
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("email"),
+                    rs.getBoolean("isVerify")
+            );
+        }
 
         user.setBalance(rs.getDouble("balance"));
         user.setFrozenBalance(rs.getDouble("frozen_balance"));
+
         return user;
     }
 }

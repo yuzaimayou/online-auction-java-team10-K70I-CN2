@@ -10,7 +10,7 @@
 
 <VBox maxWidth="Infinity" styleClass="header-section" stylesheets="@../css/NavBar.css"
       xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.NavBarController">
+      fx:controller="com.auction.client.controller.common.NavBarController">
     <HBox styleClass="top-bar">
 
         <HBox alignment="CENTER_LEFT" spacing="25" HBox.hgrow="ALWAYS">

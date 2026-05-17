@@ -17,20 +17,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemRepository {
-    private static ItemRepository instance;
-
+    private static volatile ItemRepository instance; // [FIX BUG #8] volatile để đảm bảo thread-safe với double-checked locking
 
     private ItemRepository() {
     }
 
+    // [FIX BUG #8] getInstance() trước đây không thread-safe, hai thread có thể tạo instance cùng lúc.
+    // Dùng double-checked locking với volatile để fix.
     public static ItemRepository getInstance() {
         if (instance == null) {
-            instance = new ItemRepository();
+            synchronized (ItemRepository.class) {
+                if (instance == null) {
+                    instance = new ItemRepository();
+                }
+            }
         }
         return instance;
     }
 
-    private Gson gson = new GsonUtil().getInstance();
+    // [FIX BUG #10] Trước đây: new GsonUtil().getInstance() — gọi static method qua instance mới (sai pattern).
+    // Nay dùng GsonUtil.getInstance() đúng cách.
+    private Gson gson = GsonUtil.getInstance();
 
     public boolean updateCurrentBidder(Connection conn, String itemId,
                                        double newPrice, String newBidderId) {
@@ -74,10 +81,10 @@ public class ItemRepository {
         LocalDateTime endTime =
                 LocalDateTime.parse(rs.getString("end_time"));
 
-        AuctionStatus status =
-                AuctionStatus.valueOf(
-                        rs.getString("status").toUpperCase()
-                );
+        // [FIX BUG #3] Trước đây dùng AuctionStatus.valueOf() ném IllegalArgumentException
+        // nếu DB còn chứa giá trị cũ 'PENDING' (không tồn tại trong enum).
+        // Nay dùng AuctionStatus.fromString() có fallback về UPCOMING.
+        AuctionStatus status = AuctionStatus.fromString(rs.getString("status"));
 
         return new ItemSummary(
                 id,
@@ -170,6 +177,9 @@ public class ItemRepository {
     }
 
     public boolean updateItem(Item item, String itemId) {
+        // [FIX BUG #1a] Trước đây column là "images_path" — sai, tên đúng trong DB là "image_path".
+        // [FIX BUG #1b] Trước đây "search_name" thiếu "= ?" nên SQL bị lỗi cú pháp và luôn thất bại.
+        // Số lượng tham số: 11 field + 1 WHERE id = 12 tham số tổng.
         String sql = """
                 UPDATE items SET 
                     name = ?, 
@@ -181,10 +191,9 @@ public class ItemRepository {
                     end_time = ?, 
                     category = ?, 
                     bid_step = ?, 
-                    images_path = ?,
-                    status=?,
-                    search_name
-                
+                    image_path = ?,
+                    status = ?,
+                    search_name = ?
                 WHERE id = ?
                 """;
 
@@ -192,7 +201,6 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set các tham số cần cập nhật (Thứ tự từ 1 đến 10)
             stmt.setString(1, item.getName());
             stmt.setString(2, item.getDescription());
             stmt.setDouble(3, item.getStartingPrice());
@@ -202,15 +210,13 @@ public class ItemRepository {
             stmt.setString(7, item.getEndTime().toString());
             stmt.setString(8, item.getCategory());
             stmt.setDouble(9, item.getBidStep());
-            stmt.setString(10, gson.toJson(item.getImagesPath()));
+            stmt.setString(10, gson.toJson(item.getImagesPath())); // [FIX BUG #1a] image_path
             stmt.setString(11, item.getStatus());
-            stmt.setString(12, StringUtil.removeAccents(item.getName()));
+            stmt.setString(12, StringUtil.removeAccents(item.getName())); // [FIX BUG #1b] search_name = ?
 
-            // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
+            // Set tham số ID cho điều kiện WHERE (tham số 13)
             stmt.setString(13, itemId);
 
-            // executeUpdate() trả về số dòng bị ảnh hưởng.
-            // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
 
@@ -230,10 +236,8 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set tham số ID cần xóa
             stmt.setString(1, id);
 
-            // Nếu xóa thành công (ID có tồn tại), rowsAffected sẽ > 0
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
 
@@ -276,21 +280,24 @@ public class ItemRepository {
         return null;
     }
 
+    // [FIX BUG #2] Trước đây query thiếu cột "status" trong SELECT.
+    // mapRowToItemSummary() gọi rs.getString("status") → SQLException vì cột không có trong ResultSet.
+    // Đã thêm "status" vào danh sách SELECT.
     public List<ItemSummary> findAllBySellerId(String sellerID) {
         String sql = """
                 SELECT id,
                        name,
                        category,
-                       current_price, 
+                       current_price,
                        image_path,
                        start_time,
-                       end_time
-                FROM items 
+                       end_time,
+                       status
+                FROM items
                 WHERE seller_id = ?
                 """;
 
         return executeSummaryQuery(sql, sellerID);
-
     }
 
     public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
@@ -302,20 +309,18 @@ public class ItemRepository {
             if (i < keywords.size() - 1) sql.append(" AND ");
         }
         sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
+
         System.out.println(sql.toString());
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())
         ) {
-            //gan tham so cho cau lenh sql
             for (int i = 0; i < keywords.size(); i++) {
                 stmt.setString(i + 1, "%" + keywords.get(i) + "%");
             }
             stmt.setInt(keywords.size() + 1, offset);
             System.out.println(stmt.toString());
-            //thuc thi cau lenh
             ResultSet rs = stmt.executeQuery();
-            //chuyen doi du lieu
             while (rs.next()) {
                 items.add(mapRowToItemSummary(rs));
             }
@@ -376,7 +381,7 @@ public class ItemRepository {
         List<String> imagePaths = new ArrayList<>();
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
+                PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, itemId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -397,24 +402,24 @@ public class ItemRepository {
     }
 
 
+    // [FIX BUG #5] mapRow() trước đây gọi constructor không có id rồi gọi setId() sau.
+    // Nay truyền rs.getString("id") trực tiếp vào constructor mới Item(id, ...).
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString("image_path");
         List<String> imagePaths = new ArrayList<>();
         if (pathsData != null && !pathsData.isEmpty()) {
             try {
-                // Try to parse as JSON list (new format)
                 imagePaths = gson.fromJson(pathsData, List.class);
                 if (imagePaths == null) {
                     imagePaths = new ArrayList<>();
                 }
             } catch (Exception e) {
-                // Fallback for old format (single string path)
                 imagePaths.add(pathsData);
             }
         }
 
-
         Item item = new Item(
+                rs.getString("id"),           // [FIX BUG #5] truyền id thật từ DB
                 rs.getString("name"),
                 rs.getString("description"),
                 rs.getDouble("start_price"),
@@ -426,7 +431,7 @@ public class ItemRepository {
                 rs.getDouble("bid_step"),
                 imagePaths
         );
-        item.setId(rs.getString("id"));
+        // setId() không còn cần thiết vì id đã được truyền vào constructor
         item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
         String dbStatus = rs.getString("status");
         if (dbStatus != null) item.setStatus(dbStatus);

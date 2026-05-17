@@ -1,9 +1,9 @@
 package com.auction.client.util;
 
-import com.auction.client.controller.ChatBoxAiController;
+import com.auction.client.controller.common.ChatBoxAiController;
 import com.auction.client.controller.HomePageController;
 import com.auction.client.controller.setting.SettingController;
-import com.auction.client.controller.user.VerifyController;
+import com.auction.client.controller.auth.VerifyController;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
@@ -156,6 +156,32 @@ public class NavigationUtil {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Lỗi load trang sản phẩm: " + e.getMessage());
+        }
+    }
+    public static void switchToLogin(ActionEvent event) {
+
+        try {
+
+            Parent loginRoot = FXMLLoader.load(
+                    NavigationUtil.class.getResource(
+                            "/com.auction.client/fxml/authenticator/Login.fxml"
+                    )
+            );
+
+            Stage stage =
+                    (Stage) ((Node) event.getSource())
+                            .getScene()
+                            .getWindow();
+
+            stage.getScene().setRoot(loginRoot);
+
+            stage.setTitle("Login - Auction System");
+
+        } catch (IOException e) {
+
+            System.err.println("Không tìm thấy file Login.fxml!");
+
+            e.printStackTrace();
         }
     }
 }

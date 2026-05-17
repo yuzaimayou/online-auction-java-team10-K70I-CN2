@@ -8,7 +8,7 @@
 <HBox fx:id="rootNode" alignment="CENTER"
       xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.user.LoginController">
+      fx:controller="com.auction.client.controller.auth.LoginController">
     <stylesheets>
         <URL value="@../../css/AuthPage.css"/>
     </stylesheets>

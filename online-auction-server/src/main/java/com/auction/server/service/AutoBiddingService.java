@@ -58,7 +58,6 @@ public class AutoBiddingService {
                     currentPrice + increment, maxBid));
         }
 
-        // [1] Fetch user thật từ DB
         User bidder = userRepository.findById(bidderId);
         if (bidder == null) {
             throw new Exception("Error: Bidder not found!");
@@ -82,84 +81,122 @@ public class AutoBiddingService {
             lock.writeLock().unlock();
         }
 
-        System.out.printf("Auto-bid registered: %s | user=%s | max=%.0f | inc=%.0f%n",
+        System.out.printf("Auto-bid registered: %s | auth=%s | max=%.0f | inc=%.0f%n",
                 autoBid.getAutoBidId(), bidderId, maxBid, increment);
 
         triggerAutoBids(auctionId, this.biddingService);
 
         return autoBid.getAutoBidId();
     }
+
     public void triggerAutoBids(String auctionId, BiddingService biddingService) throws Exception {
+        // Collect bids to place; actual placeBid calls happen outside the lock to avoid
+        // holding it during I/O or sleep.
+        List<AutoBid> snapshot;
         lock.writeLock().lock();
         try {
             List<AutoBid> autoBids = auctionAutoBidsMap.get(auctionId);
             if (autoBids == null || autoBids.isEmpty()) return;
-
-            Auction auction = biddingService.getAuction(auctionId);
-            double currentPrice = auction.getItem().getHighestCurrentPrice();
-            String currentWinnerId = auction.getHighestBidderId();
-
-            autoBids.sort(Comparator.comparing(AutoBid::getRegisteredAt));
-
-            boolean hasNewBid;
-            int loopGuard = 0;
-
-            do {
-                hasNewBid = false;
-
-                for (AutoBid autoBid : autoBids) {
-                    if (!autoBid.isActive()) continue;
-                    if (autoBid.getBidderId().equals(currentWinnerId)) continue;
-
-                    double nextBidAmount = currentPrice + autoBid.getIncrement();
-
-                    if (nextBidAmount > autoBid.getMaxBid()) {
-                        autoBid.setActive(false);
-                        System.out.printf("Auto-bid deactivated (max reached): %s | user=%s%n",
-                                autoBid.getAutoBidId(), autoBid.getBidderId());
-                        continue;
-                    }
-
-                    User bidder = userRepository.findById(autoBid.getBidderId());
-                    if (bidder == null) {
-                        autoBid.setActive(false);
-                        System.err.println("Auto-bid deactivated: user not found → " + autoBid.getBidderId());
-                        continue;
-                    }
-
-                    if (bidder.getBalance() < nextBidAmount) {
-                        autoBid.setActive(false);
-                        System.err.printf("Auto-bid deactivated (insufficient balance): user=%s | need=%.0f | have=%.0f%n",
-                                bidder.getId(), nextBidAmount, bidder.getBalance());
-                        continue;
-                    }
-
-                    try {
-                        BidTransaction bid = biddingService.placeBid(auctionId, bidder, nextBidAmount);
-                        bid.setAutoBid(true);
-
-                        System.out.printf("Auto-bid executed: %s | user=%s | amount=%.0f%n",
-                                autoBid.getAutoBidId(), bidder.getId(), nextBidAmount);
-
-                        currentPrice = nextBidAmount;
-                        currentWinnerId = bidder.getId();
-                        hasNewBid = true;
-
-                        biddingService.broadcastNewBid(auctionId, bid);
-                        Thread.sleep(50);
-
-                    } catch (Exception e) {
-                        autoBid.setActive(false);
-                        System.out.println("Auto-bid deactivated (placeBid failed): " + e.getMessage());
-                    }
-                }
-
-                loopGuard++;
-            } while (hasNewBid && loopGuard < 20);
-
+            snapshot = new ArrayList<>(autoBids);
+            snapshot.sort(Comparator.comparing(AutoBid::getRegisteredAt));
         } finally {
             lock.writeLock().unlock();
         }
+
+        Auction auction = biddingService.getAuction(auctionId);
+        double currentPrice = auction.getItem().getHighestCurrentPrice();
+        String currentWinnerId = auction.getHighestBidderId();
+
+        boolean hasNewBid;
+        int loopGuard = 0;
+
+        do {
+            hasNewBid = false;
+
+            // [FIX BUG #11] Trước đây toàn bộ vòng lặp (kể cả Thread.sleep) nằm trong writeLock().
+            // Điều này chặn tất cả thread khác trong suốt 50ms * số vòng lặp.
+            // Nay: chỉ dùng lock khi đọc/ghi state của autoBidMap/auctionAutoBidsMap,
+            // còn placeBid() và Thread.sleep() thực hiện ngoài lock.
+            for (AutoBid autoBid : snapshot) {
+                boolean isActive;
+                lock.readLock().lock();
+                try {
+                    isActive = autoBid.isActive();
+                } finally {
+                    lock.readLock().unlock();
+                }
+
+                if (!isActive) continue;
+                if (autoBid.getBidderId().equals(currentWinnerId)) continue;
+
+                double nextBidAmount = currentPrice + autoBid.getIncrement();
+
+                if (nextBidAmount > autoBid.getMaxBid()) {
+                    lock.writeLock().lock();
+                    try {
+                        autoBid.setActive(false);
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
+                    System.out.printf("Auto-bid deactivated (max reached): %s | auth=%s%n",
+                            autoBid.getAutoBidId(), autoBid.getBidderId());
+                    continue;
+                }
+
+                User bidder = userRepository.findById(autoBid.getBidderId());
+                if (bidder == null) {
+                    lock.writeLock().lock();
+                    try {
+                        autoBid.setActive(false);
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
+                    System.err.println("Auto-bid deactivated: auth not found → " + autoBid.getBidderId());
+                    continue;
+                }
+
+                if (bidder.getBalance() < nextBidAmount) {
+                    lock.writeLock().lock();
+                    try {
+                        autoBid.setActive(false);
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
+                    System.err.printf("Auto-bid deactivated (insufficient balance): auth=%s | need=%.0f | have=%.0f%n",
+                            bidder.getId(), nextBidAmount, bidder.getBalance());
+                    continue;
+                }
+
+                try {
+                    // placeBid() is called outside any lock to avoid deadlock / long lock hold.
+                    BidTransaction bid = biddingService.placeBid(auctionId, bidder, nextBidAmount);
+                    bid.setAutoBid(true);
+
+                    System.out.printf("Auto-bid executed: %s | auth=%s | amount=%.0f%n",
+                            autoBid.getAutoBidId(), bidder.getId(), nextBidAmount);
+
+                    currentPrice = nextBidAmount;
+                    currentWinnerId = bidder.getId();
+                    hasNewBid = true;
+
+                    biddingService.broadcastNewBid(auctionId, bid);
+
+                    // [FIX BUG #11] Thread.sleep() nằm ngoài writeLock — không còn chặn lock.
+                    Thread.sleep(50);
+
+                } catch (Exception e) {
+                    lock.writeLock().lock();
+                    try {
+                        autoBid.setActive(false);
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
+                    System.out.println("Auto-bid deactivated (placeBid failed): " + e.getMessage());
+                }
+            }
+
+            loopGuard++;
+        } while (hasNewBid && loopGuard < 20);
     }
 
     public void cancelAutoBid(String autoBidId) throws Exception {
@@ -186,7 +223,7 @@ public class AutoBiddingService {
             if (existing.getBidderId().equals(bidderId) && existing.isActive()) {
                 existing.setActive(false);
                 autoBidMap.remove(existing.getAutoBidId());
-                System.out.printf("Previous auto-bid cancelled for re-register: %s | user=%s%n",
+                System.out.printf("Previous auto-bid cancelled for re-register: %s | auth=%s%n",
                         existing.getAutoBidId(), bidderId);
             }
         }

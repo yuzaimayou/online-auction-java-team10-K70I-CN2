@@ -10,17 +10,13 @@ public class User extends Person {
     protected double balance;
     protected double frozenBalance;  // Money held against current highest bid
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
-    protected List<Double> reviewScores; // Keep track of all reviews
     protected String email;
     protected boolean isVerify;
 
     public User(String id, String username, String password) {
-
         super(id, username, password);
-        this.role = "User"; // Set specific role
         this.balance = 0.0;
         this.rating = 5.0; // New users start with perfect rating
-        this.reviewScores = new ArrayList<>();
         this.email = null;
         this.isVerify = true;
     }
@@ -29,6 +25,10 @@ public class User extends Person {
         this(id, username, password);
         this.email = email;
         this.isVerify = isEnable;
+    }
+    @Override
+    protected String getDefaultRole() {
+        return "User";
     }
 
     // --- Specific Getters & Setters ---
@@ -62,7 +62,7 @@ public class User extends Person {
 
     /** Returns the spendable balance (excludes frozen funds). */
     public double getAvailableBalance() {
-        return balance;
+        return balance - frozenBalance;
     }
 
     public double getRating() {
@@ -77,10 +77,6 @@ public class User extends Person {
         this.rating = rating;
     }
 
-    public List<Double> getReviewScores() {
-        return new ArrayList<>(reviewScores);
-    }
-
     public String getEmail() {
         return email;
     }
@@ -93,22 +89,8 @@ public class User extends Person {
         return isVerify;
     }
 
-    protected void setEnable(boolean enable) {
+    public void setEnable(boolean enable) {
         isVerify = enable;
-    }
-
-    public int getReviewCount() {
-        return reviewScores.size();
-    }
-
-    public double getAverageRating() {
-        if (reviewScores.isEmpty()) {
-            return 5.0;
-        }
-        return reviewScores.stream()
-                .mapToDouble(Double::doubleValue)
-                .average()
-                .orElse(5.0);
     }
 
     // ========== BIDDING FUNCTIONALITY ==========
@@ -141,9 +123,8 @@ public class User extends Person {
             throw new IllegalArgumentException("Error: Bid amount (" + amount + ") must be greater than the current highest price (" + item.getHighestCurrentPrice() + ")!");
         }
 
-        if (this.balance < amount) {
-            throw new IllegalStateException("Error: Insufficient balance! Required: " + amount + ", Available: " + this.balance);
-        }
+        if (this.getAvailableBalance() < amount)
+            throw new IllegalStateException("Error: Insufficient balance! Required: " + amount + ", Available: " + this.getAvailableBalance());
 
         item.setHighestCurrentPrice(amount);
         System.out.println("Success: " + this.username + " placed a bid of " + amount + " for item: " + item.getName());
@@ -166,35 +147,14 @@ public class User extends Person {
         System.out.println("Success: User " + this.username + " just listed a new item: " + itemName);
     }
 
-    /**
-     * Update seller rating based on buyer review
-     */
-    public void updateRating(double newReviewScore) {
-        if (newReviewScore < 1.0 || newReviewScore > 5.0) {
-            throw new IllegalArgumentException("Error: New review score must be between 1.0 and 5.0!");
-        }
-
-        reviewScores.add(newReviewScore);
-
-        this.rating = reviewScores.stream()
-                .mapToDouble(Double::doubleValue)
-                .average()
-                .orElse(5.0);
-
-        System.out.println("✓ System: Rating for user " + this.username + " updated to " + String.format("%.2f", this.rating) + " (Total reviews: " + reviewScores.size() + ")");
-    }
 
     @Override
     public String toString() {
-        return "BidderandSeller{" +
-                "id='" + id + '\'' +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", isEnable=" + isVerify +
-                ", balance=" + balance +
+        return "User{id='" + id + "', username='" + username + "', email='" + email +
+                "', isVerify=" + isVerify + ", balance=" + balance +
+                ", frozenBalance=" + frozenBalance +
+                ", availableBalance=" + getAvailableBalance() +
                 ", rating=" + String.format("%.2f", rating) +
-                ", reviews=" + reviewScores.size() +
-                ", role='" + role + '\'' +
-                '}';
+                ", role='" + getRole() + "'}";
     }
 }
