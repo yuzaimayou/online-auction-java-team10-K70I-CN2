@@ -20,4 +20,5 @@ module online.auction.shared {
     opens com.auction.shared.model.base to com.google.gson;
     opens com.auction.shared.model.item to com.google.gson;
     opens com.auction.shared.model.payloads to com.google.gson;
+    opens com.auction.shared.model.dto to com.google.gson;
 }
