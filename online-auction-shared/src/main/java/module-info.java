@@ -10,6 +10,7 @@ module online.auction.shared {
     exports com.auction.shared.model.item;
     exports com.auction.shared.model.payloads;
     exports com.auction.shared.util;
+    exports com.auction.shared.model.dto;
 
     //Opens
     opens com.auction.shared.message to com.google.gson;

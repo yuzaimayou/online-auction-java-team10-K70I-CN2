@@ -62,6 +62,7 @@ public class ItemDetailHandler implements HttpHandler {
         }
     }
 
+
     // Hàm tiện ích hỗ trợ trích xuất userId từ query string
     private String extractUserIdFromQuery(String query) {
         String[] params = query.split("&");
