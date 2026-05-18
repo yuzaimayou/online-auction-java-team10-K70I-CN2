@@ -1,13 +1,14 @@
 package com.auction.shared.model.dto;
 
 public class UserDTO {
-    private String id;
-    private String username;
-    private String email;
-    private String role;
-    private boolean isVerify;
-    private double balance;
-    private double frozenBalance;
+    // SỬA: Đổi từ private sang public để Gson có quyền truy cập thẳng
+    public String id;
+    public String username;
+    public String email;
+    public String role;
+    public boolean isVerify;
+    public double balance;
+    public double frozenBalance;
 
     public UserDTO(String id, String username, String email,
                    String role, boolean isVerify,
@@ -21,7 +22,7 @@ public class UserDTO {
         this.frozenBalance = frozenBalance;
     }
 
-    // Getters
+    // GIỮ NGUYÊN: Các hàm Getters để các file khác trong dự án không bị lỗi đỏ
     public String  getId()            { return id; }
     public String  getUsername()      { return username; }
     public String  getEmail()         { return email; }
