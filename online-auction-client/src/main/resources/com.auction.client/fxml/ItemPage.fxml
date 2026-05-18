@@ -205,8 +205,8 @@
                             </HBox>
                         </HBox>
 
-                        <ScrollPane fitToWidth="true" prefHeight="300.0" styleClass="history-scroll-pane"
-                                    style="-fx-background-color: transparent; -fx-background: transparent;">
+                        <ScrollPane fx:id="historyScrollPane" fitToWidth="true" fitToHeight="true" maxHeight="300.0" prefHeight="-1"
+                                    styleClass="history-scroll-pane" style="-fx-background-color: transparent; -fx-background: transparent;">
                             <content>
                                 <VBox fx:id="historyBidContainer" spacing="12" style="-fx-background-color: transparent;">
                                     <padding>
@@ -215,7 +215,6 @@
                                 </VBox>
                             </content>
                         </ScrollPane>
-
                     </VBox>
 
                 </VBox>
