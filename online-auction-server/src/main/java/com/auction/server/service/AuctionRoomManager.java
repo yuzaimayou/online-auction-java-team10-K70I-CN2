@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
 import com.auction.server.controller.ClientHandler;
+import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.google.gson.Gson;
 
@@ -31,7 +32,7 @@ public class AuctionRoomManager {
         List<ClientHandler> currentRoom = rooms.get(itemId);
         if (currentRoom != null && !currentRoom.isEmpty()) {
             ResponseMessage response = new ResponseMessage();
-            response.setStatus("success");
+            response.setStatus(SocketEventConstants.STATUS_SUCCESS_LOWER);
             response.setMessage(message);
             response.setData(dataPayload);
             System.out.println("Broadcasting message to room " + itemId + ": " + message);

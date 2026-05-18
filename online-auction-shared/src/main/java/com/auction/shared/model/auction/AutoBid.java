@@ -7,6 +7,10 @@ import java.util.UUID;
  * Model để lưu trữ thông tin auto-bid
  * Requirement 3.2.1: Auto-Bidding
  */
+/**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ */
 public class AutoBid {
     private String autoBidId;
     private String auctionId;

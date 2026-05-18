@@ -9,6 +9,9 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ *
  * Quản lý một phiên đấu giá
  * Requirement 3.1.3: Tham gia đấu giá
  * Requirement 3.1.4: Kết thúc phiên đấu giá

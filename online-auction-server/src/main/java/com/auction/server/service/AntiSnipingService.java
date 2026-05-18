@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ *
  * Service gia hạn phien dau gia khi co bid phut cuoi
  * Requirement 3.2.3: Gia han phien dau gia (Anti-sniping Algorithm)
  */

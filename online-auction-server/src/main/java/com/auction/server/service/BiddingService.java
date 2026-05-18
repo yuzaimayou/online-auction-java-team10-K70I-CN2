@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ *
  * Service xử lý chức năng đấu giá
  * Requirement 3.1.3: Tham gia đấu giá
  * Requirement 3.1.5: Xử lý lỗi & ngoại lệ

@@ -2,6 +2,7 @@ package com.auction.server.controller;
 
 import com.auction.server.service.AuctionRoomManager;
 import com.auction.server.service.BidService;
+import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.AutoBidPayload;
@@ -17,8 +18,12 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ClientHandler implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
+
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
@@ -37,8 +42,6 @@ public class ClientHandler implements Runnable {
     public ClientHandler() {
     }
 
-    ;
-
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         try {
@@ -46,7 +49,7 @@ public class ClientHandler implements Runnable {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error initializing ClientHandler streams", e);
         }
     }
 
@@ -54,7 +57,6 @@ public class ClientHandler implements Runnable {
         if (out != null) {
             out.println(jsonMessage);
         }
-
     }
 
     @Override
@@ -77,7 +79,7 @@ public class ClientHandler implements Runnable {
 
             }
         } catch (IOException e) {
-            System.out.println("Client disconnected: " + username);
+            LOGGER.info("Client disconnected: " + username);
         } finally {
             closeResources();
         }
@@ -91,7 +93,7 @@ public class ClientHandler implements Runnable {
             if (out != null) out.close();
             if (clientSocket != null) clientSocket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error closing ClientHandler resources", e);
         }
     }
 
@@ -99,27 +101,22 @@ public class ClientHandler implements Runnable {
         try {
             RoomPayload roomPayload = gson.fromJson(jsonPayload, RoomPayload.class);
             this.username = roomPayload.getToken();
-            System.out.println("UserId: " + roomPayload.getToken());
-            System.out.println("ItemId: " + roomPayload.getItemId());
+            LOGGER.fine("UserId: " + roomPayload.getToken() + " joining ItemId: " + roomPayload.getItemId());
 
             currentRoomId = roomPayload.getItemId();
             roomManager.joinRoom(currentRoomId, this);
-            responseMessage.setStatus("join_room_success");
+            responseMessage.setStatus(SocketEventConstants.STATUS_JOIN_ROOM_SUCCESS);
             responseMessage.setMessage("Joined room successfully");
             sendMessage(gson.toJson(responseMessage));
         } catch (Exception e) {
-            e.printStackTrace();
-            responseMessage.setStatus("join_room_fail");
-            responseMessage.setMessage("Failed to join room: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to join room", e);
+            responseMessage.setStatus(SocketEventConstants.STATUS_JOIN_ROOM_FAIL);
+            responseMessage.setMessage("Failed to join room");
             sendMessage(gson.toJson(responseMessage));
         }
-
-
     }
 
     private void leaveRoomAction() {
-
-
         if (currentRoomId != null) {
             roomManager.leaveRoom(currentRoomId, this);
             currentRoomId = null;
@@ -128,10 +125,10 @@ public class ClientHandler implements Runnable {
 
     private boolean bidAction(String payload, ResponseMessage response) {
         BidPayload bidData = gson.fromJson(payload, BidPayload.class);
-        System.out.println("Received bid action: " + payload);
+        LOGGER.fine("Received bid action");
 
         if (bidData == null || bidData.getItemId() == null || bidData.getUserId() == null || bidData.getBidPrice() == null) {
-            response.setStatus("FAIL");
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
             response.setMessage("Invalid bid payload");
             return true;
         }
@@ -139,16 +136,14 @@ public class ClientHandler implements Runnable {
         boolean created = bidService.placeBid(
                 bidData.getItemId(),
                 bidData.getUserId(),
-                bidData.getBidPrice(),
-                bidData.getBidTime()
+                bidData.getBidPrice()
         );
 
         if (created) {
-            System.out.println("Bid placed successfully for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
-
+            LOGGER.info("Bid placed successfully for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
         } else {
-            System.out.println("Failed to place bid for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
-            response.setStatus("FAIL");
+            LOGGER.info("Failed to place bid for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
             response.setMessage("Failed to place bid");
         }
 
@@ -163,7 +158,7 @@ public class ClientHandler implements Runnable {
                 || autoBidData.getUserId() == null
                 || autoBidData.getMaxBid() == null
                 || autoBidData.getIncrement() == null) {
-            response.setStatus("FAIL");
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
             response.setMessage("Invalid auto bid payload");
             return true;
         }
@@ -176,10 +171,10 @@ public class ClientHandler implements Runnable {
         );
 
         if (created) {
-            response.setStatus("SUCCESS");
+            response.setStatus(SocketEventConstants.STATUS_SUCCESS);
             response.setMessage("Auto-bid registered successfully");
         } else {
-            response.setStatus("FAIL");
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
             response.setMessage("Failed to register auto-bid");
         }
 

@@ -11,6 +11,7 @@ module online.auction.shared {
     exports com.auction.shared.model.payloads;
     exports com.auction.shared.util;
     exports com.auction.shared.model.dto;
+    exports com.auction.shared.constant;
 
     //Opens
     opens com.auction.shared.message to com.google.gson;
@@ -20,4 +21,5 @@ module online.auction.shared {
     opens com.auction.shared.model.base to com.google.gson;
     opens com.auction.shared.model.item to com.google.gson;
     opens com.auction.shared.model.payloads to com.google.gson;
+    opens com.auction.shared.constant to com.google.gson;
 }

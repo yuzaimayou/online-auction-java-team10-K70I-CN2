@@ -7,6 +7,9 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ *
  * Service cập nhật realtime khi có bid mới
  * Requirement 3.2.4: Realtime Update (Observer Pattern)
  */
