@@ -8,6 +8,7 @@ import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.auction.BidTransaction;
+import com.auction.shared.model.dto.BidHistoryItemDTO;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
@@ -138,6 +139,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     private final User user = UserSession.getInstance().getLoggedInUser();
     private NetworkService network = NetworkService.getInstance();
+    private List<BidHistoryItemDTO> history;
     private Gson gson = GsonUtil.getInstance();
 
     // Auto Bid
@@ -199,10 +201,38 @@ public class ItemPageController implements NetworkService.MessageListener {
                 });
     }
 
+    private void getHistoryItem() {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/history/%s?userId=%s", AppConfig.getHttpUrl(), itemId, user.getId())))
+                .GET()
+                .build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept(responseBody -> {
+                    ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
+                    if ("success".equals(response.getStatus()) && response.getData() != null) {
+                        JsonElement jsonElement = gson.toJsonTree(response.getData());
+                        history = gson.fromJson(jsonElement, new com.google.gson.reflect.TypeToken<List<BidHistoryItemDTO>>() {
+                        }.getType());
+                        //Platform.runLater(()->renderBidHistory(history));
+
+                    } else {
+                        System.err.println("Failed to load bid history: " + response.getMessage());
+                    }
+                })
+                .exceptionally(ex -> {
+                    System.err.println("Error fetching bid history: " + ex.getMessage());
+                    ex.printStackTrace();
+                    return null;
+                });
+    }
+
     public void initData(Item item) {
         this.item = item;
         this.myLastBid = item.getMyLastBid();
 
+        getHistoryItem();
         displayDataItem(item);
         connectToRealTimeBidding();
         updateUIByStatus();
