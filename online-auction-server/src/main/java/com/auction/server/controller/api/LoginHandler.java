@@ -4,6 +4,7 @@ import com.auction.server.service.user.AuthService;
 import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.dto.UserDTO;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
@@ -30,12 +31,20 @@ public class LoginHandler implements HttpHandler {
 
             ResponseMessage response = new ResponseMessage();
             if (loggedInUser != null) {
+
+                UserDTO userDTO = new UserDTO(
+                        loggedInUser.getId(),
+                        loggedInUser.getUsername(),
+                        loggedInUser.getEmail(),
+                        loggedInUser.getRole(),
+                        loggedInUser.isVerify(),
+                        loggedInUser.getBalance(),
+                        loggedInUser.getFrozenBalance()
+                );
                 response.setStatus("success");
                 response.setMessage("Login successful!");
-
-                response.setData(loggedInUser);
+                response.setData(userDTO);           // trả DTO thay vì User
                 HttpResponseUtil.sendMessage(exchange, 200, response);
-
             } else {
                 response.setStatus("error");
                 response.setMessage("Invalid username or password!");

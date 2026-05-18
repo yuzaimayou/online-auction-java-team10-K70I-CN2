@@ -5,42 +5,48 @@ import com.auction.shared.model.account.User;
 
 public class AuthService {
 
+    public enum RegisterResult {
+        SUCCESS,
+        USERNAME_EXISTS,
+        EMAIL_EXISTS,
+        FAILED
+    }
+
     private final UserRepository userRepository;
-    private VerifyService verifyService = VerifyService.getInstance();
+    private final VerifyService  verifyService = VerifyService.getInstance();
 
     public AuthService() {
         this.userRepository = new UserRepository();
     }
 
-
-    public boolean register(String username, String password, String email) {
-
-        User existingUsername = userRepository.findByUsername(username);
-
-
-        if (existingUsername != null) {
-            System.out.println("The username already exists!");
-            return false;
+    public RegisterResult register(String username, String password, String email) {
+        //  Check cả username lẫn email trùng
+        if (userRepository.findByUsername(username) != null) {
+            System.out.println("Username already exists: " + username);
+            return RegisterResult.USERNAME_EXISTS;
         }
 
+        if (userRepository.findByEmail(email) != null) {
+            System.out.println("Email already registered: " + email);
+            return RegisterResult.EMAIL_EXISTS;
+        }
 
+        boolean created = userRepository.createUser(username, password, "USER", email);
+        if (!created) {
+            return RegisterResult.FAILED;
+        }
+
+        // Gửi OTP async, không block register flow
         new Thread(() -> {
             verifyService.sendEmail(email);
-            System.out.println("Da gui email");
+            System.out.println("Đã gửi email OTP tới: " + email);
         }).start();
 
-        boolean result = userRepository.createUser(username, password, "USER", email);
-
-        if (result) {
-            System.out.println("Registered successfully!");
-        }
-
-        return result;
+        System.out.println("Registered successfully: " + username);
+        return RegisterResult.SUCCESS;
     }
 
-
     public User login(String username, String password) {
-
         User user = userRepository.findByUsername(username);
 
         if (user == null) {
@@ -49,7 +55,7 @@ public class AuthService {
         }
 
         if (user.getPassword().equals(password)) {
-            System.out.println("Log in successfully!");
+            System.out.println("Log in successfully: " + username);
             return user;
         }
 
