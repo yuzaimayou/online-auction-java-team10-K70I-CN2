@@ -4,6 +4,7 @@ import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.ItemRepository;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.ItemSummary;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,12 +15,17 @@ public class testEmbbeding {
     public static void main(String[] agrs) {
         DatabaseManager.init();
         DatabaseInit.init();
+        List<ItemSummary> items = ItemRepository.getInstance().findAllItems("s", 0);
         AiServiceClient aiServiceClient = AiServiceClient.getInstance();
-        Item item = ItemRepository.getInstance().findById("0a84be16-e35e-4970-bd43-2cd870159092");
-        List<Path> imagePaths = item.getImagesPath().stream()
-                .map(name -> Paths.get("dataBase", "images", name))
-                .collect(Collectors.toList());
-        String respons = aiServiceClient.embeddingProduct(item.getId(), item.getName(), item.getDescription(), imagePaths);
-        System.out.println(respons);
+        for (ItemSummary itemSummary : items) {
+            String itemId = itemSummary.getId();
+            Item item = ItemRepository.getInstance().findById(itemId);
+            List<Path> imagePaths = item.getImagesPath().stream()
+                    .map(name -> Paths.get("dataBase", "images", name))
+                    .collect(Collectors.toList());
+            String respons = aiServiceClient.embeddingProduct(item.getId(), item.getName(), item.getDescription(), imagePaths);
+            System.out.println(respons);
+        }
+
     }
 }
