@@ -33,7 +33,7 @@ public class LoginHandler implements HttpHandler {
                 response.setStatus("success");
                 response.setMessage("Login successful!");
 
-                response.setData(gson.toJson(loggedInUser));
+                response.setData(loggedInUser);
                 HttpResponseUtil.sendMessage(exchange, 200, response);
 
             } else {

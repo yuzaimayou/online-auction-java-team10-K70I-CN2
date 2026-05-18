@@ -9,6 +9,7 @@ import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -86,6 +87,7 @@ public class ItemEditController {
         setupAutoGrowTextArea();
         setupDynamicListeners();
     }
+
     private void setupDynamicListeners() {
         txtItemName.textProperty().addListener((obs, oldVal, newVal) -> {
             if (lblItemTitle != null) lblItemTitle.setText(newVal);
@@ -99,6 +101,7 @@ public class ItemEditController {
             });
         }
     }
+
     public void setItemId(String id) {
         this.currentItemId = id;
 
@@ -113,7 +116,8 @@ public class ItemEditController {
                 .thenAccept(responseBody -> {
                     ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
                     if ("success".equals(response.getStatus()) && response.getData() != null) {
-                        Item item = gson.fromJson(response.getData(), Item.class);
+                        JsonElement jsonElement = gson.toJsonTree(response.getData());
+                        Item item = gson.fromJson(jsonElement, Item.class);
 
                         this.currentItem = item;
                         Platform.runLater(() -> setEditData(item));
@@ -124,6 +128,7 @@ public class ItemEditController {
                     return null;
                 });
     }
+
     private void setEditData(Item item) {
         if (item == null) return;
 
@@ -236,10 +241,16 @@ public class ItemEditController {
             showMessage("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.", Color.RED);
         }
     }
+
     @FXML
-    public void handleCancel(ActionEvent event) { handleClose(); }
+    public void handleCancel(ActionEvent event) {
+        handleClose();
+    }
+
     @FXML
-    public void handleClose() { NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions"); }
+    public void handleClose() {
+        NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions");
+    }
 
     // các hàm helper khác
     private void updateCategorySelection(String categoryName) {
@@ -255,6 +266,7 @@ public class ItemEditController {
             }
         }
     }
+
     private void displayImages(Item item) {
         imageContainer.getChildren().clear();
         List<String> images = item.getImagesPath();
@@ -284,6 +296,7 @@ public class ItemEditController {
             }
         }
     }
+
     private void setupTimeComboBoxes() {
         for (int h = 0; h < 24; h++) {
             for (int m = 0; m < 60; m += 30) {
@@ -293,16 +306,19 @@ public class ItemEditController {
             }
         }
     }
+
     private void setupAutoGrowTextArea() {
         txtItemDesc.setWrapText(true);
         txtItemDesc.setPrefHeight(Region.USE_COMPUTED_SIZE);
     }
+
     private void showMessage(String msg, Color color) {
         Platform.runLater(() -> {
             lblMessage.setTextFill(color);
             lblMessage.setText(msg);
         });
     }
+
     private boolean isAnyNull(Object... objects) {
         for (Object o : objects) if (o == null || o.toString().isEmpty()) return true;
         return false;

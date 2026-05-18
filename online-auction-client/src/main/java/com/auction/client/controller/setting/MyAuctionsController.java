@@ -4,26 +4,26 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.item.Item;
+import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,24 +38,24 @@ public class MyAuctionsController {
 
     // Bảng dữ liệu
     @FXML
-    private TableView<Item> auctionTable;
+    private TableView<ItemSummary> auctionTable;
     @FXML
-    private TableColumn<Item, Item> itemCol;
+    private TableColumn<ItemSummary, ItemSummary> itemCol;
     @FXML
-    private TableColumn<Item, String> categoryCol;
+    private TableColumn<ItemSummary, String> categoryCol;
     @FXML
-    private TableColumn<Item, String> statusCol;
+    private TableColumn<ItemSummary, String> statusCol;
     @FXML
-    private TableColumn<Item, String> priceCol;
+    private TableColumn<ItemSummary, String> priceCol;
     @FXML
-    private TableColumn<Item, LocalDateTime> endTimeCol;
+    private TableColumn<ItemSummary, LocalDateTime> endTimeCol;
     @FXML
-    private TableColumn<Item, Item> actionCol;
+    private TableColumn<ItemSummary, ItemSummary> actionCol;
 
     private ItemsService itemsService = ItemsService.getInstance();
     private Gson gson = new GsonUtil().getInstance();
     private User loggedInUser = UserSession.getInstance().getLoggedInUser();
-    private ObservableList<Item> masterData = FXCollections.observableArrayList();
+    private ObservableList<ItemSummary> masterData = FXCollections.observableArrayList();
 
 
     @FXML
@@ -71,8 +71,9 @@ public class MyAuctionsController {
         });
         MyAuctionsTableHelper.setupTableColumns(
                 itemCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
-                this::handleSwitchToItemEdit,
-                this::handleDeleteItem
+                this::handleSwitchToItemEdit, // Action 1: Edit
+                this::handleDeleteItem,       // Action 2: Delete
+                this::handleViewItem
         );
         displayItems();
     }
@@ -83,9 +84,10 @@ public class MyAuctionsController {
                     if ("success".equals(responseMessage.getStatus())) {
                         System.out.println("Lấy danh sách sản phẩm của người bán thành công!");
 
-                        Type listType = new TypeToken<List<Item>>() {
+                        Type listType = new TypeToken<List<ItemSummary>>() {
                         }.getType();
-                        List<Item> items = gson.fromJson(responseMessage.getData(), listType);
+                        JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
+                        List<ItemSummary> items = gson.fromJson(jsonElement, listType);
                         Platform.runLater(() -> {
                             masterData.setAll(items);
                             auctionTable.setItems(masterData);
@@ -108,8 +110,10 @@ public class MyAuctionsController {
     }
 
     // Event handlers
+
+    // Event handlers
     @FXML
-    public void handleSwitchToItemEdit(Item selectedItem) {
+    public void handleSwitchToItemEdit(ItemSummary selectedItem) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml")
@@ -133,7 +137,14 @@ public class MyAuctionsController {
         }
     }
 
-    private void handleDeleteItem(Item itemToDelete) {
+    @FXML
+    public void handleViewItem(ItemSummary selectedItem) {
+        if (selectedItem != null) {
+            navigateToDetail(selectedItem.getId());
+        }
+    }
+
+    private void handleDeleteItem(ItemSummary itemToDelete) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Xác nhận xóa");
         alert.setHeaderText("Xóa sản phẩm: " + itemToDelete.getName());
@@ -177,6 +188,36 @@ public class MyAuctionsController {
                         });
                         return null;
                     });
+        }
+    }
+
+    private void navigateToDetail(String itemId) {
+        try {
+            // 1. Tải file FXML của trang Detail
+            // Lưu ý: Đảm bảo đường dẫn này chính xác với cấu trúc thư mục của bạn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/ItemDetail.fxml"));
+            Parent detailPage = loader.load();
+
+            // 2. Lấy Controller của trang Detail để gọi hàm load dữ liệu (tạm thời để đó)
+            ItemDetailPageController detailController = loader.getController();
+            detailController.loadItemData(itemId);
+
+            // 3. Quan trọng: Lấy instance của SettingController để truy cập vùng dynamicContent
+            // Và thay thế nội dung hiện tại bằng trang detailPage
+            SettingController mainSetting = SettingController.getInstance();
+            if (mainSetting != null) {
+                VBox contentArea = mainSetting.getDynamicContent();
+
+                // Đảm bảo trang mới co giãn theo chiều rộng/cao
+                VBox.setVgrow(detailPage, Priority.ALWAYS);
+
+                // Thay thế nội dung
+                contentArea.getChildren().setAll(detailPage);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi khi chuyển sang trang chi tiết: " + e.getMessage());
         }
     }
 }

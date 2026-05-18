@@ -10,9 +10,12 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
+
+<StackPane xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.auction.client.controller.HomePageController">
 <ScrollPane fx:id="mainScrollPane" fitToWidth="true" hbarPolicy="NEVER" prefHeight="850.0" prefWidth="1440.0"
-            stylesheets="@../css/HomePage.css" xmlns="http://javafx.com/javafx/25"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.HomePageController">
+            stylesheets="@../css/HomePage.css" >
         <VBox styleClass="main-container" >
             <padding>
                 <Insets bottom="100.0" left="0.0" right="0.0" top="0.0"/>
@@ -138,3 +141,4 @@
             </VBox>
         </VBox>
 </ScrollPane>
+        </StackPane>

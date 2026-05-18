@@ -3,8 +3,8 @@ package com.auction.server.service;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
-import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.BidPayload;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
@@ -106,6 +106,13 @@ public class BidService {
                     return false;
                 }
 
+                String lastBidder = bidRepository.findLastBidder(conn, itemId);
+                if (lastBidder != null && lastBidder.equals(userId)) {
+                    conn.rollback();
+                    System.out.println("Bid rejected: same user cannot bid consecutively");
+                    return false;
+                }
+
                 double minAllowedPrice = item.getHighestCurrentPrice() + item.getBidStep();
                 if (bidPrice + PRICE_EPSILON < minAllowedPrice) {
                     conn.rollback();
@@ -133,10 +140,9 @@ public class BidService {
                 conn.commit();
                 try {
                     BidPayload newBidData = new BidPayload(itemId, userId, bidPrice, resolvedBidTime);
-                    String jsonPayload = new com.google.gson.Gson().toJson(newBidData);
 
-                    AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", jsonPayload);
-                    System.out.println("Broadcasted new bid for item " + itemId + ": " + jsonPayload);
+                    AuctionRoomManager.getInstance().broadcastToRoom(itemId, "NEW_BID", newBidData);
+                    System.out.println("Broadcasted new bid for item " + itemId + ": " + newBidData);
                 } catch (Exception e) {
                     System.err.println("Failed to broadcast new bid for item " + itemId + ": " + e.getMessage());
                 }
