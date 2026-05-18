@@ -45,7 +45,7 @@ public class ProfilePageController {
             profileInfoBtn.setSelected(true);
         }
         displayUserData();
-        displayWalletPlaceholder();
+        updateWalletBalances();
     }
 
     private void displayUserData() {
@@ -121,15 +121,26 @@ public class ProfilePageController {
         }
     }
     @FXML
-    private void handleHistoryBid(ActionEvent event) {
-        if (SettingController.getInstance() != null) {
-            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/HistoryBidPage.fxml");
-        }
-    }
-    @FXML
     private void handleDepositAction(ActionEvent event) {
         if (SettingController.getInstance() != null) {
             SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/DepositPage.fxml");
+        }
+    }
+    private void updateWalletBalances() {
+        User currentUser = UserSession.getInstance().getLoggedInUser();
+        if (currentUser != null) {
+            double available = currentUser.getBalance();
+            double frozen = currentUser.getFrozenBalance(); // Đảm bảo model User của bạn có trường này
+            double total = available + frozen;
+
+            if (availableBalanceLabel != null)
+                availableBalanceLabel.setText(String.format("$%,.2f", available));
+            if (frozenBalanceLabel != null)
+                frozenBalanceLabel.setText(String.format("$%,.2f", frozen));
+            if (totalBalanceLabel != null)
+                totalBalanceLabel.setText(String.format("$%,.2f", total));
+        } else {
+            displayWalletPlaceholder();
         }
     }
 }

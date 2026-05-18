@@ -68,6 +68,6 @@
     </VBox>
 
     <Region VBox.vgrow="ALWAYS" />
-    <Button onAction="#handleConfirmDeposit" text="Xác nhận nạp tiền" styleClass="confirm-btn" maxWidth="Infinity" prefHeight="45.0"
+    <Button text="Xác nhận nạp tiền" onAction="#handleConfirmDeposit" styleClass="confirm-btn"
             style="-fx-background-color: #2f80ed; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;"/>
 </VBox>
