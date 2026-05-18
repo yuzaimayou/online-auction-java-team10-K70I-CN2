@@ -4,7 +4,9 @@ import java.io.File;
 import java.nio.file.Paths;
 
 public class AppConfig {
-    private static final String ROOT_DIR = System.getProperty("auth.dir");
+    private static final String ROOT_DIR = System.getProperty("auth.dir")!= null
+            ? System.getProperty("auth.dir")
+            : System.getProperty("user.dir");
     private static final String AI_SERVER_URL = "http://10.11.191.239:8000";
 
     public static final String DB_PATH = Paths.get(ROOT_DIR, "dataBase", "auction.db").toString();
