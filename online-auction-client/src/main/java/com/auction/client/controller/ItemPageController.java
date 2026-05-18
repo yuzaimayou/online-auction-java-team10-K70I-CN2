@@ -1,14 +1,17 @@
 package com.auction.client.controller;
 
 import com.auction.client.controller.common.AuctionStatusHelper;
+import com.auction.client.service.BidHistoryService;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
+import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.auction.BidTransaction;
+import com.auction.shared.model.dto.BidHistoryItemDTO;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
@@ -33,9 +36,14 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 
 public class ItemPageController implements NetworkService.MessageListener {
@@ -46,62 +54,107 @@ public class ItemPageController implements NetworkService.MessageListener {
     private static final double IMAGE_ARC    = 20.0;
     private static final double THUMB_WIDTH  = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
+    private final long AUTO_BID_DELAY = 50;
 
-    // ── FXML fields
-    @FXML private Label     itemNameLabel;
-    @FXML private Label     itemDesLabel;
-    @FXML private ImageView itemImage;
-    @FXML private Label     sellerLabel;
-    @FXML private Label     currentPriceLabel;
-    @FXML private Label     startPriceLabel;
-    @FXML private Label     bidStepLabel;
-    @FXML private Label     startTimeLabel;
-    @FXML private Label     endTimeLabel;
 
-    @FXML private TextField bidAmountField;
-    @FXML private Button    submitBid;
-    @FXML private Label     minimumBidLabel;
-    @FXML private Button    btnSuggestStep1;
-    @FXML private Button    btnSuggestStep2;
+    // item information
+    @FXML
+    private Label itemNameLabel;
+    @FXML
+    private Label itemDesLabel;
+    @FXML
+    private ImageView itemImage;
+    @FXML
+    private Label sellerLabel;
+    @FXML
+    private Label currentPriceLabel;
+    @FXML
+    private Label startPriceLabel;
+    @FXML
+    private Label bidStepLabel;
+    @FXML
+    private Label startTimeLabel;
+    @FXML
+    private Label endTimeLabel;
 
-    @FXML private VBox      historyBidContainer;
-    @FXML private Label     totalBidsLabel;
-    @FXML private Hyperlink viewAllBidsLink;
+    // BID CONTROL
+    @FXML
+    private TextField bidAmountField;
+    @FXML
+    private Button submitBid;
+    @FXML
+    private Label minimumBidLabel;
+    @FXML
+    private Button btnSuggestStep1;
+    @FXML
+    private Button btnSuggestStep2;
+
+    // BID HISTORY
+    @FXML
+    private VBox historyBidContainer;
+    @FXML
+    private Label totalBidsLabel;
+    @FXML
+    private Hyperlink viewAllBidsLink;
 
     @FXML private HBox      thumbnailContainer;
 
-    @FXML private VBox      autoBidForm;
-    @FXML private VBox      autoBidActiveStatus;
-    @FXML private TextField maxBidField;
-    @FXML private TextField autoBidStepField;
-    @FXML private Label     userCurrentBidLabel;
-    @FXML private Button    btnAutoBidToggle;
+    // IMAGE THUMBNAIL
 
-    @FXML private Label     timeStatusLabel;
-    @FXML private Label     daysLabel;
-    @FXML private Label     hoursLabel;
-    @FXML private Label     minsLabel;
-    @FXML private Label     secsLabel;
+    // AUTO BID
+    @FXML
+    private VBox autoBidForm;
+    @FXML
+    private VBox autoBidActiveStatus;
+    @FXML
+    private TextField maxBidField;
+    @FXML
+    private TextField autoBidStepField;
+    @FXML
+    private Label userCurrentBidLabel;
+    @FXML
+    private Button btnAutoBidToggle;
 
-    @FXML private VBox      bidControlsContainer;
-    @FXML private StackPane statusOverlay;
-    @FXML private Label     statusMessageLabel;
+    // COUNTDOWN TIMER
+    @FXML
+    private Label timeStatusLabel;
+    @FXML
+    private Label daysLabel;
+    @FXML
+    private Label hoursLabel;
+    @FXML
+    private Label minsLabel;
+    @FXML
+    private Label secsLabel;
 
-    // State
-    private String   itemId;
-    private Item     item;
+    //STATUS OVERLAY
+    @FXML
+    private VBox bidControlsContainer;
+    @FXML
+    private StackPane statusOverlay;
+    @FXML
+    private Label statusMessageLabel;
+
+
+    private String itemId;
+    private Item item;
     private Timeline timeline;
-    private double   myLastBid    = 0.0;
-    private boolean  isAutoBidActive   = false;
-    private double   maxBidAmount      = 0;
-    private double   autoBidIncremental = 0;
+    private double myLastBid = 0.0;
+
+    private final User user = UserSession.getInstance().getLoggedInUser();
+    private NetworkService network = NetworkService.getInstance();
+    private Gson gson = GsonUtil.getInstance();
+
+    // Auto Bid
+    private boolean isAutoBidActive = false;
+    private double maxBidAmount = 0;
+    private double autoBidIncremental = 0;
     private String   lastBidderId  = "";
+    private long lastAutoBidTime = 0;
 
     // Dependencies
     private final ItemsService   itemsService = ItemsService.getInstance();
-    private final User           user         = UserSession.getInstance().getLoggedInUser();
-    private final NetworkService network      = NetworkService.getInstance();
-    private final Gson           gson         = GsonUtil.getInstance();
+    private final BidHistoryService bidHistoryService = BidHistoryService.getInstance();
 
     //  Lifecycle
     @FXML
@@ -115,11 +168,15 @@ public class ItemPageController implements NetworkService.MessageListener {
             itemImage.setFitHeight(IMAGE_HEIGHT);
             itemImage.setPreserveRatio(false);
             itemImage.imageProperty().addListener((obs, oldImg, newImg) -> {
-                if (newImg != null) applyObjectFitCover(newImg);
+                if (newImg != null) {
+                    applyObjectFitCover(newImg);
+                }
             });
         } catch (Exception e) {
             e.printStackTrace();
+            throw new RuntimeException("Error initializing ItemPageController: " + e.getMessage());
         }
+
     }
 
     // Data loading
@@ -158,7 +215,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
-    // UI state management
+    // UI STATE MANAGEMENT
     private void updateUIByStatus() {
         updateUIByStatus(resolveRealtimeStatus());
     }
@@ -198,7 +255,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
-    // Realtime bidding
+    // REALTIME BIDDING
     private void connectToRealTimeBidding() {
         network.setListener(this);
         boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
@@ -207,6 +264,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @Override
     public void onMessageReceived(ResponseMessage response) {
+        System.out.println(response);
         Platform.runLater(() -> {
             if (!"success".equals(response.getStatus()) || !"NEW_BID".equals(response.getMessage())) return;
 
@@ -252,10 +310,11 @@ public class ItemPageController implements NetworkService.MessageListener {
             ToastService.showInfo(bidAmountField.getScene(), "Please enter a bid amount.");
             return;
         }
-
         try {
             double bidAmount  = Double.parseDouble(inputAmount);
             double minRequired = item.getCurrentPrice() + item.getBidStep();
+
+            // Kiểm tra logic giá trước khi gửi lên server để giảm tải
             if (bidAmount < minRequired) {
                 ToastService.showError(bidAmountField.getScene(),
                         String.format("Bid must be at least $ %.1f", minRequired));
@@ -280,7 +339,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep() * 2));
     }
 
-    //Auto-bid
+    // AUTO BID
     @FXML
     private void toggleAutoBidForm() {
         boolean visible = autoBidForm.isVisible();
@@ -295,11 +354,11 @@ public class ItemPageController implements NetworkService.MessageListener {
             return;
         }
         try {
-            maxBidAmount       = Double.parseDouble(maxBidField.getText().trim());
+            maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
             autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
 
             if (maxBidAmount <= item.getCurrentPrice()) {
-                ToastService.showInfo(maxBidField.getScene(), "Max bid must be greater than current price.");
+                ToastService.showInfo(maxBidField.getScene(), "Please fill in all Auto-Bid fields.");
                 return;
             }
             if (autoBidIncremental < item.getBidStep()) {
@@ -376,9 +435,9 @@ public class ItemPageController implements NetworkService.MessageListener {
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
     }
 
-    // Bid history
+    // BID HISTORY
     private void loadBidHistory() {
-        itemsService.getBidHistory(itemId)
+        bidHistoryService.getHistory(itemId)
                 .thenAccept(bids -> Platform.runLater(() -> renderBidHistory(bids)))
                 .exceptionally(ex -> {
                     ex.printStackTrace();
@@ -388,7 +447,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 });
     }
 
-    private void renderBidHistory(List<BidTransaction> bids) {
+    private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
 
         if (bids == null || bids.isEmpty()) {
@@ -398,7 +457,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             return;
         }
 
-        int totalCount  = bids.size();
+        int totalCount   = bids.size();
         int displayLimit = Math.min(totalCount, 8);
         totalBidsLabel.setText(totalCount + " bids");
 
@@ -412,34 +471,28 @@ public class ItemPageController implements NetworkService.MessageListener {
         if (hasMore) viewAllBidsLink.setText("View all bids (" + totalCount + ") →");
     }
 
-    private HBox createBidRow(int index, BidTransaction bid) {
+    private HBox createBidRow(int index, BidHistoryItemDTO bid) {
         HBox row = new HBox(15);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         row.getStyleClass().add("history-row");
 
-        Label  lblIndex = new Label(String.valueOf(index));
+        Label lblIndex = new Label(String.valueOf(index));
         lblIndex.getStyleClass().add("history-index");
 
-        Circle avatar = new Circle(15, Color.web("#e0e0e0"));
-        if (bid.getBidderId().equals(user.getId())) avatar.setFill(Color.web("#2D55FF"));
-
-        VBox   info    = new VBox(2);
-        String name    = bid.getBidderId().equals(user.getId())
-                ? bid.getBidderId() + " (You)" : bid.getBidderId();
-        Label  lblName = new Label(name);
+        VBox info = new VBox(2);
+        String name = bid.userName.equals(user.getUsername()) ? bid.userName + " (You)" : bid.userName;
+        Label lblName = new Label(name);
         lblName.setStyle("-fx-font-weight: bold;");
 
-        Label lblTime = new Label(bid.getBidTime().format(
-                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        Label lblTime = new Label(bid.bidTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
-
         info.getChildren().addAll(lblName, lblTime);
         HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
 
-        Label lblPrice = new Label(String.format("$ %.1f", bid.getBidAmount()));
+        Label lblPrice = new Label(String.format("$ %.1f", bid.bidPrice));
         lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold;");
 
-        row.getChildren().addAll(lblIndex, avatar, info, lblPrice);
+        row.getChildren().addAll(lblIndex, info, lblPrice);
         return row;
     }
 
@@ -459,6 +512,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                     IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2);
 
             boolean isFirst = true;
+
             for (String imgPath : images) {
                 if (imgPath == null || imgPath.isBlank()) continue;
 
@@ -485,7 +539,6 @@ public class ItemPageController implements NetworkService.MessageListener {
                     thumbnailContainer.getChildren().forEach(n -> n.getStyleClass().remove("active-thumb"));
                     thumbPane.getStyleClass().add("active-thumb");
                 });
-
                 thumbnailContainer.getChildren().add(thumbPane);
             }
         }
@@ -557,7 +610,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         });
     }
 
-    //Timer & countdown
+    // TIMER $ COUNTDOWN
     private void startCountdown() {
         if (timeline != null) timeline.stop();
         updateTimeDisplay();
