@@ -326,6 +326,19 @@ public class ItemPageController implements NetworkService.MessageListener {
                 } else {
                     System.err.println("Failed to parse updated item from response: " + jsonElement);
                 }
+            } else if ("success".equals(response.getStatus()) && "AUCTION_EXTENDED".equals(response.getMessage())) {
+                JsonElement jsonElement = gson.toJsonTree(response.getData());
+                com.auction.shared.model.payloads.AuctionExtendedPayload payload = gson.fromJson(jsonElement, com.auction.shared.model.payloads.AuctionExtendedPayload.class);
+                if (payload != null && item != null && item.getId().equals(payload.getItemId())) {
+                    System.out.println("Received AUCTION_EXTENDED. New end time: " + payload.getNewEndTime());
+                    item.setEndTime(java.time.LocalDateTime.parse(payload.getNewEndTime()));
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                    if (endTimeLabel != null) {
+                        endTimeLabel.setText(item.getEndTime().format(formatter));
+                    }
+                    startCountdown();
+                    ToastService.showInfo(currentPriceLabel.getScene(), "Auction time extended due to anti-sniping!");
+                }
             } else {
                 System.out.println("Received message: " + response.getMessage());
             }

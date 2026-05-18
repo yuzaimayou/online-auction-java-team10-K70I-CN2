@@ -17,6 +17,7 @@ import java.util.List;
 
 public class ItemRepository {
     private static ItemRepository instance;
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(ItemRepository.class.getName());
 
     private ItemRepository() {
     }
@@ -45,7 +46,7 @@ public class ItemRepository {
             stmt.setString(3, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
             return false;
         }
     }
@@ -99,7 +100,7 @@ public class ItemRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
 
         return summaries;
@@ -152,7 +153,7 @@ public class ItemRepository {
             return true;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
             return false;
         }
     }
@@ -203,7 +204,7 @@ public class ItemRepository {
             return rowsAffected > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
             return false;
         }
     }
@@ -226,7 +227,7 @@ public class ItemRepository {
             return rowsAffected > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
             return false;
         }
     }
@@ -244,7 +245,7 @@ public class ItemRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
         return null;
     }
@@ -259,7 +260,7 @@ public class ItemRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
         return null;
     }
@@ -290,7 +291,7 @@ public class ItemRepository {
             if (i < keywords.size() - 1) sql.append(" AND ");
         }
         sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
-        System.out.println(sql.toString());
+        LOGGER.fine(sql.toString());
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())
@@ -300,7 +301,7 @@ public class ItemRepository {
                 stmt.setString(i + 1, "%" + keywords.get(i) + "%");
             }
             stmt.setInt(keywords.size() + 1, offset);
-            System.out.println(stmt.toString());
+            LOGGER.fine(stmt.toString());
             //thuc thi cau lenh
             ResultSet rs = stmt.executeQuery();
             //chuyen doi du lieu
@@ -350,7 +351,7 @@ public class ItemRepository {
                 e.printStackTrace();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
         return imagePaths;
     }
@@ -399,7 +400,7 @@ public class ItemRepository {
             stmt.setString(1, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
             return false;
         }
     }
@@ -420,7 +421,7 @@ public class ItemRepository {
             stmt.executeUpdate();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
     }
 
@@ -436,7 +437,19 @@ public class ItemRepository {
             return stmt.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
+            return false;
+        }
+    }
+
+    public boolean extendEndTime(Connection conn, String itemId, LocalDateTime newEndTime) {
+        String sql = "UPDATE items SET end_time = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newEndTime.toString());
+            stmt.setString(2, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
             return false;
         }
     }
@@ -467,7 +480,7 @@ public class ItemRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
         return updatedId;
     }
@@ -486,7 +499,7 @@ public class ItemRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
         return 0.0;
     }

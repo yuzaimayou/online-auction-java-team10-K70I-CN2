@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class LoginHandler implements HttpHandler {
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(LoginHandler.class.getName());
     private final AuthService authService = new AuthService();
     private final Gson gson = new Gson();
 
@@ -24,7 +25,7 @@ public class LoginHandler implements HttpHandler {
 
             String username = authData.getUsername();
             String password = authData.getPassword();
-            System.out.println("Received login request for username: " + username);
+            LOGGER.info("Received login request for username: " + username);
 
             User loggedInUser = authService.login(username, password);
 
@@ -33,7 +34,18 @@ public class LoginHandler implements HttpHandler {
                 response.setStatus("success");
                 response.setMessage("Login successful!");
 
-                response.setData(loggedInUser);
+                com.auction.shared.model.dto.UserResponseDTO userDTO = new com.auction.shared.model.dto.UserResponseDTO(
+                        loggedInUser.getId(),
+                        loggedInUser.getUsername(),
+                        loggedInUser.getEmail(),
+                        loggedInUser.getRole(),
+                        loggedInUser.getBalance(),
+                        loggedInUser.getFrozenBalance(),
+                        loggedInUser.getRating(),
+                        loggedInUser.isVerify()
+                );
+
+                response.setData(userDTO);
                 HttpResponseUtil.sendMessage(exchange, 200, response);
 
             } else {

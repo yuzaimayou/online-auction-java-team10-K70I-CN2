@@ -1,5 +1,9 @@
 package com.auction.shared.model.payloads;
 
+/**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ */
 public class AutoBidPayload {
     private String itemId;
     private String userId;

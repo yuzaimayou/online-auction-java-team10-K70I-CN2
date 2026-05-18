@@ -6,6 +6,10 @@ import java.time.LocalDateTime;
  * Lưu trữ thông tin từng lần đặt giá
  * Requirement 3.1.3: Tham gia đấu giá
  */
+/**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ */
 public class BidTransaction {
     private String transactionId;
     private String auctionId;

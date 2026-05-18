@@ -8,6 +8,10 @@ import com.auction.shared.model.account.User;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * IN-PROGRESS FEATURE
+ * Note: This class is not yet wired into the active database-backed socket flow.
+ */
 public class AutoBiddingService {
     private Map<String, AutoBid> autoBidMap;
     private Map<String, List<AutoBid>> auctionAutoBidsMap;
