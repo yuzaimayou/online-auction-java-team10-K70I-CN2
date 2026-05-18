@@ -5,12 +5,10 @@ import com.auction.client.service.BidHistoryService;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
-import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
@@ -31,8 +29,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
@@ -94,8 +90,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     private VBox historyBidContainer;
     @FXML
     private Label totalBidsLabel;
-    @FXML
-    private Hyperlink viewAllBidsLink;
 
     @FXML private HBox      thumbnailContainer;
 
@@ -449,28 +443,18 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
-
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
-            viewAllBidsLink.setVisible(false);
-            viewAllBidsLink.setManaged(false);
             return;
         }
-
-        int totalCount   = bids.size();
-        int displayLimit = Math.min(totalCount, 8);
+        int totalCount = bids.size();
         totalBidsLabel.setText(totalCount + " bids");
 
-        for (int i = 0; i < displayLimit; i++) {
-            historyBidContainer.getChildren().add(createBidRow(i + 1, bids.get(i)));
+        for (int i = 0; i < totalCount; i++) {
+            int displayIndex = totalCount - i;
+            historyBidContainer.getChildren().add(createBidRow(displayIndex, bids.get(i)));
         }
-
-        boolean hasMore = totalCount > 8;
-        viewAllBidsLink.setVisible(hasMore);
-        viewAllBidsLink.setManaged(hasMore);
-        if (hasMore) viewAllBidsLink.setText("View all bids (" + totalCount + ") →");
     }
-
     private HBox createBidRow(int index, BidHistoryItemDTO bid) {
         HBox row = new HBox(15);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -478,11 +462,12 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         Label lblIndex = new Label(String.valueOf(index));
         lblIndex.getStyleClass().add("history-index");
+        lblIndex.setStyle("-fx-text-fill: #000000;");
 
         VBox info = new VBox(2);
         String name = bid.userName.equals(user.getUsername()) ? bid.userName + " (You)" : bid.userName;
         Label lblName = new Label(name);
-        lblName.setStyle("-fx-font-weight: bold;");
+        lblName.setStyle("-fx-font-weight: bold; -fx-text-fill: #000000;");
 
         Label lblTime = new Label(bid.bidTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
@@ -490,7 +475,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
 
         Label lblPrice = new Label(String.format("$ %.1f", bid.bidPrice));
-        lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold;");
+        lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold; -fx-font-size: 16px;");
 
         row.getChildren().addAll(lblIndex, info, lblPrice);
         return row;

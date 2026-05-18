@@ -6,6 +6,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.geometry.Insets?>
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.auction.client.controller.ItemPageController">
@@ -204,11 +205,17 @@
                             </HBox>
                         </HBox>
 
-                        <VBox fx:id="historyBidContainer" spacing="12"/>
+                        <ScrollPane fitToWidth="true" prefHeight="300.0" styleClass="history-scroll-pane"
+                                    style="-fx-background-color: transparent; -fx-background: transparent;">
+                            <content>
+                                <VBox fx:id="historyBidContainer" spacing="12" style="-fx-background-color: transparent;">
+                                    <padding>
+                                        <Insets top="0" right="15" bottom="0" left="0"/>
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
 
-                        <Hyperlink fx:id="viewAllBidsLink" alignment="CENTER" maxWidth="Infinity"
-                                   styleClass="see-more-link" text="View all bids →"
-                                   visible="false" managed="false" onAction="#handleViewAllBids"/>
                     </VBox>
 
                 </VBox>
