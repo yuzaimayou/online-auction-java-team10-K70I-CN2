@@ -1,5 +1,7 @@
 package com.auction.shared.model.enums;
 
+import java.time.LocalDateTime;
+
 /**
  * Requirement 3.1.4: Chuyển trạng thái phiên đấu giá
  * OPEN → RUNNING → FINISHED → PAID / CANCELED
@@ -42,5 +44,19 @@ public enum AuctionStatus {
     @Override
     public String toString() {
         return displayName;
+    }
+
+    public static AuctionStatus compute(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null) {
+            return ENDED;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(startTime)) {
+            return UPCOMING;
+        } else if (now.isAfter(endTime)) {
+            return ENDED;
+        } else {
+            return ONGOING;
+        }
     }
 }

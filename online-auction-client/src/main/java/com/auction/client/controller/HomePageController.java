@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.controller.common.AuctionStatusHelper;
+// 🛠 ĐÃ CHỈNH SỬA: Loại bỏ import AuctionStatusHelper cũ tại đây
 import com.auction.client.controller.common.NavBarController;
 import com.auction.client.controller.common.SearchStoreController;
 import com.auction.client.service.ItemsService;
@@ -32,21 +32,27 @@ public class HomePageController {
     private String currentCategory = "ALL";
 
     // FXML fields
-    @FXML private javafx.scene.control.ScrollPane mainScrollPane;
-    @FXML private FlowPane ongoingAuctionsContainer;
-    @FXML private FlowPane upcomingAuctionsContainer;
-    @FXML private FlowPane endedAuctionsContainer;
-    @FXML private VBox     ongoingSection;
-    @FXML private VBox     upcomingSection;
-    @FXML private VBox     endedSection;
-    @FXML private NavBarController navBarController;
+    @FXML
+    private javafx.scene.control.ScrollPane mainScrollPane;
+    @FXML
+    private FlowPane ongoingAuctionsContainer;
+    @FXML
+    private FlowPane upcomingAuctionsContainer;
+    @FXML
+    private FlowPane endedAuctionsContainer;
+    @FXML
+    private VBox ongoingSection;
+    @FXML
+    private VBox upcomingSection;
+    @FXML
+    private VBox endedSection;
+    @FXML
+    private NavBarController navBarController;
 
     // ─Lifecycle
     @FXML
     public void initialize() {
         network.leaveRoom();
-
-        // Lắng nghe search query thay đổi → reload
         SearchStoreController.searchQueryProperty().addListener(
                 (obs, oldVal, newVal) -> fetchItemsFromServer()
         );
@@ -93,7 +99,8 @@ public class HomePageController {
 
                 ItemCardHPController cardController = loader.getController();
                 cardController.setData(item);
-                AuctionStatus status = AuctionStatusHelper.resolveEnum(item);
+
+                AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
 
                 switch (status) {
                     case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
@@ -127,7 +134,6 @@ public class HomePageController {
         String category = clicked.getId();
 
         currentCategory = category.equalsIgnoreCase(currentCategory) ? "ALL" : category;
-
         clicked.getParent().getChildrenUnmodifiable()
                 .forEach(node -> node.getStyleClass().remove("active-category"));
 
@@ -143,8 +149,8 @@ public class HomePageController {
                     getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
             Parent root = loader.load();
 
-            Scene  currentScene = ((Node) event.getSource()).getScene();
-            Stage  stage        = (Stage) currentScene.getWindow();
+            Scene currentScene = ((Node) event.getSource()).getScene();
+            Stage stage = (Stage) currentScene.getWindow();
             currentScene.setRoot(root);
             stage.setTitle("Online Auction System - Add Item");
 

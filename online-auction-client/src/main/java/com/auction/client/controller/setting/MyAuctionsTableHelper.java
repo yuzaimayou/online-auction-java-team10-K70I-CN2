@@ -1,7 +1,7 @@
 package com.auction.client.controller.setting;
 
-import com.auction.client.controller.common.AuctionStatusHelper;
 import com.auction.client.util.ClientImageUtil;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.ItemSummary;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -112,9 +112,14 @@ public class MyAuctionsTableHelper {
 
     private static void setupStatusColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data -> {
-            String status = AuctionStatusHelper.resolve(data.getValue());
-            return new SimpleStringProperty(status);
+            ItemSummary item = data.getValue();
+            if (item == null) {
+                return new SimpleStringProperty("");
+            }
+            AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
+            return new SimpleStringProperty(status.getDisplayName());
         });
+
         col.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -126,7 +131,7 @@ public class MyAuctionsTableHelper {
                 switch (status) {
                     case "Upcoming" -> label.getStyleClass().add("status-upcoming");
                     case "Ended"    -> label.getStyleClass().add("status-ended");
-                    default         -> label.getStyleClass().add("status-live");
+                    default         -> label.getStyleClass().add("status-live"); // Thỏa mãn điều kiện "Ongoing"
                 }
                 setGraphic(label);
             }

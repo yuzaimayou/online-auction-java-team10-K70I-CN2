@@ -1,27 +1,29 @@
 package com.auction.client.controller;
 
-import com.auction.client.controller.common.AuctionStatusHelper;
+import com.auction.client.service.AutoBidService;
+import com.auction.client.service.AutoBidService.AutoBidDecision;
+import com.auction.client.service.AutoBidService.ValidationResult;
 import com.auction.client.service.BidHistoryService;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
 import com.auction.client.util.ClientImageUtil;
+import com.auction.client.util.CountdownTimerUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -30,30 +32,21 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Duration;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 
 public class ItemPageController implements NetworkService.MessageListener {
 
-    // constants
+    // Constants
     private static final double IMAGE_WIDTH  = 700.0;
     private static final double IMAGE_HEIGHT = 450.0;
     private static final double IMAGE_ARC    = 20.0;
     private static final double THUMB_WIDTH  = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
-    private final long AUTO_BID_DELAY = 50;
 
-
-    // item information
+    // FXML: item info
     @FXML
     private Label itemNameLabel;
     @FXML
@@ -72,8 +65,10 @@ public class ItemPageController implements NetworkService.MessageListener {
     private Label startTimeLabel;
     @FXML
     private Label endTimeLabel;
+    @FXML
+    private HBox thumbnailContainer;
 
-    // BID CONTROL
+    // FXML: bid controls
     @FXML
     private TextField bidAmountField;
     @FXML
@@ -85,21 +80,19 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnSuggestStep2;
 
-    // BID HISTORY
+    // FXML: bid history (Đã chỉnh sửa: Thêm ScrollPane để quản lý việc co giãn hiển thị)
+    @FXML
+    private ScrollPane historyScrollPane;
     @FXML
     private VBox historyBidContainer;
     @FXML
     private Label totalBidsLabel;
 
-    @FXML private HBox      thumbnailContainer;
-
-    // IMAGE THUMBNAIL
-
-    // AUTO BID
+    // FXML: auto-bid
     @FXML
     private VBox autoBidForm;
     @FXML
-    private VBox autoBidActiveStatus;
+    private VBox  autoBidActiveStatus;
     @FXML
     private TextField maxBidField;
     @FXML
@@ -109,7 +102,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnAutoBidToggle;
 
-    // COUNTDOWN TIMER
+    // FXML: countdown timer
     @FXML
     private Label timeStatusLabel;
     @FXML
@@ -121,56 +114,46 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label secsLabel;
 
-    //STATUS OVERLAY
-    @FXML
-    private VBox bidControlsContainer;
-    @FXML
-    private StackPane statusOverlay;
-    @FXML
-    private Label statusMessageLabel;
+    //  FXML: status overlay
+    @FXML private VBox bidControlsContainer;
+    @FXML private StackPane statusOverlay;
+    @FXML private Label statusMessageLabel;
 
-
+    // State
     private String itemId;
     private Item item;
-    private Timeline timeline;
     private double myLastBid = 0.0;
 
+    //  Dependencies
     private final User user = UserSession.getInstance().getLoggedInUser();
-    private NetworkService network = NetworkService.getInstance();
-    private Gson gson = GsonUtil.getInstance();
-
-    // Auto Bid
-    private boolean isAutoBidActive = false;
-    private double maxBidAmount = 0;
-    private double autoBidIncremental = 0;
-    private String   lastBidderId  = "";
-    private long lastAutoBidTime = 0;
-
-    // Dependencies
-    private final ItemsService   itemsService = ItemsService.getInstance();
+    private final NetworkService network  = NetworkService.getInstance();
+    private final Gson gson = GsonUtil.getInstance();
+    private final ItemsService itemsService = ItemsService.getInstance();
     private final BidHistoryService bidHistoryService = BidHistoryService.getInstance();
 
-    //  Lifecycle
+    private final AutoBidService autoBidManager = new AutoBidService();
+    private CountdownTimerUtil countdownTimer;
+
+    // Lifecycle
     @FXML
     public void initialize() {
-        try {
-            Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
-            clip.setArcWidth(IMAGE_ARC);
-            clip.setArcHeight(IMAGE_ARC);
-            itemImage.setClip(clip);
-            itemImage.setFitWidth(IMAGE_WIDTH);
-            itemImage.setFitHeight(IMAGE_HEIGHT);
-            itemImage.setPreserveRatio(false);
-            itemImage.imageProperty().addListener((obs, oldImg, newImg) -> {
-                if (newImg != null) {
-                    applyObjectFitCover(newImg);
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error initializing ItemPageController: " + e.getMessage());
-        }
+        initImageClip();
+        countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
+    }
 
+    private void initImageClip() {
+        Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
+        clip.setArcWidth(IMAGE_ARC);
+        clip.setArcHeight(IMAGE_ARC);
+        itemImage.setClip(clip);
+        itemImage.setFitWidth(IMAGE_WIDTH);
+        itemImage.setFitHeight(IMAGE_HEIGHT);
+        itemImage.setPreserveRatio(false);
+        itemImage.imageProperty().addListener((obs, old, newImg) -> {
+            if (newImg != null) {
+                ClientImageUtil.applyObjectFitCoverToImageView(itemImage, newImg, IMAGE_WIDTH, IMAGE_HEIGHT);
+            }
+        });
     }
 
     // Data loading
@@ -188,11 +171,11 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     public void initData(Item item) {
-        this.item          = item;
-        this.myLastBid     = item.getMyLastBid();
-        this.lastBidderId  = item.getCurrentTopPLayerId();
+        this.item         = item;
+        this.myLastBid    = item.getMyLastBid();
+        autoBidManager.setLastBidderId(item.getCurrentTopPLayerId());
 
-        String status = resolveRealtimeStatus();
+        AuctionStatus status = currentStatus();
         item.setStatus(status);
 
         displayDataItem(item);
@@ -209,12 +192,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
-    // UI STATE MANAGEMENT
-    private void updateUIByStatus() {
-        updateUIByStatus(resolveRealtimeStatus());
-    }
-
-    private void updateUIByStatus(String status) {
+    private void updateUIByStatus(AuctionStatus status) {
         if (item == null) return;
 
         item.setStatus(status);
@@ -231,31 +209,25 @@ public class ItemPageController implements NetworkService.MessageListener {
             return;
         }
 
-        switch (status.toUpperCase()) {
-            case "ONGOING" -> {
+        switch (status) {
+            case ONGOING -> {
                 bidControlsContainer.setVisible(true);
                 bidControlsContainer.setManaged(true);
                 statusOverlay.setVisible(false);
                 statusOverlay.setManaged(false);
             }
-            case "UPCOMING" -> {
+            case UPCOMING -> {
                 statusMessageLabel.setText("⏳ This auction hasn't started yet");
                 statusMessageLabel.getStyleClass().add("status-upcoming");
             }
-            case "ENDED" -> {
+            case ENDED, PAID, CANCELED -> {
                 statusMessageLabel.setText("🚫 This auction has ended");
                 statusMessageLabel.getStyleClass().add("status-ended");
             }
         }
     }
 
-    // REALTIME BIDDING
-    private void connectToRealTimeBidding() {
-        network.setListener(this);
-        boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
-        if (!connected) System.err.println("Failed to connect to auction room: " + item.getId());
-    }
-
+    // Realtime bidding
     @Override
     public void onMessageReceived(ResponseMessage response) {
         System.out.println(response);
@@ -270,7 +242,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 return;
             }
 
-            lastBidderId = bidPayload.getUserId();
+            autoBidManager.setLastBidderId(bidPayload.getUserId());
             item.setCurrentTopPLayerId(bidPayload.getUserId());
             item.setCurrentPrice(bidPayload.getBidPrice());
 
@@ -279,18 +251,23 @@ public class ItemPageController implements NetworkService.MessageListener {
             }
 
             currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
-            updateUIByStatus(resolveRealtimeStatus());
+            updateUIByStatus(currentStatus());
             updateMinimumBidLabel();
+
             handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
             loadBidHistory();
         });
     }
 
-    // Bid actions
+    private void connectToRealTimeBidding() {
+        network.setListener(this);
+        boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
+        if (!connected) System.err.println("Failed to connect to auction room: " + item.getId());
+    }
+
     @FXML
     public void bidHandle() {
-        String status = resolveRealtimeStatus();
-        if (!"ONGOING".equalsIgnoreCase(status)) {
+        if (!isOngoing()) {
             ToastService.showError(bidAmountField.getScene(), "Auction is not active.");
             return;
         }
@@ -305,10 +282,9 @@ public class ItemPageController implements NetworkService.MessageListener {
             return;
         }
         try {
-            double bidAmount  = Double.parseDouble(inputAmount);
+            double bidAmount   = Double.parseDouble(inputAmount);
             double minRequired = item.getCurrentPrice() + item.getBidStep();
 
-            // Kiểm tra logic giá trước khi gửi lên server để giảm tải
             if (bidAmount < minRequired) {
                 ToastService.showError(bidAmountField.getScene(),
                         String.format("Bid must be at least $ %.1f", minRequired));
@@ -333,7 +309,6 @@ public class ItemPageController implements NetworkService.MessageListener {
         bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep() * 2));
     }
 
-    // AUTO BID
     @FXML
     private void toggleAutoBidForm() {
         boolean visible = autoBidForm.isVisible();
@@ -343,53 +318,35 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     private void startAutoBid() {
-        if (!"ONGOING".equalsIgnoreCase(resolveRealtimeStatus())) {
+        if (!isOngoing()) {
             ToastService.showError(maxBidField.getScene(), "Auction is not active.");
             return;
         }
         try {
-            maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
-            autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
+            double max  = Double.parseDouble(maxBidField.getText().trim());
+            double step = Double.parseDouble(autoBidStepField.getText().trim());
 
-            if (maxBidAmount <= item.getCurrentPrice()) {
-                ToastService.showInfo(maxBidField.getScene(), "Please fill in all Auto-Bid fields.");
-                return;
-            }
-            if (autoBidIncremental < item.getBidStep()) {
-                ToastService.showError(maxBidField.getScene(),
-                        "Your step must be at least " + item.getBidStep());
-                return;
-            }
-            if (autoBidIncremental >= maxBidAmount) {
-                ToastService.showError(maxBidField.getScene(),
-                        String.format("Increment ($ %.0f) must be less than Max bid ($ %.0f).",
-                                autoBidIncremental, maxBidAmount));
+            ValidationResult result = autoBidManager.validate(item, max, step);
+            if (!result.ok()) {
+                ToastService.showError(maxBidField.getScene(), result.errorMessage());
                 return;
             }
 
-            double firstAutoBidPrice = item.getCurrentPrice() + autoBidIncremental;
-            if (firstAutoBidPrice > maxBidAmount) {
-                ToastService.showError(maxBidField.getScene(),
-                        String.format("First auto-bid ($ %.0f) exceeds Max bid ($ %.0f). Raise Max or lower increment.",
-                                firstAutoBidPrice, maxBidAmount));
-                return;
-            }
-
-            network.sendAutoBidRegister(item.getId(), user.getId(), maxBidAmount, autoBidIncremental);
-            isAutoBidActive = true;
+            autoBidManager.activate(max, step);
+            network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
             updateAutoBidUI(true);
             ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
 
-            boolean isLeading = user.getId().equals(lastBidderId);
+            boolean isLeading = user.getId().equals(autoBidManager.getLastBidderId());
             if (isLeading) {
                 userCurrentBidLabel.setText(
                         String.format("Your current bid: $ %.0f (Leading)", item.getCurrentPrice()));
             } else {
-                network.sendBid(item.getId(), user.getId(), firstAutoBidPrice, "");
+                double firstBid = item.getCurrentPrice() + step;
+                network.sendBid(item.getId(), user.getId(), firstBid, "");
                 userCurrentBidLabel.setText(
-                        String.format("Your current bid: $ %.0f (Auto-bidding...)", firstAutoBidPrice));
+                        String.format("Your current bid: $ %.0f (Auto-bidding...)", firstBid));
             }
-
         } catch (NumberFormatException e) {
             ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
@@ -397,25 +354,26 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     private void stopAutoBid() {
-        isAutoBidActive = false;
+        autoBidManager.deactivate();
         updateAutoBidUI(false);
     }
 
     private void handleAutoBidLogic(double serverCurrentPrice, String topBidderId) {
-        if (!"ONGOING".equalsIgnoreCase(resolveRealtimeStatus())) { stopAutoBid(); return; }
-        if (!isAutoBidActive) return;
+        AutoBidDecision decision = autoBidManager.decideBid(
+                topBidderId, serverCurrentPrice, user.getId(), myLastBid, isOngoing());
 
-        if (user.getId().equals(topBidderId)) {
-            userCurrentBidLabel.setText(
-                    String.format("Your current bid: $ %.0f (Leading)", serverCurrentPrice));
-        } else if (serverCurrentPrice >= maxBidAmount) {
-            stopAutoBid();
-            ToastService.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!");
-        } else {
-            String text = myLastBid > 0
-                    ? String.format("Your current bid: $ %.0f (Outbid — auto-bidding...)", myLastBid)
-                    : "Auto-bidding...";
-            userCurrentBidLabel.setText(text);
+        switch (decision.type()) {
+            case AUCTION_ENDED -> stopAutoBid();
+            case INACTIVE      -> {}
+            case LEADING       -> userCurrentBidLabel.setText(decision.statusText());
+            case MAX_REACHED -> {
+                updateAutoBidUI(false);
+                ToastService.showInfo(userCurrentBidLabel.getScene(), decision.statusText());
+            }
+            case OUTBID_AND_REBID -> {
+                userCurrentBidLabel.setText(decision.statusText());
+                network.sendBid(item.getId(), user.getId(), decision.nextBidPrice(), "");
+            }
         }
     }
 
@@ -429,7 +387,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
     }
 
-    // BID HISTORY
+    // Bid history
     private void loadBidHistory() {
         bidHistoryService.getHistory(itemId)
                 .thenAccept(bids -> Platform.runLater(() -> renderBidHistory(bids)))
@@ -441,20 +399,33 @@ public class ItemPageController implements NetworkService.MessageListener {
                 });
     }
 
+    // (Đã chỉnh sửa: Thay đổi trạng thái layout động giống display:none / display:block)
     private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
+
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
+            // Nếu có liên kết ScrollPane từ FXML, thu gọn layout để tránh chiếm không gian trống vô ích
+            if (historyScrollPane != null) {
+                historyScrollPane.setVisible(false);
+                historyScrollPane.setManaged(false);
+            }
             return;
         }
+
+        // Có dữ liệu -> Kích hoạt hiển thị phân cấp linh hoạt tự giãn
+        if (historyScrollPane != null) {
+            historyScrollPane.setVisible(true);
+            historyScrollPane.setManaged(true);
+        }
+
         int totalCount = bids.size();
         totalBidsLabel.setText(totalCount + " bids");
-
         for (int i = 0; i < totalCount; i++) {
-            int displayIndex = totalCount - i;
-            historyBidContainer.getChildren().add(createBidRow(displayIndex, bids.get(i)));
+            historyBidContainer.getChildren().add(createBidRow(totalCount - i, bids.get(i)));
         }
     }
+
     private HBox createBidRow(int index, BidHistoryItemDTO bid) {
         HBox row = new HBox(15);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -481,13 +452,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         return row;
     }
 
-    @FXML
-    private void handleViewAllBids() {
-        // TODO: cần cung cấp FXML path của FullBidHistoryPage
-        System.out.println("[TODO] Navigate to full bid history for item: " + itemId);
-    }
-
-    // Display & image
+    //  Display & image
     private void displayDataItem(Item item) {
         thumbnailContainer.getChildren().clear();
         List<String> images = item.getImagesPath();
@@ -497,7 +462,6 @@ public class ItemPageController implements NetworkService.MessageListener {
                     IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2);
 
             boolean isFirst = true;
-
             for (String imgPath : images) {
                 if (imgPath == null || imgPath.isBlank()) continue;
 
@@ -512,8 +476,10 @@ public class ItemPageController implements NetworkService.MessageListener {
                 thumbView.setFitHeight(THUMB_HEIGHT);
                 thumbView.setPreserveRatio(false);
                 thumbView.imageProperty().addListener((obs, oldImg, newImg) -> {
-                    if (newImg != null) applyObjectFitCoverToImageView(thumbView, newImg, THUMB_WIDTH, THUMB_HEIGHT);
+                    if (newImg != null)
+                        ClientImageUtil.applyObjectFitCoverToImageView(thumbView, newImg, THUMB_WIDTH, THUMB_HEIGHT);
                 });
+
                 ClientImageUtil.displayImage(imgPath, "images", thumbView, IMAGE_WIDTH, IMAGE_HEIGHT);
                 thumbPane.getChildren().add(thumbView);
 
@@ -533,8 +499,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         itemDesLabel.setWrapText(true);
         itemDesLabel.setMaxWidth(Double.MAX_VALUE);
         itemDesLabel.prefWidthProperty().bind(
-                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
-        );
+                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth()));
         itemDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
         itemDesLabel.setMinHeight(Region.USE_PREF_SIZE);
 
@@ -563,80 +528,27 @@ public class ItemPageController implements NetworkService.MessageListener {
                 item.getCurrentPrice() + item.getBidStep()));
     }
 
-    private void applyObjectFitCover(Image img) {
-        applyObjectFitCoverToImageView(itemImage, img, IMAGE_WIDTH, IMAGE_HEIGHT);
-    }
+    private void startCountdown() {
+        AuctionStatus status = currentStatus();
+        LocalDateTime targetTime = null;
 
-    private void applyObjectFitCoverToImageView(ImageView imageView, Image img, double targetW, double targetH) {
-        if (img == null || imageView == null) return;
-        if (img.getProgress() < 1.0) {
-            img.progressProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal.doubleValue() >= 1.0)
-                    Platform.runLater(() -> applyObjectFitCoverToImageView(imageView, img, targetW, targetH));
-            });
-            return;
+        if (status == AuctionStatus.UPCOMING) {
+            targetTime = item.getStartTime();
+        } else if (status == AuctionStatus.ONGOING) {
+            targetTime = item.getEndTime();
         }
-        Platform.runLater(() -> {
-            double imgW = img.getWidth(), imgH = img.getHeight();
-            if (imgW == 0 || imgH == 0) return;
 
-            double targetRatio = targetW / targetH;
-            double sourceRatio = imgW / imgH;
-            double viewW, viewH, viewX, viewY;
-
-            if (sourceRatio > targetRatio) {
-                viewH = imgH; viewW = imgH * targetRatio;
-                viewX = (imgW - viewW) / 2; viewY = 0;
-            } else {
-                viewW = imgW; viewH = imgW / targetRatio;
-                viewX = 0; viewY = (imgH - viewH) / 2;
-            }
-            imageView.setViewport(new javafx.geometry.Rectangle2D(viewX, viewY, viewW, viewH));
+        countdownTimer.startFor(targetTime, () -> {
+            AuctionStatus newStatus = currentStatus();
+            item.setStatus(newStatus);
+            Platform.runLater(() -> updateUIByStatus(newStatus));
         });
     }
 
-    // TIMER $ COUNTDOWN
-    private void startCountdown() {
-        if (timeline != null) timeline.stop();
-        updateTimeDisplay();
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateTimeDisplay()));
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.playFromStart();
+    private AuctionStatus currentStatus() {
+        if (item == null) return AuctionStatus.ENDED;
+        return AuctionStatus.compute(item.getStartTime(), item.getEndTime());
     }
 
-    private void updateTimeDisplay() {
-        if (item == null) return;
-
-        String status = resolveRealtimeStatus();
-        LocalDateTime now        = LocalDateTime.now();
-        LocalDateTime targetTime = "UPCOMING".equalsIgnoreCase(status) ? item.getStartTime()
-                : "ONGOING".equalsIgnoreCase(status) ? item.getEndTime() : null;
-
-        if (targetTime == null || now.isAfter(targetTime)) {
-            item.setStatus(status);
-            updateUIByStatus(status);
-            updateTimerLabels(0, 0, 0, 0);
-            if (timeline != null) timeline.stop();
-            return;
-        }
-
-        updateTimerLabels(
-                ChronoUnit.DAYS.between(now, targetTime),
-                ChronoUnit.HOURS.between(now, targetTime) % 24,
-                ChronoUnit.MINUTES.between(now, targetTime) % 60,
-                ChronoUnit.SECONDS.between(now, targetTime) % 60
-        );
-    }
-
-    private void updateTimerLabels(long d, long h, long m, long s) {
-        if (daysLabel  != null) daysLabel.setText(String.format("%02d", d));
-        if (hoursLabel != null) hoursLabel.setText(String.format("%02d", h));
-        if (minsLabel  != null) minsLabel.setText(String.format("%02d", m));
-        if (secsLabel  != null) secsLabel.setText(String.format("%02d", s));
-    }
-    private String resolveRealtimeStatus() {
-        return AuctionStatusHelper.resolveUpperCase(
-                item != null ? item.getStartTime() : null,
-                item != null ? item.getEndTime()   : null);
-    }
+    private boolean isOngoing()  { return currentStatus() == AuctionStatus.ONGOING; }
 }
