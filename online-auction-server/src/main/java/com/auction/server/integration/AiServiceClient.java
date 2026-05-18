@@ -35,7 +35,7 @@ public class AiServiceClient {
     }
 
     public String embeddingProduct(String itemId, String name, String description, List<Path> imagePaths) {
-        String requestUrl = AI_SERVER_URL + "/index-product/" + itemId;
+        String requestUrl = AI_SERVER_URL + "/products/index-product/" + itemId;
 
         // Tạo một chuỗi ngẫu nhiên làm vách ngăn (boundary) giữa các phần dữ liệu
         String boundary = "---Boundary" + UUID.randomUUID().toString();
