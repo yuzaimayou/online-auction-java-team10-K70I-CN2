@@ -5,22 +5,18 @@ import com.auction.server.util.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
-import com.auction.shared.util.LocalDateTimeAdapter;
+import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class ItemsHandler implements HttpHandler {
-    private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .create();
+    private final Gson gson = GsonUtil.getInstance();
     private final ItemService itemService = ItemService.getInstance();
 
     @Override
@@ -35,12 +31,10 @@ public class ItemsHandler implements HttpHandler {
 
             ResponseMessage response = new ResponseMessage();
             if (payload != null) {
-                String jsonPayload = gson.toJson(payload);
-
 
                 response.setStatus("success");
                 response.setMessage("Get data items successfully");
-                response.setData(jsonPayload);
+                response.setData(payload);
                 HttpResponseUtil.sendMessage(exchange, 200, response);
             } else {
                 response.setStatus("error");

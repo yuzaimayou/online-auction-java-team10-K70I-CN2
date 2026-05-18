@@ -313,17 +313,15 @@ public class ItemRepository {
 
     public List<ItemSummary> findAllItems(String sortOrder, int offset) {
         String sql = """
-                             SELECT id,
-                                    name,
-                                    category,
-                                    current_price,
-                                    image_path,
-                                    start_time,
-                                    end_time 
-                             FROM items
-                             ORDER BY """ + sortOrder + """
-                             LIMIT 20 OFFSET ?
-                             """;
+                SELECT id,
+                       name,
+                       category,
+                       current_price,
+                       image_path,
+                       start_time,
+                       end_time 
+                FROM items
+                """;
 
         return executeSummaryQuery(sql);
     }
