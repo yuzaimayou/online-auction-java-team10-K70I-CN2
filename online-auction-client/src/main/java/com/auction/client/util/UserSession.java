@@ -25,6 +25,9 @@ public class UserSession {
     public User getLoggedInUser() {
         return loggedInUser;
     }
+    public String getCurrentUserId() {
+        return loggedInUser != null ? loggedInUser.getId() : null;
+    }
 
     public boolean isAdmin() {
         return loggedInUser instanceof Admin;

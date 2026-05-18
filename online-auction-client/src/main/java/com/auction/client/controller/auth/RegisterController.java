@@ -18,25 +18,23 @@ import javafx.util.Duration;
 
 import java.io.IOException;
 
+import static com.auction.client.service.ToastService.showError;
+
 public class RegisterController {
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
     @FXML
     private TextField txtUsername;
-
     @FXML
     private TextField txtEmail;
-
     @FXML
     private PasswordField txtPassword;
-
     @FXML
     private PasswordField txtConfirmPassword;
-
     @FXML
     private Label lblMessage;
 
     private AuthService authService = AuthService.getInstance();
-    private Gson gson = new Gson();
 
     @FXML
     public void handleRegister(ActionEvent event) {
@@ -44,22 +42,17 @@ public class RegisterController {
         String password = txtPassword.getText();
         String confirm = txtConfirmPassword.getText();
         String email = txtEmail.getText().trim();
-        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
         if (username.isEmpty() || password.isEmpty() || confirm.isEmpty() || email.isEmpty()) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Please fill in all fields.");
+            showError("Please fill in all fields.");
             return;
         }
-        if (!email.matches(regex)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Invalid email address.");
+        if (!email.matches(EMAIL_REGEX)) {
+            showError("Invalid email address.");
             return;
         }
-
         if (!password.equals(confirm)) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Passwords do not match.");
+            showError("Passwords do not match.");
             return;
         }
 
@@ -67,24 +60,17 @@ public class RegisterController {
                 .thenAccept(res -> {
                     if ("success".equalsIgnoreCase(res.getStatus())) {
                         Platform.runLater(() -> {
-                            lblMessage.setTextFill(Color.GREEN);
-                            lblMessage.setText(res.getMessage());
+                            showSuccess(res.getMessage());
                             PauseTransition pause = new PauseTransition(Duration.seconds(2));
                             pause.setOnFinished(e -> switchToOtpScreen(event, email));
                             pause.play();
                         });
                     } else {
-                        Platform.runLater(() -> {
-                            lblMessage.setTextFill(Color.RED);
-                            lblMessage.setText(res.getMessage());
-                        });
+                        Platform.runLater(() -> showError(res.getMessage()));
                     }
                 })
                 .exceptionally(ex -> {
-                    Platform.runLater(() -> {
-                        lblMessage.setTextFill(Color.RED);
-                        lblMessage.setText("Unable to connect to server");
-                    });
+                    Platform.runLater(() -> showError("Unable to connect to server"));
                     return null;
                 });
     }
@@ -118,4 +104,13 @@ public class RegisterController {
             e.printStackTrace();
         }
     }
-}
+        private void showError(String message) {
+            lblMessage.setTextFill(Color.RED);
+            lblMessage.setText(message);
+        }
+
+        private void showSuccess(String message) {
+            lblMessage.setTextFill(Color.GREEN);
+            lblMessage.setText(message);
+        }
+    }

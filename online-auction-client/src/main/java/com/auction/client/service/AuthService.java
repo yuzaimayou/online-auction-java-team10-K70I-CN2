@@ -2,9 +2,13 @@ package com.auction.client.service;
 
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
+import com.auction.shared.model.account.Admin;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.auction.shared.model.payloads.VerifyPayload;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -79,5 +83,18 @@ public class AuthService {
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
+        public User parseUser(Object data) {
+            JsonElement jsonElement = gson.toJsonTree(data);
+            JsonObject userData    = jsonElement.getAsJsonObject();
 
-}
+            String role = "";
+            if (userData.has("role") && !userData.get("role").isJsonNull()) {
+                role = userData.get("role").getAsString();
+            }
+
+            if ("Admin".equalsIgnoreCase(role)) {
+                return gson.fromJson(jsonElement, Admin.class);
+            }
+            return gson.fromJson(jsonElement, User.class);
+        }
+    }

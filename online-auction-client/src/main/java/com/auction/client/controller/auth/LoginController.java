@@ -52,33 +52,10 @@ public class LoginController {
             lblMessage.setText("Username and password are required!");
             return;
         }
-
-        System.out.println("Sending login request for: " + username);
-
         authService.login(username, password)
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
-                        // --- ĐOẠN CODE ĐÃ ĐƯỢC SỬA LẠI ĐỂ FIX LỖI ROLE ---
-                        // 1. Đọc Data thành JsonObject để kiểm tra role trước
-                        JsonElement jsonElement = gson.toJsonTree(responseMessage.getData());
-                        JsonObject userData = jsonElement.getAsJsonObject();
-                        System.out.println("Received auth data: " + userData.toString());
-                        String role = "";
-
-                        // Kiểm tra xem JSON có trường "role" không
-                        if (userData.has("role") && !userData.get("role").isJsonNull()) {
-                            role = userData.get("role").getAsString();
-                        }
-
-                        // 2. Khởi tạo User hoặc Admin tùy thuộc vào Role
-                        User loggedInUser;
-                        if ("Admin".equalsIgnoreCase(role)) {
-                            loggedInUser = gson.fromJson(jsonElement, Admin.class);
-                            System.out.println("Đã đăng nhập với quyền ADMIN!");
-                        } else {
-                            loggedInUser = gson.fromJson(jsonElement, User.class);
-                            System.out.println("Đã đăng nhập với quyền USER!");
-                        }
+                        User loggedInUser = authService.parseUser(responseMessage.getData());
 
                         UserSession.getInstance().cleanUserSession();
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
@@ -99,9 +76,9 @@ public class LoginController {
                             lblMessage.setText("Login successful! Welcome " + loggedInUser.getUsername());
                         });
 
-                        // Chuyển về trang chủ
                         pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         pause.play();
+
                     } else {
                         Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.RED);
