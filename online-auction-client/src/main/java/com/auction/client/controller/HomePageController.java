@@ -105,7 +105,7 @@ public class HomePageController {
                 switch (status) {
                     case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
                     case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
-                    case ENDED, BANNED -> { endedAuctionsContainer.getChildren().add(cardBox); endedCount++; }
+                    case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
                 }
 
             } catch (IOException e) {
