@@ -72,4 +72,15 @@ public class WalletTransactionRepository {
                            double balanceBefore, double balanceAfter) throws Exception {
         insert(conn, userId, TYPE_DEPOSIT, amount, balanceBefore, balanceAfter, null);
     }
+
+    public boolean existsAuctionPayment(Connection conn, String itemId) throws Exception {
+        String sql = "SELECT 1 FROM wallet_transactions WHERE type = ? AND reference_id = ? LIMIT 1";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, TYPE_AUCTION_PAYMENT);
+            stmt.setString(2, itemId);
+            try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
 }

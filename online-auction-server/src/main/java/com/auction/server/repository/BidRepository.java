@@ -175,6 +175,20 @@ public class BidRepository {
         }
     }
 
+    public boolean deactivateAutoBidIfPresent(Connection conn, String itemId, String userId) {
+        String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ? AND is_active = 1";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            stmt.setString(2, userId);
+            int rows = stmt.executeUpdate();
+            LOGGER.info(String.format("[AUTO_BID_CANCEL][DB_DEACTIVATE_CONN] time=%s itemId=%s userId=%s rowsUpdated=%d",
+                    LocalDateTime.now(), itemId, userId, rows));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public List<AutoBidConfig> findActiveAutoBids(Connection conn, String itemId) {
         List<AutoBidConfig> autoBids = new ArrayList<>();
 

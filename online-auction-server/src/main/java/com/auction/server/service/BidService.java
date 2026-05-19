@@ -3,6 +3,8 @@ package com.auction.server.service;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
+import com.auction.server.repository.WalletRepository;
+import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.model.item.Item;
@@ -25,7 +27,45 @@ public class BidService {
     private final BidRepository bidRepository;
     private final ItemRepository itemRepository;
     private final AutoBidResolver autoBidResolver;
+    private final WalletRepository walletRepository = new WalletRepository();
+    private final WalletTransactionRepository txLogRepository = new WalletTransactionRepository();
     private static final ConcurrentMap<String, Object> ITEM_LOCKS = new ConcurrentHashMap<>();
+
+    private boolean handleWalletMovement(Connection conn, String itemId, String bidderId, double bidPrice, String prevBidderId, double prevBidPrice) throws Exception {
+        // 1. Check balance of new bidder
+        double[] bidderBalances = walletRepository.getBalances(conn, bidderId);
+        double bidderBalance = bidderBalances[0];
+
+        if (bidderBalance < bidPrice) {
+            LOGGER.warning(String.format("Insufficient balance: has %.2f, needs %.2f for user %s", bidderBalance, bidPrice, bidderId));
+            return false;
+        }
+
+        // 2. Freeze money for the new bidder
+        boolean frozeOk = walletRepository.freezeAmount(conn, bidderId, bidPrice);
+        if (!frozeOk) {
+            LOGGER.warning("Failed to freeze balance for user: " + bidderId);
+            return false;
+        }
+
+        // 3. Log FREEZE
+        txLogRepository.logFreeze(conn, bidderId, bidPrice, bidderBalance, bidderBalance - bidPrice, itemId);
+
+        // 4. Unfreeze money for previous bidder
+        if (prevBidderId != null && !prevBidderId.isBlank() && !prevBidderId.equals(bidderId)) {
+            boolean unfrozeOk = walletRepository.unfreezeAmount(conn, prevBidderId, prevBidPrice);
+            if (!unfrozeOk) {
+                LOGGER.warning("Failed to unfreeze balance for previous leader: " + prevBidderId);
+                return false;
+            }
+
+            // Log UNFREEZE
+            double[] prevBal = walletRepository.getBalances(conn, prevBidderId);
+            txLogRepository.logUnfreeze(conn, prevBidderId, prevBidPrice, prevBal[0] - prevBidPrice, prevBal[0], itemId);
+        }
+
+        return true;
+    }
 
     public BidService() {
         this.bidRepository = new BidRepository();
@@ -174,6 +214,18 @@ public class BidService {
                         "[AUTO_BID_REGISTER][DECISION] time=%s itemId=%s registeringUserId=%s dbCurrentBidderId=%s decision=PLACE_IMMEDIATE_AUTO_BID",
                         LocalDateTime.now(), itemId, userId, currentBidderId));
 
+                // Handle wallet movement before updating DB
+                try {
+                    if (!handleWalletMovement(conn, itemId, userId, immediateBidPrice, currentBidderId, currentPrice)) {
+                        conn.rollback();
+                        return false;
+                    }
+                } catch (Exception e) {
+                    conn.rollback();
+                    LOGGER.log(Level.SEVERE, "Wallet operation failed during immediate auto-bid", e);
+                    return false;
+                }
+
                 String bidTime = LocalDateTime.now().toString();
                 if (!bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime)) {
                     conn.rollback();
@@ -275,6 +327,18 @@ public class BidService {
                     return false;
                 }
 
+                // Handle wallet movement before updating DB
+                try {
+                    if (!handleWalletMovement(conn, itemId, userId, bidPrice, item.getCurrentTopPLayerId(), item.getHighestCurrentPrice())) {
+                        conn.rollback();
+                        return false;
+                    }
+                } catch (Exception e) {
+                    conn.rollback();
+                    LOGGER.log(Level.SEVERE, "Wallet operation failed during manual bid placement", e);
+                    return false;
+                }
+
                 String resolvedBidTime = now.toString();
                 LOGGER.info(String.format("[AUTO_BID_ROUND][MANUAL_BID] time=%s itemId=%s userId=%s itemCurrentPrice=%.2f bidStep=%.2f bidPrice=%.2f minAllowed=%.2f",
                         LocalDateTime.now(), itemId, userId, item.getHighestCurrentPrice(), item.getBidStep(), bidPrice, minAllowedPrice));
@@ -353,6 +417,28 @@ public class BidService {
                 return new FinalBid(currentLeader, livePrice, liveBidTime);
             }
 
+            // 1. Check if candidate can afford it
+            try {
+                double[] candidateBalances = walletRepository.getBalances(conn, candidate.userId());
+                if (candidateBalances[0] < candidate.bidPrice()) {
+                    LOGGER.warning(String.format("[AUTO_BID_ROUND][SKIP] Insufficient funds for auto-bid user %s. Needs %.2f, has %.2f",
+                            candidate.userId(), candidate.bidPrice(), candidateBalances[0]));
+                    bidRepository.deactivateAutoBidIfPresent(conn, itemId, candidate.userId());
+                    continue; // Skip this candidate, try others in the list
+                }
+            } catch (Exception e) {
+                throw new SQLException("Failed to verify auto-bid candidate balance: " + e.getMessage(), e);
+            }
+
+            // 2. Perform wallet movement
+            try {
+                if (!handleWalletMovement(conn, itemId, candidate.userId(), candidate.bidPrice(), currentLeader, livePrice)) {
+                    throw new SQLException("Failed to handle wallet movement for auto-bid candidate: " + candidate.userId());
+                }
+            } catch (Exception e) {
+                throw new SQLException("Failed to execute wallet movement for auto-bid: " + e.getMessage(), e);
+            }
+
             String bidTime = LocalDateTime.now().toString();
             if (!bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime)) {
                 throw new SQLException("Failed to create auto bid in database");
@@ -405,7 +491,7 @@ public class BidService {
         return status == null ? "" : status.trim().toUpperCase();
     }
 
-    private Object getItemLock(String itemId) {
+    public static Object getItemLock(String itemId) {
         return ITEM_LOCKS.computeIfAbsent(itemId, ignored -> new Object());
     }
 
