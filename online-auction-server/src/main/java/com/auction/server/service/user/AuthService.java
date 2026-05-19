@@ -12,6 +12,10 @@ public class AuthService {
         this.userRepository = new UserRepository();
     }
 
+    public AuthService(UserRepository userRepository, VerifyService verifyService) {
+        this.userRepository = userRepository;
+        this.verifyService = verifyService;
+    }
 
     public boolean register(String username, String password, String email) {
 
