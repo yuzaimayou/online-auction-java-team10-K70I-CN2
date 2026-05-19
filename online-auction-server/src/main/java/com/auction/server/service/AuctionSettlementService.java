@@ -30,74 +30,82 @@ public class AuctionSettlementService {
             return SettlementResult.fail("Item id không hợp lệ");
         }
 
-        Connection conn = null;
-        try {
-            conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false);
+        synchronized (BidService.getItemLock(itemId)) {
+            Connection conn = null;
+            try {
+                conn = DatabaseManager.getConnection();
+                conn.setAutoCommit(false);
 
-            // Đọc item
-            Item item = itemRepo.findById(conn, itemId);
-            if (item == null) {
-                rollback(conn);
-                return SettlementResult.fail("Không tìm thấy item: " + itemId);
-            }
+                // Đọc item
+                Item item = itemRepo.findById(conn, itemId);
+                if (item == null) {
+                    rollback(conn);
+                    return SettlementResult.fail("Không tìm thấy item: " + itemId);
+                }
 
-            boolean expired = java.time.LocalDateTime.now().isAfter(item.getEndTime());
-            String status = item.getStatus();
-            if (!expired && !ItemStatusConstants.ENDED.equalsIgnoreCase(status)) {
-                rollback(conn);
-                return SettlementResult.fail("Phiên chưa kết thúc (status=" + status + ")");
-            }
+                boolean expired = java.time.LocalDateTime.now().isAfter(item.getEndTime());
+                String status = item.getStatus();
+                if (!expired && !ItemStatusConstants.ENDED.equalsIgnoreCase(status)) {
+                    rollback(conn);
+                    return SettlementResult.fail("Phiên chưa kết thúc (status=" + status + ")");
+                }
 
-            String winnerId     = item.getCurrentTopPLayerId();
-            double winningPrice = item.getHighestCurrentPrice();
-            String sellerId     = item.getSellerId();
+                String winnerId     = item.getCurrentTopPLayerId();
+                double winningPrice = item.getHighestCurrentPrice();
+                String sellerId     = item.getSellerId();
 
-            // Không có ai đặt giá — chỉ đóng phiên
-            if (winnerId == null || winnerId.isBlank()) {
+                // Idempotency check: if auction payment already occurred, do not double-charge/double-settle
+                if (txLogRepo.existsAuctionPayment(conn, itemId)) {
+                    conn.commit();
+                    return SettlementResult.success(itemId, winnerId, sellerId, winningPrice);
+                }
+
+                // Không có ai đặt giá — chỉ đóng phiên
+                if (winnerId == null || winnerId.isBlank()) {
+                    itemRepo.markEnded(conn, itemId);
+                    conn.commit();
+                    return SettlementResult.noBids(itemId);
+                }
+
+                // Trừ giá thắng từ frozen_balance người thắng
+                double[] winnerBal = walletRepo.getBalances(conn, winnerId);
+                double winnerFrozenBefore = winnerBal[1];
+
+                if (!walletRepo.deductFromFrozen(conn, winnerId, winningPrice)) {
+                    rollback(conn);
+                    return SettlementResult.fail("Không thể trừ tiền người thắng");
+                }
+
+                // Cộng tiền vào balance người bán
+                double[] sellerBal = walletRepo.getBalances(conn, sellerId);
+                double sellerBalBefore = sellerBal[0];
+
+                if (!walletRepo.creditBalance(conn, sellerId, winningPrice)) {
+                    rollback(conn);
+                    return SettlementResult.fail("Không thể cộng tiền người bán");
+                }
+
+                // Đánh dấu item kết thúc
                 itemRepo.markEnded(conn, itemId);
+
+                // Ghi log cho người thắng và người bán
+                txLogRepo.logAuctionPayment(conn, winnerId, winningPrice,
+                        winnerFrozenBefore, winnerFrozenBefore - winningPrice, itemId);
+                txLogRepo.logAuctionPayment(conn, sellerId, winningPrice,
+                        sellerBalBefore, sellerBalBefore + winningPrice, itemId);
+
                 conn.commit();
-                return SettlementResult.noBids(itemId);
-            }
+                System.out.printf("[Settlement] item=%s winner=%s seller=%s price=%.2f%n",
+                        itemId, winnerId, sellerId, winningPrice);
+                return SettlementResult.success(itemId, winnerId, sellerId, winningPrice);
 
-            // Trừ giá thắng từ frozen_balance người thắng
-            double[] winnerBal = walletRepo.getBalances(conn, winnerId);
-            double winnerFrozenBefore = winnerBal[1];
-
-            if (!walletRepo.deductFromFrozen(conn, winnerId, winningPrice)) {
+            } catch (Exception e) {
                 rollback(conn);
-                return SettlementResult.fail("Không thể trừ tiền người thắng");
+                e.printStackTrace();
+                return SettlementResult.fail("Lỗi hệ thống: " + e.getMessage());
+            } finally {
+                close(conn);
             }
-
-            // Cộng tiền vào balance người bán
-            double[] sellerBal = walletRepo.getBalances(conn, sellerId);
-            double sellerBalBefore = sellerBal[0];
-
-            if (!walletRepo.creditBalance(conn, sellerId, winningPrice)) {
-                rollback(conn);
-                return SettlementResult.fail("Không thể cộng tiền người bán");
-            }
-
-            // Đánh dấu item kết thúc
-            itemRepo.markEnded(conn, itemId);
-
-            // Ghi log cho người thắng và người bán
-            txLogRepo.logAuctionPayment(conn, winnerId, winningPrice,
-                    winnerFrozenBefore, winnerFrozenBefore - winningPrice, itemId);
-            txLogRepo.logAuctionPayment(conn, sellerId, winningPrice,
-                    sellerBalBefore, sellerBalBefore + winningPrice, itemId);
-
-            conn.commit();
-            System.out.printf("[Settlement] item=%s winner=%s seller=%s price=%.2f%n",
-                    itemId, winnerId, sellerId, winningPrice);
-            return SettlementResult.success(itemId, winnerId, sellerId, winningPrice);
-
-        } catch (Exception e) {
-            rollback(conn);
-            e.printStackTrace();
-            return SettlementResult.fail("Lỗi hệ thống: " + e.getMessage());
-        } finally {
-            close(conn);
         }
     }
 

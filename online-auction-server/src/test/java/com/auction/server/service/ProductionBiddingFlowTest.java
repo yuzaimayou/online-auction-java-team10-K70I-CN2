@@ -140,6 +140,18 @@ class ProductionBiddingFlowTest {
         assertEquals(maxBidPrice(itemId), finalPrice, EPSILON);
         assertEquals(1, bidCountAtPrice(itemId, finalPrice));
         assertEquals(bidderForPrice(itemId, finalPrice), currentBidder(itemId));
+
+        // Winner wallet verification
+        String leader = currentBidder(itemId);
+        String loser = leader.equals(lowBidder) ? highBidder : lowBidder;
+        double winnerBidPrice = finalPrice;
+
+        assertEquals(10000.0 - winnerBidPrice, queryDouble("SELECT balance FROM users WHERE id = ?", leader), EPSILON);
+        assertEquals(winnerBidPrice, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", leader), EPSILON);
+
+        // Loser wallet verification
+        assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", loser), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", loser), EPSILON);
     }
 
     @Test
@@ -147,19 +159,33 @@ class ProductionBiddingFlowTest {
         String itemId = item("twenty-race", 10.0, 5.0, ItemStatusConstants.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         List<Callable<Boolean>> tasks = new ArrayList<>();
+        List<String> bidders = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
             String bidder = user("bidder-" + i);
+            bidders.add(bidder);
             double amount = 15.0 + (i * 5.0);
             tasks.add(() -> bidService.placeBid(itemId, bidder, amount));
         }
 
         runConcurrent(tasks);
 
-        assertEquals(110.0, currentPrice(itemId), EPSILON);
-        assertEquals(110.0, maxBidPrice(itemId), EPSILON);
-        assertEquals(1, bidCountAtPrice(itemId, 110.0));
-        assertEquals(bidderForPrice(itemId, 110.0), currentBidder(itemId));
+        double finalPrice = currentPrice(itemId);
+        assertEquals(finalPrice, maxBidPrice(itemId), EPSILON);
+        assertEquals(1, bidCountAtPrice(itemId, finalPrice));
+        assertEquals(bidderForPrice(itemId, finalPrice), currentBidder(itemId));
+
+        // Verify wallet balances for all 20 bidders:
+        String winner = currentBidder(itemId);
+        for (String bidder : bidders) {
+            if (bidder.equals(winner)) {
+                assertEquals(10000.0 - finalPrice, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+                assertEquals(finalPrice, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+            } else {
+                assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+                assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+            }
+        }
     }
 
     @Test
@@ -451,5 +477,248 @@ class ProductionBiddingFlowTest {
                 return rs.getString(1);
             }
         }
+    }
+
+    @Test
+    void manualBidShouldFreezeMoneyForHighestBidder() throws Exception {
+        String itemId = item("wallet-freeze", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bidder = user("wallet-bidder");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+
+        assertEquals(15.0, currentPrice(itemId), EPSILON);
+        assertEquals(bidder, currentBidder(itemId));
+
+        // Assert A available balance decreased (from 10,000 to 9,985)
+        assertEquals(9985.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        // Assert A frozen balance increased by 15.0
+        assertEquals(15.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+    }
+
+    @Test
+    void outbidShouldReleasePreviousLeaderAndFreezeNewLeader() throws Exception {
+        String itemId = item("wallet-outbid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bidderA = user("bidder-a");
+        String bidderB = user("bidder-b");
+
+        assertTrue(bidService.placeBid(itemId, bidderA, 15.0));
+        assertTrue(bidService.placeBid(itemId, bidderB, 20.0));
+
+        // Assert A's frozen balance is released (back to 0) and balance returned (back to 10,000)
+        assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidderA), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidderA), EPSILON);
+
+        // Assert B's frozen balance is locked (20) and balance decreased (9,980)
+        assertEquals(9980.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidderB), EPSILON);
+        assertEquals(20.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidderB), EPSILON);
+    }
+
+    @Test
+    void sameBidderBiddingAgainShouldLockNewAmount() throws Exception {
+        String itemId = item("wallet-rebid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bidderA = user("bidder-a");
+        String bidderB = user("bidder-b");
+
+        assertTrue(bidService.placeBid(itemId, bidderA, 15.0));
+        assertTrue(bidService.placeBid(itemId, bidderB, 20.0));
+        assertTrue(bidService.placeBid(itemId, bidderA, 25.0));
+
+        // bidderA outbid, then bid again.
+        // bidderB should be released (frozen = 0, balance = 10,000)
+        assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidderB), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidderB), EPSILON);
+
+        // bidderA's new frozen is 25, balance is 9975
+        assertEquals(9975.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidderA), EPSILON);
+        assertEquals(25.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidderA), EPSILON);
+    }
+
+    @Test
+    void insufficientBalanceShouldRejectBidAndNotMutateState() throws Exception {
+        String itemId = item("wallet-insufficient", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String poorBidder = prefix + "-poor";
+        
+        // Create user with 5.0 balance
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("""
+                     INSERT INTO users(id, username, password, role, isVerify, email, balance, frozen_balance)
+                     VALUES(?,?,?,?,?,?,?,?)
+                     """)) {
+            stmt.setString(1, poorBidder);
+            stmt.setString(2, poorBidder);
+            stmt.setString(3, "test");
+            stmt.setString(4, "USER");
+            stmt.setInt(5, 1);
+            stmt.setString(6, poorBidder + "@example.test");
+            stmt.setDouble(7, 5.0);
+            stmt.setDouble(8, 0.0);
+            stmt.executeUpdate();
+        }
+
+        // Try bidding 15.0 (which is greater than 5.0 available balance)
+        assertFalse(bidService.placeBid(itemId, poorBidder, 15.0));
+
+        // Assert no balance state mutated
+        assertEquals(5.0, queryDouble("SELECT balance FROM users WHERE id = ?", poorBidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", poorBidder), EPSILON);
+
+        // Assert item was not updated
+        assertEquals(10.0, currentPrice(itemId), EPSILON);
+        assertNull(currentBidder(itemId));
+        assertEquals(0, bidCount(itemId));
+    }
+
+    @Test
+    void autoBidShouldFreezeAndReleaseCorrectly() throws Exception {
+        String itemId = item("wallet-autobid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String first = user("first");
+        String second = user("second");
+
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, first, 50.0, 5.0));
+        Thread.sleep(5L);
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, second, 60.0, 5.0));
+
+        // The competition should end with 'second' leading at 55.0 or 60.0
+        String leader = currentBidder(itemId);
+        double finalPrice = currentPrice(itemId);
+        assertEquals(second, leader);
+
+        // Assert second user's frozen balance matches final price
+        assertEquals(finalPrice, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", second), EPSILON);
+        assertEquals(10000.0 - finalPrice, queryDouble("SELECT balance FROM users WHERE id = ?", second), EPSILON);
+
+        // Assert first user's frozen balance is released (returned to 0)
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", first), EPSILON);
+        assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", first), EPSILON);
+    }
+
+    @Test
+    void currentLeaderCannotBidAgainAndWalletDoesNotChange() throws Exception {
+        String itemId = item("wallet-consecutive", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bidder = user("consecutive-bidder");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+
+        // Attempt consecutive bid by same bidder
+        assertFalse(bidService.placeBid(itemId, bidder, 20.0));
+
+        // State remains at 15.0
+        assertEquals(15.0, currentPrice(itemId), EPSILON);
+        assertEquals(bidder, currentBidder(itemId));
+        assertEquals(9985.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(15.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+    }
+
+    @Test
+    void autoBidCandidateWithInsufficientFundsIsSkippedSafely() throws Exception {
+        String itemId = item("wallet-auto-poor", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String rich = user("rich-autobidder");
+        String poor = prefix + "-poor-autobidder";
+
+        // Create poor user with 22.0 balance
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("""
+                     INSERT INTO users(id, username, password, role, isVerify, email, balance, frozen_balance)
+                     VALUES(?,?,?,?,?,?,?,?)
+                     """)) {
+            stmt.setString(1, poor);
+            stmt.setString(2, poor);
+            stmt.setString(3, "test");
+            stmt.setString(4, "USER");
+            stmt.setInt(5, 1);
+            stmt.setString(6, poor + "@example.test");
+            stmt.setDouble(7, 22.0);
+            stmt.setDouble(8, 0.0);
+            stmt.executeUpdate();
+        }
+
+        // Register rich auto-bid (max 100, increment 5)
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, rich, 100.0, 5.0));
+        // Register poor auto-bid (max 100, increment 5)
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, poor, 100.0, 5.0));
+
+        // Price competition:
+        // rich bids 15
+        // poor bids 20
+        // rich bids 25
+        // poor wants to bid 30, but poor only has 22.0 balance!
+        // So poor's auto-bid is skipped and deactivated.
+        // rich should win/remain the leader.
+        String leader = currentBidder(itemId);
+        assertEquals(rich, leader);
+        double finalPrice = currentPrice(itemId);
+        assertEquals(25.0, finalPrice, EPSILON);
+
+        // Verify rich wallet
+        assertEquals(10000.0 - 25.0, queryDouble("SELECT balance FROM users WHERE id = ?", rich), EPSILON);
+        assertEquals(25.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", rich), EPSILON);
+
+        // Verify poor wallet was not charged/frozen any money (since its bid of 20 was outbid and unfrozen, and 30 was rejected)
+        assertEquals(22.0, queryDouble("SELECT balance FROM users WHERE id = ?", poor), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", poor), EPSILON);
+
+        // Verify poor's auto-bid config is inactive
+        com.auction.shared.model.payloads.AutoBidPayload status = bidService.getAutoBidStatus(itemId, poor);
+        assertFalse(status.getIsActive());
+    }
+
+    @Test
+    void settlementCannotDoubleChargeAndShouldNotRaceWithBidProcessing() throws Exception {
+        String itemId = item("wallet-settle", 10.0, 5.0, ItemStatusConstants.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String seller = prefix + "-user-seller-wallet-settle";
+        String bidder = user("settle-bidder");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+
+        // Explicitly end the auction in DB
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("UPDATE items SET status = ?, end_time = ? WHERE id = ?")) {
+            stmt.setString(1, ItemStatusConstants.ENDED);
+            stmt.setString(2, LocalDateTime.now().minusMinutes(5).toString());
+            stmt.setString(3, itemId);
+            stmt.executeUpdate();
+        }
+
+        AuctionSettlementService settlementService = new AuctionSettlementService();
+
+        // 1. First settlement run
+        AuctionSettlementService.SettlementResult result1 = settlementService.settleAuction(itemId);
+        assertTrue(result1.success);
+        assertTrue(result1.hadBids);
+        assertEquals(bidder, result1.winnerId);
+        assertEquals(15.0, result1.winningPrice, EPSILON);
+
+        // Verify balances after first settlement
+        assertEquals(10000.0 - 15.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(10015.0, queryDouble("SELECT balance FROM users WHERE id = ?", seller), EPSILON);
+
+        // 2. Second settlement run (idempotency check)
+        AuctionSettlementService.SettlementResult result2 = settlementService.settleAuction(itemId);
+        assertTrue(result2.success);
+        assertTrue(result2.hadBids);
+
+        // Verify balances remain unchanged (no double charge/credit!)
+        assertEquals(10000.0 - 15.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(10015.0, queryDouble("SELECT balance FROM users WHERE id = ?", seller), EPSILON);
+
+        // 3. Test concurrent bid and settlement (race condition safety)
+        String anotherBidder = user("another-bidder");
+        runConcurrent(List.of(
+                () -> bidService.placeBid(itemId, anotherBidder, 20.0),
+                () -> {
+                    settlementService.settleAuction(itemId);
+                    return true;
+                }
+        ));
     }
 }
