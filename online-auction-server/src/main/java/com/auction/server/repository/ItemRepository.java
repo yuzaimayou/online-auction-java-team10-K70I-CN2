@@ -473,11 +473,11 @@ public class ItemRepository {
         String selectAboutToEndSql =
                 "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
         String selectAboutToLiveSql =
-                "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime')";
+                "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
         String updateEndedSql =
                 "UPDATE items SET status = ? WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
         String updateOngoingSql =
-                "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime')";
+                "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
 
         try (Connection conn = DatabaseManager.getConnection()) {
 

@@ -400,3 +400,20 @@
 .dialog-pane .button:cancel:hover {
     -fx-background-color: #bdc3c7;
 }
+
+.auction-table .table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.auction-table .table-row-cell:empty .table-cell {
+    -fx-border-width: 0px;
+}
+
+.auction-table .table-row-cell {
+    -fx-cell-size: 25px;
+}
+.auction-table .table-cell {
+    -fx-padding: 4px 8px;
+    -fx-alignment: CENTER-LEFT;
+}

@@ -26,16 +26,18 @@ public class HistoryHandler implements HttpHandler {
             case "GET" -> {
                 List<BidHistoryItemDTO> history = bidHistoryService.getHistory(itemId);
 
-                if (history != null && !history.isEmpty()) {
+                if (history != null) {
                     responseMessage.setStatus("success");
                     responseMessage.setMessage("Get bid history successfully");
                     responseMessage.setData(history);
                     HttpResponseUtil.sendMessage(exchange, 200, responseMessage);
                 } else {
+                    // Chỉ rơi vào trường hợp này nếu có lỗi thực sự từ Database (ví dụ Exception làm trả về null)
                     responseMessage.setStatus("error");
-                    responseMessage.setMessage("No bid history found for this item");
-                    HttpResponseUtil.sendMessage(exchange, 404, responseMessage);
+                    responseMessage.setMessage("Failed to retrieve bid history");
+                    HttpResponseUtil.sendMessage(exchange, 500, responseMessage);
                 }
+                // --- [KẾT THÚC CHỈNH SỬA] ---
             }
             default -> exchange.sendResponseHeaders(405, -1);
         }

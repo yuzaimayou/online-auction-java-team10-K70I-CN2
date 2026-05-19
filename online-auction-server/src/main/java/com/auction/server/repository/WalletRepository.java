@@ -8,14 +8,14 @@ import java.sql.ResultSet;
 // Mọi hàm thay đổi dữ liệu đều yêu cầu Connection từ bên ngoài để dùng chung transaction.
 public class WalletRepository {
 
-    // Đọc [balance, frozen_balance] của user
+    // Đọc [balance, frozen_balance] của auth
     public double[] getBalances(Connection conn, String userId) throws Exception {
         String sql = "SELECT balance, frozen_balance FROM users WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (!rs.next()) {
-                    throw new Exception("Không tìm thấy user: " + userId);
+                    throw new Exception("Không tìm thấy auth: " + userId);
                 }
                 return new double[]{rs.getDouble("balance"), rs.getDouble("frozen_balance")};
             }

@@ -1,6 +1,6 @@
 package com.auction.shared.model.payloads;
 
-import java.util.Timer;
+// [FIX BUG #7] Đã xóa "import java.util.Timer;" — import thừa, không sử dụng ở đâu trong file này.
 
 public class BidPayload {
     private String itemId;
@@ -41,4 +41,3 @@ public class BidPayload {
         return bidTime;
     }
 }
-

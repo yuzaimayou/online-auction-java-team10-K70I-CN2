@@ -457,30 +457,10 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
         if (!isAutoBidActive) return;
-        if (serverBackedAutoBidActive) return;
 
         if (user.getId().equals(lastBidderId)) {
             myLastBid = serverCurrentPrice;
             userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
-            return;
-        }
-
-        double myNextBid = serverCurrentPrice + autoBidIncremental;
-
-        if (myNextBid <= maxBidAmount) {
-            long now = System.currentTimeMillis();
-            if (now - lastAutoBidTime < AUTO_BID_DELAY) return;
-            lastAutoBidTime = now;
-            network.sendBid(item.getId(), user.getId(), myNextBid, "");
-            myLastBid = myNextBid;
-            System.out.println("Auto Bid thực hiện đặt giá: " + myNextBid);
-            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ", myNextBid));
-        } else {
-            isAutoBidActive = false;
-            updateAutoBidUI(false);
-            Platform.runLater(() ->
-                    ToastService.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!")
-            );
         }
     }
 

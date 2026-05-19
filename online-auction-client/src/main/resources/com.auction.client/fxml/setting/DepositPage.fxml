@@ -4,70 +4,77 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox prefWidth="1000.0" spacing="25.0" styleClass="content-card" HBox.hgrow="ALWAYS"
+<VBox prefWidth="1000.0" spacing="25.0"
+      HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" minHeight="-Infinity" maxHeight="Infinity"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.setting.DepositController"
+      styleClass="content-card"
       stylesheets="@../../css/DepositPage.css">
+
     <padding>
-        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+        <Insets top="30.0" right="40.0" bottom="30.0" left="40.0"/>
     </padding>
 
-    <HBox alignment="CENTER_LEFT" >
-        <Button onAction="#handleBackToWallet" styleClass="back-btn" text="←  Back  "/>
+    <HBox alignment="CENTER_LEFT">
+        <Button onAction="#handleBackToWallet" styleClass="back-btn" text="←  Quay lại"/>
     </HBox>
 
-    <VBox spacing="5.0">
+    <VBox spacing="6.0">
         <HBox spacing="10.0" alignment="CENTER_LEFT">
-            <Label text="💰" style="-fx-font-size: 24px;"/>
-            <Label text="Nạp tiền vào tài khoản" styleClass="content-title" />
+            <Label text="💰" styleClass="title-icon"/>
+            <Label text="Nạp tiền vào tài khoản" styleClass="main-title" />
         </HBox>
-        <Label text="Chọn số tiền và phương thức thanh toán." style="-fx-text-fill: #7a828a;"/>
+        <Label text="Chọn số tiền và phương thức thanh toán phù hợp." styleClass="sub-description"/>
     </VBox>
 
-    <Separator style="-fx-opacity: 0.5;"/>
+    <Separator styleClass="custom-separator"/>
 
     <VBox spacing="15.0">
-        <Label text="1. Chọn số tiền nạp" style="-fx-font-weight: bold;"/>
-        <HBox spacing="10.0">
+        <Label text="1. Chọn số tiền nạp" styleClass="step-label"/>
+        <HBox spacing="12.0">
             <fx:define>
                 <ToggleGroup fx:id="amountGroup"/>
             </fx:define>
-            <ToggleButton fx:id="btn50" text="\$50" styleClass="amount-toggle"
-                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
-            <ToggleButton fx:id="btn100" text="\$100" styleClass="amount-toggle"
-                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
-            <ToggleButton fx:id="btn200" text="\$200" styleClass="amount-toggle"
-                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
-            <ToggleButton fx:id="btn500" text="\$500" styleClass="amount-toggle"
-                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
-            <ToggleButton fx:id="btn1000" text="\$1000" styleClass="amount-toggle"
-                          toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn50" text="\$50" styleClass="amount-btn" toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn100" text="\$100" styleClass="amount-btn" toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn200" text="\$200" styleClass="amount-btn" toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn500" text="\$500" styleClass="amount-btn" toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
+            <ToggleButton fx:id="btn1000" text="\$1000" styleClass="amount-btn" toggleGroup="$amountGroup" onAction="#handleAmountSelection"/>
         </HBox>
-        <TextField fx:id="amountField" promptText="Nhập số tiền muốn nạp" styleClass="info-field" prefHeight="40.0"/>
+
+        <TextField fx:id="amountField" promptText="Hoặc nhập số tiền khác muốn nạp" styleClass="input-amount-field" prefHeight="45.0"/>
     </VBox>
 
     <VBox spacing="15.0">
-        <Label text="2. Phương thức thanh toán" style="-fx-font-weight: bold;"/>
-        <VBox spacing="10.0">
-            <HBox spacing="15.0" styleClass="payment-option, selected-option" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-border-color: #2f80ed; -fx-border-radius: 8;">
-                <Label text="ZaloPay" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
-                <Label text="Fast payment via ZaloPay wallet" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <RadioButton />
+        <Label text="2. Phương thức thanh toán" styleClass="step-label"/>
+        <VBox spacing="12.0">
+            <fx:define>
+                <ToggleGroup fx:id="paymentGroup"/>
+            </fx:define>
+
+            <HBox spacing="15.0" styleClass="payment-card" alignment="CENTER_LEFT">
+                <Label text="📱" styleClass="payment-icon-emoji"/>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Ví điện tử ZaloPay" styleClass="payment-name"/>
+                    <Label text="Thanh toán nhanh qua ứng dụng ZaloPay" styleClass="payment-desc"/>
+                </VBox>
+                <RadioButton fx:id="radioZaloPay" toggleGroup="$paymentGroup"/>
             </HBox>
 
-            <HBox spacing="15.0" alignment="CENTER_LEFT" styleClass="payment-option,  selected-option">
-                <Label text="🏦" style="-fx-font-size: 20px;"/>
-                <VBox HBox.hgrow="ALWAYS">
-                    <Label text="Bank Transfer" styleClass="payment-title"/>
-                    <Label text="Transfer via local bank account" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold;"/>
+            <HBox spacing="15.0" styleClass="payment-card" alignment="CENTER_LEFT">
+                <Label text="🏦" styleClass="payment-icon-emoji"/>
+                <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                    <Label text="Chuyển khoản ngân hàng" styleClass="payment-name"/>
+                    <Label text="Chuyển khoản qua tài khoản ngân hàng nội địa (Internet Banking)" styleClass="payment-desc"/>
                 </VBox>
-                <RadioButton/>
+                <RadioButton fx:id="radioBank" toggleGroup="$paymentGroup"/>
             </HBox>
         </VBox>
     </VBox>
 
     <Region VBox.vgrow="ALWAYS" />
-    <Button onAction="#handleConfirmDeposit" text="Xác nhận nạp tiền" styleClass="confirm-btn" maxWidth="Infinity" prefHeight="45.0"
-            style="-fx-background-color: #2f80ed; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8;"/>
+
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Xác nhận nạp tiền" onAction="#handleConfirmDeposit" styleClass="btn-confirm-main"/>
+    </HBox>
 </VBox>

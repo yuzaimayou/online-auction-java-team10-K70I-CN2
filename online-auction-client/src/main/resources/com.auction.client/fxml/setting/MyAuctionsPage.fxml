@@ -4,7 +4,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox prefHeight="760.0" prefWidth="980.0" spacing="18.0" styleClass="content-card"
+<VBox prefWidth="1000.0" spacing="18.0" styleClass="content-card"
+      HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" minHeight="-Infinity" maxHeight="Infinity"
       stylesheets="@../../css/MyAuctionsPage.css"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.controller.setting.MyAuctionsController">

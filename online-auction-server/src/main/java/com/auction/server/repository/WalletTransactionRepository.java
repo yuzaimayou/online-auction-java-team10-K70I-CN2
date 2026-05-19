@@ -41,7 +41,7 @@ public class WalletTransactionRepository {
 
             int rows = stmt.executeUpdate();
             if (rows == 0) {
-                throw new Exception("Ghi wallet_transactions thất bại, user=" + userId);
+                throw new Exception("Ghi wallet_transactions thất bại, auth=" + userId);
             }
         }
     }

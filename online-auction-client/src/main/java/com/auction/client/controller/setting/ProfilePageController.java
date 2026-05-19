@@ -15,7 +15,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class ProfilePageController {
-    // user info
+    // auth info
     @FXML
     private TextField emailField;
     @FXML
@@ -45,7 +45,7 @@ public class ProfilePageController {
             profileInfoBtn.setSelected(true);
         }
         displayUserData();
-        displayWalletData();
+        updateWalletBalances();
     }
 
     private void displayUserData() {
@@ -64,18 +64,17 @@ public class ProfilePageController {
                 } else {
                     roleUserField.setText("User Account");
                 }
+                /*  setText(emailField, currentUser.getEmail());
+        setText(userNameField, currentUser.getUsername());
+
+        // FIX [refactor]: dùng role thay vì so sánh username để phân biệt admin
+        if (roleUserField != null) {
+            boolean isAdmin = currentUser.getRole() != null
+                    && currentUser.getRole().equalsIgnoreCase("admin");
+            roleUserField.setText(isAdmin ? "Admin Account" : "User Account"); */
             }
             lockFields(emailField, userNameField, roleUserField);
         }
-    }
-
-    // hiển thị số dư ví
-    private void displayWalletData() {
-        // Giả lập dữ liệu ví
-        double available = 700.00;
-        availableBalanceLabel.setText(String.format("$%,.2f", available));
-        frozenBalanceLabel.setText("$300.00");
-        totalBalanceLabel.setText("$1,000.00");
     }
 
     private void lockFields(TextField... fields) {
@@ -86,6 +85,30 @@ public class ProfilePageController {
                 field.setMouseTransparent(true);
             }
         }
+    }
+
+    // ── Wallet ─────────────────────────────────────────────────────────────────
+    /**
+     * FIX [dead code]: thay hardcode bằng method public để
+     * inject dữ liệu thật từ WalletService khi sẵn sàng.
+     * Gọi method này từ bên ngoài sau khi load xong wallet:
+     *   controller.loadWalletData(available, frozen, total);
+     */
+    public void loadWalletData(double available, double frozen, double total) {
+        // FIX [error handling]: null-check trước khi set text
+        if (availableBalanceLabel != null)
+            availableBalanceLabel.setText(String.format("$%,.2f", available));
+        if (frozenBalanceLabel != null)
+            frozenBalanceLabel.setText(String.format("$%,.2f", frozen));
+        if (totalBalanceLabel != null)
+            totalBalanceLabel.setText(String.format("$%,.2f", total));
+    }
+
+    /** Hiển thị trạng thái loading khi chờ WalletService. */
+    private void displayWalletPlaceholder() {
+        if (availableBalanceLabel != null) availableBalanceLabel.setText("Loading...");
+        if (frozenBalanceLabel    != null) frozenBalanceLabel.setText("Loading...");
+        if (totalBalanceLabel     != null) totalBalanceLabel.setText("Loading...");
     }
     @FXML
     private void handleProfileInfo(ActionEvent event) {
@@ -98,15 +121,26 @@ public class ProfilePageController {
         }
     }
     @FXML
-    private void handleHistoryBid(ActionEvent event) {
-        if (SettingController.getInstance() != null) {
-            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/HistoryBidPage.fxml");
-        }
-    }
-    @FXML
     private void handleDepositAction(ActionEvent event) {
         if (SettingController.getInstance() != null) {
             SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/DepositPage.fxml");
+        }
+    }
+    private void updateWalletBalances() {
+        User currentUser = UserSession.getInstance().getLoggedInUser();
+        if (currentUser != null) {
+            double available = currentUser.getBalance();
+            double frozen = currentUser.getFrozenBalance(); // Đảm bảo model User của bạn có trường này
+            double total = available + frozen;
+
+            if (availableBalanceLabel != null)
+                availableBalanceLabel.setText(String.format("$%,.2f", available));
+            if (frozenBalanceLabel != null)
+                frozenBalanceLabel.setText(String.format("$%,.2f", frozen));
+            if (totalBalanceLabel != null)
+                totalBalanceLabel.setText(String.format("$%,.2f", total));
+        } else {
+            displayWalletPlaceholder();
         }
     }
 }
