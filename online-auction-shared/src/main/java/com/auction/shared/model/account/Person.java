@@ -5,7 +5,7 @@ import com.auction.shared.model.base.Entity;
 public abstract class Person extends Entity {
     protected String username;
     protected String password;
-    protected String role;
+    private String roleOverride;
 
     public Person(String id, String username, String password) {
         super(id);
@@ -47,23 +47,20 @@ public abstract class Person extends Entity {
         this.password = password;
     }
 
+    protected abstract String getDefaultRole();
     public String getRole() {
-        return role;
+        return (roleOverride != null) ? roleOverride : getDefaultRole();
     }
 
     public void setRole(String role) {
         if (role == null || role.trim().isEmpty()) {
-            throw new IllegalArgumentException("Error: Updated role cannot be null or empty!");
+            throw new IllegalArgumentException("Error: Role cannot be null or empty!");
         }
-        this.role = role;
+        this.roleOverride = role;
     }
 
     @Override
     public String toString() {
-        return "User{" +
-                "id='" + id + '\'' +
-                ", username='" + username + '\'' +
-                ", role='" + role + '\'' +
-                '}';
+        return "Person{id='" + id + "', username='" + username + "', role='" + getRole() + "'}";
     }
 }

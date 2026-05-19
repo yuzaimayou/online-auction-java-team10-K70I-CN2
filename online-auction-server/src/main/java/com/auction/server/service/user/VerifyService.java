@@ -87,7 +87,7 @@ public class VerifyService {
         }
 
         otpStorage.remove(email); // Remove OTP after successful verification
-        userRepository.enableUser(email); // Enable user account after successful verification
+        userRepository.enableUser(email); // Enable auth account after successful verification
         return true;
     }
 

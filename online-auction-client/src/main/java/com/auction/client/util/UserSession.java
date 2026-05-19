@@ -1,17 +1,19 @@
 package com.auction.client.util;
 
+import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
 
 public class UserSession {
-    private static UserSession instance;
+    private static volatile UserSession instance;
     private User loggedInUser;
-
-    private UserSession() {
-    }
 
     public static UserSession getInstance() {
         if (instance == null) {
-            instance = new UserSession();
+            synchronized (UserSession.class) {
+                if (instance == null) {
+                    instance = new UserSession();
+                }
+            }
         }
         return instance;
     }
@@ -23,6 +25,24 @@ public class UserSession {
     public User getLoggedInUser() {
         return loggedInUser;
     }
+    public String getCurrentUserId() {
+        return loggedInUser != null ? loggedInUser.getId() : null;
+    }
 
-    public void cleanUserSession() { loggedInUser = null; }
+    public boolean isAdmin() {
+        return loggedInUser instanceof Admin;
+    }
+
+    /**
+     * Trả về Admin object nếu người đăng nhập là Admin, null nếu không phải.
+     * Dùng khi cần gọi Admin-specific actions (deleteUser, suspendUser...).
+     */
+    public Admin getAsAdmin() {
+        if (loggedInUser instanceof Admin admin) return admin;
+        return null;
+    }
+
+    public void cleanUserSession() {
+        loggedInUser = null;
+    }
 }

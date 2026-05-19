@@ -11,6 +11,13 @@
     -fx-max-width: Infinity;
 }
 
+.scroll-pane {
+    -fx-background-color: white;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: white;
+}
 
 /* --- Explore Categories Section --- */
 .section-title {

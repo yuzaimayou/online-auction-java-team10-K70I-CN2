@@ -11,9 +11,13 @@
 <?import javafx.scene.layout.VBox?>
 
 
+<?import javafx.scene.layout.Pane?>
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.auction.client.controller.HomePageController">
+    <VBox>
+    <fx:include fx:id="navBar" source="NavBar.fxml"/>
+
 <ScrollPane fx:id="mainScrollPane" fitToWidth="true" hbarPolicy="NEVER" prefHeight="850.0" prefWidth="1440.0"
             stylesheets="@../css/HomePage.css" >
         <VBox styleClass="main-container" >
@@ -21,7 +25,7 @@
                 <Insets bottom="100.0" left="0.0" right="0.0" top="0.0"/>
             </padding>
 
-            <fx:include fx:id="navBar" source="NavBar.fxml"/>
+
 
             <Label styleClass="section-title" text="Explore Categories">
                 <VBox.margin>
@@ -139,6 +143,9 @@
                     <Insets top="30.0"/>
                 </VBox.margin>
             </VBox>
+            <Pane prefHeight="100.0" minHeight="100.0" maxWidth="Infinity" />
         </VBox>
 </ScrollPane>
+    </VBox>
+
         </StackPane>
