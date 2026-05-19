@@ -49,48 +49,80 @@ public class ItemPageController implements NetworkService.MessageListener {
     private static final double THUMB_HEIGHT = 60.0;
 
     // FXML: item info
-    @FXML private Label itemNameLabel;
-    @FXML private Label itemDesLabel;
-    @FXML private ImageView itemImage;
-    @FXML private Label sellerLabel;
-    @FXML private Label currentPriceLabel;
-    @FXML private Label startPriceLabel;
-    @FXML private Label bidStepLabel;
-    @FXML private Label startTimeLabel;
-    @FXML private Label endTimeLabel;
-    @FXML private HBox thumbnailContainer;
+    @FXML
+    private Label itemNameLabel;
+    @FXML
+    private Label itemDesLabel;
+    @FXML
+    private ImageView itemImage;
+    @FXML
+    private Label sellerLabel;
+    @FXML
+    private Label currentPriceLabel;
+    @FXML
+    private Label startPriceLabel;
+    @FXML
+    private Label bidStepLabel;
+    @FXML
+    private Label startTimeLabel;
+    @FXML
+    private Label endTimeLabel;
+    @FXML
+    private HBox thumbnailContainer;
 
     // FXML: bid controls
-    @FXML private TextField bidAmountField;
-    @FXML private Button submitBid;
-    @FXML private Label minimumBidLabel;
-    @FXML private Button btnSuggestStep1;
-    @FXML private Button btnSuggestStep2;
+    @FXML
+    private TextField bidAmountField;
+    @FXML
+    private Button submitBid;
+    @FXML
+    private Label minimumBidLabel;
+    @FXML
+    private Button btnSuggestStep1;
+    @FXML
+    private Button btnSuggestStep2;
 
     // FXML: bid history
-    @FXML private ScrollPane historyScrollPane;
-    @FXML private VBox historyBidContainer;
-    @FXML private Label totalBidsLabel;
+    @FXML
+    private ScrollPane historyScrollPane;
+    @FXML
+    private VBox historyBidContainer;
+    @FXML
+    private Label totalBidsLabel;
 
     // FXML: auto-bid
-    @FXML private VBox autoBidForm;
-    @FXML private VBox autoBidActiveStatus;
-    @FXML private TextField maxBidField;
-    @FXML private TextField autoBidStepField;
-    @FXML private Label userCurrentBidLabel;
-    @FXML private Button btnAutoBidToggle;
+    @FXML
+    private VBox autoBidForm;
+    @FXML
+    private VBox autoBidActiveStatus;
+    @FXML
+    private TextField maxBidField;
+    @FXML
+    private TextField autoBidStepField;
+    @FXML
+    private Label userCurrentBidLabel;
+    @FXML
+    private Button btnAutoBidToggle;
 
     // FXML: countdown timer
-    @FXML private Label timeStatusLabel;
-    @FXML private Label daysLabel;
-    @FXML private Label hoursLabel;
-    @FXML private Label minsLabel;
-    @FXML private Label secsLabel;
+    @FXML
+    private Label timeStatusLabel;
+    @FXML
+    private Label daysLabel;
+    @FXML
+    private Label hoursLabel;
+    @FXML
+    private Label minsLabel;
+    @FXML
+    private Label secsLabel;
 
     // FXML: status overlay
-    @FXML private VBox bidControlsContainer;
-    @FXML private StackPane statusOverlay;
-    @FXML private Label statusMessageLabel;
+    @FXML
+    private VBox bidControlsContainer;
+    @FXML
+    private StackPane statusOverlay;
+    @FXML
+    private Label statusMessageLabel;
 
     // State
     private String itemId;
@@ -150,10 +182,6 @@ public class ItemPageController implements NetworkService.MessageListener {
         autoBidManager.setLastBidderId(item.getCurrentTopPLayerId());
 
         AuctionStatus status = currentStatus();
-
-        // [FIX #1] item.setStatus() nhận String, không phải AuctionStatus.
-        // Trước: item.setStatus(status) → compile error (type mismatch)
-        // Sau:   item.setStatus(status.getDisplayName())
         item.setStatus(status.getDisplayName());
 
         displayDataItem(item);
@@ -587,7 +615,6 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         countdownTimer.startFor(targetTime, () -> {
             AuctionStatus newStatus = currentStatus();
-            // [FIX #1 – chỗ 3] Cùng lỗi type mismatch như trên
             item.setStatus(newStatus.getDisplayName());
             Platform.runLater(() -> updateUIByStatus(newStatus));
         });
