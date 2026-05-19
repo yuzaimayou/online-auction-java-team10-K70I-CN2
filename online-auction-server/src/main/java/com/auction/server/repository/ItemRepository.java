@@ -2,6 +2,7 @@ package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.util.StringUtil;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
@@ -16,20 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemRepository {
-    private static ItemRepository instance;
+    private static final ItemRepository instance = new ItemRepository();
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(ItemRepository.class.getName());
 
     private ItemRepository() {
     }
 
     public static ItemRepository getInstance() {
-        if (instance == null) {
-            instance = new ItemRepository();
-        }
         return instance;
     }
 
-    private Gson gson = new GsonUtil().getInstance();
+    private Gson gson = GsonUtil.getInstance();
 
 
     public boolean updateCurrentBidder(Connection conn, String itemId,
@@ -60,7 +58,7 @@ public class ItemRepository {
         String thumbnailUrl = null;
         String imagesData = rs.getString("image_path");
 
-        List<String> imagePaths = gson.fromJson(imagesData, List.class);
+        List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
         if (imagePaths != null && !imagePaths.isEmpty()) {
             thumbnailUrl = imagePaths.get(0);
         }
@@ -265,6 +263,19 @@ public class ItemRepository {
         return null;
     }
 
+    public String getCurrentBidderId(Connection conn, String itemId) throws SQLException {
+        String sql = "SELECT current_bidder_id FROM items WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("current_bidder_id");
+                }
+            }
+        }
+        return null;
+    }
+
     public List<ItemSummary> findAllBySellerId(String sellerID) {
         String sql = """
                 SELECT id,
@@ -344,7 +355,7 @@ public class ItemRepository {
                     String pathsData = rs.getString("image_path");
 
                     if (pathsData != null && !pathsData.isEmpty()) {
-                        imagePaths = gson.fromJson(pathsData, List.class);
+                        imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
                     }
                 }
             } catch (SQLException e) {
@@ -363,7 +374,7 @@ public class ItemRepository {
         if (pathsData != null && !pathsData.isEmpty()) {
             try {
                 // Try to parse as JSON list (new format)
-                imagePaths = gson.fromJson(pathsData, List.class);
+                imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
                 if (imagePaths == null) {
                     imagePaths = new ArrayList<>();
                 }
@@ -395,7 +406,7 @@ public class ItemRepository {
 
     // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
     public boolean markEnded(Connection conn, String itemId) {
-        String sql = "UPDATE items SET status = 'ENDED' WHERE id = ?";
+        String sql = "UPDATE items SET status = '" + ItemStatusConstants.ENDED + "' WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, itemId);
             return stmt.executeUpdate() > 0;
@@ -456,31 +467,56 @@ public class ItemRepository {
 
     public List<String> updateStatus() {
         List<String> updatedId = new ArrayList<>();
-        String selectEndedSql = "SELECT id FROM items WHERE status = 'ONGOING' AND datetime(end_time) <= datetime('now','localtime')";
-        String selectLiveSql = "SELECT id FROM items WHERE status = 'UPCOMING' AND datetime(start_time) <= datetime('now','localtime')";
+
+        // SELECT-before-UPDATE: collect IDs that are *about* to transition so the
+        // return value reflects exactly what changed, not all already-ended items.
+        String selectAboutToEndSql =
+                "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
+        String selectAboutToLiveSql =
+                "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime')";
+        String updateEndedSql =
+                "UPDATE items SET status = ? WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
+        String updateOngoingSql =
+                "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime')";
 
         try (Connection conn = DatabaseManager.getConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(selectEndedSql);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    updatedId.add(rs.getString("id"));
-                }
-            }
-            try (PreparedStatement ps = conn.prepareStatement(selectLiveSql);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    updatedId.add(rs.getString("id"));
+
+            // Step 1: Collect IDs that will transition ONGOING -> ENDED
+            try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
+                ps.setString(1, ItemStatusConstants.ONGOING);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) updatedId.add(rs.getString("id"));
                 }
             }
 
-            for (String id : updatedId) {
+            // Step 2: Perform ONGOING -> ENDED update
+            try (PreparedStatement ps = conn.prepareStatement(updateEndedSql)) {
+                ps.setString(1, ItemStatusConstants.ENDED);
+                ps.setString(2, ItemStatusConstants.ONGOING);
+                int rows = ps.executeUpdate();
+                LOGGER.info(String.format("[updateStatus] ONGOING->ENDED: %d row(s) updated", rows));
+            }
 
+            // Step 3: Collect IDs that will transition UPCOMING -> ONGOING
+            try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
+                ps.setString(1, ItemStatusConstants.UPCOMING);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) updatedId.add(rs.getString("id"));
+                }
+            }
+
+            // Step 4: Perform UPCOMING -> ONGOING update
+            try (PreparedStatement ps = conn.prepareStatement(updateOngoingSql)) {
+                ps.setString(1, ItemStatusConstants.ONGOING);
+                ps.setString(2, ItemStatusConstants.UPCOMING);
+                int rows = ps.executeUpdate();
+                LOGGER.info(String.format("[updateStatus] UPCOMING->ONGOING: %d row(s) updated", rows));
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update item statuses", e);
         } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unexpected error while updating item statuses", e);
         }
         return updatedId;
     }

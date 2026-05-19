@@ -5,6 +5,7 @@ import com.auction.server.controller.ClientHandler;
 import com.auction.server.controller.api.*;
 import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
+import com.auction.server.service.AuctionSchedulerService;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -24,6 +25,11 @@ public class MainServer {
         // tao database
         DatabaseManager.init();
         DatabaseInit.init();
+
+        // Start auction scheduler: polls every 5 s to transition
+        // UPCOMING -> ONGOING and ONGOING -> ENDED in the database.
+        new AuctionSchedulerService(null).start();
+        System.out.println("Auction scheduler started.");
 
         //start http server
         try {

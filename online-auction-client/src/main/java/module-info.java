@@ -1,5 +1,5 @@
 module online.auction.client {
-    requires online.auction.shared;
+    requires transitive online.auction.shared;
 
     requires java.desktop;
     requires com.google.gson;

@@ -140,7 +140,7 @@ public class DatabaseInit {
         } catch (Exception ignored) {
         }
         try {
-            stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'PENDING'");
+            stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'UPCOMING'");
         } catch (Exception ignored) {
         }
         try {

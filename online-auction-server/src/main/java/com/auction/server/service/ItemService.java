@@ -6,9 +6,7 @@ import com.auction.server.util.StringUtil;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
-import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,16 +21,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class ItemService {
-    private static ItemService instance;
+    private static final ItemService instance = new ItemService();
 
     private final ItemRepository itemRepository = ItemRepository.getInstance();
     private final AiServiceClient aiServiceClient = AiServiceClient.getInstance();
-    private Gson gson = GsonUtil.getInstance();
 
     public static ItemService getInstance() {
-        if (instance == null) {
-            instance = new ItemService();
-        }
         return instance;
     }
 

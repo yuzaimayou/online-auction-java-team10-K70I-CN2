@@ -10,12 +10,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * IN-PROGRESS FEATURE
- * Note: This class is not yet wired into the active database-backed socket flow.
+ * Prototype/demo class only. Not part of the production bidding flow.
+ *
+ * <p>The production bid placement flow is
+ * {@link BidService} -> {@link AutoBidResolver} -> {@link AuctionRoomManager}.
+ * Production anti-sniping currently runs inside {@link BidService} after an
+ * accepted bid and before commit. This in-memory helper is kept as a historical
+ * prototype for the anti-sniping algorithm.</p>
+ *
+ * @deprecated Use the database-backed anti-sniping behavior in {@link BidService}.
  *
  * Service gia hạn phien dau gia khi co bid phut cuoi
  * Requirement 3.2.3: Gia han phien dau gia (Anti-sniping Algorithm)
  */
+@Deprecated
 public class AntiSnipingService {
     private final Map<String, Auction> auctionMap;
     private final int LAST_SECONDS_THRESHOLD = 60;

@@ -1,15 +1,10 @@
 package com.auction.shared.model.enums;
 
-/**
- * Requirement 3.1.4: Chuyển trạng thái phiên đấu giá
- * OPEN → RUNNING → FINISHED → PAID / CANCELED
- */
 public enum AuctionStatus {
-    OPEN("Open", "Session has not started yet"),
-    RUNNING("Running", "Session is underway"),
-    FINISHED("Finished", "Session has ended"),
-    PAID("Paid", "Paid"),
-    CANCELED("Canceled", "Canceled");
+    UPCOMING("UPCOMING", "Item auction has not started yet"),
+    ONGOING("ONGOING", "Item auction is currently open for bidding"),
+    ENDED("ENDED", "Item auction has finished"),
+    BANNED("BANNED", "Item is blocked/disabled and cannot be bid");
 
     private final String displayName;
     private final String description;

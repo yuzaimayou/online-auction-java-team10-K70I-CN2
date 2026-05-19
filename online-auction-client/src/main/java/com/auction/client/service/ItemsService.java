@@ -16,7 +16,9 @@ import java.util.concurrent.CompletableFuture;
 public class ItemsService {
     private static ItemsService instance;
     private User loggedInUser = UserSession.getInstance().getLoggedInUser();
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
     private final Gson gson = new GsonUtil().getInstance();
 
     public static ItemsService getInstance() {
@@ -39,7 +41,9 @@ public class ItemsService {
     }
 
     public CompletableFuture<ResponseMessage> createItem(String jsonPayload) {
-        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
                 .header("Content-Type", "application/json")

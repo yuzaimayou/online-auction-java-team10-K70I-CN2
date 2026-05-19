@@ -9,9 +9,17 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * IN-PROGRESS FEATURE
- * Note: This class is not yet wired into the active database-backed socket flow.
+ * Prototype/demo class only. Not part of the production bidding flow.
+ *
+ * <p>The production bid placement flow is
+ * {@link BidService} -> {@link AutoBidResolver} -> {@link AuctionRoomManager}.
+ * Server-backed auto-bid execution is handled by {@link BidService} and
+ * {@link AutoBidResolver}. This in-memory service is kept as a historical
+ * prototype for OOP/design-pattern demonstration.</p>
+ *
+ * @deprecated Use the database-backed auto-bid flow through {@link BidService}.
  */
+@Deprecated
 public class AutoBiddingService {
     private Map<String, AutoBid> autoBidMap;
     private Map<String, List<AutoBid>> auctionAutoBidsMap;

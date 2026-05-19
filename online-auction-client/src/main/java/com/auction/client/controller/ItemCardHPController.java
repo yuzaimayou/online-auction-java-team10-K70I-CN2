@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.util.ClientImageUtil;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.ItemSummary;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -116,7 +117,7 @@ public class ItemCardHPController {
 
         // Upcoming
         if (currentItem.getStartTime() != null && now.isBefore(currentItem.getStartTime())) {
-            statusLabel.setText("UPCOMING");
+            statusLabel.setText(ItemStatusConstants.UPCOMING);
             statusLabel.setStyle("-fx-background-color: #fff3c4; -fx-text-fill: #eea504;");
             priceTitleLabel.setText("START PRICE");
             priceLabel.setText(formatPrice(currentItem.getCurrentPrice()));
@@ -125,7 +126,7 @@ public class ItemCardHPController {
         }
         // Live
         else if (currentItem.getEndTime() != null && now.isAfter(currentItem.getStartTime()) && now.isBefore(currentItem.getEndTime())) {
-            statusLabel.setText("LIVE");
+            statusLabel.setText(ItemStatusConstants.ONGOING);
             statusLabel.setStyle("-fx-background-color: #ecfdf5");
             priceTitleLabel.setText("CURRENT BID");
             double displayPrice = currentItem.getCurrentPrice();
@@ -135,7 +136,7 @@ public class ItemCardHPController {
         }
         // Ended
         else {
-            statusLabel.setText("ENDED");
+            statusLabel.setText(ItemStatusConstants.ENDED);
             statusLabel.setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white;");
             priceTitleLabel.setText("FINAL PRICE");
             double finalPrice = currentItem.getCurrentPrice();

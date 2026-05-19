@@ -3,6 +3,7 @@ package com.auction.client.service;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.enums.ActionType;
+import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.payloads.RoomPayload;
 import com.google.gson.Gson;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
 
 import static com.auction.client.util.AppConfig.ServerIp;
 import static com.auction.client.util.AppConfig.SocketPort;
@@ -114,6 +116,47 @@ public class NetworkService {
             System.out.println("Client was sent message: " + bidMessage);
         } else {
             System.out.println("Cannot send bid, not connected to server");
+        }
+    }
+
+    public void sendAutoBidRegister(String itemId, String userId, Double maxBid, Double increment) {
+        if (out != null && socket != null && !socket.isClosed()) {
+            AutoBidPayload payload = new AutoBidPayload(itemId, userId, maxBid, increment);
+            String jsonPayload = gson.toJson(payload);
+            RequestMessage requestMessage = new RequestMessage(ActionType.AUTO_BID_REGISTER, jsonPayload);
+            String autoBidMessage = gson.toJson(requestMessage);
+            out.println(autoBidMessage);
+            System.out.println("Client was sent message: " + autoBidMessage);
+        } else {
+            System.out.println("Cannot register auto-bid, not connected to server");
+        }
+    }
+
+    public void sendGetAutoBidStatus(String itemId, String userId) {
+        if (out != null && socket != null && !socket.isClosed()) {
+            AutoBidPayload payload = new AutoBidPayload(itemId, userId, null, null);
+            String jsonPayload = gson.toJson(payload);
+            RequestMessage requestMessage = new RequestMessage(ActionType.GET_AUTO_BID_STATUS, jsonPayload);
+            String statusMessage = gson.toJson(requestMessage);
+            out.println(statusMessage);
+            System.out.println("Client was sent message: " + statusMessage);
+        } else {
+            System.out.println("Cannot fetch auto-bid status, not connected to server");
+        }
+    }
+
+    public void sendCancelAutoBid(String itemId, String userId) {
+        if (out != null && socket != null && !socket.isClosed()) {
+            AutoBidPayload payload = new AutoBidPayload(itemId, userId, null, null);
+            String jsonPayload = gson.toJson(payload);
+            RequestMessage requestMessage = new RequestMessage(ActionType.CANCEL_AUTO_BID, jsonPayload);
+            String cancelMessage = gson.toJson(requestMessage);
+            out.println(cancelMessage);
+            System.out.printf("[AUTO_BID_CANCEL][CLIENT_SEND] time=%s itemId=%s userId=%s%n",
+                    LocalDateTime.now(), itemId, userId);
+            System.out.println("Client was sent message: " + cancelMessage);
+        } else {
+            System.out.println("Cannot cancel auto-bid, not connected to server");
         }
     }
 

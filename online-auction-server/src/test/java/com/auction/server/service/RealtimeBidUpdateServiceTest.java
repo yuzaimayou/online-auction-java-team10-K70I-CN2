@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("deprecation")
 class RealtimeBidUpdateServiceTest {
 
     private RealtimeBidUpdateService service;

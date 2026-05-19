@@ -10,13 +10,10 @@ import java.util.List;
  * Requirement 3.2.5: Bid History Visualization - Realtime Price Curve
  */
 public class BidHistoryService {
-    private static BidHistoryService instance;
+    private static final BidHistoryService instance = new BidHistoryService();
     private final HistoryRepository historyRepository = HistoryRepository.getInstance();
 
     public static BidHistoryService getInstance() {
-        if (instance == null) {
-            instance = new BidHistoryService();
-        }
         return instance;
     }
 
