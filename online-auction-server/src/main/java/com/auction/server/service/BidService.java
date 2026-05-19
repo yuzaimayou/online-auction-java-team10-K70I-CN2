@@ -6,6 +6,9 @@ import com.auction.server.repository.ItemRepository;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.item.Item;
 
+import com.auction.server.database.ConnectionProvider;
+import com.auction.server.database.DefaultConnectionProvider;
+
 import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,12 +23,31 @@ public class BidService {
     private final ItemRepository itemRepository;
     private final AutoBidResolver autoBidResolver;
     private final ConcurrentMap<String, Object> itemLocks;
+    private final ConnectionProvider connectionProvider;
 
     public BidService() {
         this.bidRepository = new BidRepository();
         this.itemRepository = ItemRepository.getInstance();
         this.autoBidResolver = new AutoBidResolver(PRICE_EPSILON);
         this.itemLocks = new ConcurrentHashMap<>();
+        this.connectionProvider = new DefaultConnectionProvider();
+    }
+
+    public BidService(BidRepository bidRepository,
+                      ItemRepository itemRepository,
+                      AutoBidResolver autoBidResolver,
+                      ConnectionProvider connectionProvider) {
+        this.bidRepository = bidRepository;
+        this.itemRepository = itemRepository;
+        this.autoBidResolver = autoBidResolver;
+        this.itemLocks = new ConcurrentHashMap<>();
+        this.connectionProvider = connectionProvider;
+    }
+
+    public BidService(BidRepository bidRepository,
+                      ItemRepository itemRepository,
+                      AutoBidResolver autoBidResolver) {
+        this(bidRepository, itemRepository, autoBidResolver, new DefaultConnectionProvider());
     }
 
     public boolean registerAutoBid(String itemId, String userId, double maxBid, double increment) {
