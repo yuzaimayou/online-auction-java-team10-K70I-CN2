@@ -142,31 +142,29 @@ public class UserRepository {
     }
 
     private User mapRow(ResultSet rs) throws Exception {
-        String role = rs.getString("role"); // Đọc role từ DB
+        String role = rs.getString("role");
 
         User user;
 
         if ("Admin".equalsIgnoreCase(role)) {
-            Admin admin = new Admin(
+            user = new Admin(
                     rs.getString("id"),
                     rs.getString("username"),
                     rs.getString("password"),
                     rs.getString("email"),
-                    rs.getBoolean("isVerify")
-            );
-            user = admin;
+                    rs.getBoolean("isVerify"));
         } else {
             user = new User(
                     rs.getString("id"),
                     rs.getString("username"),
                     rs.getString("password"),
                     rs.getString("email"),
-                    rs.getBoolean("isVerify")
-            );
+                    rs.getBoolean("isVerify"));
         }
 
         user.setBalance(rs.getDouble("balance"));
         user.setFrozenBalance(rs.getDouble("frozen_balance"));
+
         if (role != null) {
             user.setRole(role);
         }
