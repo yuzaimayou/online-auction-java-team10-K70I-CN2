@@ -21,11 +21,7 @@ public class DepositService {
         }
         return instance;
     }
-
-    /**
-     * Gửi yêu cầu nạp tiền lên Server qua API
-     */
-    public CompletableFuture<Double> deposit(String userId, double amount) {
+    public CompletableFuture<Double> deposit(String userId, double amount, double currentBalance) {
         JsonObject jsonReq = new JsonObject();
         jsonReq.addProperty("userId", userId);
         jsonReq.addProperty("amount", amount);
@@ -40,10 +36,11 @@ public class DepositService {
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
                         JsonObject jsonResp = gson.fromJson(response.body(), JsonObject.class);
+
                         if (jsonResp != null && jsonResp.has("newBalance")) {
                             return jsonResp.get("newBalance").getAsDouble();
                         }
-                        throw new RuntimeException("Phản hồi từ server thiếu thông tin số dư");
+                        return currentBalance + amount;
                     } else {
                         throw new RuntimeException("Server báo lỗi: " + response.body());
                     }

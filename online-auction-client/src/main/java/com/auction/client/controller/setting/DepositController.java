@@ -16,6 +16,8 @@ public class DepositController {
     private TextField amountField;
     @FXML
     private ToggleGroup amountGroup;
+    @FXML
+    private ToggleGroup paymentGroup;
     private boolean isUpdatingFromButton = false;
 
     @FXML
@@ -56,10 +58,13 @@ public class DepositController {
     private void handleConfirmDeposit(ActionEvent event) {
         String amountText = amountField.getText().trim();
         if (amountText.isEmpty()) {
-            ToastService.showError(amountField.getScene(), "Vui lòng nhập số tiền!");
+            ToastService.showError(amountField.getScene(), "Vui lòng nhập hoặc chọn số tiền muốn nạp!");
             return;
         }
-
+        if (paymentGroup.getSelectedToggle() == null) {
+            ToastService.showError(amountField.getScene(), "Vui lòng chọn phương thức thanh toán!");
+            return;
+        }
         double amount;
         try {
             amount = Double.parseDouble(amountText);
@@ -71,7 +76,7 @@ public class DepositController {
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser == null) return;
 
-        DepositService.getInstance().deposit(currentUser.getId(), amount)
+        DepositService.getInstance().deposit(currentUser.getId(), amount, currentUser.getBalance())
                 .thenAccept(newBalance -> {
                     Platform.runLater(() -> {
                         currentUser.setBalance(newBalance);
@@ -82,7 +87,9 @@ public class DepositController {
                 })
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
-                        ToastService.showError(amountField.getScene(), ex.getCause().getMessage());
+                        Throwable cause = ex.getCause();
+                        String errorMsg = (cause != null) ? cause.getMessage() : ex.getMessage();
+                        ToastService.showError(amountField.getScene(), errorMsg);
                     });
                     return null;
                 });
