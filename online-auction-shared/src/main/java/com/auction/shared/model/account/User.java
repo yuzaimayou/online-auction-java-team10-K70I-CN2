@@ -8,7 +8,7 @@ import java.util.List;
 
 public class User extends Person {
     protected double balance;
-    protected double frozenBalance;  // Money held against current highest bid
+    protected double frozenBalance; // Money held against current highest bid
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
     protected String email;
     protected boolean isVerify;
@@ -26,6 +26,7 @@ public class User extends Person {
         this.email = email;
         this.isVerify = isEnable;
     }
+
     @Override
     protected String getDefaultRole() {
         return "User";
@@ -120,11 +121,13 @@ public class User extends Person {
         }
 
         if (amount <= item.getHighestCurrentPrice()) {
-            throw new IllegalArgumentException("Error: Bid amount (" + amount + ") must be greater than the current highest price (" + item.getHighestCurrentPrice() + ")!");
+            throw new IllegalArgumentException("Error: Bid amount (" + amount
+                    + ") must be greater than the current highest price (" + item.getHighestCurrentPrice() + ")!");
         }
 
         if (this.getAvailableBalance() < amount)
-            throw new IllegalStateException("Error: Insufficient balance! Required: " + amount + ", Available: " + this.getAvailableBalance());
+            throw new IllegalStateException(
+                    "Error: Insufficient balance! Required: " + amount + ", Available: " + this.getAvailableBalance());
 
         item.setHighestCurrentPrice(amount);
         System.out.println("Success: " + this.username + " placed a bid of " + amount + " for item: " + item.getName());
@@ -141,12 +144,12 @@ public class User extends Person {
         }
 
         if (this.rating < 2.0) {
-            throw new IllegalStateException("Error: User " + this.username + " has insufficient rating (" + String.format("%.2f", this.rating) + ") to list new items. Required: 2.0+");
+            throw new IllegalStateException("Error: User " + this.username + " has insufficient rating ("
+                    + String.format("%.2f", this.rating) + ") to list new items. Required: 2.0+");
         }
 
         System.out.println("Success: User " + this.username + " just listed a new item: " + itemName);
     }
-
 
     @Override
     public String toString() {
