@@ -151,6 +151,12 @@ public class UserRepository {
 
         user.setBalance(rs.getDouble("balance"));
         user.setFrozenBalance(rs.getDouble("frozen_balance"));
+        
+        String role = rs.getString("role");
+        if (role != null) {
+            user.setRole(role);
+        }
+        
         return user;
     }
 }

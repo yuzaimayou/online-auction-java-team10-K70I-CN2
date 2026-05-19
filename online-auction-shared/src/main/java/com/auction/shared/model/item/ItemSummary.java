@@ -1,5 +1,7 @@
 package com.auction.shared.model.item;
 
+import com.auction.shared.constant.ItemStatusConstants;
+
 import java.time.LocalDateTime;
 
 public class ItemSummary {
@@ -54,11 +56,11 @@ public class ItemSummary {
         LocalDateTime now = LocalDateTime.now();
 
         if (now.isBefore(startTime)) {
-            return "UPCOMING";
+            return ItemStatusConstants.UPCOMING;
         } else if (now.isAfter(endTime)) {
-            return "ENDED";
+            return ItemStatusConstants.ENDED;
         } else {
-            return "ONGOING";
+            return ItemStatusConstants.ONGOING;
         }
     }
 

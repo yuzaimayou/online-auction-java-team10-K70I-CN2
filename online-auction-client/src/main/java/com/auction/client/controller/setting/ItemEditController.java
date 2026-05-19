@@ -105,7 +105,9 @@ public class ItemEditController {
     public void setItemId(String id) {
         this.currentItemId = id;
 
-        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), id)))
                 .GET()

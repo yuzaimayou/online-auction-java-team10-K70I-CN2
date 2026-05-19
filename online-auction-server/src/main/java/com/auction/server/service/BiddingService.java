@@ -9,13 +9,22 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * IN-PROGRESS FEATURE
- * Note: This class is not yet wired into the active database-backed socket flow.
+ * Prototype/demo class only. Not part of the production bidding flow.
+ *
+ * <p>The production bid placement flow is
+ * {@link BidService} -> {@link AutoBidResolver} -> {@link AuctionRoomManager}.
+ * This in-memory service is kept as a historical OOP/design-pattern
+ * demonstration and should not be used to evaluate production auction
+ * correctness.</p>
+ *
+ * @deprecated Use the database-backed production bidding flow through
+ * {@link BidService}.
  *
  * Service xử lý chức năng đấu giá
  * Requirement 3.1.3: Tham gia đấu giá
  * Requirement 3.1.5: Xử lý lỗi & ngoại lệ
  */
+@Deprecated
 public class BiddingService {
     private Map<String, Auction> auctionMap;
 
@@ -118,7 +127,7 @@ public class BiddingService {
     }
 
     /**
-     * Requirement 3.1.4: Chuyển trạng thái FINISHED → PAID
+     * Payment is handled outside the canonical auction status lifecycle.
      */
     public void markAuctionAsPaid(String auctionId) throws Exception {
         if (!auctionMap.containsKey(auctionId)) {

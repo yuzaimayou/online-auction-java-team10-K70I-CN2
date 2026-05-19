@@ -4,6 +4,7 @@ import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
@@ -43,7 +44,7 @@ public class AuctionSettlementService {
 
             boolean expired = java.time.LocalDateTime.now().isAfter(item.getEndTime());
             String status = item.getStatus();
-            if (!expired && !"ENDED".equalsIgnoreCase(status)) {
+            if (!expired && !ItemStatusConstants.ENDED.equalsIgnoreCase(status)) {
                 rollback(conn);
                 return SettlementResult.fail("Phiên chưa kết thúc (status=" + status + ")");
             }

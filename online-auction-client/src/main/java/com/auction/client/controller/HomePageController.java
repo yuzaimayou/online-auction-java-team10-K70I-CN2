@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
 import com.auction.client.util.AppConfig;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
@@ -38,7 +39,7 @@ public class HomePageController {
     private List<ItemSummary> masterItemList;
     private String currentCategory = "ALL";
     private static final HttpClient httpClient = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_2)
+            .version(HttpClient.Version.HTTP_1_1)
             .build();
 
     @FXML
@@ -163,10 +164,10 @@ public class HomePageController {
                     String status = (item.getStatus() != null)
                             ? item.getStatus().toString().toUpperCase() : "";
 
-                    if (status.contains("ONGOING") || status.contains("LIVE")) {
+                    if (status.contains(ItemStatusConstants.ONGOING)) {
                         ongoingAuctionsContainer.getChildren().add(cardBox);
                         ongoingCount++;
-                    } else if (status.contains("UPCOMING")) {
+                    } else if (status.contains(ItemStatusConstants.UPCOMING)) {
                         upcomingAuctionsContainer.getChildren().add(cardBox);
                         upcomingCount++;
                     } else {

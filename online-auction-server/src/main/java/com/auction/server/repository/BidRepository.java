@@ -1,6 +1,7 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.payloads.AutoBidPayload;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,8 +10,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class BidRepository {
+    private static final Logger LOGGER = Logger.getLogger(BidRepository.class.getName());
 
     public static class AutoBidConfig {
         private final String userId;
@@ -154,6 +157,24 @@ public class BidRepository {
         }
     }
 
+    public Boolean deactivateAutoBidIfPresent(String itemId, String userId) {
+        String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ? AND is_active = 1";
+
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, itemId);
+            stmt.setString(2, userId);
+            int rows = stmt.executeUpdate();
+            LOGGER.info(String.format("[AUTO_BID_CANCEL][DB_DEACTIVATE] time=%s itemId=%s userId=%s rowsUpdated=%d",
+                    LocalDateTime.now(), itemId, userId, rows));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public List<AutoBidConfig> findActiveAutoBids(Connection conn, String itemId) {
         List<AutoBidConfig> autoBids = new ArrayList<>();
 
@@ -177,11 +198,49 @@ public class BidRepository {
                     ));
                 }
             }
+            LOGGER.info(String.format("[AUTO_BID_ROUND][ACTIVE_CONFIGS] time=%s itemId=%s count=%d users=%s",
+                    LocalDateTime.now(),
+                    itemId,
+                    autoBids.size(),
+                    autoBids.stream().map(AutoBidConfig::getUserId).toList()));
         } catch (Exception e) {
             return new ArrayList<>();
         }
 
         return autoBids;
+    }
+
+    public AutoBidPayload findActiveAutoBid(String itemId, String userId) {
+        String sql = """
+                SELECT item_id, user_id, max_bid, increment, is_active
+                FROM auto_bids
+                WHERE item_id = ? AND user_id = ? AND is_active = 1
+                LIMIT 1
+                """;
+
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, itemId);
+            stmt.setString(2, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new AutoBidPayload(
+                            rs.getString("item_id"),
+                            rs.getString("user_id"),
+                            rs.getDouble("max_bid"),
+                            rs.getDouble("increment"),
+                            rs.getInt("is_active") == 1
+                    );
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+
+        return null;
     }
 
     private LocalDateTime parseDateTime(String rawValue) {

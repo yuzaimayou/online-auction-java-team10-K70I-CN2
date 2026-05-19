@@ -7,12 +7,20 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * IN-PROGRESS FEATURE
- * Note: This class is not yet wired into the active database-backed socket flow.
+ * Prototype/demo class only. Not part of the production bidding flow.
+ *
+ * <p>The production bid placement flow is
+ * {@link BidService} -> {@link AutoBidResolver} -> {@link AuctionRoomManager}.
+ * Production realtime bid broadcasts are sent through {@link AuctionRoomManager}.
+ * This observer implementation is kept for OOP/design-pattern demonstration and
+ * for its existing unit test coverage.</p>
+ *
+ * @deprecated Use {@link AuctionRoomManager} for production realtime broadcasts.
  *
  * Service cập nhật realtime khi có bid mới
  * Requirement 3.2.4: Realtime Update (Observer Pattern)
  */
+@Deprecated
 public class RealtimeBidUpdateService {
     private Map<String, List<BidObserver>> observerMap;
 

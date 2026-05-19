@@ -5,11 +5,14 @@ import com.auction.client.service.ToastService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.UserSession;
+import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
@@ -144,8 +147,12 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     // Auto Bid
     private boolean isAutoBidActive = false;
+    private boolean serverBackedAutoBidActive = false;
+    private boolean pendingAutoBidRegistration = false;
     private double maxBidAmount = 0;
     private double autoBidIncremental = 0;
+    private double pendingMaxBidAmount = 0;
+    private double pendingAutoBidIncremental = 0;
     private long lastAutoBidTime = 0;
 
 
@@ -176,7 +183,9 @@ public class ItemPageController implements NetworkService.MessageListener {
     public void setItemId(String id) {
         this.itemId = id;
         String currentUserId = UserSession.getInstance().getLoggedInUser().getId();
-        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/items/%s?userId=%s", AppConfig.getHttpUrl(), id, currentUserId)))
                 .GET()
@@ -202,7 +211,9 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void getHistoryItem() {
-        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("%s/api/history/%s?userId=%s", AppConfig.getHttpUrl(), itemId, user.getId())))
                 .GET()
@@ -237,6 +248,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         connectToRealTimeBidding();
         updateUIByStatus();
         loadBidHistory();
+        requestAutoBidStatus();
 
         if (item.getSellerId().equals(user.getId())) {
             bidControlsContainer.setDisable(true);
@@ -266,7 +278,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             return;
         }
         switch (status) {
-            case "ONGOING":
+            case ItemStatusConstants.ONGOING:
 
                 bidControlsContainer.setVisible(true);
                 bidControlsContainer.setManaged(true);
@@ -275,12 +287,12 @@ public class ItemPageController implements NetworkService.MessageListener {
 
                 break;
 
-            case "UPCOMING":
+            case ItemStatusConstants.UPCOMING:
                 statusMessageLabel.setText("⏳ This auction hasn't started yet");
                 statusMessageLabel.getStyleClass().add("status-upcoming");
                 break;
 
-            case "ENDED":
+            case ItemStatusConstants.ENDED:
                 statusMessageLabel.setText("🚫 This auction has ended");
                 statusMessageLabel.getStyleClass().add("status-ended");
                 break;
@@ -339,6 +351,27 @@ public class ItemPageController implements NetworkService.MessageListener {
                     startCountdown();
                     ToastService.showInfo(currentPriceLabel.getScene(), "Auction time extended due to anti-sniping!");
                 }
+            } else if (pendingAutoBidRegistration
+                    && SocketEventConstants.STATUS_SUCCESS.equals(response.getStatus())
+                    && "Auto-bid registered successfully".equals(response.getMessage())) {
+                pendingAutoBidRegistration = false;
+                maxBidAmount = pendingMaxBidAmount;
+                autoBidIncremental = pendingAutoBidIncremental;
+                isAutoBidActive = true;
+                serverBackedAutoBidActive = true;
+                myLastBid = item.getCurrentPrice();
+                updateAutoBidUI(true);
+                ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
+            } else if (pendingAutoBidRegistration
+                    && SocketEventConstants.STATUS_FAIL.equals(response.getStatus())
+                    && response.getMessage() != null) {
+                pendingAutoBidRegistration = false;
+                ToastService.showError(maxBidField.getScene(), response.getMessage());
+            } else if (SocketEventConstants.STATUS_SUCCESS.equals(response.getStatus())
+                    && SocketEventConstants.EVENT_AUTO_BID_STATUS.equals(response.getMessage())) {
+                restoreAutoBidStatus(response);
+            } else if (SocketEventConstants.EVENT_AUTO_BID_CANCELLED.equals(response.getMessage())) {
+                handleAutoBidCancelResponse(response);
             } else {
                 System.out.println("Received message: " + response.getMessage());
             }
@@ -393,23 +426,22 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private void startAutoBid() {
         try {
-            maxBidAmount = Double.parseDouble(maxBidField.getText().trim());
-            autoBidIncremental = Double.parseDouble(autoBidStepField.getText().trim());
+            double requestedMaxBid = Double.parseDouble(maxBidField.getText().trim());
+            double requestedIncrement = Double.parseDouble(autoBidStepField.getText().trim());
 
-            if (maxBidAmount <= item.getCurrentPrice()) {
+            if (requestedMaxBid <= item.getCurrentPrice()) {
                 ToastService.showInfo(maxBidField.getScene(), "Please fill in all Auto-Bid fields.");
                 return;
             }
-            if (autoBidIncremental < item.getBidStep()) {
+            if (requestedIncrement < item.getBidStep()) {
                 ToastService.showError(maxBidField.getScene(),
                         "Your step must be at least " + item.getBidStep());
                 return;
             }
-            isAutoBidActive = true;
-            myLastBid = item.getCurrentPrice();
-            updateAutoBidUI(true);
-            ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
-            handleAutoBidLogic(item.getCurrentPrice(), null);
+            pendingMaxBidAmount = requestedMaxBid;
+            pendingAutoBidIncremental = requestedIncrement;
+            pendingAutoBidRegistration = true;
+            network.sendAutoBidRegister(item.getId(), user.getId(), requestedMaxBid, requestedIncrement);
         } catch (NumberFormatException e) {
             ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
@@ -417,12 +449,15 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     private void stopAutoBid() {
-        isAutoBidActive = false;
-        updateAutoBidUI(false);
+        if (item == null || user == null) return;
+        System.out.printf("[AUTO_BID_CANCEL][UI_REQUEST] time=%s itemId=%s userId=%s serverBacked=%s active=%s%n",
+                java.time.LocalDateTime.now(), item.getId(), user.getId(), serverBackedAutoBidActive, isAutoBidActive);
+        network.sendCancelAutoBid(item.getId(), user.getId());
     }
 
     private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
         if (!isAutoBidActive) return;
+        if (serverBackedAutoBidActive) return;
 
         if (user.getId().equals(lastBidderId)) {
             myLastBid = serverCurrentPrice;
@@ -441,7 +476,8 @@ public class ItemPageController implements NetworkService.MessageListener {
             System.out.println("Auto Bid thực hiện đặt giá: " + myNextBid);
             userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ", myNextBid));
         } else {
-            stopAutoBid();
+            isAutoBidActive = false;
+            updateAutoBidUI(false);
             Platform.runLater(() ->
                     ToastService.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!")
             );
@@ -460,9 +496,55 @@ public class ItemPageController implements NetworkService.MessageListener {
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
     }
 
+    private void requestAutoBidStatus() {
+        if (item == null || user == null) return;
+        network.sendGetAutoBidStatus(item.getId(), user.getId());
+    }
+
+    private void restoreAutoBidStatus(ResponseMessage response) {
+        if (response.getData() == null) {
+            return;
+        }
+
+        JsonElement jsonElement = gson.toJsonTree(response.getData());
+        AutoBidPayload payload = gson.fromJson(jsonElement, AutoBidPayload.class);
+        if (payload == null || !Boolean.TRUE.equals(payload.getIsActive())) {
+            return;
+        }
+
+        maxBidAmount = payload.getMaxBid();
+        autoBidIncremental = payload.getIncrement();
+        isAutoBidActive = true;
+        serverBackedAutoBidActive = true;
+        pendingAutoBidRegistration = false;
+        maxBidField.setText(String.format("%.0f", maxBidAmount));
+        autoBidStepField.setText(String.format("%.0f", autoBidIncremental));
+        userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNÄ", myLastBid));
+        updateAutoBidUI(true);
+    }
+
+    private void handleAutoBidCancelResponse(ResponseMessage response) {
+        System.out.printf("[AUTO_BID_CANCEL][CLIENT_RECEIVE] time=%s status=%s message=%s%n",
+                java.time.LocalDateTime.now(), response.getStatus(), response.getMessage());
+        if (SocketEventConstants.STATUS_SUCCESS.equals(response.getStatus())) {
+            isAutoBidActive = false;
+            serverBackedAutoBidActive = false;
+            pendingAutoBidRegistration = false;
+            maxBidAmount = 0;
+            autoBidIncremental = 0;
+            updateAutoBidUI(false);
+            ToastService.showSuccess(userCurrentBidLabel.getScene(), "Auto-Bid cancelled!");
+            return;
+        }
+
+        ToastService.showError(userCurrentBidLabel.getScene(), "Failed to cancel auto-bid.");
+    }
+
     // BID HISTORY
     private void loadBidHistory() {
-        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(AppConfig.getHttpUrl() + "/api/bids/history/" + itemId))
                 .GET()

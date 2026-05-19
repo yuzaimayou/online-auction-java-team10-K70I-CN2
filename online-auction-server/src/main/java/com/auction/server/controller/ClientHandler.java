@@ -67,11 +67,33 @@ public class ClientHandler implements Runnable {
                 RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
                 ResponseMessage responseMessage = new ResponseMessage();
                 String jsonPayload = request.getPayload();
-
                 switch (request.getAction()) {
-                    case BID -> bidAction(jsonPayload, responseMessage);
+                    case BID -> {
+                        bidAction(jsonPayload, responseMessage);
+                        if (responseMessage.getStatus() != null) {
+                            sendMessage(gson.toJson(responseMessage));
+                        }
+                    }
                     case JOIN_ROOM -> joinRoomAction(jsonPayload, responseMessage);
                     case LEAVE_ROOM -> leaveRoomAction();
+                    case AUTO_BID_REGISTER -> {
+                        autoBidRegisterAction(jsonPayload, responseMessage);
+                        if (responseMessage.getStatus() != null) {
+                            sendMessage(gson.toJson(responseMessage));
+                        }
+                    }
+                    case GET_AUTO_BID_STATUS -> {
+                        getAutoBidStatusAction(jsonPayload, responseMessage);
+                        if (responseMessage.getStatus() != null) {
+                            sendMessage(gson.toJson(responseMessage));
+                        }
+                    }
+                    case CANCEL_AUTO_BID -> {
+                        cancelAutoBidAction(jsonPayload, responseMessage);
+                        if (responseMessage.getStatus() != null) {
+                            sendMessage(gson.toJson(responseMessage));
+                        }
+                    }
                     default -> {
 
                     }
@@ -163,7 +185,7 @@ public class ClientHandler implements Runnable {
             return true;
         }
 
-        boolean created = bidService.registerAutoBid(
+        boolean created = bidService.registerAutoBidAndMaybeBid(
                 autoBidData.getItemId(),
                 autoBidData.getUserId(),
                 autoBidData.getMaxBid(),
@@ -178,6 +200,70 @@ public class ClientHandler implements Runnable {
             response.setMessage("Failed to register auto-bid");
         }
 
+        return true;
+    }
+
+    private boolean getAutoBidStatusAction(String payload, ResponseMessage response) {
+        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+
+        if (autoBidData == null
+                || autoBidData.getItemId() == null
+                || autoBidData.getUserId() == null) {
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
+            return true;
+        }
+
+        AutoBidPayload autoBidStatus = bidService.getAutoBidStatus(
+                autoBidData.getItemId(),
+                autoBidData.getUserId()
+        );
+
+        if (autoBidStatus == null) {
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
+            return true;
+        }
+
+        response.setStatus(SocketEventConstants.STATUS_SUCCESS);
+        response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
+        response.setData(autoBidStatus);
+        return true;
+    }
+
+    private boolean cancelAutoBidAction(String payload, ResponseMessage response) {
+        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+
+        if (autoBidData == null
+                || autoBidData.getItemId() == null
+                || autoBidData.getUserId() == null) {
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage(SocketEventConstants.EVENT_AUTO_BID_CANCELLED);
+            return true;
+        }
+        LOGGER.info(String.format("[AUTO_BID_CANCEL][SERVER_RECEIVE] time=%s itemId=%s userId=%s",
+                LocalDateTime.now(), autoBidData.getItemId(), autoBidData.getUserId()));
+
+        boolean cancelled = bidService.cancelAutoBid(
+                autoBidData.getItemId(),
+                autoBidData.getUserId()
+        );
+
+        if (!cancelled) {
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage(SocketEventConstants.EVENT_AUTO_BID_CANCELLED);
+            return true;
+        }
+
+        response.setStatus(SocketEventConstants.STATUS_SUCCESS);
+        response.setMessage(SocketEventConstants.EVENT_AUTO_BID_CANCELLED);
+        response.setData(new AutoBidPayload(
+                autoBidData.getItemId(),
+                autoBidData.getUserId(),
+                null,
+                null,
+                false
+        ));
         return true;
     }
 

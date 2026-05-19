@@ -5,6 +5,7 @@ import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
@@ -72,7 +73,7 @@ public class WalletService {
                 }
 
                 String status = item.getStatus();
-                if ("ENDED".equalsIgnoreCase(status) || "UPCOMING".equalsIgnoreCase(status)) {
+                if (!ItemStatusConstants.ONGOING.equalsIgnoreCase(status)) {
                     rollback(conn);
                     return BidResult.fail("Phiên đấu giá không đang hoạt động (status=" + status + ")");
                 }

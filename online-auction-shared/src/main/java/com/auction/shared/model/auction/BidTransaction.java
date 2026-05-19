@@ -7,8 +7,12 @@ import java.time.LocalDateTime;
  * Requirement 3.1.3: Tham gia đấu giá
  */
 /**
- * IN-PROGRESS FEATURE
- * Note: This class is not yet wired into the active database-backed socket flow.
+ * Shared bid-history row model.
+ *
+ * <p>Production bid placement is handled by BidService -> AutoBidResolver ->
+ * AuctionRoomManager in the server module. This class is still used by the
+ * client bid-history UI and by prototype/demo auction classes, so it is not
+ * deprecated.</p>
  */
 public class BidTransaction {
     private String transactionId;

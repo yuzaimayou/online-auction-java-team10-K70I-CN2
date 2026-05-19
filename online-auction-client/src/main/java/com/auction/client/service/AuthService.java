@@ -18,7 +18,9 @@ public class AuthService {
     private final Gson gson;
 
     private AuthService() {
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         this.gson = new Gson();
     }
 
