@@ -100,7 +100,7 @@ public class ItemCardHPController {
             timeTitleLabel.setText("Starts on " + currentItem.getStartTime().format(dateFormatter));
 
         } else if (status == AuctionStatus.ONGOING) {
-            statusLabel.setText("ONGOING");
+            statusLabel.setText("LIVE");
             statusLabel.setStyle("-fx-background-color: #ecfdf5");
             priceTitleLabel.setText("CURRENT BID");
             priceLabel.setText(formatPrice(currentItem.getCurrentPrice()));

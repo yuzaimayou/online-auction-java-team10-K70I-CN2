@@ -74,10 +74,10 @@ public class NavigationUtil {
         try {
             System.out.println("Da chuyen sang trang chu");
             if (homePageRoot == null || homePageController == null) {
-            FXMLLoader loader = new FXMLLoader(
-                    NavigationUtil.class.getResource(
-                            "/com.auction.client/fxml/HomePage.fxml")
-            );
+                FXMLLoader loader = new FXMLLoader(
+                        NavigationUtil.class.getResource(
+                                "/com.auction.client/fxml/HomePage.fxml")
+                );
                 homePageRoot = loader.load();
                 homePageController = loader.getController();
 

@@ -1,29 +1,31 @@
 package com.auction.client.controller;
 
+import com.auction.client.service.AutoBidService;
+import com.auction.client.service.AutoBidService.AutoBidDecision;
+import com.auction.client.service.AutoBidService.ValidationResult;
+import com.auction.client.service.BidHistoryService;
+import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
-import com.auction.client.util.AppConfig;
 import com.auction.client.util.ClientImageUtil;
+import com.auction.client.util.CountdownTimerUtil;
 import com.auction.client.util.UserSession;
-import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
-import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -31,224 +33,133 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Duration;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 
 public class ItemPageController implements NetworkService.MessageListener {
-    private static final double IMAGE_WIDTH = 700.0;
+
+    // Constants
+    private static final double IMAGE_WIDTH  = 700.0;
     private static final double IMAGE_HEIGHT = 450.0;
-    private static final double IMAGE_ARC = 20.0;
-    private static final double THUMB_WIDTH = 80.0;
+    private static final double IMAGE_ARC    = 20.0;
+    private static final double THUMB_WIDTH  = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
-    private final long AUTO_BID_DELAY = 50;
 
+    // FXML: item info
+    @FXML private Label itemNameLabel;
+    @FXML private Label itemDesLabel;
+    @FXML private ImageView itemImage;
+    @FXML private Label sellerLabel;
+    @FXML private Label currentPriceLabel;
+    @FXML private Label startPriceLabel;
+    @FXML private Label bidStepLabel;
+    @FXML private Label startTimeLabel;
+    @FXML private Label endTimeLabel;
+    @FXML private HBox thumbnailContainer;
 
-    // item information
-    @FXML
-    private Label itemNameLabel;
-    @FXML
-    private Label itemDesLabel;
-    @FXML
-    private ImageView itemImage;
-    @FXML
-    private Label sellerLabel;
-    @FXML
-    private Label currentPriceLabel;
-    @FXML
-    private Label startPriceLabel;
-    @FXML
-    private Label bidStepLabel;
-    @FXML
-    private Label startTimeLabel;
-    @FXML
-    private Label endTimeLabel;
+    // FXML: bid controls
+    @FXML private TextField bidAmountField;
+    @FXML private Button submitBid;
+    @FXML private Label minimumBidLabel;
+    @FXML private Button btnSuggestStep1;
+    @FXML private Button btnSuggestStep2;
 
-    // BID CONTROL
-    @FXML
-    private TextField bidAmountField;
-    @FXML
-    private Button submitBid;
-    @FXML
-    private Label minimumBidLabel;
-    @FXML
-    private Button btnSuggestStep1;
-    @FXML
-    private Button btnSuggestStep2;
+    // FXML: bid history
+    @FXML private ScrollPane historyScrollPane;
+    @FXML private VBox historyBidContainer;
+    @FXML private Label totalBidsLabel;
 
-    // BID HISTORY
-    @FXML
-    private VBox historyBidContainer;
-    @FXML
-    private Label totalBidsLabel;
-    @FXML
-    private Hyperlink viewAllBidsLink;
+    // FXML: auto-bid
+    @FXML private VBox autoBidForm;
+    @FXML private VBox autoBidActiveStatus;
+    @FXML private TextField maxBidField;
+    @FXML private TextField autoBidStepField;
+    @FXML private Label userCurrentBidLabel;
+    @FXML private Button btnAutoBidToggle;
 
+    // FXML: countdown timer
+    @FXML private Label timeStatusLabel;
+    @FXML private Label daysLabel;
+    @FXML private Label hoursLabel;
+    @FXML private Label minsLabel;
+    @FXML private Label secsLabel;
 
-    // IMAGE THUMBNAIL
-    @FXML
-    private HBox thumbnailContainer;
+    // FXML: status overlay
+    @FXML private VBox bidControlsContainer;
+    @FXML private StackPane statusOverlay;
+    @FXML private Label statusMessageLabel;
 
-    // AUTO BID
-    @FXML
-    private VBox autoBidForm;
-    @FXML
-    private VBox autoBidActiveStatus;
-    @FXML
-    private TextField maxBidField;
-    @FXML
-    private TextField autoBidStepField;
-    @FXML
-    private Label userCurrentBidLabel;
-    @FXML
-    private Button btnAutoBidToggle;
-
-    // COUNTDOWN TIMER
-    @FXML
-    private Label timeStatusLabel;
-    @FXML
-    private Label daysLabel;
-    @FXML
-    private Label hoursLabel;
-    @FXML
-    private Label minsLabel;
-    @FXML
-    private Label secsLabel;
-
-    //STATUS OVERLAY
-    @FXML
-    private VBox bidControlsContainer;
-    @FXML
-    private StackPane statusOverlay;
-    @FXML
-    private Label statusMessageLabel;
-
-
+    // State
     private String itemId;
     private Item item;
-    private Timeline timeline;
     private double myLastBid = 0.0;
 
+    // Dependencies
     private final User user = UserSession.getInstance().getLoggedInUser();
-    private NetworkService network = NetworkService.getInstance();
-    private List<BidHistoryItemDTO> history;
-    private Gson gson = GsonUtil.getInstance();
+    private final NetworkService network = NetworkService.getInstance();
+    private final Gson gson = GsonUtil.getInstance();
+    private final ItemsService itemsService = ItemsService.getInstance();
+    private final BidHistoryService bidHistoryService = BidHistoryService.getInstance();
+    private final AutoBidService autoBidManager = new AutoBidService();
+    private CountdownTimerUtil countdownTimer;
 
-    // Auto Bid
-    private boolean isAutoBidActive = false;
-    private boolean serverBackedAutoBidActive = false;
-    private boolean pendingAutoBidRegistration = false;
-    private double maxBidAmount = 0;
-    private double autoBidIncremental = 0;
-    private double pendingMaxBidAmount = 0;
-    private double pendingAutoBidIncremental = 0;
-    private long lastAutoBidTime = 0;
-
+    // ─── Lifecycle ────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
-        try {
-            Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
-            clip.setArcWidth(IMAGE_ARC);
-            clip.setArcHeight(IMAGE_ARC);
-            itemImage.setClip(clip);
-
-            itemImage.setFitWidth(IMAGE_WIDTH);
-            itemImage.setFitHeight(IMAGE_HEIGHT);
-            itemImage.setPreserveRatio(false);
-
-            itemImage.imageProperty().addListener((obs, oldImg, newImg) -> {
-                if (newImg != null) {
-                    applyObjectFitCover(newImg);
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error initializing ItemPageController: " + e.getMessage());
-        }
-
+        initImageClip();
+        countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
     }
+
+    private void initImageClip() {
+        Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
+        clip.setArcWidth(IMAGE_ARC);
+        clip.setArcHeight(IMAGE_ARC);
+        itemImage.setClip(clip);
+        itemImage.setFitWidth(IMAGE_WIDTH);
+        itemImage.setFitHeight(IMAGE_HEIGHT);
+        itemImage.setPreserveRatio(false);
+        itemImage.imageProperty().addListener((obs, old, newImg) -> {
+            if (newImg != null) {
+                ClientImageUtil.applyObjectFitCoverToImageView(itemImage, newImg, IMAGE_WIDTH, IMAGE_HEIGHT);
+            }
+        });
+    }
+
+    // ─── Data loading ─────────────────────────────────────────────────────────
 
     public void setItemId(String id) {
         this.itemId = id;
-        String currentUserId = UserSession.getInstance().getLoggedInUser().getId();
-        HttpClient httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s?userId=%s", AppConfig.getHttpUrl(), id, currentUserId)))
-                .GET()
-                .build();
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
-                    if ("success".equals(response.getStatus()) && response.getData() != null) {
-                        JsonElement jsonElement = gson.toJsonTree(response.getData());
-                        Item item = gson.fromJson(jsonElement, Item.class);
-                        Platform.runLater(() -> initData(item));
-                        System.out.println("Item data loaded successfully for item ID: " + id);
-                    } else {
-                        System.err.println("Failed to load item data: " + response.getMessage());
-                    }
-                })
+        itemsService.getItemById(id, user.getId())
+                .thenAccept(item -> Platform.runLater(() -> initData(item)))
                 .exceptionally(ex -> {
-                    System.err.println("Error fetching item data: " + ex.getMessage());
-                    ex.printStackTrace();
-                    return null;
-                });
-    }
-
-    private void getHistoryItem() {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/history/%s?userId=%s", AppConfig.getHttpUrl(), itemId, user.getId())))
-                .GET()
-                .build();
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    ResponseMessage response = gson.fromJson(responseBody, ResponseMessage.class);
-                    if ("success".equals(response.getStatus()) && response.getData() != null) {
-                        JsonElement jsonElement = gson.toJsonTree(response.getData());
-                        history = gson.fromJson(jsonElement, new com.google.gson.reflect.TypeToken<List<BidHistoryItemDTO>>() {
-                        }.getType());
-                        //Platform.runLater(()->renderBidHistory(history));
-
-                    } else {
-                        System.err.println("Failed to load bid history: " + response.getMessage());
-                    }
-                })
-                .exceptionally(ex -> {
-                    System.err.println("Error fetching bid history: " + ex.getMessage());
-                    ex.printStackTrace();
+                    Platform.runLater(() -> {
+                        ex.printStackTrace();
+                        ToastService.showError(itemNameLabel.getScene(), "Failed to load item data");
+                    });
                     return null;
                 });
     }
 
     public void initData(Item item) {
-        this.item = item;
+        this.item      = item;
         this.myLastBid = item.getMyLastBid();
+        autoBidManager.setLastBidderId(item.getCurrentTopPLayerId());
 
-        getHistoryItem();
+        AuctionStatus status = currentStatus();
+
+        // [FIX #1] item.setStatus() nhận String, không phải AuctionStatus.
+        // Trước: item.setStatus(status) → compile error (type mismatch)
+        // Sau:   item.setStatus(status.getDisplayName())
+        item.setStatus(status.getDisplayName());
+
         displayDataItem(item);
+        updateUIByStatus(status);
         connectToRealTimeBidding();
-        updateUIByStatus();
         loadBidHistory();
-        requestAutoBidStatus();
 
         if (item.getSellerId().equals(user.getId())) {
             bidControlsContainer.setDisable(true);
@@ -259,136 +170,167 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
-    // UI STATE MANAGEMENT
-    private void updateUIByStatus() {
+    private void updateUIByStatus(AuctionStatus status) {
         if (item == null) return;
 
-        String status = item.getStatus().toString().toUpperCase();
+        // [FIX #1 – chỗ 2] Cùng lỗi type mismatch như trên
+        item.setStatus(status.getDisplayName());
+
         boolean isOwner = item.getSellerId().equals(user.getId());
 
         bidControlsContainer.setVisible(false);
         bidControlsContainer.setManaged(false);
         statusOverlay.setVisible(true);
         statusOverlay.setManaged(true);
-
         statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
 
         if (isOwner) {
             statusMessageLabel.setText("👤 You are the owner of this item");
             return;
         }
-        switch (status) {
-            case ItemStatusConstants.ONGOING:
 
+        switch (status) {
+            case ONGOING -> {
                 bidControlsContainer.setVisible(true);
                 bidControlsContainer.setManaged(true);
                 statusOverlay.setVisible(false);
                 statusOverlay.setManaged(false);
-
-                break;
-
-            case ItemStatusConstants.UPCOMING:
+            }
+            case UPCOMING -> {
                 statusMessageLabel.setText("⏳ This auction hasn't started yet");
                 statusMessageLabel.getStyleClass().add("status-upcoming");
-                break;
-
-            case ItemStatusConstants.ENDED:
+            }
+            case ENDED -> {
                 statusMessageLabel.setText("🚫 This auction has ended");
                 statusMessageLabel.getStyleClass().add("status-ended");
-                break;
+            }
         }
     }
 
-    // REALTIME BIDDING
-    private void connectToRealTimeBidding() {
-        network.setListener(this);
-
-        String userId = UserSession.getInstance().getLoggedInUser().getId();
-        String itemId = item.getId();
-
-        boolean connected = network.connectToAuctionRoom(itemId, userId);
-        if (connected) {
-            System.out.println("Connected to auction room for item: " + itemId);
-        } else {
-            System.err.println("Failed to connect to auction room for item: " + itemId);
-        }
-    }
+    // ─── Realtime bidding ─────────────────────────────────────────────────────
 
     @Override
     public void onMessageReceived(ResponseMessage response) {
         System.out.println(response);
         Platform.runLater(() -> {
-            if ("success".equals(response.getStatus()) && "NEW_BID".equals(response.getMessage())) {
-                JsonElement jsonElement = gson.toJsonTree(response.getData());
-                BidPayload bidPayload = gson.fromJson(jsonElement, BidPayload.class);
-                if (bidPayload != null) {
-                    System.out.println("Received new bid update: " + jsonElement);
-                    item.setCurrentPrice(bidPayload.getBidPrice());
-                    currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
 
-                    // Nếu người vừa đặt giá thành công là chính user này, cập nhật myLastBid
-                    if (user.getId().equals(bidPayload.getUserId())) {
-                        myLastBid = bidPayload.getBidPrice();
-                    }
-                    updateMinimumBidLabel();
+            String event = response.getMessage();
 
-                    // Kích hoạt logic Auto Bid nếu đang bật
-                    handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
-                    loadBidHistory();
-                } else {
-                    System.err.println("Failed to parse updated item from response: " + jsonElement);
-                }
-            } else if ("success".equals(response.getStatus()) && "AUCTION_EXTENDED".equals(response.getMessage())) {
-                JsonElement jsonElement = gson.toJsonTree(response.getData());
-                com.auction.shared.model.payloads.AuctionExtendedPayload payload = gson.fromJson(jsonElement, com.auction.shared.model.payloads.AuctionExtendedPayload.class);
-                if (payload != null && item != null && item.getId().equals(payload.getItemId())) {
-                    System.out.println("Received AUCTION_EXTENDED. New end time: " + payload.getNewEndTime());
-                    item.setEndTime(java.time.LocalDateTime.parse(payload.getNewEndTime()));
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                    if (endTimeLabel != null) {
-                        endTimeLabel.setText(item.getEndTime().format(formatter));
-                    }
-                    startCountdown();
-                    ToastService.showInfo(currentPriceLabel.getScene(), "Auction time extended due to anti-sniping!");
-                }
-            } else if (pendingAutoBidRegistration
-                    && SocketEventConstants.STATUS_SUCCESS.equals(response.getStatus())
-                    && "Auto-bid registered successfully".equals(response.getMessage())) {
-                pendingAutoBidRegistration = false;
-                maxBidAmount = pendingMaxBidAmount;
-                autoBidIncremental = pendingAutoBidIncremental;
-                isAutoBidActive = true;
-                serverBackedAutoBidActive = true;
-                myLastBid = item.getCurrentPrice();
-                updateAutoBidUI(true);
-                ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
-            } else if (pendingAutoBidRegistration
-                    && SocketEventConstants.STATUS_FAIL.equals(response.getStatus())
-                    && response.getMessage() != null) {
-                pendingAutoBidRegistration = false;
-                ToastService.showError(maxBidField.getScene(), response.getMessage());
-            } else if (SocketEventConstants.STATUS_SUCCESS.equals(response.getStatus())
-                    && SocketEventConstants.EVENT_AUTO_BID_STATUS.equals(response.getMessage())) {
-                restoreAutoBidStatus(response);
-            } else if (SocketEventConstants.EVENT_AUTO_BID_CANCELLED.equals(response.getMessage())) {
-                handleAutoBidCancelResponse(response);
-            } else {
-                System.out.println("Received message: " + response.getMessage());
+            // [FIX #2] Trước đây chỉ xử lý "NEW_BID", bỏ qua "AUCTION_EXTENDED".
+            // Dùng hằng số từ SocketEventConstants thay vì hardcode string.
+            if (SocketEventConstants.EVENT_NEW_BID.equals(event)) {
+                handleNewBidEvent(response);
+            } else if (SocketEventConstants.EVENT_AUCTION_EXTENDED.equals(event)) {
+                handleAuctionExtendedEvent(response);
             }
+            // Các event khác (AUTO_BID_STATUS, v.v.) có thể mở rộng tại đây.
         });
     }
 
+    /**
+     * Xử lý sự kiện đặt giá mới từ server.
+     * Logic giữ nguyên so với phiên bản cũ, chỉ tách ra method riêng cho rõ ràng.
+     */
+    private void handleNewBidEvent(ResponseMessage response) {
+        if (!SocketEventConstants.STATUS_SUCCESS_LOWER.equals(response.getStatus())) return;
+
+        JsonElement jsonElement = gson.toJsonTree(response.getData());
+        BidPayload bidPayload = gson.fromJson(jsonElement, BidPayload.class);
+
+        if (bidPayload == null) {
+            System.err.println("Failed to parse BidPayload: " + jsonElement);
+            return;
+        }
+
+        autoBidManager.setLastBidderId(bidPayload.getUserId());
+        item.setCurrentTopPLayerId(bidPayload.getUserId());
+        item.setCurrentPrice(bidPayload.getBidPrice());
+
+        // [FIX] BUG ROOT CAUSE: Server chạy auto-bid nhiều vòng rồi chỉ broadcast
+        //   MỘT LẦN với finalBid = người thắng cuối cùng.
+        //   Ví dụ: User A bid thủ công → auto-bid của B thắng → server broadcast userId=B.
+        //   Client A nhận: bidPayload.getUserId() = B != A
+        //   → điều kiện cũ KHÔNG cập nhật myLastBid dù A đã có bản ghi bid trong DB.
+        //
+        //   FIX: Sau mỗi broadcast, reload myLastBid từ server (nguồn sự thật duy nhất).
+        //   Không phụ thuộc vào việc ai là finalBid.
+        //
+        //   TRƯỚC (sai):
+        //     if (user.getId().equals(bidPayload.getUserId())) {
+        //         myLastBid = bidPayload.getBidPrice(); // chỉ đúng khi mình là finalBid
+        //     }
+        itemsService.getItemById(itemId, user.getId())
+                .thenAccept(refreshed -> Platform.runLater(() -> {
+                    myLastBid = refreshed.getMyLastBid();
+                    updateMinimumBidLabel();
+                }))
+                .exceptionally(ex -> null); // silent fail — label giữ giá trị cũ
+
+        currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
+        updateUIByStatus(currentStatus());
+        updateMinimumBidLabel(); // hiển thị ngay với giá trị hiện tại, async sẽ refresh
+        handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
+        loadBidHistory();
+    }
+
+    /**
+     * [FIX #2 – mới] Xử lý sự kiện gia hạn thời gian đấu giá từ server.
+     * Server gửi data chứa endTime mới → cập nhật item và khởi động lại countdown.
+     */
+    private void handleAuctionExtendedEvent(ResponseMessage response) {
+        try {
+            JsonElement jsonElement = gson.toJsonTree(response.getData());
+            if (jsonElement == null || !jsonElement.isJsonObject()) return;
+
+            JsonObject data = jsonElement.getAsJsonObject();
+            if (!data.has("endTime")) return;
+
+            String newEndTimeStr = data.get("endTime").getAsString();
+            LocalDateTime newEndTime = LocalDateTime.parse(newEndTimeStr);
+
+            item.setEndTime(newEndTime);
+
+            // Cập nhật label hiển thị thời gian kết thúc
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            endTimeLabel.setText(newEndTime.format(fmt));
+
+            // Khởi động lại countdown với thời gian mới
+            startCountdown();
+
+            System.out.println("[AUCTION_EXTENDED] New end time: " + newEndTimeStr);
+        } catch (Exception e) {
+            System.err.println("[AUCTION_EXTENDED] Failed to parse extended time: " + e.getMessage());
+        }
+    }
+
+    private void connectToRealTimeBidding() {
+        network.setListener(this);
+        boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
+        if (!connected) System.err.println("Failed to connect to auction room: " + item.getId());
+    }
+
+    // ─── Bid handling ─────────────────────────────────────────────────────────
+
+    @FXML
     public void bidHandle() {
+        if (!isOngoing()) {
+            ToastService.showError(bidAmountField.getScene(), "Auction is not active.");
+            return;
+        }
+        if (user.getId().equals(item.getCurrentTopPLayerId())) {
+            ToastService.showInfo(bidAmountField.getScene(), "You are already the highest bidder.");
+            return;
+        }
+
         String inputAmount = bidAmountField.getText().trim();
         if (inputAmount.isEmpty()) {
             ToastService.showInfo(bidAmountField.getScene(), "Please enter a bid amount.");
             return;
         }
         try {
-            double bidAmount = Double.parseDouble(inputAmount);
+            double bidAmount   = Double.parseDouble(inputAmount);
             double minRequired = item.getCurrentPrice() + item.getBidStep();
 
-            // Kiểm tra logic giá trước khi gửi lên server để giảm tải
             if (bidAmount < minRequired) {
                 ToastService.showError(bidAmountField.getScene(),
                         String.format("Bid must be at least $ %.1f", minRequired));
@@ -404,44 +346,55 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private void handleSuggestStep1() {
         if (item == null) return;
-        double suggestedPrice = item.getCurrentPrice() + item.getBidStep();
-        bidAmountField.setText(String.format("%.0f", suggestedPrice));
+        bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep()));
     }
 
     @FXML
     private void handleSuggestStep2() {
         if (item == null) return;
-        double suggestedPrice = item.getCurrentPrice() + (item.getBidStep() * 2);
-        bidAmountField.setText(String.format("%.0f", suggestedPrice));
+        bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep() * 2));
     }
 
-    // AUTO BID
+    // ─── Auto-bid ─────────────────────────────────────────────────────────────
+
     @FXML
     private void toggleAutoBidForm() {
-        boolean isVisible = autoBidForm.isVisible();
-        autoBidForm.setVisible(!isVisible);
-        autoBidForm.setManaged(!isVisible);
+        boolean visible = autoBidForm.isVisible();
+        autoBidForm.setVisible(!visible);
+        autoBidForm.setManaged(!visible);
     }
 
     @FXML
     private void startAutoBid() {
+        if (!isOngoing()) {
+            ToastService.showError(maxBidField.getScene(), "Auction is not active.");
+            return;
+        }
         try {
-            double requestedMaxBid = Double.parseDouble(maxBidField.getText().trim());
-            double requestedIncrement = Double.parseDouble(autoBidStepField.getText().trim());
+            double max  = Double.parseDouble(maxBidField.getText().trim());
+            double step = Double.parseDouble(autoBidStepField.getText().trim());
 
-            if (requestedMaxBid <= item.getCurrentPrice()) {
-                ToastService.showInfo(maxBidField.getScene(), "Please fill in all Auto-Bid fields.");
+            ValidationResult result = autoBidManager.validate(item, max, step);
+            if (!result.ok()) {
+                ToastService.showError(maxBidField.getScene(), result.errorMessage());
                 return;
             }
-            if (requestedIncrement < item.getBidStep()) {
-                ToastService.showError(maxBidField.getScene(),
-                        "Your step must be at least " + item.getBidStep());
-                return;
+
+            autoBidManager.activate(max, step);
+            network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
+            updateAutoBidUI(true);
+            ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
+
+            boolean isLeading = user.getId().equals(autoBidManager.getLastBidderId());
+            if (isLeading) {
+                userCurrentBidLabel.setText(
+                        String.format("Your current bid: $ %.0f (Leading)", item.getCurrentPrice()));
+            } else {
+                double firstBid = item.getCurrentPrice() + step;
+                network.sendBid(item.getId(), user.getId(), firstBid, "");
+                userCurrentBidLabel.setText(
+                        String.format("Your current bid: $ %.0f (Auto-bidding...)", firstBid));
             }
-            pendingMaxBidAmount = requestedMaxBid;
-            pendingAutoBidIncremental = requestedIncrement;
-            pendingAutoBidRegistration = true;
-            network.sendAutoBidRegister(item.getId(), user.getId(), requestedMaxBid, requestedIncrement);
         } catch (NumberFormatException e) {
             ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
@@ -449,331 +402,201 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     private void stopAutoBid() {
-        if (item == null || user == null) return;
-        System.out.printf("[AUTO_BID_CANCEL][UI_REQUEST] time=%s itemId=%s userId=%s serverBacked=%s active=%s%n",
-                java.time.LocalDateTime.now(), item.getId(), user.getId(), serverBackedAutoBidActive, isAutoBidActive);
-        network.sendCancelAutoBid(item.getId(), user.getId());
+        autoBidManager.deactivate();
+        updateAutoBidUI(false);
     }
 
-    private void handleAutoBidLogic(double serverCurrentPrice, String lastBidderId) {
-        if (!isAutoBidActive) return;
+    private void handleAutoBidLogic(double serverCurrentPrice, String topBidderId) {
+        AutoBidDecision decision = autoBidManager.decideBid(
+                topBidderId, serverCurrentPrice, user.getId(), myLastBid, isOngoing());
 
-        if (user.getId().equals(lastBidderId)) {
-            myLastBid = serverCurrentPrice;
-            userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNĐ (Leading)", serverCurrentPrice));
+        switch (decision.type()) {
+            case AUCTION_ENDED    -> stopAutoBid();
+            case INACTIVE         -> {}
+            case LEADING          -> userCurrentBidLabel.setText(decision.statusText());
+            case MAX_REACHED -> {
+                updateAutoBidUI(false);
+                ToastService.showInfo(userCurrentBidLabel.getScene(), decision.statusText());
+            }
+            case OUTBID_AND_REBID -> {
+                userCurrentBidLabel.setText(decision.statusText());
+                network.sendBid(item.getId(), user.getId(), decision.nextBidPrice(), "");
+            }
         }
     }
 
     private void updateAutoBidUI(boolean active) {
         autoBidForm.setVisible(false);
         autoBidForm.setManaged(false);
-
         autoBidActiveStatus.setVisible(active);
         autoBidActiveStatus.setManaged(active);
-
         btnAutoBidToggle.setVisible(!active);
         btnAutoBidToggle.setManaged(!active);
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
     }
 
-    private void requestAutoBidStatus() {
-        if (item == null || user == null) return;
-        network.sendGetAutoBidStatus(item.getId(), user.getId());
-    }
+    // ─── Bid history ──────────────────────────────────────────────────────────
 
-    private void restoreAutoBidStatus(ResponseMessage response) {
-        if (response.getData() == null) {
-            return;
-        }
-
-        JsonElement jsonElement = gson.toJsonTree(response.getData());
-        AutoBidPayload payload = gson.fromJson(jsonElement, AutoBidPayload.class);
-        if (payload == null || !Boolean.TRUE.equals(payload.getIsActive())) {
-            return;
-        }
-
-        maxBidAmount = payload.getMaxBid();
-        autoBidIncremental = payload.getIncrement();
-        isAutoBidActive = true;
-        serverBackedAutoBidActive = true;
-        pendingAutoBidRegistration = false;
-        maxBidField.setText(String.format("%.0f", maxBidAmount));
-        autoBidStepField.setText(String.format("%.0f", autoBidIncremental));
-        userCurrentBidLabel.setText(String.format("Your current bid: %.0f VNÄ", myLastBid));
-        updateAutoBidUI(true);
-    }
-
-    private void handleAutoBidCancelResponse(ResponseMessage response) {
-        System.out.printf("[AUTO_BID_CANCEL][CLIENT_RECEIVE] time=%s status=%s message=%s%n",
-                java.time.LocalDateTime.now(), response.getStatus(), response.getMessage());
-        if (SocketEventConstants.STATUS_SUCCESS.equals(response.getStatus())) {
-            isAutoBidActive = false;
-            serverBackedAutoBidActive = false;
-            pendingAutoBidRegistration = false;
-            maxBidAmount = 0;
-            autoBidIncremental = 0;
-            updateAutoBidUI(false);
-            ToastService.showSuccess(userCurrentBidLabel.getScene(), "Auto-Bid cancelled!");
-            return;
-        }
-
-        ToastService.showError(userCurrentBidLabel.getScene(), "Failed to cancel auto-bid.");
-    }
-
-    // BID HISTORY
     private void loadBidHistory() {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(AppConfig.getHttpUrl() + "/api/bids/history/" + itemId))
-                .GET()
-                .build();
-
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(body -> {
-                    ResponseMessage res = gson.fromJson(body, ResponseMessage.class);
-                    if ("success".equals(res.getStatus())) {
-                        java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<BidTransaction>>() {
-                        }.getType();
-                        JsonElement jsonElement = gson.toJsonTree(res.getData());
-                        List<BidTransaction> bids = gson.fromJson(jsonElement, listType);
-                        Platform.runLater(() -> renderBidHistory(bids));
-                    }
+        bidHistoryService.getHistory(itemId)
+                .thenAccept(bids -> Platform.runLater(() -> renderBidHistory(bids)))
+                .exceptionally(ex -> {
+                    ex.printStackTrace();
+                    Platform.runLater(() ->
+                            ToastService.showError(historyBidContainer.getScene(), "Failed to load bid history"));
+                    return null;
                 });
     }
 
-    private void renderBidHistory(List<BidTransaction> bids) {
+    private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
+
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
+            if (historyScrollPane != null) {
+                historyScrollPane.setVisible(false);
+                historyScrollPane.setManaged(false);
+            }
             return;
         }
-        bids.sort(Comparator.comparing(BidTransaction::getBidTime).reversed());
+
+        if (historyScrollPane != null) {
+            historyScrollPane.setVisible(true);
+            historyScrollPane.setManaged(true);
+        }
 
         int totalCount = bids.size();
         totalBidsLabel.setText(totalCount + " bids");
-
-        int displayLimit = Math.min(totalCount, 8);
-        for (int i = 0; i < displayLimit; i++) {
-            historyBidContainer.getChildren().add(createBidRow(i + 1, bids.get(i)));
+        for (int i = 0; i < totalCount; i++) {
+            historyBidContainer.getChildren().add(createBidRow(totalCount - i, bids.get(i)));
         }
-        boolean hasMore = totalCount > 8;
-        viewAllBidsLink.setVisible(hasMore);
-        viewAllBidsLink.setManaged(hasMore);
-        if (hasMore) viewAllBidsLink.setText("View all bids (" + totalCount + ") →");
     }
 
-    private HBox createBidRow(int index, BidTransaction bid) {
+    private HBox createBidRow(int index, BidHistoryItemDTO bid) {
         HBox row = new HBox(15);
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         row.getStyleClass().add("history-row");
 
         Label lblIndex = new Label(String.valueOf(index));
         lblIndex.getStyleClass().add("history-index");
-
-        Circle avatar = new Circle(15, Color.web("#e0e0e0"));
-        if (bid.getBidderId().equals(user.getId())) avatar.setFill(Color.web("#2D55FF"));
+        lblIndex.setStyle("-fx-text-fill: #000000;");
 
         VBox info = new VBox(2);
-        String name = bid.getBidderId().equals(user.getId()) ? bid.getBidderId() + " (You)" : bid.getBidderId();
+        String name = bid.userName.equals(user.getUsername()) ? bid.userName + " (You)" : bid.userName;
         Label lblName = new Label(name);
-        lblName.setStyle("-fx-font-weight: bold;");
+        lblName.setStyle("-fx-font-weight: bold; -fx-text-fill: #000000;");
 
-        Label lblTime = new Label(bid.getBidTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        Label lblTime = new Label(bid.bidTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
         info.getChildren().addAll(lblName, lblTime);
         HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
 
-        Label lblPrice = new Label(String.format("$ %.1f", bid.getBidAmount()));
-        lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold;");
+        Label lblPrice = new Label(String.format("$ %.1f", bid.bidPrice));
+        lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold; -fx-font-size: 16px;");
 
-        row.getChildren().addAll(lblIndex, avatar, info, lblPrice);
+        row.getChildren().addAll(lblIndex, info, lblPrice);
         return row;
     }
 
-    @FXML
-    private void handleViewAllBids() {
-        System.out.println("Redirecting to full history for item: " + itemId);
-        // Chuyển hướng sang trang Full History tại đây
-    }
+    // ─── Display & image ──────────────────────────────────────────────────────
 
-
-    // DISPLAY & IMAGE HANDLING
     private void displayDataItem(Item item) {
         thumbnailContainer.getChildren().clear();
         List<String> images = item.getImagesPath();
 
         if (images != null && !images.isEmpty()) {
-            String mainImageUrl = images.get(0);
-            ClientImageUtil.displayImage(mainImageUrl, "images", itemImage, IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2);
+            ClientImageUtil.displayImage(images.get(0), "images", itemImage,
+                    IMAGE_WIDTH * 2, IMAGE_HEIGHT * 2);
 
             boolean isFirst = true;
-
             for (String imgPath : images) {
-                if (imgPath == null || imgPath.trim().isEmpty()) continue;
+                if (imgPath == null || imgPath.isBlank()) continue;
+
                 StackPane thumbPane = new StackPane();
                 thumbPane.getStyleClass().add("thumbnail-container");
-                thumbPane.setMinWidth(80);
-                thumbPane.setMinHeight(60);
-                thumbPane.setMaxWidth(80);
-                thumbPane.setMaxHeight(60);
+                thumbPane.setMinWidth(THUMB_WIDTH);  thumbPane.setMaxWidth(THUMB_WIDTH);
+                thumbPane.setMinHeight(THUMB_HEIGHT); thumbPane.setMaxHeight(THUMB_HEIGHT);
+                if (isFirst) { thumbPane.getStyleClass().add("active-thumb"); isFirst = false; }
 
-                if (isFirst) {
-                    thumbPane.getStyleClass().add("active-thumb");
-                    isFirst = false;
-                }
                 ImageView thumbView = new ImageView();
-                thumbView.setFitWidth(80);
-                thumbView.setFitHeight(60);
-                thumbView.setPreserveRatio(true);
-
+                thumbView.setFitWidth(THUMB_WIDTH);
+                thumbView.setFitHeight(THUMB_HEIGHT);
                 thumbView.setPreserveRatio(false);
-
                 thumbView.imageProperty().addListener((obs, oldImg, newImg) -> {
-                    if (newImg != null) {
-                        applyObjectFitCoverToImageView(thumbView, newImg, THUMB_WIDTH, THUMB_HEIGHT);
-                    }
+                    if (newImg != null)
+                        ClientImageUtil.applyObjectFitCoverToImageView(thumbView, newImg, THUMB_WIDTH, THUMB_HEIGHT);
                 });
+
                 ClientImageUtil.displayImage(imgPath, "images", thumbView, IMAGE_WIDTH, IMAGE_HEIGHT);
                 thumbPane.getChildren().add(thumbView);
 
                 thumbPane.setOnMouseClicked(e -> {
-                    Image clickedImage = thumbView.getImage();
-                    if (clickedImage != null) {
-                        itemImage.setImage(clickedImage);
-                    } else {
-                        ClientImageUtil.displayImage(imgPath, "images", itemImage, THUMB_WIDTH, THUMB_HEIGHT);
-                    }
-                    thumbnailContainer.getChildren().forEach(node -> {
-                        node.getStyleClass().remove("active-thumb");
-                    });
+                    Image clicked = thumbView.getImage();
+                    if (clicked != null) itemImage.setImage(clicked);
+                    else ClientImageUtil.displayImage(imgPath, "images", itemImage, THUMB_WIDTH, THUMB_HEIGHT);
+                    thumbnailContainer.getChildren().forEach(n -> n.getStyleClass().remove("active-thumb"));
                     thumbPane.getStyleClass().add("active-thumb");
                 });
                 thumbnailContainer.getChildren().add(thumbPane);
             }
         }
-        double minHeight = 100;
-        itemDesLabel.setMinHeight(minHeight);
+
+        itemDesLabel.setMinHeight(100);
         itemDesLabel.setText(item.getDescription());
         itemDesLabel.setWrapText(true);
         itemDesLabel.setMaxWidth(Double.MAX_VALUE);
         itemDesLabel.prefWidthProperty().bind(
-                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth())
-        );
-
+                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth()));
         itemDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
         itemDesLabel.setMinHeight(Region.USE_PREF_SIZE);
+
         itemNameLabel.setText(item.getName());
         sellerLabel.setText(item.getSellerId());
-        currentPriceLabel.setText(String.format("$ " + item.getCurrentPrice()));
-        startPriceLabel.setText(String.valueOf(item.getStartingPrice()));
-        bidStepLabel.setText(String.valueOf(item.getBidStep()));
+        currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
+        startPriceLabel.setText(String.format("$ %.0f", item.getStartingPrice()));
+        bidStepLabel.setText(String.format("$ %.0f", item.getBidStep()));
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        if (item.getStartTime() != null) {
-            startTimeLabel.setText(item.getStartTime().format(formatter));
-        } else {
-            startTimeLabel.setText("N/A");
-        }
-        if (item.getEndTime() != null) {
-            endTimeLabel.setText(item.getEndTime().format(formatter));
-        } else {
-            endTimeLabel.setText("N/A");
-        }
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        startTimeLabel.setText(item.getStartTime() != null ? item.getStartTime().format(fmt) : "N/A");
+        endTimeLabel.setText(item.getEndTime()     != null ? item.getEndTime().format(fmt)   : "N/A");
+
         if (btnSuggestStep1 != null) btnSuggestStep1.setText(String.format("$ %.0f", item.getBidStep()));
         if (btnSuggestStep2 != null) btnSuggestStep2.setText(String.format("$ %.0f", item.getBidStep() * 2));
+
         startCountdown();
         updateMinimumBidLabel();
     }
 
     private void updateMinimumBidLabel() {
-        if (item != null && minimumBidLabel != null) {
-            double minimumNextBid = item.getCurrentPrice() + item.getBidStep();
-            // Cập nhật text: Hiển thị giá bid cuối cùng của User và Giá tối thiểu yêu cầu cho lượt tới
-            minimumBidLabel.setText(String.format("Your last bid: $ %.0f ( min next: $ %.0f ) ", myLastBid, minimumNextBid));
-        }
+        if (item == null || minimumBidLabel == null) return;
+        minimumBidLabel.setText(String.format(
+                "Your last bid: $ %.0f  (Min next: $ %.0f)",
+                myLastBid,
+                item.getCurrentPrice() + item.getBidStep()));
     }
 
-    private void applyObjectFitCover(Image img) {
-        applyObjectFitCoverToImageView(itemImage, img, IMAGE_WIDTH, IMAGE_HEIGHT);
-    }
+    private void startCountdown() {
+        AuctionStatus status = currentStatus();
+        LocalDateTime targetTime = null;
 
-    private void applyObjectFitCoverToImageView(ImageView imageView, Image img, double targetW, double targetH) {
-        if (img == null || imageView == null) return;
-        if (img.getProgress() < 1.0) {
-            img.progressProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal.doubleValue() == 1.0) {
-                    Platform.runLater(() -> applyObjectFitCoverToImageView(imageView, img, targetW, targetH));
-                }
-            });
-            return;
+        if (status == AuctionStatus.UPCOMING) {
+            targetTime = item.getStartTime();
+        } else if (status == AuctionStatus.ONGOING) {
+            targetTime = item.getEndTime();
         }
-        Platform.runLater(() -> {
-            double imgW = img.getWidth();
-            double imgH = img.getHeight();
 
-            if (imgW == 0 || imgH == 0) return;
-
-            double targetRatio = targetW / targetH;
-            double sourceRatio = imgW / imgH;
-            double viewW, viewH, viewX, viewY;
-            if (sourceRatio > targetRatio) {
-                viewH = imgH;
-                viewW = imgH * targetRatio;
-                viewX = (imgW - viewW) / 2;
-                viewY = 0;
-            } else {
-                viewW = imgW;
-                viewH = imgW / targetRatio;
-                viewX = 0;
-                viewY = (imgH - viewH) / 2;
-            }
-            imageView.setViewport(new javafx.geometry.Rectangle2D(viewX, viewY, viewW, viewH));
+        countdownTimer.startFor(targetTime, () -> {
+            AuctionStatus newStatus = currentStatus();
+            // [FIX #1 – chỗ 3] Cùng lỗi type mismatch như trên
+            item.setStatus(newStatus.getDisplayName());
+            Platform.runLater(() -> updateUIByStatus(newStatus));
         });
     }
 
-    // TIMER $ COUNTDOWN
-    private void startCountdown() {
-        if (timeline != null) {
-            timeline.stop();
-        }
-        updateTimeDisplay();
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateTimeDisplay()));
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.playFromStart();
+    private AuctionStatus currentStatus() {
+        if (item == null) return AuctionStatus.ENDED;
+        return AuctionStatus.compute(item.getStartTime(), item.getEndTime());
     }
 
-    private void updateTimeDisplay() {
-        if (item == null) return;
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime targetTime = null;
-
-        // upcoming
-        if (item.getStartTime() != null && now.isBefore(item.getStartTime())) {
-            targetTime = item.getStartTime();
-        } else if (item.getEndTime() != null && now.isBefore(item.getEndTime())) {
-            targetTime = item.getEndTime();
-        }
-        if (targetTime == null || now.isAfter(targetTime)) {
-            updateTimerLabels(0, 0, 0, 0);
-            updateUIByStatus(); // Gọi lại để ẩn/hiện bảng bid
-            if (timeline != null) timeline.stop();
-        } else {
-            long days = ChronoUnit.DAYS.between(now, targetTime);
-            long hours = ChronoUnit.HOURS.between(now, targetTime) % 24;
-            long minutes = ChronoUnit.MINUTES.between(now, targetTime) % 60;
-            long seconds = ChronoUnit.SECONDS.between(now, targetTime) % 60;
-            updateTimerLabels(days, hours, minutes, seconds);
-        }
-    }
-
-    private void updateTimerLabels(long d, long h, long m, long s) {
-        if (daysLabel != null) daysLabel.setText(String.format("%02d", d));
-        if (hoursLabel != null) hoursLabel.setText(String.format("%02d", h));
-        if (minsLabel != null) minsLabel.setText(String.format("%02d", m));
-        if (secsLabel != null) secsLabel.setText(String.format("%02d", s));
-    }
+    private boolean isOngoing() { return currentStatus() == AuctionStatus.ONGOING; }
 }

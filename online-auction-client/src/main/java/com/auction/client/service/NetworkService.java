@@ -20,7 +20,6 @@ import static com.auction.client.util.AppConfig.SocketPort;
 
 public class NetworkService {
 
-    // [SỬA #1] Dùng volatile để đảm bảo thread-safety cho singleton
     private static volatile NetworkService instance;
 
     private final Gson gson = new Gson();
@@ -101,6 +100,7 @@ public class NetworkService {
         listenerThread.setDaemon(true);
         listenerThread.start();
     }
+
     private void send(ActionType actionType, Object payload) {
         if (out == null || socket == null || socket.isClosed()) {
             System.out.println("Cannot send message [" + actionType + "], not connected to server");
@@ -118,22 +118,19 @@ public class NetworkService {
         send(ActionType.BID, payload);
     }
 
+    /**
+     * Gửi yêu cầu đăng ký auto-bid lên server.
+     *
+     * [FIX #3] Trước đây có 2 overload sendAutoBidRegister:
+     *   - sendAutoBidRegister(String, String, double, double)   → dùng helper send()
+     *   - sendAutoBidRegister(String, String, Double, Double)   → code lặp, không nhất quán
+     *
+     * Gộp lại thành 1 method dùng double (primitive), loại bỏ overload thừa.
+     * Gọi từ ItemPageController dùng double literals → không bị ảnh hưởng.
+     */
     public void sendAutoBidRegister(String itemId, String userId, double maxBid, double increment) {
         AutoBidPayload payload = new AutoBidPayload(itemId, userId, maxBid, increment);
         send(ActionType.AUTO_BID_REGISTER, payload);
-    }
-
-    public void sendAutoBidRegister(String itemId, String userId, Double maxBid, Double increment) {
-        if (out != null && socket != null && !socket.isClosed()) {
-            AutoBidPayload payload = new AutoBidPayload(itemId, userId, maxBid, increment);
-            String jsonPayload = gson.toJson(payload);
-            RequestMessage requestMessage = new RequestMessage(ActionType.AUTO_BID_REGISTER, jsonPayload);
-            String autoBidMessage = gson.toJson(requestMessage);
-            out.println(autoBidMessage);
-            System.out.println("Client was sent message: " + autoBidMessage);
-        } else {
-            System.out.println("Cannot register auto-bid, not connected to server");
-        }
     }
 
     public void sendGetAutoBidStatus(String itemId, String userId) {
