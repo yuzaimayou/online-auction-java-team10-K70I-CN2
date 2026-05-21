@@ -22,6 +22,9 @@ public class ImageUtil {
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(base64Image);
             String projectRoot = System.getProperty("auth.dir");
+            if (projectRoot == null || projectRoot.isBlank()) {
+                projectRoot = System.getProperty("user.dir");
+            }
             String uploadDir = projectRoot + File.separator + "dataBase" + File.separator + "images" + File.separator;
 
             Path dirPath = Paths.get(uploadDir);

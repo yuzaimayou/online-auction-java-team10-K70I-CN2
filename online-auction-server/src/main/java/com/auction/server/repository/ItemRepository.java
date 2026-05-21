@@ -58,9 +58,11 @@ public class ItemRepository {
         String thumbnailUrl = null;
         String imagesData = rs.getString("image_path");
 
-        List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
-        if (imagePaths != null && !imagePaths.isEmpty()) {
-            thumbnailUrl = imagePaths.get(0);
+        if (imagesData != null && !imagesData.isBlank()) {
+            List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
+            if (imagePaths != null && !imagePaths.isEmpty()) {
+                thumbnailUrl = imagePaths.get(0);
+            }
         }
 
         LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
@@ -166,10 +168,9 @@ public class ItemRepository {
                     end_time = ?, 
                     category = ?, 
                     bid_step = ?, 
-                    images_path = ?,
-                    status=?,
-                    search_name
-                
+                    image_path = ?,
+                    status = ?,
+                    search_name = ?
                 WHERE id = ?
                 """;
 
@@ -300,9 +301,10 @@ public class ItemRepository {
             }
             stmt.setInt(keywords.size() + 1, offset);
 
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                items.add(mapRowToItemSummary(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    items.add(mapRowToItemSummary(rs));
+                }
             }
         }
         return items;
@@ -516,7 +518,7 @@ public class ItemRepository {
                 ps.setString(1, ItemStatusConstants.ENDED);
                 ps.setString(2, ItemStatusConstants.ONGOING);
                 int rows = ps.executeUpdate();
-                LOGGER.info(String.format("[updateStatus] ONGOING->ENDED: %d row(s) updated", rows));
+                logStatusUpdate("ONGOING->ENDED", rows);
             }
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
@@ -530,7 +532,7 @@ public class ItemRepository {
                 ps.setString(1, ItemStatusConstants.ONGOING);
                 ps.setString(2, ItemStatusConstants.UPCOMING);
                 int rows = ps.executeUpdate();
-                LOGGER.info(String.format("[updateStatus] UPCOMING->ONGOING: %d row(s) updated", rows));
+                logStatusUpdate("UPCOMING->ONGOING", rows);
             }
 
         } catch (SQLException e) {
@@ -539,6 +541,15 @@ public class ItemRepository {
             LOGGER.log(java.util.logging.Level.SEVERE, "Unexpected error while updating item statuses", e);
         }
         return updatedId;
+    }
+
+    private void logStatusUpdate(String transition, int rows) {
+        String message = String.format("[updateStatus] %s: %d row(s) updated", transition, rows);
+        if (rows > 0) {
+            LOGGER.info(message);
+        } else {
+            LOGGER.fine(message);
+        }
     }
 
     public double getUserLastBid(String itemId, String userId) {

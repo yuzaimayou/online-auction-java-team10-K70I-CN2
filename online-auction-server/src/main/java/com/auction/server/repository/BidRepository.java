@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BidRepository {
@@ -46,24 +47,10 @@ public class BidRepository {
     }
 
     public boolean createBid(String itemId, String userId, double bidPrice, String bidTime) {
-
-        String sql = "INSERT INTO bids(item_id,user_id,bid_price,bid_time) VALUES(?,?,?,?)";
-
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
-
-            stmt.setString(1, itemId);
-            stmt.setString(2, userId);
-            stmt.setDouble(3, bidPrice);
-            stmt.setString(4, bidTime);
-
-            stmt.executeUpdate();
-
-            return true;
-
+        try (Connection conn = DatabaseManager.getConnection()) {
+            return createBid(conn, itemId, userId, bidPrice, bidTime);
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to create bid", e);
             return false;
         }
     }
@@ -104,6 +91,7 @@ public class BidRepository {
             return true;
 
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to create bid", e);
             return false;
         }
     }
@@ -112,6 +100,7 @@ public class BidRepository {
         try (Connection conn = DatabaseManager.getConnection()) {
             return upsertAutoBid(conn, itemId, userId, maxBid, increment, registeredAt);
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to upsert auto bid", e);
             return false;
         }
     }
@@ -138,39 +127,37 @@ public class BidRepository {
             stmt.executeUpdate();
             return true;
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to upsert auto bid", e);
             return false;
         }
     }
 
     public boolean deactivateAutoBid(String itemId, String userId) {
-        String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ?";
-
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
-            stmt.setString(1, itemId);
-            stmt.setString(2, userId);
-            return stmt.executeUpdate() > 0;
+        try (Connection conn = DatabaseManager.getConnection()) {
+            return deactivateAutoBid(conn, itemId, userId);
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to deactivate auto bid", e);
             return false;
         }
     }
 
     public Boolean deactivateAutoBidIfPresent(String itemId, String userId) {
-        String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ? AND is_active = 1";
+        try (Connection conn = DatabaseManager.getConnection()) {
+            return deactivateAutoBidIfPresent(conn, itemId, userId);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to deactivate auto bid if present", e);
+            return false;
+        }
+    }
 
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+    private boolean deactivateAutoBid(Connection conn, String itemId, String userId) {
+        String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, itemId);
             stmt.setString(2, userId);
-            int rows = stmt.executeUpdate();
-            LOGGER.info(String.format("[AUTO_BID_CANCEL][DB_DEACTIVATE] time=%s itemId=%s userId=%s rowsUpdated=%d",
-                    LocalDateTime.now(), itemId, userId, rows));
-            return true;
+            return stmt.executeUpdate() > 0;
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to deactivate auto bid", e);
             return false;
         }
     }
@@ -185,6 +172,7 @@ public class BidRepository {
                     LocalDateTime.now(), itemId, userId, rows));
             return true;
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to deactivate auto bid if present", e);
             return false;
         }
     }
@@ -212,12 +200,13 @@ public class BidRepository {
                     ));
                 }
             }
-            LOGGER.info(String.format("[AUTO_BID_ROUND][ACTIVE_CONFIGS] time=%s itemId=%s count=%d users=%s",
+            LOGGER.fine(String.format("[AUTO_BID_ROUND][ACTIVE_CONFIGS] time=%s itemId=%s count=%d users=%s",
                     LocalDateTime.now(),
                     itemId,
                     autoBids.size(),
                     autoBids.stream().map(AutoBidConfig::getUserId).toList()));
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to find active auto bids", e);
             return new ArrayList<>();
         }
 
@@ -251,6 +240,7 @@ public class BidRepository {
                 }
             }
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to find active auto bid", e);
             return null;
         }
 

@@ -104,7 +104,6 @@
     -fx-background-radius: 16;
     -fx-border-radius: 16;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
-    -fx-min-height: -fx-type-preferred;
 }
 
 /* Timer */

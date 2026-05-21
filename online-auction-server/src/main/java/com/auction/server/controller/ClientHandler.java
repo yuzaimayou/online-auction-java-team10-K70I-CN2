@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,14 +47,14 @@ public class ClientHandler implements Runnable {
         this.clientSocket = socket;
         try {
             this.out = new PrintWriter(clientSocket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error initializing ClientHandler streams", e);
         }
     }
 
-    public void sendMessage(String jsonMessage) {
+    public synchronized void sendMessage(String jsonMessage) {
         if (out != null) {
             out.println(jsonMessage);
         }
@@ -65,34 +66,30 @@ public class ClientHandler implements Runnable {
             String jsonRequest;
             while ((jsonRequest = in.readLine()) != null) {
                 RequestMessage request = gson.fromJson(jsonRequest, RequestMessage.class);
+                if (request == null || request.getAction() == null) {
+                    LOGGER.warning("Ignoring invalid socket request from " + username);
+                    continue;
+                }
                 ResponseMessage responseMessage = new ResponseMessage();
                 String jsonPayload = request.getPayload();
                 switch (request.getAction()) {
                     case BID -> {
                         bidAction(jsonPayload, responseMessage);
-                        if (responseMessage.getStatus() != null) {
-                            sendMessage(gson.toJson(responseMessage));
-                        }
+                        sendIfHasStatus(responseMessage);
                     }
                     case JOIN_ROOM -> joinRoomAction(jsonPayload, responseMessage);
                     case LEAVE_ROOM -> leaveRoomAction();
                     case AUTO_BID_REGISTER -> {
                         autoBidRegisterAction(jsonPayload, responseMessage);
-                        if (responseMessage.getStatus() != null) {
-                            sendMessage(gson.toJson(responseMessage));
-                        }
+                        sendIfHasStatus(responseMessage);
                     }
                     case GET_AUTO_BID_STATUS -> {
                         getAutoBidStatusAction(jsonPayload, responseMessage);
-                        if (responseMessage.getStatus() != null) {
-                            sendMessage(gson.toJson(responseMessage));
-                        }
+                        sendIfHasStatus(responseMessage);
                     }
                     case CANCEL_AUTO_BID -> {
                         cancelAutoBidAction(jsonPayload, responseMessage);
-                        if (responseMessage.getStatus() != null) {
-                            sendMessage(gson.toJson(responseMessage));
-                        }
+                        sendIfHasStatus(responseMessage);
                     }
                     default -> {
 
@@ -102,8 +99,16 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             LOGGER.info("Client disconnected: " + username);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.SEVERE, "Unexpected socket handler error for client " + username, e);
         } finally {
             closeResources();
+        }
+    }
+
+    private void sendIfHasStatus(ResponseMessage responseMessage) {
+        if (responseMessage.getStatus() != null) {
+            sendMessage(gson.toJson(responseMessage));
         }
     }
 
@@ -116,15 +121,28 @@ public class ClientHandler implements Runnable {
             if (clientSocket != null) clientSocket.close();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error closing ClientHandler resources", e);
+        } finally {
+            in = null;
+            out = null;
+            clientSocket = null;
         }
     }
 
     private void joinRoomAction(String jsonPayload, ResponseMessage responseMessage) {
         try {
             RoomPayload roomPayload = gson.fromJson(jsonPayload, RoomPayload.class);
+            if (roomPayload == null || roomPayload.getItemId() == null || roomPayload.getItemId().isBlank()) {
+                responseMessage.setStatus(SocketEventConstants.STATUS_JOIN_ROOM_FAIL);
+                responseMessage.setMessage("Invalid room payload");
+                sendMessage(gson.toJson(responseMessage));
+                return;
+            }
             this.username = roomPayload.getToken();
             LOGGER.fine("UserId: " + roomPayload.getToken() + " joining ItemId: " + roomPayload.getItemId());
 
+            if (currentRoomId != null && !currentRoomId.equals(roomPayload.getItemId())) {
+                roomManager.leaveRoom(currentRoomId, this);
+            }
             currentRoomId = roomPayload.getItemId();
             roomManager.joinRoom(currentRoomId, this);
             responseMessage.setStatus(SocketEventConstants.STATUS_JOIN_ROOM_SUCCESS);
@@ -271,4 +289,3 @@ public class ClientHandler implements Runnable {
         return username;
     }
 }
-
