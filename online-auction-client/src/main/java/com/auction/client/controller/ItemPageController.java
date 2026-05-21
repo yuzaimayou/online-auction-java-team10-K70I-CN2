@@ -453,10 +453,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 userCurrentBidLabel.setText(
                         String.format("Your current bid: $ %.0f (Leading)", item.getCurrentPrice()));
             } else {
-                double firstBid = item.getCurrentPrice() + step;
-                network.sendBid(item.getId(), user.getId(), firstBid, "");
-                userCurrentBidLabel.setText(
-                        String.format("Your current bid: $ %.0f (Auto-bidding...)", firstBid));
+                userCurrentBidLabel.setText("Auto-bidding...");
             }
         } catch (NumberFormatException e) {
             ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");

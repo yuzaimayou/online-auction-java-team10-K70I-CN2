@@ -10,8 +10,6 @@ import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 // Service xử lý logic đóng băng tiền khi đặt giá và nạp tiền.
 //
@@ -31,9 +29,6 @@ public class WalletService {
     private final WalletTransactionRepository txLogRepo;
     private final ItemRepository              itemRepo;
     private final BidRepository               bidRepo;
-
-    // Khoá theo item_id để tuần tự hoá các thread cùng đặt một item
-    private final ConcurrentMap<String, Object> itemLocks = new ConcurrentHashMap<>();
 
     public WalletService() {
         this.walletRepo = new WalletRepository();
@@ -192,7 +187,7 @@ public class WalletService {
 
     // Lấy khoá theo item để tuần tự hoá đặt giá
     private Object getItemLock(String itemId) {
-        return itemLocks.computeIfAbsent(itemId, ignored -> new Object());
+        return BidService.getItemLock(itemId);
     }
 
     private static void rollback(Connection conn) {

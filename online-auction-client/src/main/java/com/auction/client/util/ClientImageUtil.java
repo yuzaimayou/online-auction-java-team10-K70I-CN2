@@ -22,7 +22,6 @@ public class ClientImageUtil {
 
         Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
             try {
-                System.out.println("Loading new image: " + imageUrl);
                 return new Image(imageUrl, reqWidth, reqHeight, true, true);
             } catch (Exception e) {
                 System.err.println("Failed to load image: " + imageUrl);

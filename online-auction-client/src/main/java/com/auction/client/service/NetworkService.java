@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import static com.auction.client.util.AppConfig.ServerIp;
@@ -33,7 +34,7 @@ public class NetworkService {
         void onMessageReceived(ResponseMessage responseMessage);
     }
 
-    private MessageListener currentListener;
+    private volatile MessageListener currentListener;
 
     public void setCurrentListener(MessageListener listener) {
         this.currentListener = listener;
@@ -62,7 +63,7 @@ public class NetworkService {
             if (socket == null || socket.isClosed()) {
                 socket = new Socket(ServerIp, SocketPort);
                 out = new PrintWriter(socket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "utf-8"));
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             }
             String jsonPayload = gson.toJson(new RoomPayload(roomId, token));
             RequestMessage request = new RequestMessage(ActionType.JOIN_ROOM, jsonPayload);
@@ -77,14 +78,18 @@ public class NetworkService {
     }
 
     private void startListeningThread() {
+        if (listenerThread != null && listenerThread.isAlive()) {
+            return;
+        }
+
         listenerThread = new Thread(() -> {
             try {
                 String jsonRes;
                 while ((jsonRes = in.readLine()) != null) {
-                    System.out.println("Client was received message: " + jsonRes);
                     ResponseMessage response = gson.fromJson(jsonRes, ResponseMessage.class);
                     if ("join_room_success".equals(response.getStatus())) {
                         System.out.println("Successfully joined the auction room");
+                        continue;
                     } else if ("join_room_fail".equals(response.getStatus())) {
                         throw new IOException("Failed to join the auction room: " + response.getMessage());
                     }
@@ -101,7 +106,7 @@ public class NetworkService {
         listenerThread.start();
     }
 
-    private void send(ActionType actionType, Object payload) {
+    private synchronized void send(ActionType actionType, Object payload) {
         if (out == null || socket == null || socket.isClosed()) {
             System.out.println("Cannot send message [" + actionType + "], not connected to server");
             return;
@@ -134,38 +139,22 @@ public class NetworkService {
     }
 
     public void sendGetAutoBidStatus(String itemId, String userId) {
-        if (out != null && socket != null && !socket.isClosed()) {
-            AutoBidPayload payload = new AutoBidPayload(itemId, userId, null, null);
-            String jsonPayload = gson.toJson(payload);
-            RequestMessage requestMessage = new RequestMessage(ActionType.GET_AUTO_BID_STATUS, jsonPayload);
-            String statusMessage = gson.toJson(requestMessage);
-            out.println(statusMessage);
-            System.out.println("Client was sent message: " + statusMessage);
-        } else {
-            System.out.println("Cannot fetch auto-bid status, not connected to server");
-        }
+        AutoBidPayload payload = new AutoBidPayload(itemId, userId, null, null);
+        send(ActionType.GET_AUTO_BID_STATUS, payload);
     }
 
     public void sendCancelAutoBid(String itemId, String userId) {
-        if (out != null && socket != null && !socket.isClosed()) {
-            AutoBidPayload payload = new AutoBidPayload(itemId, userId, null, null);
-            String jsonPayload = gson.toJson(payload);
-            RequestMessage requestMessage = new RequestMessage(ActionType.CANCEL_AUTO_BID, jsonPayload);
-            String cancelMessage = gson.toJson(requestMessage);
-            out.println(cancelMessage);
-            System.out.printf("[AUTO_BID_CANCEL][CLIENT_SEND] time=%s itemId=%s userId=%s%n",
-                    LocalDateTime.now(), itemId, userId);
-            System.out.println("Client was sent message: " + cancelMessage);
-        } else {
-            System.out.println("Cannot cancel auto-bid, not connected to server");
-        }
+        AutoBidPayload payload = new AutoBidPayload(itemId, userId, null, null);
+        System.out.printf("[AUTO_BID_CANCEL][CLIENT_SEND] time=%s itemId=%s userId=%s%n",
+                LocalDateTime.now(), itemId, userId);
+        send(ActionType.CANCEL_AUTO_BID, payload);
     }
 
     public void leaveRoom() {
         send(ActionType.LEAVE_ROOM, null);
     }
 
-    public void closeConnection() {
+    public synchronized void closeConnection() {
         try {
             if (in != null) in.close();
             if (out != null) out.close();
@@ -177,7 +166,10 @@ public class NetworkService {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            in = null;
+            out = null;
             socket = null;
+            listenerThread = null;
             currentListener = null;
         }
     }

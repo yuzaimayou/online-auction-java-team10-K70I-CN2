@@ -72,7 +72,6 @@ public class NavigationUtil {
 
     public static void handleSwitchToHomePage(Label label) {
         try {
-            System.out.println("Da chuyen sang trang chu");
             if (homePageRoot == null || homePageController == null) {
                 FXMLLoader loader = new FXMLLoader(
                         NavigationUtil.class.getResource(

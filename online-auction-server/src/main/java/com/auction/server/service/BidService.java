@@ -149,6 +149,11 @@ public class BidService {
                     LOGGER.info("Auto-bid registration rejected: item not found or user is the seller for itemId " + itemId);
                     return false;
                 }
+                if (increment + PRICE_EPSILON < item.getBidStep()) {
+                    conn.rollback();
+                    LOGGER.info("Auto-bid registration rejected: increment is lower than bid step for itemId " + itemId);
+                    return false;
+                }
                 if (!isBiddingStatusAllowed(item)) {
                     conn.rollback();
                     LOGGER.info("Auto-bid registration rejected: item status does not allow bidding for itemId " + itemId
