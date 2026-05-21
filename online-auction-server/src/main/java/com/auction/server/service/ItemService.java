@@ -3,6 +3,7 @@ package com.auction.server.service;
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.util.StringUtil;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
@@ -32,24 +33,30 @@ public class ItemService {
 
     public List<ItemSummary> getAllItemsBySeller(String sellerId) {
         if (sellerId == null || sellerId.trim().isEmpty()) {
-            return null; // Hoặc trả về list rỗng tùy logic của bạn
+            return null;
         }
-        // Gọi hàm từ ItemRepository
         return itemRepository.findAllBySellerId(sellerId);
     }
 
-    //Lay nhieu item
+    /**
+     * Lấy danh sách item theo query string.
+     *
+     * [UPDATE] Hỗ trợ tham số caller=ADMIN:
+     *   - Nếu caller=ADMIN → gọi findAllItemsForAdmin() để trả về toàn bộ item kể cả BANNED
+     *     (admin cần nhìn thấy item đã ban để quản lý).
+     *   - Nếu không có caller → gọi findAllItems() như cũ, đã loại BANNED ra khỏi kết quả.
+     */
     public List<ItemSummary> getItems(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return itemRepository.findAllItems("s", 0);
+            return itemRepository.findAllItems("end_time ASC", 0);
         }
+
         int page = 0;
         if (query.contains("page=")) {
             try {
                 page = Integer.parseInt(extractParam(query, "page"));
             } catch (NumberFormatException e) {
                 page = 0;
-                e.printStackTrace();
             }
         }
 
@@ -65,7 +72,12 @@ public class ItemService {
             }
         }
 
-        //lay cac san pham theo keyword
+        // [NEW] Admin caller: trả về tất cả item kể cả BANNED
+        if (query.contains("caller=ADMIN")) {
+            return itemRepository.findAllItemsForAdmin(sortOrder, page);
+        }
+
+        // Lấy theo keyword (public)
         if (query.contains("search=")) {
             try {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
@@ -75,26 +87,24 @@ public class ItemService {
                         page = Integer.parseInt(extractParam(query, "page"));
                     } catch (NumberFormatException e) {
                         page = 0;
-                        e.printStackTrace();
                     }
                 }
                 return getItemsByKeyword(input, page);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-
         }
 
-        //lay san pham theo id
+        // Lấy theo sellerId
         if (query.contains("sellerId")) {
             String sellerId = extractParam(query, "sellerId");
             return itemRepository.findAllBySellerId(sellerId);
         }
 
-
+        // Mặc định: trang chủ public, loại bỏ BANNED
         List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page);
-        System.out.println("Fetched " + items.size() + " items with sort order: ");
-        return itemRepository.findAllItems(sortOrder, page);
+        System.out.println("Fetched " + items.size() + " items");
+        return items;
     }
 
 
@@ -198,5 +208,9 @@ public class ItemService {
 
     public double getUserLastBid(String itemId, String userId) {
         return itemRepository.getUserLastBid(itemId, userId);
+    }
+
+    public boolean banItem(String itemId) {
+        return itemRepository.updateStatus(itemId, ItemStatusConstants.BANNED);
     }
 }

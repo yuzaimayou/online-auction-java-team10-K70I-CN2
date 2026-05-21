@@ -24,8 +24,6 @@ public class Item extends Entity {
     private LocalDateTime create_at;
     private double myLastBid = 0.0;
 
-
-    // Constructor khi tạo item mới
     public Item(String name, String description,
                 double startingPrice,
                 LocalDateTime startTime,
@@ -36,38 +34,29 @@ public class Item extends Entity {
                 List<String> imagesPath) {
 
         super(UUID.randomUUID().toString());
-        //Validate item name
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Error: Item name cannot be null or empty!");
         }
-
-        //Validate description
         if (description == null) {
             throw new IllegalArgumentException("Error: Description cannot be null!");
         }
-        // [ERROR HANDLING] Validate starting price
         if (startingPrice < 0) {
             throw new IllegalArgumentException("Error: Starting price cannot be negative!");
         }
-        // [ERROR HANDLING] Validate time constraints
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("Error: Start time and end time cannot be null!");
         }
 
         LocalDateTime now = LocalDateTime.now();
-
         if (startTime.isBefore(now)) {
             throw new IllegalArgumentException("Error: Start time cannot be in the past!");
         }
-
         if (endTime.isBefore(now)) {
             throw new IllegalArgumentException("Error: End time cannot be in the past!");
         }
-
         if (endTime.isBefore(startTime)) {
             throw new IllegalArgumentException("Error: End time must be strictly after the start time!");
         }
-        // [ERROR HANDLING] Validate seller ID
         if (sellerId == null || sellerId.trim().isEmpty()) {
             throw new IllegalArgumentException("Error: Seller ID cannot be null or empty!");
         }
@@ -77,11 +66,9 @@ public class Item extends Entity {
         if (bidStep <= 0) {
             throw new IllegalArgumentException("Error: Bid step must be greater than 0!");
         }
-
         if (bidStep > startingPrice) {
             throw new IllegalArgumentException("Error: Bid step cannot be greater than starting price!");
         }
-
         if (imagesPath == null || imagesPath.isEmpty()) {
             throw new IllegalArgumentException("Error: Image path cannot be null or empty!");
         }
@@ -89,7 +76,7 @@ public class Item extends Entity {
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
-        this.currentPrice = startingPrice; // Current price starts from starting price
+        this.currentPrice = startingPrice;
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
@@ -109,7 +96,6 @@ public class Item extends Entity {
         }
     }
 
-    // Constructor khi load tu database
     public Item(String name, String description,
                 double startingPrice, double currentPrice,
                 LocalDateTime startTime, LocalDateTime endTime,
@@ -119,7 +105,6 @@ public class Item extends Entity {
                 List<String> imagesPath) {
 
         super(UUID.randomUUID().toString());
-
         this.name = name;
         this.description = description;
         this.startingPrice = startingPrice;
@@ -141,14 +126,12 @@ public class Item extends Entity {
     }
 
     public void setCurrentPrice(double currentPrice) {
-        // [ERROR HANDLING] Ensure new price is not lower than the starting price
         if (currentPrice < this.startingPrice) {
             throw new IllegalArgumentException("Error: Current price cannot be lower than the starting price!");
         }
         this.currentPrice = currentPrice;
     }
 
-    // Backward-compatible wrappers used by existing bidding/services code.
     public double getHighestCurrentPrice() {
         return getCurrentPrice();
     }
@@ -156,7 +139,6 @@ public class Item extends Entity {
     public void setHighestCurrentPrice(double highestCurrentPrice) {
         setCurrentPrice(highestCurrentPrice);
     }
-
 
     public String getSellerId() {
         return sellerId;
@@ -170,12 +152,10 @@ public class Item extends Entity {
         return bidStep;
     }
 
-
     public List<String> getImagesPath() {
         return imagesPath;
     }
 
-    // Getters for time (needed for auction time validation)
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -199,7 +179,6 @@ public class Item extends Entity {
         return description;
     }
 
-    // Verify if someone is the item owner (to prevent shill bidding)
     public boolean isOwner(String userId) {
         return sellerId != null && sellerId.equals(userId);
     }
@@ -211,10 +190,6 @@ public class Item extends Entity {
     public void setCurrentTopPLayerId(String playerId) {
         currentTopPLayerId = playerId;
     }
-
-//    public String getStatus() {
-//        return status;
-//    }
 
     public void setStatus(String status) {
         this.status = status;
@@ -229,7 +204,6 @@ public class Item extends Entity {
     public void setMyLastBid(double myLastBid) { this.myLastBid = myLastBid; }
 
     public void printItemDetails() {
-
         System.out.println("Item ID: " + getId());
         System.out.println("Name: " + name);
         System.out.println("Description: " + description);
@@ -243,9 +217,15 @@ public class Item extends Entity {
         System.out.println("End time: " + endTime);
     }
 
+    // --- CẬP NHẬT LOGIC HÀM GETSTATUS() BAN ĐẦU ---
     public String getStatus() {
-        LocalDateTime now = LocalDateTime.now();
+        // Nếu biến status nội tại được gán cứng từ DB là BANNED, ưu tiên chặn ngay lập tức
+        if (ItemStatusConstants.BANNED.equalsIgnoreCase(this.status)) {
+            return ItemStatusConstants.BANNED;
+        }
 
+        // Giữ nguyên logic tính toán thời gian động ban đầu của bạn
+        LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(startTime)) {
             return ItemStatusConstants.UPCOMING;
         } else if (now.isAfter(endTime)) {
@@ -259,4 +239,3 @@ public class Item extends Entity {
         return status;
     }
 }
-

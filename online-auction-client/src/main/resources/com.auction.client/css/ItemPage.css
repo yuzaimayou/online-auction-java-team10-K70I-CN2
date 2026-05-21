@@ -96,13 +96,15 @@
 }
 
 /* Auction Card */
+/* Auction Card */
 .auction-info-card {
     -fx-padding: 25;
-    -fx-spacing: 15;
+    -fx-spacing: 20; /* Tăng nhẹ spacing giữa các khối để thoáng hơn */
     -fx-background-color: #ffffff;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
+    -fx-min-height: -fx-type-preferred;
 }
 
 /* Timer */

@@ -10,6 +10,7 @@ import com.auction.client.service.ToastService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.CountdownTimerUtil;
 import com.auction.client.util.UserSession;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
@@ -49,80 +50,48 @@ public class ItemPageController implements NetworkService.MessageListener {
     private static final double THUMB_HEIGHT = 60.0;
 
     // FXML: item info
-    @FXML
-    private Label itemNameLabel;
-    @FXML
-    private Label itemDesLabel;
-    @FXML
-    private ImageView itemImage;
-    @FXML
-    private Label sellerLabel;
-    @FXML
-    private Label currentPriceLabel;
-    @FXML
-    private Label startPriceLabel;
-    @FXML
-    private Label bidStepLabel;
-    @FXML
-    private Label startTimeLabel;
-    @FXML
-    private Label endTimeLabel;
-    @FXML
-    private HBox thumbnailContainer;
+    @FXML private Label itemNameLabel;
+    @FXML private Label itemDesLabel;
+    @FXML private ImageView itemImage;
+    @FXML private Label sellerLabel;
+    @FXML private Label currentPriceLabel;
+    @FXML private Label startPriceLabel;
+    @FXML private Label bidStepLabel;
+    @FXML private Label startTimeLabel;
+    @FXML private Label endTimeLabel;
+    @FXML private HBox thumbnailContainer;
 
     // FXML: bid controls
-    @FXML
-    private TextField bidAmountField;
-    @FXML
-    private Button submitBid;
-    @FXML
-    private Label minimumBidLabel;
-    @FXML
-    private Button btnSuggestStep1;
-    @FXML
-    private Button btnSuggestStep2;
+    @FXML private TextField bidAmountField;
+    @FXML private Button submitBid;
+    @FXML private Label minimumBidLabel;
+    @FXML private Button btnSuggestStep1;
+    @FXML private Button btnSuggestStep2;
 
     // FXML: bid history
-    @FXML
-    private ScrollPane historyScrollPane;
-    @FXML
-    private VBox historyBidContainer;
-    @FXML
-    private Label totalBidsLabel;
+    @FXML private ScrollPane historyScrollPane;
+    @FXML private VBox historyBidContainer;
+    @FXML private Label totalBidsLabel;
 
     // FXML: auto-bid
-    @FXML
-    private VBox autoBidForm;
-    @FXML
-    private VBox autoBidActiveStatus;
-    @FXML
-    private TextField maxBidField;
-    @FXML
-    private TextField autoBidStepField;
-    @FXML
-    private Label userCurrentBidLabel;
-    @FXML
-    private Button btnAutoBidToggle;
+    @FXML private VBox autoBidForm;
+    @FXML private VBox autoBidActiveStatus;
+    @FXML private TextField maxBidField;
+    @FXML private TextField autoBidStepField;
+    @FXML private Label userCurrentBidLabel;
+    @FXML private Button btnAutoBidToggle;
 
     // FXML: countdown timer
-    @FXML
-    private Label timeStatusLabel;
-    @FXML
-    private Label daysLabel;
-    @FXML
-    private Label hoursLabel;
-    @FXML
-    private Label minsLabel;
-    @FXML
-    private Label secsLabel;
+    @FXML private Label timeStatusLabel;
+    @FXML private Label daysLabel;
+    @FXML private Label hoursLabel;
+    @FXML private Label minsLabel;
+    @FXML private Label secsLabel;
 
     // FXML: status overlay
-    @FXML
-    private VBox bidControlsContainer;
-    @FXML
-    private StackPane statusOverlay;
-    @FXML
-    private Label statusMessageLabel;
+    @FXML private VBox bidControlsContainer;
+    @FXML private StackPane statusOverlay;
+    @FXML private Label statusMessageLabel;
 
     // State
     private String itemId;
@@ -181,6 +150,14 @@ public class ItemPageController implements NetworkService.MessageListener {
         this.myLastBid = item.getMyLastBid();
         autoBidManager.setLastBidderId(item.getCurrentTopPLayerId());
 
+        // Nếu item đã bị ban từ trước (tải trang khi status đã là BANNED)
+        if (ItemStatusConstants.BANNED.equalsIgnoreCase(item.getStoredStatus())) {
+            displayDataItem(item);
+            showBannedOverlay();
+            connectToRealTimeBidding();
+            return;
+        }
+
         AuctionStatus status = currentStatus();
         item.setStatus(status.getDisplayName());
 
@@ -201,7 +178,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     private void updateUIByStatus(AuctionStatus status) {
         if (item == null) return;
 
-        // [FIX #1 – chỗ 2] Cùng lỗi type mismatch như trên
         item.setStatus(status.getDisplayName());
 
         boolean isOwner = item.getSellerId().equals(user.getId());
@@ -232,6 +208,45 @@ public class ItemPageController implements NetworkService.MessageListener {
                 statusMessageLabel.setText("🚫 This auction has ended");
                 statusMessageLabel.getStyleClass().add("status-ended");
             }
+            case BANNED -> {
+                // Hiển thị thông báo kiểm duyệt theo yêu cầu
+                showBannedOverlay();
+            }
+        }
+    }
+
+    /**
+     * Hiển thị overlay trạng thái bị kiểm duyệt và tắt toàn bộ tương tác đấu giá.
+     * Được gọi cả khi load trang (item đã banned từ trước) và khi nhận realtime event.
+     */
+    private void showBannedOverlay() {
+        // Dừng đồng hồ đếm ngược
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
+
+        // Tắt toàn bộ khu vực điều khiển đặt giá
+        bidControlsContainer.setVisible(false);
+        bidControlsContainer.setManaged(false);
+
+        // Tắt auto-bid nếu đang hoạt động
+        autoBidManager.deactivate();
+        autoBidForm.setVisible(false);
+        autoBidForm.setManaged(false);
+        autoBidActiveStatus.setVisible(false);
+        autoBidActiveStatus.setManaged(false);
+
+        // Hiển thị overlay với thông báo theo yêu cầu
+        statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
+        statusMessageLabel.getStyleClass().add("status-ended");
+        statusMessageLabel.setText("⛔ Phát hiện hành vi trạng thái bất thường của phòng đấu giá. Không thể truy cập.");
+
+        statusOverlay.setVisible(true);
+        statusOverlay.setManaged(true);
+
+        // Cập nhật trạng thái item
+        if (item != null) {
+            item.setStatus(ItemStatusConstants.BANNED);
         }
     }
 
@@ -244,20 +259,56 @@ public class ItemPageController implements NetworkService.MessageListener {
 
             String event = response.getMessage();
 
-            // [FIX #2] Trước đây chỉ xử lý "NEW_BID", bỏ qua "AUCTION_EXTENDED".
-            // Dùng hằng số từ SocketEventConstants thay vì hardcode string.
             if (SocketEventConstants.EVENT_NEW_BID.equals(event)) {
                 handleNewBidEvent(response);
             } else if (SocketEventConstants.EVENT_AUCTION_EXTENDED.equals(event)) {
                 handleAuctionExtendedEvent(response);
+            } else if (SocketEventConstants.EVENT_ITEM_BANNED.equals(event)) {
+                handleItemBannedEvent(response);
             }
-            // Các event khác (AUTO_BID_STATUS, v.v.) có thể mở rộng tại đây.
         });
     }
 
     /**
+     * [NEW] Xử lý sự kiện ITEM_BANNED từ server.
+     * Được trigger khi admin ban sản phẩm trong khi user đang xem trang đấu giá.
+     *
+     * Flow:
+     *  1. Parse itemId từ data payload
+     *  2. Bỏ qua nếu không phải phòng hiện tại
+     *  3. Dừng timer, tắt controls, hiển thị overlay banned
+     *  4. Hiện toast thông báo cho user
+     */
+    private void handleItemBannedEvent(ResponseMessage response) {
+        try {
+            JsonElement dataElement = gson.toJsonTree(response.getData());
+            if (dataElement == null || !dataElement.isJsonObject()) return;
+
+            String bannedItemId = dataElement.getAsJsonObject().get("itemId").getAsString();
+
+            // Chỉ xử lý nếu đúng phòng đấu giá hiện tại user đang xem
+            if (!bannedItemId.equals(this.itemId)) return;
+
+        } catch (Exception e) {
+            // Nếu không parse được itemId, bỏ qua để tránh false-positive
+            System.err.println("[ItemPageController] Failed to parse ITEM_BANNED payload: " + e.getMessage());
+            return;
+        }
+
+        // Hiển thị overlay banned (dừng timer, tắt controls, hiện thông báo)
+        showBannedOverlay();
+
+        // Toast thông báo "văng ra" cho user
+        ToastService.showError(
+                itemNameLabel.getScene(),
+                "Sản phẩm này đã bị kiểm duyệt bởi quản trị viên."
+        );
+
+        System.out.println("[ItemPageController] Item banned by admin, room locked: " + this.itemId);
+    }
+
+    /**
      * Xử lý sự kiện đặt giá mới từ server.
-     * Logic giữ nguyên so với phiên bản cũ, chỉ tách ra method riêng cho rõ ràng.
      */
     private void handleNewBidEvent(ResponseMessage response) {
         if (!SocketEventConstants.STATUS_SUCCESS_LOWER.equals(response.getStatus())) return;
@@ -274,36 +325,22 @@ public class ItemPageController implements NetworkService.MessageListener {
         item.setCurrentTopPLayerId(bidPayload.getUserId());
         item.setCurrentPrice(bidPayload.getBidPrice());
 
-        // [FIX] BUG ROOT CAUSE: Server chạy auto-bid nhiều vòng rồi chỉ broadcast
-        //   MỘT LẦN với finalBid = người thắng cuối cùng.
-        //   Ví dụ: User A bid thủ công → auto-bid của B thắng → server broadcast userId=B.
-        //   Client A nhận: bidPayload.getUserId() = B != A
-        //   → điều kiện cũ KHÔNG cập nhật myLastBid dù A đã có bản ghi bid trong DB.
-        //
-        //   FIX: Sau mỗi broadcast, reload myLastBid từ server (nguồn sự thật duy nhất).
-        //   Không phụ thuộc vào việc ai là finalBid.
-        //
-        //   TRƯỚC (sai):
-        //     if (user.getId().equals(bidPayload.getUserId())) {
-        //         myLastBid = bidPayload.getBidPrice(); // chỉ đúng khi mình là finalBid
-        //     }
         itemsService.getItemById(itemId, user.getId())
                 .thenAccept(refreshed -> Platform.runLater(() -> {
                     myLastBid = refreshed.getMyLastBid();
                     updateMinimumBidLabel();
                 }))
-                .exceptionally(ex -> null); // silent fail — label giữ giá trị cũ
+                .exceptionally(ex -> null);
 
         currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
         updateUIByStatus(currentStatus());
-        updateMinimumBidLabel(); // hiển thị ngay với giá trị hiện tại, async sẽ refresh
+        updateMinimumBidLabel();
         handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
         loadBidHistory();
     }
 
     /**
-     * [FIX #2 – mới] Xử lý sự kiện gia hạn thời gian đấu giá từ server.
-     * Server gửi data chứa endTime mới → cập nhật item và khởi động lại countdown.
+     * Xử lý sự kiện gia hạn thời gian đấu giá từ server.
      */
     private void handleAuctionExtendedEvent(ResponseMessage response) {
         try {
@@ -318,11 +355,9 @@ public class ItemPageController implements NetworkService.MessageListener {
 
             item.setEndTime(newEndTime);
 
-            // Cập nhật label hiển thị thời gian kết thúc
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             endTimeLabel.setText(newEndTime.format(fmt));
 
-            // Khởi động lại countdown với thời gian mới
             startCountdown();
 
             System.out.println("[AUCTION_EXTENDED] New end time: " + newEndTimeStr);
