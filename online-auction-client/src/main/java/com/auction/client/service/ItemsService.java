@@ -101,6 +101,17 @@ public class ItemsService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
 
+    public CompletableFuture<ResponseMessage> banItem(String itemId) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(String.format("%s/api/items/ban/%s", AppConfig.getHttpUrl(), itemId)))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    }
+
+
     // GET BID HISTORY
     public CompletableFuture<List<BidTransaction>> getBidHistory(String itemId) {
         HttpRequest request = HttpRequest.newBuilder()

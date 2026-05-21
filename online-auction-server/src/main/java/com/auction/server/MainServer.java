@@ -41,6 +41,7 @@ public class MainServer {
             httpServer.createContext("/api/verify-account", new VerifyHandler());
             httpServer.createContext("/api/send-otp", new SendOtp());
             httpServer.createContext("/api/items", new ItemsHandler());
+            httpServer.createContext("/api/items/ban", new BanItemHandler());
             httpServer.createContext("/api/items/", new ItemDetailHandler());
             httpServer.createContext("/api/history/", new HistoryHandler());
             // ngix da xu ly viec /images

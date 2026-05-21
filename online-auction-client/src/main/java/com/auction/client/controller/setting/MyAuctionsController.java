@@ -4,6 +4,7 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.util.AppConfig;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
@@ -104,6 +105,11 @@ public class MyAuctionsController {
     @FXML
     public void handleSwitchToItemEdit(ItemSummary selectedItem) {
         if (selectedItem == null) return;
+
+        if (selectedItem.getStatus() == AuctionStatus.BANNED) {
+            showError("Access Denied", "This product has been banned by management and cannot be modified.");
+            return;
+        }
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml")
@@ -132,6 +138,12 @@ public class MyAuctionsController {
 
     private void handleDeleteItem(ItemSummary itemToDelete) {
         if (itemToDelete == null) return;
+
+// [ADD SECURITY] Chặn gửi request xóa nếu sản phẩm đang bị BAN
+        if (itemToDelete.getStatus() == AuctionStatus.BANNED) {
+            showError("Action Not Allowed", "You cannot delete a product that has been banned.");
+            return;
+        }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirm delete");

@@ -85,7 +85,6 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set
             for (int i = 0; i < params.length; i++) {
                 stmt.setObject(i + 1, params[i]);
             }
@@ -93,7 +92,6 @@ public class ItemRepository {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     ItemSummary itemSummary = mapRowToItemSummary(rs);
-
                     summaries.add(itemSummary);
                 }
             }
@@ -179,7 +177,6 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set các tham số cần cập nhật (Thứ tự từ 1 đến 10)
             stmt.setString(1, item.getName());
             stmt.setString(2, item.getDescription());
             stmt.setDouble(3, item.getStartingPrice());
@@ -192,12 +189,8 @@ public class ItemRepository {
             stmt.setString(10, gson.toJson(item.getImagesPath()));
             stmt.setString(11, item.getStatus());
             stmt.setString(12, StringUtil.removeAccents(item.getName()));
-
-            // Set tham số ID cho điều kiện WHERE (Thứ tự 11)
             stmt.setString(13, itemId);
 
-            // executeUpdate() trả về số dòng bị ảnh hưởng.
-            // Nếu > 0 nghĩa là update thành công (có tìm thấy ID)
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
 
@@ -217,10 +210,7 @@ public class ItemRepository {
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            // Set tham số ID cần xóa
             stmt.setString(1, id);
-
-            // Nếu xóa thành công (ID có tồn tại), rowsAffected sẽ > 0
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
 
@@ -290,32 +280,27 @@ public class ItemRepository {
                 """;
 
         return executeSummaryQuery(sql, sellerID);
-
     }
 
     public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
         List<ItemSummary> items = new ArrayList<>();
-        //khoi tao cau lenh sql dong
-        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE ");
+        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != 'BANNED' AND (");
         for (int i = 0; i < keywords.size(); i++) {
             sql.append("LOWER(search_name) LIKE ?");
             if (i < keywords.size() - 1) sql.append(" AND ");
         }
-        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
+        sql.append(") ORDER BY id DESC LIMIT 10 OFFSET ?");
         LOGGER.fine(sql.toString());
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())
         ) {
-            //gan tham so cho cau lenh sql
             for (int i = 0; i < keywords.size(); i++) {
                 stmt.setString(i + 1, "%" + keywords.get(i) + "%");
             }
             stmt.setInt(keywords.size() + 1, offset);
-            LOGGER.fine(stmt.toString());
-            //thuc thi cau lenh
+
             ResultSet rs = stmt.executeQuery();
-            //chuyen doi du lieu
             while (rs.next()) {
                 items.add(mapRowToItemSummary(rs));
             }
@@ -323,19 +308,63 @@ public class ItemRepository {
         return items;
     }
 
+    /**
+     * Dành cho trang chủ / public: loại bỏ sản phẩm BANNED.
+     * [FIX] Áp dụng đúng sortOrder và offset (trước đây bị bỏ qua).
+     */
     public List<ItemSummary> findAllItems(String sortOrder, int offset) {
-        String sql = """
+        // Whitelist sort order để tránh SQL injection
+        String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
+            case "start_time desc"    -> "start_time DESC";
+            case "current_price asc"  -> "current_price ASC";
+            case "current_price desc" -> "current_price DESC";
+            default                   -> "end_time ASC";   // mặc định
+        };
+
+        String sql = String.format("""
                 SELECT id,
                        name,
                        category,
                        current_price,
                        image_path,
                        start_time,
-                       end_time 
+                       end_time
                 FROM items
-                """;
+                WHERE status != '%s'
+                ORDER BY %s
+                LIMIT 10 OFFSET ?
+                """, ItemStatusConstants.BANNED, safeSort);
 
-        return executeSummaryQuery(sql);
+        return executeSummaryQuery(sql, offset);
+    }
+
+    /**
+     * [NEW] Dành cho Admin panel: trả về TẤT CẢ sản phẩm kể cả BANNED
+     * để admin có thể xem và quản lý.
+     * Được gọi từ ItemService.getItems() khi caller = "ADMIN".
+     */
+    public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
+        String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
+            case "start_time desc"    -> "start_time DESC";
+            case "current_price asc"  -> "current_price ASC";
+            case "current_price desc" -> "current_price DESC";
+            default                   -> "end_time ASC";
+        };
+
+        String sql = String.format("""
+                SELECT id,
+                       name,
+                       category,
+                       current_price,
+                       image_path,
+                       start_time,
+                       end_time
+                FROM items
+                ORDER BY %s
+                LIMIT 10 OFFSET ?
+                """, safeSort);
+
+        return executeSummaryQuery(sql, offset);
     }
 
     public List<String> getImgName(String itemId) {
@@ -373,17 +402,14 @@ public class ItemRepository {
         List<String> imagePaths = new ArrayList<>();
         if (pathsData != null && !pathsData.isEmpty()) {
             try {
-                // Try to parse as JSON list (new format)
                 imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
                 if (imagePaths == null) {
                     imagePaths = new ArrayList<>();
                 }
             } catch (Exception e) {
-                // Fallback for old format (single string path)
                 imagePaths.add(pathsData);
             }
         }
-
 
         Item item = new Item(
                 rs.getString("name"),
@@ -468,8 +494,6 @@ public class ItemRepository {
     public List<String> updateStatus() {
         List<String> updatedId = new ArrayList<>();
 
-        // SELECT-before-UPDATE: collect IDs that are *about* to transition so the
-        // return value reflects exactly what changed, not all already-ended items.
         String selectAboutToEndSql =
                 "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
         String selectAboutToLiveSql =
@@ -481,7 +505,6 @@ public class ItemRepository {
 
         try (Connection conn = DatabaseManager.getConnection()) {
 
-            // Step 1: Collect IDs that will transition ONGOING -> ENDED
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
                 ps.setString(1, ItemStatusConstants.ONGOING);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -489,7 +512,6 @@ public class ItemRepository {
                 }
             }
 
-            // Step 2: Perform ONGOING -> ENDED update
             try (PreparedStatement ps = conn.prepareStatement(updateEndedSql)) {
                 ps.setString(1, ItemStatusConstants.ENDED);
                 ps.setString(2, ItemStatusConstants.ONGOING);
@@ -497,7 +519,6 @@ public class ItemRepository {
                 LOGGER.info(String.format("[updateStatus] ONGOING->ENDED: %d row(s) updated", rows));
             }
 
-            // Step 3: Collect IDs that will transition UPCOMING -> ONGOING
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
                 ps.setString(1, ItemStatusConstants.UPCOMING);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -505,7 +526,6 @@ public class ItemRepository {
                 }
             }
 
-            // Step 4: Perform UPCOMING -> ONGOING update
             try (PreparedStatement ps = conn.prepareStatement(updateOngoingSql)) {
                 ps.setString(1, ItemStatusConstants.ONGOING);
                 ps.setString(2, ItemStatusConstants.UPCOMING);
@@ -538,5 +558,20 @@ public class ItemRepository {
             LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
         }
         return 0.0;
+    }
+
+    public boolean updateStatus(String itemId, String status) {
+        String sql = "UPDATE items SET status = ? WHERE id = ?";
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, status);
+            stmt.setString(2, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update item status", e);
+            return false;
+        }
     }
 }

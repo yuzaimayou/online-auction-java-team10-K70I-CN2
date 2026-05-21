@@ -116,6 +116,11 @@ public class MyAuctionsTableHelper {
             if (item == null) {
                 return new SimpleStringProperty("");
             }
+
+            if (item.getStatus() == AuctionStatus.BANNED) {
+                return new SimpleStringProperty(AuctionStatus.BANNED.getDisplayName());
+            }
+
             AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
             return new SimpleStringProperty(status.getDisplayName());
         });
@@ -131,7 +136,11 @@ public class MyAuctionsTableHelper {
                 switch (status) {
                     case "Upcoming" -> label.getStyleClass().add("status-upcoming");
                     case "Ended"    -> label.getStyleClass().add("status-ended");
-                    default         -> label.getStyleClass().add("status-live"); // Thỏa mãn điều kiện "Ongoing"
+                    case "BANNED"   -> {
+                        label.setText("⛔ Banned");
+                        label.getStyleClass().add("status-ended");
+                    }
+                    default  -> label.getStyleClass().add("status-live");
                 }
                 setGraphic(label);
             }
@@ -200,7 +209,19 @@ public class MyAuctionsTableHelper {
             protected void updateItem(ItemSummary item, boolean empty) {
                 super.updateItem(item, empty);
                 currentItem = item;
-                setGraphic(empty || item == null ? null : container);
+
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    // Nếu sản phẩm đã bị quản trị viên Ban, vô hiệu hóa (Disable) nút chỉnh sửa
+                    // để người dùng không thể cố tình vào thay đổi dữ liệu trái phép.
+                    if (item.getStatus() == AuctionStatus.BANNED) {
+                        editBtn.setDisable(true);
+                    } else {
+                        editBtn.setDisable(false);
+                    }
+                    setGraphic(container);
+                }
             }
         });
     }
