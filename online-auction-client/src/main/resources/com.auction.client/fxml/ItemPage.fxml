@@ -6,6 +6,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
@@ -25,6 +26,19 @@
                     <HBox fx:id="thumbnailContainer" alignment="CENTER_LEFT" spacing="15">
                     </HBox>
                     <Label fx:id="itemNameLabel" styleClass="item-title" text="NAME ITEM" wrapText="true"/>
+
+                    <VBox spacing="17.0" styleClass="chart-container" VBox.vgrow="NEVER" maxWidth="Infinity">
+                        <Label styleClass="sub-section-title" text="Price Trend"/>
+                        <Separator/>
+                        <LineChart fx:id="bidPriceChart" prefHeight="280" legendVisible="false" animated="false">
+                            <xAxis>
+                                <CategoryAxis fx:id="bidTimeAxis" label="Time"/>
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis fx:id="bidPriceAxis" label="Price ($)"/>
+                            </yAxis>
+                        </LineChart>
+                    </VBox>
 
                     <VBox spacing="17.0" styleClass="description-container" VBox.vgrow="NEVER" maxWidth="Infinity">
                         <Label styleClass="sub-section-title" text="Description"/>

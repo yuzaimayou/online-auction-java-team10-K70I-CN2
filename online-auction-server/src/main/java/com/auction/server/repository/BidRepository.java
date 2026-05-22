@@ -162,6 +162,34 @@ public class BidRepository {
         }
     }
 
+    public boolean deactivateAllAutoBids(Connection conn, String itemId) {
+        String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND is_active = 1";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            int rows = stmt.executeUpdate();
+            LOGGER.info(String.format("[AUTO_BID_CANCEL_ALL][DB_DEACTIVATE_CONN] time=%s itemId=%s rowsUpdated=%d",
+                    LocalDateTime.now(), itemId, rows));
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to deactivate all auto bids for item", e);
+            return false;
+        }
+    }
+
+    public boolean deactivateAllAutoBidsForUser(Connection conn, String userId) {
+        String sql = "UPDATE auto_bids SET is_active = 0 WHERE user_id = ? AND is_active = 1";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, userId);
+            int rows = stmt.executeUpdate();
+            LOGGER.info(String.format("[AUTO_BID_CANCEL_ALL_USER][DB_DEACTIVATE_CONN] time=%s userId=%s rowsUpdated=%d",
+                    LocalDateTime.now(), userId, rows));
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to deactivate all auto bids for user", e);
+            return false;
+        }
+    }
+
     public boolean deactivateAutoBidIfPresent(Connection conn, String itemId, String userId) {
         String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ? AND is_active = 1";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {

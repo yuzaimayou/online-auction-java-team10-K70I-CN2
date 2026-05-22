@@ -187,7 +187,7 @@ public class WalletService {
 
     // Lấy khoá theo item để tuần tự hoá đặt giá
     private Object getItemLock(String itemId) {
-        return BidService.getItemLock(itemId);
+        return com.auction.server.util.AuctionLockManager.getItemLock(itemId);
     }
 
     private static void rollback(Connection conn) {

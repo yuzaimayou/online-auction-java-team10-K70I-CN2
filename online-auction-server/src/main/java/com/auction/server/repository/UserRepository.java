@@ -171,4 +171,19 @@ public class UserRepository {
 
         return user;
     }
+
+    public boolean updateRole(String userId, String newRole) {
+        String sql = "UPDATE users SET role = ? WHERE id = ?";
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, newRole);
+            stmt.setString(2, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

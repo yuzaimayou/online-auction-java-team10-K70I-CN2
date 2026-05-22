@@ -34,7 +34,7 @@ public class BidService {
     private final AutoBidResolver autoBidResolver;
     private final WalletRepository walletRepository = new WalletRepository();
     private final WalletTransactionRepository txLogRepository = new WalletTransactionRepository();
-    private static final ConcurrentMap<String, Object> ITEM_LOCKS = new ConcurrentHashMap<>();
+
 
     private boolean handleWalletMovement(Connection conn, String itemId, String bidderId, double bidPrice, String prevBidderId, double prevBidPrice) throws SQLException {
         try {
@@ -118,7 +118,7 @@ public class BidService {
             return false;
         }
 
-        synchronized (getItemLock(itemId)) {
+        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
@@ -132,6 +132,13 @@ public class BidService {
                 if (item.getSellerId().equals(userId)) {
                     conn.rollback();
                     LOGGER.info("Auto-bid registration rejected: Seller cannot auto-bid - " + itemId);
+                    return false;
+                }
+
+                com.auction.shared.model.account.User user = new com.auction.server.repository.UserRepository().findById(userId);
+                if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
+                    conn.rollback();
+                    LOGGER.info("Auto-bid registration rejected: User is banned - " + userId);
                     return false;
                 }
 
@@ -193,7 +200,7 @@ public class BidService {
         FinalBid finalBid = null;
         boolean shouldBroadcast = false;
 
-        synchronized (getItemLock(itemId)) {
+        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
@@ -207,6 +214,13 @@ public class BidService {
                 if (item.getSellerId().equals(userId)) {
                     conn.rollback();
                     LOGGER.info("Auto-bid registration rejected: Seller cannot auto-bid - " + itemId);
+                    return false;
+                }
+
+                com.auction.shared.model.account.User user = new com.auction.server.repository.UserRepository().findById(userId);
+                if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
+                    conn.rollback();
+                    LOGGER.info("Auto-bid registration rejected: User is banned - " + userId);
                     return false;
                 }
 
@@ -343,7 +357,7 @@ public class BidService {
             return false;
         }
 
-        synchronized (getItemLock(itemId)) {
+        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
@@ -357,6 +371,13 @@ public class BidService {
                 if (item.getSellerId().equals(userId)) {
                     conn.rollback();
                     LOGGER.info("Bid rejected: Seller cannot bid - " + itemId);
+                    return false;
+                }
+
+                com.auction.shared.model.account.User user = new com.auction.server.repository.UserRepository().findById(userId);
+                if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
+                    conn.rollback();
+                    LOGGER.info("Bid rejected: User is banned - " + userId);
                     return false;
                 }
 
@@ -594,8 +615,6 @@ public class BidService {
         }
     }
 
-    public static Object getItemLock(String itemId) {
-        return ITEM_LOCKS.computeIfAbsent(itemId, ignored -> new Object());
-    }
+
 
 }
