@@ -15,7 +15,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class ItemsService {
@@ -111,7 +113,6 @@ public class ItemsService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
 
-
     // GET BID HISTORY
     public CompletableFuture<List<BidTransaction>> getBidHistory(String itemId) {
         HttpRequest request = HttpRequest.newBuilder()
@@ -133,9 +134,6 @@ public class ItemsService {
 
     // GET ITEMS (search / filter)
     public CompletableFuture<List<ItemSummary>> getItems(String search, String category) {
-
-        // [FIX #4] Trước: URL luôn kết thúc bằng "?" dù không có param nào.
-        // Sau: chỉ thêm "?" khi thực sự có ít nhất 1 query param.
         StringBuilder url = new StringBuilder(
                 String.format("%s/api/items", AppConfig.getHttpUrl())
         );
