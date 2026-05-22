@@ -37,7 +37,13 @@ import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 
 public class ItemPageController implements NetworkService.MessageListener {
 
@@ -71,6 +77,16 @@ public class ItemPageController implements NetworkService.MessageListener {
     private HBox thumbnailContainer;
     @FXML
     private StackPane mainImageContainer;
+
+    // FXML: chart
+    @FXML
+    private LineChart<String, Number> bidPriceChart;
+    @FXML
+    private CategoryAxis bidTimeAxis;
+    @FXML
+    private NumberAxis bidPriceAxis;
+    
+    private XYChart.Series<String, Number> bidPriceSeries;
 
     // FXML: bid controls
     @FXML
@@ -146,6 +162,12 @@ public class ItemPageController implements NetworkService.MessageListener {
     public void initialize() {
         initImageClip();
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
+        
+        if (bidPriceChart != null) {
+            bidPriceSeries = new XYChart.Series<>();
+            bidPriceChart.getData().add(bidPriceSeries);
+            bidPriceChart.setAnimated(false);
+        }
     }
     private void initImageClip() {
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
@@ -529,6 +551,8 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
+        
+        renderBidPriceChart(bids);
 
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
@@ -575,6 +599,25 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         row.getChildren().addAll(lblIndex, info, lblPrice);
         return row;
+    }
+
+    private void renderBidPriceChart(List<BidHistoryItemDTO> bids) {
+        if (bidPriceChart == null || bidPriceSeries == null) return;
+        
+        bidPriceSeries.getData().clear();
+        
+        if (bids == null || bids.isEmpty()) return;
+        
+        List<BidHistoryItemDTO> copy = new ArrayList<>(bids);
+        Collections.reverse(copy);
+        
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm:ss");
+        for (BidHistoryItemDTO bid : copy) {
+            if (bid.bidTime != null) {
+                String timeLabel = bid.bidTime.format(fmt);
+                bidPriceSeries.getData().add(new XYChart.Data<>(timeLabel, bid.bidPrice));
+            }
+        }
     }
 
     // ─── Display & image ──────────────────────────────────────────────────────

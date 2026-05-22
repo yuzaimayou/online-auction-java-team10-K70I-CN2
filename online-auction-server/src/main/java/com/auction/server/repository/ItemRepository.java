@@ -585,4 +585,16 @@ public class ItemRepository {
             return false;
         }
     }
+
+    public boolean updateStatus(Connection conn, String itemId, String status) {
+        String sql = "UPDATE items SET status = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, status);
+            stmt.setString(2, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update item status", e);
+            return false;
+        }
+    }
 }
