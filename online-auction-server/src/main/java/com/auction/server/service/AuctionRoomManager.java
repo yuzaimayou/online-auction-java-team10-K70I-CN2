@@ -27,7 +27,7 @@ public class AuctionRoomManager {
         //broadcastRoomInfo(itemId);
     }
 
-    public void broadcastToRoom(String itemId, String message, String dataPayload) {
+    public void broadcastToRoom(String itemId, String message, Object dataPayload) {
         List<ClientHandler> currentRoom = rooms.get(itemId);
         if (currentRoom != null && !currentRoom.isEmpty()) {
             ResponseMessage response = new ResponseMessage();

@@ -51,10 +51,9 @@ public class ItemDetailHandler implements HttpHandler {
                     item.setMyLastBid(lastBid); // Gán giá trị vào object Item trước khi parse ra JSON
                 }
             }
-            String jsonPayload = gson.toJson(item);
             responseMessage.setStatus("success");
             responseMessage.setMessage("Get item details successfully");
-            responseMessage.setData(jsonPayload);
+            responseMessage.setData(item);
             HttpResponseUtil.sendMessage(exchange, 200, responseMessage);
         } else {
             responseMessage.setStatus("error");
@@ -62,6 +61,7 @@ public class ItemDetailHandler implements HttpHandler {
             HttpResponseUtil.sendMessage(exchange, 404, responseMessage);
         }
     }
+
 
     // Hàm tiện ích hỗ trợ trích xuất userId từ query string
     private String extractUserIdFromQuery(String query) {
