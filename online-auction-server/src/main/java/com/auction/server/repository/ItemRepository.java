@@ -283,23 +283,35 @@ public class ItemRepository {
         return executeSummaryQuery(sql, sellerID);
     }
 
-    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
+    public List<ItemSummary> searchItems(List<String> keywords, String category, int offset) throws SQLException {
         List<ItemSummary> items = new ArrayList<>();
+
+        boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
+
         StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != 'BANNED' AND (");
         for (int i = 0; i < keywords.size(); i++) {
             sql.append("LOWER(search_name) LIKE ?");
             if (i < keywords.size() - 1) sql.append(" AND ");
         }
-        sql.append(") ORDER BY id DESC LIMIT 10 OFFSET ?");
+        sql.append(")");
+        if (filterCategory) {
+            sql.append(" AND LOWER(category) = LOWER(?)");
+        }
+        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
+
         LOGGER.fine(sql.toString());
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())
         ) {
-            for (int i = 0; i < keywords.size(); i++) {
-                stmt.setString(i + 1, "%" + keywords.get(i) + "%");
+            int paramIndex = 1;
+            for (String keyword : keywords) {
+                stmt.setString(paramIndex++, "%" + keyword + "%");
             }
-            stmt.setInt(keywords.size() + 1, offset);
+            if (filterCategory) {
+                stmt.setString(paramIndex++, category);
+            }
+            stmt.setInt(paramIndex, offset);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -311,10 +323,20 @@ public class ItemRepository {
     }
 
     /**
-     * Dành cho trang chủ / public: loại bỏ sản phẩm BANNED.
-     * [FIX] Áp dụng đúng sortOrder và offset (trước đây bị bỏ qua).
+     * @deprecated Dùng {@link #searchItems(List, String, int)} thay thế.
      */
-    public List<ItemSummary> findAllItems(String sortOrder, int offset) {
+    @Deprecated
+    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
+        return searchItems(keywords, null, offset);
+    }
+
+    /**
+     * Dành cho trang chủ / public: loại bỏ sản phẩm BANNED.
+     * [FIX] Áp dụng đúng sortOrder, offset, và category filter.
+     *
+     * @param category null hoặc "ALL" = không filter, chuỗi khác = filter theo category
+     */
+    public List<ItemSummary> findAllItems(String sortOrder, int offset, String category) {
         // Whitelist sort order để tránh SQL injection
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
             case "start_time desc"    -> "start_time DESC";
@@ -322,6 +344,8 @@ public class ItemRepository {
             case "current_price desc" -> "current_price DESC";
             default                   -> "end_time ASC";   // mặc định
         };
+
+        boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
         String sql = String.format("""
                 SELECT id,
@@ -333,11 +357,26 @@ public class ItemRepository {
                        end_time
                 FROM items
                 WHERE status != '%s'
+                %s
                 ORDER BY %s
                 LIMIT 10 OFFSET ?
-                """, ItemStatusConstants.BANNED, safeSort);
+                """,
+                ItemStatusConstants.BANNED,
+                filterCategory ? "AND LOWER(category) = LOWER(?)" : "",
+                safeSort);
 
+        if (filterCategory) {
+            return executeSummaryQuery(sql, category, offset);
+        }
         return executeSummaryQuery(sql, offset);
+    }
+
+    /**
+     * @deprecated Dùng {@link #findAllItems(String, int, String)} thay thế.
+     */
+    @Deprecated
+    public List<ItemSummary> findAllItems(String sortOrder, int offset) {
+        return findAllItems(sortOrder, offset, null);
     }
 
     /**

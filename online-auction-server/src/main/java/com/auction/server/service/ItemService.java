@@ -48,7 +48,7 @@ public class ItemService {
      */
     public List<ItemSummary> getItems(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return itemRepository.findAllItems("end_time ASC", 0);
+            return itemRepository.findAllItems("end_time ASC", 0, null);
         }
 
         int page = 0;
@@ -72,12 +72,25 @@ public class ItemService {
             }
         }
 
+        // Parse category filter (null = no filter = ALL)
+        String category = null;
+        if (query.contains("category=")) {
+            String raw = extractParam(query, "category");
+            if (raw != null && !raw.isBlank()) {
+                try {
+                    category = java.net.URLDecoder.decode(raw, java.nio.charset.StandardCharsets.UTF_8);
+                } catch (Exception e) {
+                    category = raw;
+                }
+            }
+        }
+
         // [NEW] Admin caller: trả về tất cả item kể cả BANNED
         if (query.contains("caller=ADMIN")) {
             return itemRepository.findAllItemsForAdmin(sortOrder, page);
         }
 
-        // Lấy theo keyword (public)
+        // Lấy theo keyword + category (public)
         if (query.contains("search=")) {
             try {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
@@ -89,7 +102,7 @@ public class ItemService {
                         page = 0;
                     }
                 }
-                return getItemsByKeyword(input, page);
+                return getItemsByKeyword(input, category, page);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -101,9 +114,9 @@ public class ItemService {
             return itemRepository.findAllBySellerId(sellerId);
         }
 
-        // Mặc định: trang chủ public, loại bỏ BANNED
-        List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page);
-        System.out.println("Fetched " + items.size() + " items");
+        // Mặc định: trang chủ public, loại bỏ BANNED, filter theo category nếu có
+        List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page, category);
+        System.out.println("Fetched " + items.size() + " items" + (category != null ? " in category: " + category : ""));
         return items;
     }
 
@@ -183,7 +196,7 @@ public class ItemService {
         return itemRepository.deleteItem(itemId);
     }
 
-    private List<ItemSummary> getItemsByKeyword(String input, int page) throws SQLException {
+    private List<ItemSummary> getItemsByKeyword(String input, String category, int page) throws SQLException {
         if (input == null || input.trim().isEmpty()) {
             return null;
         }
@@ -191,7 +204,7 @@ public class ItemService {
                 .filter(word -> !word.isEmpty())
                 .collect(Collectors.toList());
         int offset = page * 10;
-        return itemRepository.searchItems(keywords, offset);
+        return itemRepository.searchItems(keywords, category, offset);
     }
 
 

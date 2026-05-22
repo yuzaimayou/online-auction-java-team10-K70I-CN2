@@ -12,9 +12,11 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -140,13 +142,18 @@ public class ItemsService {
 
         boolean hasParam = false;
 
-        if (search != null && !search.isBlank()) {
-            url.append("?search=").append(search.trim());
-            hasParam = true;
-        }
+        try {
+            if (search != null && !search.isBlank()) {
+                url.append("?search=").append(URLEncoder.encode(search.trim(), StandardCharsets.UTF_8));
+                hasParam = true;
+            }
 
-        if (category != null && !category.equalsIgnoreCase("ALL")) {
-            url.append(hasParam ? "&" : "?").append("category=").append(category);
+            if (category != null && !category.equalsIgnoreCase("ALL")) {
+                url.append(hasParam ? "&" : "?").append("category=")
+                        .append(URLEncoder.encode(category.trim(), StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         HttpRequest request = HttpRequest.newBuilder()

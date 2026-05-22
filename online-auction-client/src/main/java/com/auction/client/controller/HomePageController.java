@@ -1,6 +1,5 @@
 package com.auction.client.controller;
 
-// 🛠 ĐÃ CHỈNH SỬA: Loại bỏ import AuctionStatusHelper cũ tại đây
 import com.auction.client.controller.common.NavBarController;
 import com.auction.client.controller.common.SearchStoreController;
 import com.auction.client.service.ItemsService;
@@ -25,13 +24,11 @@ import java.util.List;
 
 public class HomePageController {
 
-    // Dependencies
     private final NetworkService network      = NetworkService.getInstance();
     private final ItemsService   itemsService = ItemsService.getInstance();
-    // State
+
     private String currentCategory = "ALL";
 
-    // FXML fields
     @FXML
     private javafx.scene.control.ScrollPane mainScrollPane;
     @FXML
@@ -49,7 +46,6 @@ public class HomePageController {
     @FXML
     private NavBarController navBarController;
 
-    // ─Lifecycle
     @FXML
     public void initialize() {
         network.leaveRoom();
@@ -67,20 +63,21 @@ public class HomePageController {
         fetchItemsFromServer();
     }
 
-    // Data fetching
     private void fetchItemsFromServer() {
         String search = SearchStoreController.getSearchQuery();
         itemsService.getItems(search, currentCategory)
                 .thenAccept(items -> Platform.runLater(() -> loadItemsToUI(items)))
                 .exceptionally(e -> {
                     e.printStackTrace();
-                    Platform.runLater(() ->
-                            ToastService.showError(mainScrollPane.getScene(), "Cannot load auction items."));
+                    Platform.runLater(() -> {
+                        if (mainScrollPane.getScene() != null) {
+                            ToastService.showError(mainScrollPane.getScene(), "Cannot load auction items.");
+                        }
+                    });
                     return null;
                 });
     }
 
-    //  UI rendering
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
         ongoingAuctionsContainer.getChildren().clear();
         upcomingAuctionsContainer.getChildren().clear();
@@ -88,28 +85,30 @@ public class HomePageController {
 
         int ongoingCount = 0, upcomingCount = 0, endedCount = 0;
 
-        for (ItemSummary item : itemsFromServer) {
-            try {
-                FXMLLoader loader = new FXMLLoader(
-                        getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
-                VBox cardBox = loader.load();
-                cardBox.setPrefWidth(280);
-                cardBox.setMinWidth(280);
-                cardBox.setMaxWidth(280);
+        if (itemsFromServer != null) {
+            for (ItemSummary item : itemsFromServer) {
+                if (item.getStatus() == AuctionStatus.BANNED) continue;
 
-                ItemCardHPController cardController = loader.getController();
-                cardController.setData(item);
+                try {
+                    FXMLLoader loader = new FXMLLoader(
+                            getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
+                    VBox cardBox = loader.load();
+                    cardBox.setPrefWidth(280);
+                    cardBox.setMinWidth(280);
+                    cardBox.setMaxWidth(280);
 
-                AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
+                    ItemCardHPController cardController = loader.getController();
+                    cardController.setData(item);
+                    AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
 
-                switch (status) {
-                    case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
-                    case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
-                    case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
+                    switch (status) {
+                        case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
+                        case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
+                        case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
 
@@ -127,18 +126,37 @@ public class HomePageController {
         section.setManaged(visible);
     }
 
-    // Event handlers
     @FXML
     private void handleCategoryClick(MouseEvent event) {
-        VBox clicked  = (VBox) event.getSource();
-        String category = clicked.getId();
+        VBox clickedBox = (VBox) event.getSource();
+        String rawId = clickedBox.getId();
 
-        currentCategory = category.equalsIgnoreCase(currentCategory) ? "ALL" : category;
-        clicked.getParent().getChildrenUnmodifiable()
-                .forEach(node -> node.getStyleClass().remove("active-category"));
+        if (rawId == null || rawId.isBlank()) return;
+        String targetCategory = switch (rawId.toUpperCase()) {
+            case "FASHION"     -> "Fashion";
+            case "ELECTRONICS" -> "Electronics";
+            case "HOME"        -> "Home";
+            case "ART"         -> "Art";
+            case "BOOK"       -> "Book";
+            case "JEWELRY"     -> "Jewelry";
+            case "SPORTS"      -> "Sports";
+            default            -> rawId;
+        };
+        if (targetCategory.equalsIgnoreCase(currentCategory)) {
+            currentCategory = "ALL";
+        } else {
+            currentCategory = targetCategory;
+        }
 
-        if (!"ALL".equals(currentCategory)) clicked.getStyleClass().add("active-category");
+        clickedBox.getParent().getChildrenUnmodifiable().forEach(node -> {
+            if (node instanceof VBox) {
+                node.getStyleClass().remove("active-category");
+            }
+        });
 
+        if (!"ALL".equals(currentCategory)) {
+            clickedBox.getStyleClass().add("active-category");
+        }
         fetchItemsFromServer();
     }
 
@@ -156,25 +174,17 @@ public class HomePageController {
 
         } catch (IOException e) {
             e.printStackTrace();
-            ToastService.showError(
-                    ((Node) event.getSource()).getScene(),
-                    "Could not open Auction Form page.");
+            ToastService.showError(((Node) event.getSource()).getScene(), "Could not open Auction Form page.");
         }
     }
 
-    //Public utilities
     public void refreshItems() {
-        ongoingAuctionsContainer.getChildren().clear();
-        upcomingAuctionsContainer.getChildren().clear();
-        endedAuctionsContainer.getChildren().clear();
         fetchItemsFromServer();
     }
 
     public void refreshNavBarInfo() {
         if (navBarController != null) {
             navBarController.refreshUserInfo();
-        } else {
-            System.out.println("Warning: NavBarController not connected.");
         }
     }
 }

@@ -78,7 +78,7 @@
                         <Label text="Art"/>
                     </VBox>
 
-                    <VBox fx:id="BOOKS" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
+                    <VBox fx:id="BOOK" styleClass="category-item"  onMouseClicked="#handleCategoryClick">
                         <StackPane styleClass="cat-icon-bg">
                             <ImageView fitHeight="25.0" fitWidth="25.0" preserveRatio="true">
                                 <image>
@@ -86,7 +86,7 @@
                                 </image>
                             </ImageView>
                         </StackPane>
-                        <Label text="Books"/>
+                        <Label text="Book"/>
                     </VBox>
 
                     <VBox fx:id="JEWELRY" styleClass="category-item" onMouseClicked="#handleCategoryClick">
