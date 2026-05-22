@@ -1,4 +1,5 @@
 import sqlite3
+from pathlib import Path
 
 import sqlite_vec
 
@@ -7,10 +8,15 @@ from app.core.config import settings
 
 def get_db_connection():
     # Sử dụng đường dẫn từ file config
-    conn = sqlite3.connect(settings.DATABASE_PATH)
+    db_path = Path(settings.DATABASE_PATH).resolve()
+    print("DATABASE PATH:", db_path)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+
     conn.enable_load_extension(True)
     sqlite_vec.load(conn)
     conn.enable_load_extension(False)
+
     return conn
 
 
@@ -34,33 +40,29 @@ def init_db():
     db.execute("""
                CREATE TABLE IF NOT EXISTS docs_info
                (
-                   id
-                   INTEGER
-                   PRIMARY
-                   KEY
-                   AUTOINCREMENT,
-                   chunk_id
-                   TEXT,
-                   doc_name
-                   TEXT,
-                   content
-                   TEXT
+                   id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                   chunk_id TEXT,
+                   doc_name TEXT,
+                   title    TEXT,
+                   path     TEXT,
+                   content  TEXT
                );
                """)
 
     db.execute("CREATE VIRTUAL TABLE IF NOT EXISTS vec_items USING vec0(embedding float[768]);")
+
     db.execute("""
                CREATE TABLE IF NOT EXISTS items_info
                (
                    id
-                   INTEGER
-                   PRIMARY
-                   KEY
-                   AUTOINCREMENT,
+                       INTEGER
+                       PRIMARY
+                           KEY
+                       AUTOINCREMENT,
                    item_id
-                   TEXT,
+                       TEXT,
                    type
-                   TEXT
+                       TEXT
                );
                """)
 
