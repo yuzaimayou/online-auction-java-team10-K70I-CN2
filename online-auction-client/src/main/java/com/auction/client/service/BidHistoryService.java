@@ -7,11 +7,17 @@ import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -33,6 +39,10 @@ public class BidHistoryService {
         }
         return instance;
     }
+
+    /**
+     * Lấy lịch sử đấu giá từ Server API
+     */
     public CompletableFuture<List<BidHistoryItemDTO>> getHistory(String itemId) {
         String url = String.format("%s/api/history/%s", AppConfig.getHttpUrl(), itemId);
         HttpRequest request = HttpRequest.newBuilder()
@@ -53,5 +63,35 @@ public class BidHistoryService {
                             jsonElement, new TypeToken<List<BidHistoryItemDTO>>() {}.getType()
                     );
                 });
+    }
+
+    /**
+     * Sinh giao diện động cho một hàng lịch sử đấu giá (Bid Row)
+     * Được chuyển từ ClientUiUtil cũ sang đây theo yêu cầu.
+     */
+    public static HBox createBidRow(int index, BidHistoryItemDTO bid, String currentUsername) {
+        HBox row = new HBox(15);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("history-row");
+
+        Label lblIndex = new Label(String.valueOf(index));
+        lblIndex.getStyleClass().add("history-index");
+        lblIndex.setStyle("-fx-text-fill: #000000;");
+
+        VBox info = new VBox(2);
+        String name = bid.userName.equals(currentUsername) ? bid.userName + " (You)" : bid.userName;
+        Label lblName = new Label(name);
+        lblName.setStyle("-fx-font-weight: bold; -fx-text-fill: #000000;");
+
+        Label lblTime = new Label(bid.bidTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
+        info.getChildren().addAll(lblName, lblTime);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Label lblPrice = new Label(String.format("$ %.1f", bid.bidPrice));
+        lblPrice.setStyle("-fx-text-fill: #4A835D; -fx-font-weight: bold; -fx-font-size: 16px;");
+
+        row.getChildren().addAll(lblIndex, info, lblPrice);
+        return row;
     }
 }
