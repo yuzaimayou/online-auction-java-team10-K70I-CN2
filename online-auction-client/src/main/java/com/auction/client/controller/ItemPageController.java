@@ -34,7 +34,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Rectangle;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -50,48 +49,82 @@ public class ItemPageController implements NetworkService.MessageListener {
     private static final double THUMB_HEIGHT = 60.0;
 
     // FXML: item info
-    @FXML private Label itemNameLabel;
-    @FXML private Label itemDesLabel;
-    @FXML private ImageView itemImage;
-    @FXML private Label sellerLabel;
-    @FXML private Label currentPriceLabel;
-    @FXML private Label startPriceLabel;
-    @FXML private Label bidStepLabel;
-    @FXML private Label startTimeLabel;
-    @FXML private Label endTimeLabel;
-    @FXML private HBox thumbnailContainer;
+    @FXML
+    private Label itemNameLabel;
+    @FXML
+    private Label itemDesLabel;
+    @FXML
+    private ImageView itemImage;
+    @FXML
+    private Label sellerLabel;
+    @FXML
+    private Label currentPriceLabel;
+    @FXML
+    private Label startPriceLabel;
+    @FXML
+    private Label bidStepLabel;
+    @FXML
+    private Label startTimeLabel;
+    @FXML
+    private Label endTimeLabel;
+    @FXML
+    private HBox thumbnailContainer;
+    @FXML
+    private StackPane mainImageContainer;
 
     // FXML: bid controls
-    @FXML private TextField bidAmountField;
-    @FXML private Button submitBid;
-    @FXML private Label minimumBidLabel;
-    @FXML private Button btnSuggestStep1;
-    @FXML private Button btnSuggestStep2;
+    @FXML
+    private TextField bidAmountField;
+    @FXML
+    private Button submitBid;
+    @FXML
+    private Label minimumBidLabel;
+    @FXML
+    private Button btnSuggestStep1;
+    @FXML
+    private Button btnSuggestStep2;
 
     // FXML: bid history
-    @FXML private ScrollPane historyScrollPane;
-    @FXML private VBox historyBidContainer;
-    @FXML private Label totalBidsLabel;
+    @FXML
+    private ScrollPane historyScrollPane;
+    @FXML
+    private VBox historyBidContainer;
+    @FXML
+    private Label totalBidsLabel;
 
     // FXML: auto-bid
-    @FXML private VBox autoBidForm;
-    @FXML private VBox autoBidActiveStatus;
-    @FXML private TextField maxBidField;
-    @FXML private TextField autoBidStepField;
-    @FXML private Label userCurrentBidLabel;
-    @FXML private Button btnAutoBidToggle;
+    @FXML
+    private VBox autoBidForm;
+    @FXML
+    private VBox autoBidActiveStatus;
+    @FXML
+    private TextField maxBidField;
+    @FXML
+    private TextField autoBidStepField;
+    @FXML
+    private Label userCurrentBidLabel;
+    @FXML
+    private Button btnAutoBidToggle;
 
     // FXML: countdown timer
-    @FXML private Label timeStatusLabel;
-    @FXML private Label daysLabel;
-    @FXML private Label hoursLabel;
-    @FXML private Label minsLabel;
-    @FXML private Label secsLabel;
+    @FXML
+    private Label timeStatusLabel;
+    @FXML
+    private Label daysLabel;
+    @FXML
+    private Label hoursLabel;
+    @FXML
+    private Label minsLabel;
+    @FXML
+    private Label secsLabel;
 
     // FXML: status overlay
-    @FXML private VBox bidControlsContainer;
-    @FXML private StackPane statusOverlay;
-    @FXML private Label statusMessageLabel;
+    @FXML
+    private VBox bidControlsContainer;
+    @FXML
+    private StackPane statusOverlay;
+    @FXML
+    private Label statusMessageLabel;
 
     // State
     private String itemId;
@@ -114,20 +147,8 @@ public class ItemPageController implements NetworkService.MessageListener {
         initImageClip();
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
     }
-
     private void initImageClip() {
-        Rectangle clip = new Rectangle(IMAGE_WIDTH, IMAGE_HEIGHT);
-        clip.setArcWidth(IMAGE_ARC);
-        clip.setArcHeight(IMAGE_ARC);
-        itemImage.setClip(clip);
-        itemImage.setFitWidth(IMAGE_WIDTH);
-        itemImage.setFitHeight(IMAGE_HEIGHT);
-        itemImage.setPreserveRatio(false);
-        itemImage.imageProperty().addListener((obs, old, newImg) -> {
-            if (newImg != null) {
-                ClientImageUtil.applyObjectFitCoverToImageView(itemImage, newImg, IMAGE_WIDTH, IMAGE_HEIGHT);
-            }
-        });
+        ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
     }
 
     // ─── Data loading ─────────────────────────────────────────────────────────
@@ -224,7 +245,6 @@ public class ItemPageController implements NetworkService.MessageListener {
         if (countdownTimer != null) {
             countdownTimer.stop();
         }
-
         // Tắt toàn bộ khu vực điều khiển đặt giá
         bidControlsContainer.setVisible(false);
         bidControlsContainer.setManaged(false);
@@ -270,7 +290,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     /**
-     * [NEW] Xử lý sự kiện ITEM_BANNED từ server.
+     * Xử lý sự kiện ITEM_BANNED từ server.
      * Được trigger khi admin ban sản phẩm trong khi user đang xem trang đấu giá.
      *
      * Flow:
@@ -294,7 +314,6 @@ public class ItemPageController implements NetworkService.MessageListener {
             System.err.println("[ItemPageController] Failed to parse ITEM_BANNED payload: " + e.getMessage());
             return;
         }
-
         // Hiển thị overlay banned (dừng timer, tắt controls, hiện thông báo)
         showBannedOverlay();
 

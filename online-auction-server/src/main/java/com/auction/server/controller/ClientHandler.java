@@ -3,6 +3,7 @@ package com.auction.server.controller;
 import com.auction.server.service.AuctionRoomManager;
 import com.auction.server.service.BidService;
 import com.auction.shared.constant.SocketEventConstants;
+import com.auction.shared.exception.AuctionException;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.AutoBidPayload;
@@ -164,125 +165,189 @@ public class ClientHandler implements Runnable {
     }
 
     private boolean bidAction(String payload, ResponseMessage response) {
-        BidPayload bidData = gson.fromJson(payload, BidPayload.class);
-        LOGGER.fine("Received bid action");
+        try {
+            BidPayload bidData = gson.fromJson(payload, BidPayload.class);
+            LOGGER.fine("Received bid action");
 
-        if (bidData == null || bidData.getItemId() == null || bidData.getUserId() == null || bidData.getBidPrice() == null) {
+            if (bidData == null || bidData.getItemId() == null || bidData.getUserId() == null || bidData.getBidPrice() == null) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Thông tin bid không hợp lệ: thiếu itemId, userId hoặc bidPrice");
+                LOGGER.warning("Invalid bid payload received");
+                return true;
+            }
+
+            // Kiểm tra giá bid có hợp lệ không
+            if (bidData.getBidPrice() <= 0) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Giá bid phải lớn hơn 0");
+                LOGGER.warning("Invalid bid price: " + bidData.getBidPrice());
+                return true;
+            }
+
+            boolean created = bidService.placeBid(
+                    bidData.getItemId(),
+                    bidData.getUserId(),
+                    bidData.getBidPrice()
+            );
+
+            if (created) {
+                LOGGER.info("Bid placed successfully for item " + bidData.getItemId() + " by user " + bidData.getUserId());
+            } else {
+                LOGGER.warning("Failed to place bid for item " + bidData.getItemId());
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Không thể đặt giá. Vui lòng kiểm tra giá bid, thời gian phiên, hoặc số dư tài khoản");
+            }
+
+            return true;
+        } catch (AuctionException e) {
+            LOGGER.log(Level.WARNING, "Auction error during bid: " + e.getMessage());
             response.setStatus(SocketEventConstants.STATUS_FAIL);
-            response.setMessage("Invalid bid payload");
+            response.setMessage("Lỗi đấu giá: " + e.getMessage());
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing bid action", e);
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage("Lỗi khi xử lý bid: Vui lòng thử lại sau");
             return true;
         }
-
-        boolean created = bidService.placeBid(
-                bidData.getItemId(),
-                bidData.getUserId(),
-                bidData.getBidPrice()
-        );
-
-        if (created) {
-            LOGGER.info("Bid placed successfully for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
-        } else {
-            LOGGER.info("Failed to place bid for item " + bidData.getItemId() + " by user " + bidData.getUserId() + " with amount " + bidData.getBidPrice());
-            response.setStatus(SocketEventConstants.STATUS_FAIL);
-            response.setMessage("Failed to place bid");
-        }
-
-        return true;
     }
 
     private boolean autoBidRegisterAction(String payload, ResponseMessage response) {
-        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+        try {
+            AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
 
-        if (autoBidData == null
-                || autoBidData.getItemId() == null
-                || autoBidData.getUserId() == null
-                || autoBidData.getMaxBid() == null
-                || autoBidData.getIncrement() == null) {
+            if (autoBidData == null
+                    || autoBidData.getItemId() == null
+                    || autoBidData.getUserId() == null
+                    || autoBidData.getMaxBid() == null
+                    || autoBidData.getIncrement() == null) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Thông tin auto-bid không hợp lệ: thiếu các trường bắt buộc");
+                LOGGER.warning("Invalid auto-bid payload received");
+                return true;
+            }
+
+            // Kiểm tra các tham số
+            if (autoBidData.getMaxBid() <= 0 || autoBidData.getIncrement() <= 0) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Giá tối đa và bước tăng phải lớn hơn 0");
+                LOGGER.warning("Invalid auto-bid parameters");
+                return true;
+            }
+
+            boolean created = bidService.registerAutoBidAndMaybeBid(
+                    autoBidData.getItemId(),
+                    autoBidData.getUserId(),
+                    autoBidData.getMaxBid(),
+                    autoBidData.getIncrement()
+            );
+
+            if (created) {
+                response.setStatus(SocketEventConstants.STATUS_SUCCESS);
+                response.setMessage("Đăng ký auto-bid thành công");
+                LOGGER.info("Auto-bid registered successfully");
+            } else {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Không thể đăng ký auto-bid. Vui lòng kiểm tra giá tối đa, phiên đấu giá hoặc số dư");
+                LOGGER.warning("Failed to register auto-bid");
+            }
+
+            return true;
+        } catch (AuctionException e) {
+            LOGGER.log(Level.WARNING, "Auction error during auto-bid registration: " + e.getMessage());
             response.setStatus(SocketEventConstants.STATUS_FAIL);
-            response.setMessage("Invalid auto bid payload");
+            response.setMessage("Lỗi đấu giá: " + e.getMessage());
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing auto-bid register action", e);
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage("Lỗi khi đăng ký auto-bid: Vui lòng thử lại sau");
             return true;
         }
-
-        boolean created = bidService.registerAutoBidAndMaybeBid(
-                autoBidData.getItemId(),
-                autoBidData.getUserId(),
-                autoBidData.getMaxBid(),
-                autoBidData.getIncrement()
-        );
-
-        if (created) {
-            response.setStatus(SocketEventConstants.STATUS_SUCCESS);
-            response.setMessage("Auto-bid registered successfully");
-        } else {
-            response.setStatus(SocketEventConstants.STATUS_FAIL);
-            response.setMessage("Failed to register auto-bid");
-        }
-
-        return true;
     }
 
     private boolean getAutoBidStatusAction(String payload, ResponseMessage response) {
-        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+        try {
+            AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
 
-        if (autoBidData == null
-                || autoBidData.getItemId() == null
-                || autoBidData.getUserId() == null) {
-            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            if (autoBidData == null
+                    || autoBidData.getItemId() == null
+                    || autoBidData.getUserId() == null) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Thông tin không hợp lệ: thiếu itemId hoặc userId");
+                LOGGER.warning("Invalid get auto-bid status payload");
+                return true;
+            }
+
+            AutoBidPayload autoBidStatus = bidService.getAutoBidStatus(
+                    autoBidData.getItemId(),
+                    autoBidData.getUserId()
+            );
+
+            if (autoBidStatus == null) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
+                LOGGER.warning("Failed to retrieve auto-bid status");
+                return true;
+            }
+
+            response.setStatus(SocketEventConstants.STATUS_SUCCESS);
             response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
+            response.setData(autoBidStatus);
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing get auto-bid status action", e);
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage("Lỗi khi lấy trạng thái auto-bid: Vui lòng thử lại sau");
             return true;
         }
-
-        AutoBidPayload autoBidStatus = bidService.getAutoBidStatus(
-                autoBidData.getItemId(),
-                autoBidData.getUserId()
-        );
-
-        if (autoBidStatus == null) {
-            response.setStatus(SocketEventConstants.STATUS_FAIL);
-            response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
-            return true;
-        }
-
-        response.setStatus(SocketEventConstants.STATUS_SUCCESS);
-        response.setMessage(SocketEventConstants.EVENT_AUTO_BID_STATUS);
-        response.setData(autoBidStatus);
-        return true;
     }
 
     private boolean cancelAutoBidAction(String payload, ResponseMessage response) {
-        AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
+        try {
+            AutoBidPayload autoBidData = gson.fromJson(payload, AutoBidPayload.class);
 
-        if (autoBidData == null
-                || autoBidData.getItemId() == null
-                || autoBidData.getUserId() == null) {
-            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            if (autoBidData == null
+                    || autoBidData.getItemId() == null
+                    || autoBidData.getUserId() == null) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Thông tin không hợp lệ: thiếu itemId hoặc userId");
+                LOGGER.warning("Invalid cancel auto-bid payload");
+                return true;
+            }
+
+            LOGGER.info(String.format("[AUTO_BID_CANCEL][SERVER_RECEIVE] time=%s itemId=%s userId=%s",
+                    LocalDateTime.now(), autoBidData.getItemId(), autoBidData.getUserId()));
+
+            boolean cancelled = bidService.cancelAutoBid(
+                    autoBidData.getItemId(),
+                    autoBidData.getUserId()
+            );
+
+            if (!cancelled) {
+                response.setStatus(SocketEventConstants.STATUS_FAIL);
+                response.setMessage("Không thể hủy auto-bid");
+                LOGGER.warning("Failed to cancel auto-bid");
+                return true;
+            }
+
+            response.setStatus(SocketEventConstants.STATUS_SUCCESS);
             response.setMessage(SocketEventConstants.EVENT_AUTO_BID_CANCELLED);
+            response.setData(new AutoBidPayload(
+                    autoBidData.getItemId(),
+                    autoBidData.getUserId(),
+                    null,
+                    null,
+                    false
+            ));
+            LOGGER.info("Auto-bid cancelled successfully");
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing cancel auto-bid action", e);
+            response.setStatus(SocketEventConstants.STATUS_FAIL);
+            response.setMessage("Lỗi khi hủy auto-bid: Vui lòng thử lại sau");
             return true;
         }
-        LOGGER.info(String.format("[AUTO_BID_CANCEL][SERVER_RECEIVE] time=%s itemId=%s userId=%s",
-                LocalDateTime.now(), autoBidData.getItemId(), autoBidData.getUserId()));
-
-        boolean cancelled = bidService.cancelAutoBid(
-                autoBidData.getItemId(),
-                autoBidData.getUserId()
-        );
-
-        if (!cancelled) {
-            response.setStatus(SocketEventConstants.STATUS_FAIL);
-            response.setMessage(SocketEventConstants.EVENT_AUTO_BID_CANCELLED);
-            return true;
-        }
-
-        response.setStatus(SocketEventConstants.STATUS_SUCCESS);
-        response.setMessage(SocketEventConstants.EVENT_AUTO_BID_CANCELLED);
-        response.setData(new AutoBidPayload(
-                autoBidData.getItemId(),
-                autoBidData.getUserId(),
-                null,
-                null,
-                false
-        ));
-        return true;
     }
 
     public String getUsername() {
