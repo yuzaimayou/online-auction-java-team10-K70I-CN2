@@ -5,7 +5,7 @@ import java.nio.file.Paths;
 
 public class AppConfig {
     private static final String ROOT_DIR = System.getProperty("user.dir");
-    private static final String AI_SERVER_URL = "http://127.0.0.1:8000";
+    private static final String AI_SERVER_URL = "http://10.11.191.239:8000";
 
     public static final String DB_PATH = Paths.get(ROOT_DIR, "dataBase", "auction.db").toString();
     public static final String IMAGE_DIR = Paths.get(ROOT_DIR, "dataBase", "images").toString();
