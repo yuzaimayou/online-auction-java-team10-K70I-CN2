@@ -43,12 +43,12 @@ public class MyAuctionsTableHelper {
         setupActionColumn(actionCol, onEditAction, onDeleteAction, onViewAction);
     }
 
-    // ── Column setup helpers
-
     @SafeVarargs
     private static void disableSorting(TableColumn<ItemSummary, ?>... cols) {
         for (TableColumn<ItemSummary, ?> col : cols) col.setSortable(false);
     }
+
+    // CỘT SẢN PHẨM (Hình ảnh + Tên)
     private static void setupItemColumn(TableColumn<ItemSummary, ItemSummary> col) {
         col.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
         col.setCellFactory(param -> new TableCell<>() {
@@ -70,7 +70,6 @@ public class MyAuctionsTableHelper {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
-                    imageView.setImage(null);
                     return;
                 }
                 nameLabel.setText(item.getName());
@@ -83,84 +82,123 @@ public class MyAuctionsTableHelper {
         });
     }
 
+    // ── 2. CỘT DANH MỤC (Phân tách rõ Style)
     private static void setupCategoryColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
         col.setCellFactory(column -> new TableCell<>() {
+            private final Label label = new Label();
+            {
+                label.getStyleClass().add("category-badge");
+                setAlignment(Pos.CENTER); // Căn giữa Badge trong Cell
+            }
+
             @Override
             protected void updateItem(String category, boolean empty) {
                 super.updateItem(category, empty);
-                if (empty || category == null) { setGraphic(null); return; }
+                if (empty || category == null) {
+                    setGraphic(null);
+                    return;
+                }
 
-                Label label = new Label(category);
-                label.getStyleClass().add("category-badge");
+                label.setText(category);
 
-                label.getStyleClass().add(resolveCategoryStyle(category));
+                label.getStyleClass().removeAll("cat-fashion", "cat-electronics", "cat-home", "cat-art", "cat-jewelry");
+
+                String cat = category.toLowerCase();
+                if (cat.contains("fashion"))     label.getStyleClass().add("cat-fashion");
+                else if (cat.contains("electronics")) label.getStyleClass().add("cat-electronics");
+                else if (cat.contains("home"))        label.getStyleClass().add("cat-home");
+                else if (cat.contains("art"))         label.getStyleClass().add("cat-art");
+                else if (cat.contains("jewelry"))     label.getStyleClass().add("cat-jewelry");
+
                 setGraphic(label);
             }
         });
     }
 
-    private static String resolveCategoryStyle(String category) {
-        String cat = category.toLowerCase();
-        if (cat.contains("fashion"))     return "cat-fashion";
-        if (cat.contains("electronics")) return "cat-electronics";
-        if (cat.contains("home"))        return "cat-home";
-        if (cat.contains("art"))         return "cat-art";
-        if (cat.contains("jewelry"))     return "cat-jewelry";
-        return "";
-    }
-
+    //  CỘT TRẠNG THÁI (Đầy đủ Live, Upcoming, Ended, Banned)
     private static void setupStatusColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data -> {
             ItemSummary item = data.getValue();
-            if (item == null) {
-                return new SimpleStringProperty("");
-            }
+            if (item == null) return new SimpleStringProperty("");
 
             if (item.getStatus() == AuctionStatus.BANNED) {
-                return new SimpleStringProperty(AuctionStatus.BANNED.getDisplayName());
+                return new SimpleStringProperty("BANNED");
             }
 
             AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
-            return new SimpleStringProperty(status.getDisplayName());
+            return new SimpleStringProperty(status.name());
         });
 
         col.setCellFactory(column -> new TableCell<>() {
+            private final Label label = new Label();
+            {
+                label.getStyleClass().add("status-badge-base");
+                setAlignment(Pos.CENTER);
+            }
+
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
-                if (empty || status == null) { setGraphic(null); return; }
+                if (empty || status == null) {
+                    setGraphic(null);
+                    return;
+                }
+                label.getStyleClass().removeAll("status-upcoming", "status-ended", "status-banned", "status-live");
 
-                Label label = new Label(status);
-                label.getStyleClass().add("status-badge-base");
                 switch (status) {
-                    case "Upcoming" -> label.getStyleClass().add("status-upcoming");
-                    case "Ended"    -> label.getStyleClass().add("status-ended");
-                    case "BANNED"   -> {
-                        label.setText("⛔ Banned");
+                    case "UPCOMING" -> {
+                        label.setText("Upcoming");
+                        label.getStyleClass().add("status-upcoming");
+                    }
+                    case "ENDED" -> {
+                        label.setText("Ended");
                         label.getStyleClass().add("status-ended");
                     }
-                    default  -> label.getStyleClass().add("status-live");
+                    case "BANNED" -> {
+                        label.setText("⛔ Banned");
+                        label.getStyleClass().add("status-banned");
+                    }
+                    default -> {
+                        label.setText("");
+                        label.getStyleClass().add("status-live");
+                    }
                 }
                 setGraphic(label);
             }
         });
     }
 
+    // CỘT GIÁ CẢ
     private static void setupPriceColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data ->
                 new SimpleStringProperty(String.format("$%,.0f", data.getValue().getCurrentPrice())));
+        // Căn phải giá tiền cho đúng chuẩn UI
+        col.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    setText(price);
+                    setAlignment(Pos.CENTER_RIGHT);
+                }
+            }
+        });
     }
 
+    //. CỘT THỜI GIAN KẾT THÚC (Căn giữa: Ngày ở trên - Giờ ở dưới)
     private static void setupEndTimeColumn(TableColumn<ItemSummary, LocalDateTime> col) {
         col.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getEndTime()));
         col.setCellFactory(column -> new TableCell<>() {
             private final Label dateLabel = new Label();
             private final Label timeLabel = new Label();
-            private final VBox  container = new VBox(2, dateLabel, timeLabel);
+            private final VBox  container = new VBox(4, dateLabel, timeLabel);
 
             {
-                container.setAlignment(Pos.CENTER_LEFT);
+                container.setAlignment(Pos.CENTER);
+                this.setAlignment(Pos.CENTER);
                 dateLabel.getStyleClass().add("end-time-date");
                 timeLabel.getStyleClass().add("end-time-hour");
             }
@@ -168,14 +206,16 @@ public class MyAuctionsTableHelper {
             @Override
             protected void updateItem(LocalDateTime item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setGraphic(null); return; }
+                if (empty || item == null) {
+                    setGraphic(null);
+                    return;
+                }
                 dateLabel.setText(item.format(DATE_FORMAT));
                 timeLabel.setText(item.format(TIME_FORMAT));
                 setGraphic(container);
             }
         });
     }
-
     private static void setupActionColumn(
             TableColumn<ItemSummary, ItemSummary> col,
             Consumer<ItemSummary> onEditAction,
@@ -213,13 +253,7 @@ public class MyAuctionsTableHelper {
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    // Nếu sản phẩm đã bị quản trị viên Ban, vô hiệu hóa (Disable) nút chỉnh sửa
-                    // để người dùng không thể cố tình vào thay đổi dữ liệu trái phép.
-                    if (item.getStatus() == AuctionStatus.BANNED) {
-                        editBtn.setDisable(true);
-                    } else {
-                        editBtn.setDisable(false);
-                    }
+                    editBtn.setDisable(item.getStatus() == AuctionStatus.BANNED);
                     setGraphic(container);
                 }
             }
