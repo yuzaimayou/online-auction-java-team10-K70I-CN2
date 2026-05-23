@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -152,6 +153,12 @@ public class ItemService {
     }
 
     public boolean addItem(ItemPayload itemData) {
+        com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
+        if (seller != null && "banned_user".equalsIgnoreCase(seller.getRole())) {
+            System.out.println("Item creation rejected: User is banned.");
+            return false;
+        }
+
         Item item = setItem(itemData);
         boolean created = itemRepository.createItem(item);
 
@@ -224,6 +231,70 @@ public class ItemService {
     }
 
     public boolean banItem(String itemId) {
-        return itemRepository.updateStatus(itemId, ItemStatusConstants.BANNED);
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return false;
+        }
+
+        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
+            Connection conn = null;
+            try {
+                conn = com.auction.server.database.DatabaseManager.getConnection();
+                conn.setAutoCommit(false);
+
+                Item item = itemRepository.findById(conn, itemId);
+                if (item == null || ItemStatusConstants.BANNED.equalsIgnoreCase(item.getStatus())) {
+                    conn.rollback();
+                    return false;
+                }
+
+                // Update status to BANNED
+                if (!itemRepository.updateStatus(conn, itemId, ItemStatusConstants.BANNED)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                String currentBidderId = item.getCurrentTopPLayerId();
+                double currentPrice = item.getHighestCurrentPrice();
+
+                if (currentBidderId != null && !currentBidderId.trim().isEmpty()) {
+                    com.auction.server.repository.WalletRepository walletRepo = new com.auction.server.repository.WalletRepository();
+                    // Unfreeze amount
+                    if (!walletRepo.unfreezeAmount(conn, currentBidderId, currentPrice)) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    // Log unfreeze
+                    com.auction.server.repository.WalletTransactionRepository txLogRepo = new com.auction.server.repository.WalletTransactionRepository();
+                    double[] balances = walletRepo.getBalances(conn, currentBidderId);
+                    if (balances != null && balances.length >= 2) {
+                        txLogRepo.logUnfreeze(conn, currentBidderId, currentPrice, balances[1] + currentPrice, balances[1], itemId);
+                    }
+                    
+                    // Do NOT clear current_bidder_id and current_price per requirements.
+                }
+
+                // Deactivate all auto bids
+                com.auction.server.repository.BidRepository bidRepo = new com.auction.server.repository.BidRepository();
+                bidRepo.deactivateAllAutoBids(conn, itemId);
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (Exception ignored) {}
+                }
+                e.printStackTrace();
+                return false;
+            } finally {
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
     }
 }
