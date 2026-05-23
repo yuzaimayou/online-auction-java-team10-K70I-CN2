@@ -253,7 +253,15 @@ public class MyAuctionsTableHelper {
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    editBtn.setDisable(item.getStatus() == AuctionStatus.BANNED);
+                    // Chỉ hiện nút Edit khi item đang UPCOMING
+                    // ONGOING, ENDED, BANNED → ẩn nút Edit hoàn toàn
+                    AuctionStatus computed = item.getStatus() == AuctionStatus.BANNED
+                            ? AuctionStatus.BANNED
+                            : AuctionStatus.compute(item.getStartTime(), item.getEndTime());
+
+                    boolean canEdit = computed == AuctionStatus.UPCOMING;
+                    editBtn.setVisible(canEdit);
+                    editBtn.setManaged(canEdit);
                     setGraphic(container);
                 }
             }
