@@ -30,7 +30,7 @@ public class AuctionSettlementService {
             return SettlementResult.fail("Item id không hợp lệ");
         }
 
-        synchronized (BidService.getItemLock(itemId)) {
+        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
             Connection conn = null;
             try {
                 conn = DatabaseManager.getConnection();
@@ -48,6 +48,11 @@ public class AuctionSettlementService {
                 if (!expired && !ItemStatusConstants.ENDED.equalsIgnoreCase(status)) {
                     rollback(conn);
                     return SettlementResult.fail("Phiên chưa kết thúc (status=" + status + ")");
+                }
+
+                if (ItemStatusConstants.BANNED.equalsIgnoreCase(status)) {
+                    rollback(conn);
+                    return SettlementResult.fail("Item bị BAN, không thể thanh toán");
                 }
 
                 String winnerId     = item.getCurrentTopPLayerId();

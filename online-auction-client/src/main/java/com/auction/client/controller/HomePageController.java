@@ -24,11 +24,13 @@ import java.util.List;
 
 public class HomePageController {
 
+    // Dependencies
     private final NetworkService network      = NetworkService.getInstance();
     private final ItemsService   itemsService = ItemsService.getInstance();
-
+    // State
     private String currentCategory = "ALL";
 
+    // FXML fields
     @FXML
     private javafx.scene.control.ScrollPane mainScrollPane;
     @FXML
@@ -46,6 +48,7 @@ public class HomePageController {
     @FXML
     private NavBarController navBarController;
 
+    // ─Lifecycle
     @FXML
     public void initialize() {
         network.leaveRoom();
@@ -63,6 +66,7 @@ public class HomePageController {
         fetchItemsFromServer();
     }
 
+    // Data fetching
     private void fetchItemsFromServer() {
         String search = SearchStoreController.getSearchQuery();
         itemsService.getItems(search, currentCategory)
@@ -126,6 +130,7 @@ public class HomePageController {
         section.setManaged(visible);
     }
 
+    // Event handlers
     @FXML
     private void handleCategoryClick(MouseEvent event) {
         VBox clickedBox = (VBox) event.getSource();
