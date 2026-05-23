@@ -1,620 +1,572 @@
 package com.auction.server.service;
 
 import com.auction.server.database.DatabaseManager;
-import com.auction.server.repository.BidRepository;
-import com.auction.server.repository.ItemRepository;
-import com.auction.server.repository.WalletRepository;
-import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.server.repository.*;
+import com.auction.server.util.AuctionLockManager;
 import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.exception.AuctionClosedException;
-import com.auction.shared.exception.ConnectionException;
 import com.auction.shared.exception.DataException;
 import com.auction.shared.exception.ErrorCode;
 import com.auction.shared.exception.InvalidBidException;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * BidService — xử lý toàn bộ nghiệp vụ đặt giá (manual bid và auto-bid).
+ *
+ * Nguyên tắc thiết kế:
+ *  1. Mỗi thao tác ghi DB chạy trong một transaction duy nhất (conn.setAutoCommit(false)).
+ *  2. Mọi nhánh thất bại đều rollback TRƯỚC khi return false.
+ *  3. Validate nghiệp vụ (item, user, giá, thời gian) được tập trung vào
+ *     BidValidator — BidService chỉ điều phối, không tự validate.
+ *  4. UserRepository được inject (không new() inline) để tái sử dụng connection pool.
+ *  5. Anti-sniping áp dụng nhất quán cho cả manual bid lẫn auto-bid.
+ *  6. broadcastNewBid() luôn được gọi SAU khi commit, ngoài synchronized block.
+ */
 public class BidService {
-    private static final Logger LOGGER = Logger.getLogger(BidService.class.getName());
-    private static final double PRICE_EPSILON = 0.000001d;
-    private static final int AUTO_BID_MAX_ROUNDS = 200;
 
+    private static final Logger LOGGER = Logger.getLogger(BidService.class.getName());
+    private static final double PRICE_EPSILON  = 0.000001d;
+    private static final int AUTO_BID_MAX_ROUNDS = 200;
+    private static final long ANTI_SNIPE_SECONDS  = 60L;
+
+    // Dependencies — inject qua constructor, không new() inline
     private final BidRepository bidRepository;
     private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
     private final AutoBidResolver autoBidResolver;
-    private final WalletRepository walletRepository = new WalletRepository();
-    private final WalletTransactionRepository txLogRepository = new WalletTransactionRepository();
-
-
-    private boolean handleWalletMovement(Connection conn, String itemId, String bidderId, double bidPrice, String prevBidderId, double prevBidPrice) throws SQLException {
-        try {
-            // 1. Check balance of new bidder
-            double[] bidderBalances = walletRepository.getBalances(conn, bidderId);
-            if (bidderBalances == null || bidderBalances.length == 0) {
-                throw DataException.of(ErrorCode.DATA_INTEGRITY_ERROR,
-                        "Không thể lấy thông tin ví của người dùng: " + bidderId);
-            }
-
-            double bidderBalance = bidderBalances[0];
-
-            if (bidderBalance < bidPrice) {
-                throw InvalidBidException.of(ErrorCode.INSUFFICIENT_BALANCE,
-                        String.format("Số dư không đủ: có %.2f đ, cần %.2f đ cho người dùng %s",
-                                bidderBalance, bidPrice, bidderId));
-            }
-
-            // 2. Freeze money for the new bidder
-            boolean frozeOk = walletRepository.freezeAmount(conn, bidderId, bidPrice);
-            if (!frozeOk) {
-                throw DataException.of(ErrorCode.WALLET_OPERATION_FAILED,
-                        "Không thể khóa số dư của người dùng: " + bidderId);
-            }
-
-            // 3. Log FREEZE
-            try {
-                txLogRepository.logFreeze(conn, bidderId, bidPrice, bidderBalance, bidderBalance - bidPrice, itemId);
-            } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Cảnh báo: Không thể ghi log khóa ví", e);
-                // Không throw exception, chỉ log cảnh báo vì log không ảnh hưởng đến logic chính
-            }
-
-            // 4. Unfreeze money for previous bidder
-            if (prevBidderId != null && !prevBidderId.isBlank() && !prevBidderId.equals(bidderId)) {
-                boolean unfrozeOk = walletRepository.unfreezeAmount(conn, prevBidderId, prevBidPrice);
-                if (!unfrozeOk) {
-                    throw DataException.of(ErrorCode.WALLET_OPERATION_FAILED,
-                            "Không thể mở khóa số dư của người dùng trước: " + prevBidderId);
-                }
-
-                // Log UNFREEZE
-                try {
-                    double[] prevBal = walletRepository.getBalances(conn, prevBidderId);
-                    if (prevBal == null || prevBal.length == 0) {
-                        throw DataException.of(ErrorCode.DATA_INTEGRITY_ERROR,
-                                "Không thể lấy thông tin ví của người dùng trước: " + prevBidderId);
-                    }
-                    txLogRepository.logUnfreeze(conn, prevBidderId, prevBidPrice, prevBal[0] - prevBidPrice, prevBal[0], itemId);
-                } catch (DataException e) {
-                    throw e;
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Cảnh báo: Không thể ghi log mở khóa ví", e);
-                    // Không throw exception, chỉ log cảnh báo
-                }
-            }
-
-            return true;
-        } catch (InvalidBidException | DataException e) {
-            // Re-throw các exception tùy chỉnh
-            throw new SQLException(e.getMessage(), e);
-        } catch (Exception e) {
-            // Wrap các exception khác
-            throw new SQLException("Lỗi xử lý ví: " + e.getMessage(), e);
-        }
-    }
+    private final WalletRepository walletRepository;
+    private final WalletTransactionRepository txLogRepository;
+    private final BidValidator bidValidator;
 
     public BidService() {
         this.bidRepository = new BidRepository();
         this.itemRepository = ItemRepository.getInstance();
+        this.userRepository = new UserRepository();
         this.autoBidResolver = new AutoBidResolver(PRICE_EPSILON);
+        this.walletRepository = new WalletRepository();
+        this.txLogRepository = new WalletTransactionRepository();
+        this.bidValidator = new BidValidator(PRICE_EPSILON);
     }
 
-    public boolean registerAutoBid(String itemId, String userId, double maxBid, double increment) {
-        if (itemId == null || itemId.isBlank() || userId == null || userId.isBlank()) {
-            LOGGER.warning("Auto-bid registration rejected: Invalid input - itemId or userId is empty");
-            return false;
-        }
-        if (maxBid <= 0 || increment <= 0) {
-            LOGGER.warning("Auto-bid registration rejected: Invalid parameters - maxBid or increment <= 0");
+    // Public API
+    /**
+     * Đặt bid thủ công.
+     *
+     * Flow:
+     *  1. Validate đầu vào (item, user, status, thời gian, giá).
+     *  2. Xử lý ví (freeze mới / unfreeze cũ) trong transaction.
+     *  3. Ghi bid + cập nhật current bidder.
+     *  4. Anti-snipe nếu còn < 60s.
+     *  5. Chạy auto-bid rounds cho các user đã đăng ký.
+     *  6. Commit → broadcast.
+     */
+    public boolean placeBid(String itemId, String userId, double bidPrice) {
+        if (isBlank(itemId) || isBlank(userId)) {
+            LOGGER.warning("Bid rejected: itemId hoặc userId rỗng");
             return false;
         }
 
-        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
+        FinalBid finalBid     = null;
+        boolean isExtended   = false;
+        LocalDateTime newEndTime = null;
+
+        synchronized (AuctionLockManager.getItemLock(itemId)) {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
-                Item item = itemRepository.findById(itemId);
-                if (item == null) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: Item not found - " + itemId);
-                    return false;
-                }
-
-                if (item.getSellerId().equals(userId)) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: Seller cannot auto-bid - " + itemId);
-                    return false;
-                }
-
-                com.auction.shared.model.account.User user = new com.auction.server.repository.UserRepository().findById(userId);
-                if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: User is banned - " + userId);
-                    return false;
-                }
-
-                // Kiểm tra thời gian phiên đấu giá
-                try {
-                    validateAuctionTime(item);
-                } catch (AuctionClosedException e) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: " + e.getMessage());
-                    return false;
-                }
-
-                // Kiểm tra maxBid hợp lệ
-                double minimumPossible = item.getHighestCurrentPrice() + item.getBidStep();
-                if (maxBid + PRICE_EPSILON < minimumPossible) {
-                    conn.rollback();
-                    LOGGER.info(String.format("Auto-bid registration rejected: maxBid %.2f < minimum %.2f", maxBid, minimumPossible));
-                    return false;
-                }
-
-                boolean registered = bidRepository.upsertAutoBid(
-                        conn,
-                        itemId,
-                        userId,
-                        maxBid,
-                        increment,
-                        LocalDateTime.now().toString()
-                );
-
-                if (!registered) {
-                    conn.rollback();
-                    LOGGER.warning("Auto-bid registration rejected: Failed to persist auto-bid config");
-                    return false;
-                }
-
-                conn.commit();
-                LOGGER.info("Auto-bid registered successfully");
-                return true;
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Database connection error during auto-bid registration", e);
-                return false;
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Unexpected error during auto-bid registration", e);
-                return false;
-            }
-        }
-    }
-
-    public boolean registerAutoBidAndMaybeBid(String itemId, String userId, double maxBid, double increment) {
-        if (itemId == null || itemId.isBlank() || userId == null || userId.isBlank()) {
-            LOGGER.warning("Auto-bid registration rejected: Invalid input - itemId or userId is empty");
-            return false;
-        }
-        if (maxBid <= 0 || increment <= 0) {
-            LOGGER.warning("Auto-bid registration rejected: Invalid parameters - maxBid or increment <= 0");
-            return false;
-        }
-
-        FinalBid finalBid = null;
-        boolean shouldBroadcast = false;
-
-        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
-            try (Connection conn = DatabaseManager.getConnection()) {
-                conn.setAutoCommit(false);
-
+                // 1. Load dữ liệu trong transaction (tránh stale read)
                 Item item = itemRepository.findById(conn, itemId);
                 if (item == null) {
                     conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: Item not found - " + itemId);
+                    LOGGER.info("Bid rejected: Item không tồn tại - " + itemId);
                     return false;
                 }
 
-                if (item.getSellerId().equals(userId)) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: Seller cannot auto-bid - " + itemId);
-                    return false;
-                }
+                // FIX: Load user trong cùng transaction thay vì dùng connection riêng
+                User user = userRepository.findById(conn, userId);
 
-                com.auction.shared.model.account.User user = new com.auction.server.repository.UserRepository().findById(userId);
-                if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: User is banned - " + userId);
-                    return false;
-                }
-
-                if (increment + PRICE_EPSILON < item.getBidStep()) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: Increment lower than bid step");
-                    return false;
-                }
-
-                if (!isBiddingStatusAllowed(item)) {
-                    conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: Invalid item status");
-                    return false;
-                }
-
-                // Kiểm tra thời gian phiên đấu giá
+                // 2. Validate nghiệp vụ
                 try {
-                    validateAuctionTime(item);
-                } catch (AuctionClosedException e) {
+                    bidValidator.validateForManualBid(item, user, userId, bidPrice);
+                } catch (InvalidBidException | AuctionClosedException e) {
                     conn.rollback();
-                    LOGGER.info("Auto-bid registration rejected: " + e.getMessage());
+                    LOGGER.info("Bid rejected: " + e.getMessage());
+                    return false;
+                }
+                // FIX: Lấy lastBidder từ DB trong cùng transaction để tránh stale read
+                String lastBidder = bidRepository.findLastBidder(conn, itemId);
+                if (userId.equals(lastBidder)) {
+                    conn.rollback();
+                    LOGGER.info("Bid rejected: Cùng user không được bid liên tiếp - " + itemId);
                     return false;
                 }
 
-                boolean registered = bidRepository.upsertAutoBid(
-                        conn,
-                        itemId,
-                        userId,
-                        maxBid,
-                        increment,
-                        LocalDateTime.now().toString()
-                );
-                if (!registered) {
-                    conn.rollback();
-                    LOGGER.warning("Auto-bid registration rejected: Failed to persist auto-bid config");
-                    return false;
-                }
-
-                String currentBidderId = itemRepository.getCurrentBidderId(conn, itemId);
+                // FIX: Lấy currentTopPlayer từ DB (không từ item snapshot) để đảm bảo nhất quán
+                String currentTopPlayerId = itemRepository.getCurrentBidderId(conn, itemId);
                 double currentPrice = item.getHighestCurrentPrice();
-                double immediateBidPrice = computeImmediateAutoBidPrice(currentPrice, item.getBidStep(), increment);
-                LOGGER.info(String.format(
-                        "[AUTO_BID_REGISTER][DECISION_INPUT] time=%s itemId=%s registeringUserId=%s dbCurrentBidderId=%s currentPrice=%.2f nextLegalBid=%.2f maxBid=%.2f bidStep=%.2f increment=%.2f",
-                        LocalDateTime.now(), itemId, userId, currentBidderId, currentPrice, immediateBidPrice, maxBid, item.getBidStep(), increment));
-                if (userId.equals(currentBidderId)) {
-                    conn.commit();
-                    LOGGER.info(String.format(
-                            "[AUTO_BID_REGISTER][DECISION] time=%s itemId=%s registeringUserId=%s dbCurrentBidderId=%s decision=REGISTER_ONLY",
-                            LocalDateTime.now(), itemId, userId, currentBidderId));
-                    return true;
-                }
 
-                if (immediateBidPrice + PRICE_EPSILON <= currentPrice || immediateBidPrice > maxBid + PRICE_EPSILON) {
-                    conn.rollback();
-                    LOGGER.info(String.format(
-                            "[AUTO_BID_REGISTER][DECISION] time=%s itemId=%s registeringUserId=%s dbCurrentBidderId=%s decision=REJECT_MAX_TOO_LOW",
-                            LocalDateTime.now(), itemId, userId, currentBidderId));
-                    return false;
-                }
+                handleWalletMovement(conn, itemId, userId, bidPrice, currentTopPlayerId, currentPrice);
 
-                LOGGER.info(String.format(
-                        "[AUTO_BID_REGISTER][DECISION] time=%s itemId=%s registeringUserId=%s dbCurrentBidderId=%s decision=PLACE_IMMEDIATE_AUTO_BID",
-                        LocalDateTime.now(), itemId, userId, currentBidderId));
-
-                // Handle wallet movement before updating DB
-                try {
-                    if (!handleWalletMovement(conn, itemId, userId, immediateBidPrice, currentBidderId, currentPrice)) {
-                        conn.rollback();
-                        return false;
-                    }
-                } catch (SQLException e) {
-                    conn.rollback();
-                    LOGGER.log(Level.WARNING, "Auto-bid registration rejected: Wallet operation failed - " + e.getMessage());
-                    return false;
-                }
-
+                //  4. Ghi bid
                 String bidTime = LocalDateTime.now().toString();
-                if (!bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime)) {
-                    conn.rollback();
-                    LOGGER.warning("Auto-bid registration rejected: Failed to create immediate bid record");
-                    return false;
-                }
-                if (!itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId)) {
-                    conn.rollback();
-                    LOGGER.warning("Auto-bid registration rejected: Failed to update current bidder");
-                    return false;
-                }
-                LOGGER.info(String.format("[AUTO_BID_REGISTER][IMMEDIATE_BID] time=%s itemId=%s userId=%s currentPrice=%.2f bidStep=%.2f increment=%.2f bidPrice=%.2f maxBid=%.2f",
-                        LocalDateTime.now(), itemId, userId, currentPrice, item.getBidStep(), increment, immediateBidPrice, maxBid));
+                LOGGER.info(String.format(
+                        "[MANUAL_BID] time=%s itemId=%s userId=%s currentPrice=%.2f bidPrice=%.2f",
+                        bidTime, itemId, userId, currentPrice, bidPrice));
 
-                finalBid = runAutoBiddingRounds(conn, itemId, userId, immediateBidPrice, bidTime);
+                bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime);
+                itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId);
+
+                //  5. Anti-snipe
+                long secondsRemaining = ChronoUnit.SECONDS.between(LocalDateTime.now(), item.getEndTime());
+                if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
+                    newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
+                    itemRepository.extendEndTime(conn, itemId, newEndTime);
+                    isExtended = true;
+                    LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
+                }
+
+                //  6. Auto-bid rounds
+                finalBid = runAutoBiddingRounds(conn, itemId, userId, bidPrice, bidTime);
                 conn.commit();
-                shouldBroadcast = true;
+
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Database connection error during auto-bid registration", e);
+                LOGGER.log(Level.SEVERE, "DB error trong placeBid - " + e.getMessage(), e);
                 return false;
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Unexpected error during auto-bid registration", e);
+                LOGGER.log(Level.SEVERE, "Unexpected error trong placeBid - " + e.getMessage(), e);
                 return false;
             }
         }
 
-        if (shouldBroadcast && finalBid != null) {
-            broadcastNewBid(itemId, finalBid);
+        // Broadcast ngoài synchronized block (tránh giữ lock khi I/O)
+        broadcastAfterBid(itemId, finalBid, isExtended, newEndTime);
+        return true;
+    }
+
+    /**
+     * Đăng ký auto-bid VÀ đặt bid ngay nếu điều kiện cho phép.
+     *
+     * Flow:
+     *  1. Validate đầu vào.
+     *  2. Validate nghiệp vụ (item, user, status, thời gian, increment).
+     *  3. Upsert auto-bid config.
+     *  4. Quyết định: REGISTER_ONLY nếu đang dẫn đầu, PLACE_BID nếu chưa.
+     *  5. Nếu PLACE_BID: xử lý ví → ghi bid → anti-snipe → auto-bid rounds.
+     *  6. Commit → broadcast.
+     */
+    public boolean registerAutoBidAndMaybeBid(String itemId, String userId, double maxBid, double increment) {
+        if (isBlank(itemId) || isBlank(userId)) {
+            LOGGER.warning("Auto-bid rejected: itemId hoặc userId rỗng");
+            return false;
+        }
+        if (maxBid <= 0 || increment <= 0) {
+            LOGGER.warning("Auto-bid rejected: maxBid hoặc increment <= 0");
+            return false;
+        }
+
+        FinalBid finalBid   = null;
+        boolean shouldBroadcast = false;
+        boolean isExtended = false;
+        LocalDateTime newEndTime   = null;
+
+        synchronized (AuctionLockManager.getItemLock(itemId)) {
+            try (Connection conn = DatabaseManager.getConnection()) {
+                conn.setAutoCommit(false);
+
+                //  1. Load dữ liệu
+                Item item = itemRepository.findById(conn, itemId);
+                if (item == null) {
+                    conn.rollback();
+                    LOGGER.info("Auto-bid rejected: Item không tồn tại - " + itemId);
+                    return false;
+                }
+
+                User user = userRepository.findById(conn, userId);
+
+                //  2. Validate nghiệp vụ
+                try {
+                    bidValidator.validateForAutoBid(item, user, userId, maxBid, increment);
+                } catch (InvalidBidException | AuctionClosedException e) {
+                    conn.rollback();
+                    LOGGER.info("Auto-bid rejected: " + e.getMessage());
+                    return false;
+                }
+
+                //  3. Upsert config (TRƯỚC khi validate maxBid vs price) ---
+                // FIX: upsert trước rồi mới quyết định bid hay không là đúng,
+                // nhưng nếu REJECT thì phải rollback để xóa upsert vừa làm.
+                // Với ON CONFLICT UPDATE thì rollback sẽ khôi phục giá trị cũ.
+                bidRepository.upsertAutoBid(conn, itemId, userId, maxBid, increment,
+                        LocalDateTime.now().toString());
+
+                String currentBidderId = itemRepository.getCurrentBidderId(conn, itemId);
+                double currentPrice    = item.getHighestCurrentPrice();
+                double immediateBidPrice = computeImmediateAutoBidPrice(
+                        currentPrice, item.getBidStep(), increment);
+
+                LOGGER.info(String.format(
+                        "[AUTO_BID_REGISTER][DECISION_INPUT] time=%s itemId=%s userId=%s " +
+                                "currentBidder=%s currentPrice=%.2f nextBid=%.2f maxBid=%.2f",
+                        LocalDateTime.now(), itemId, userId,
+                        currentBidderId, currentPrice, immediateBidPrice, maxBid));
+
+                if (userId.equals(currentBidderId)) {
+                    // Đang dẫn đầu → chỉ đăng ký, không bid thêm
+                    conn.commit();
+                    LOGGER.info(String.format(
+                            "[AUTO_BID_REGISTER][DECISION=REGISTER_ONLY] itemId=%s userId=%s",
+                            itemId, userId));
+                    return true;
+                }
+
+                // FIX: validate maxBid TRƯỚC khi thực hiện wallet / bid
+                if (immediateBidPrice + PRICE_EPSILON <= currentPrice
+                        || immediateBidPrice > maxBid + PRICE_EPSILON) {
+                    conn.rollback();  // rollback upsert vì config không hợp lệ
+                    LOGGER.info(String.format(
+                            "[AUTO_BID_REGISTER][DECISION=REJECT_MAX_TOO_LOW] itemId=%s userId=%s " +
+                                    "immediateBid=%.2f maxBid=%.2f",
+                            itemId, userId, immediateBidPrice, maxBid));
+                    return false;
+                }
+
+                LOGGER.info(String.format(
+                        "[AUTO_BID_REGISTER][DECISION=PLACE_IMMEDIATE_BID] itemId=%s userId=%s bidPrice=%.2f",
+                        itemId, userId, immediateBidPrice));
+
+                //  5. Xử lý ví + ghi bid
+                handleWalletMovement(conn, itemId, userId, immediateBidPrice,
+                        currentBidderId, currentPrice);
+
+                String bidTime = LocalDateTime.now().toString();
+                bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime);
+                itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId);
+
+                LOGGER.info(String.format(
+                        "[AUTO_BID_REGISTER][IMMEDIATE_BID] time=%s itemId=%s userId=%s bidPrice=%.2f",
+                        bidTime, itemId, userId, immediateBidPrice));
+
+                // 6. Anti-snipe (FIX: áp dụng nhất quán cho cả auto-bid)
+                long secondsRemaining = ChronoUnit.SECONDS.between(LocalDateTime.now(), item.getEndTime());
+                if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
+                    newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
+                    itemRepository.extendEndTime(conn, itemId, newEndTime);
+                    isExtended = true;
+                    LOGGER.info("Anti-snipe (auto-bid): gia hạn đến " + newEndTime);
+                }
+
+                // 7. Auto-bid rounds
+                finalBid = runAutoBiddingRounds(conn, itemId, userId, immediateBidPrice, bidTime);
+                conn.commit();
+                shouldBroadcast = true;
+
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "DB error trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
+                return false;
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Unexpected error trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
+                return false;
+            }
+        }
+
+        if (shouldBroadcast) {
+            broadcastAfterBid(itemId, finalBid, isExtended, newEndTime);
         }
         return true;
     }
 
-    public com.auction.shared.model.payloads.AutoBidPayload getAutoBidStatus(String itemId, String userId) {
-        if (itemId == null || itemId.isBlank() || userId == null || userId.isBlank()) {
-            return null;
-        }
+    /**
+     * Lấy trạng thái auto-bid hiện tại của user cho một item.
+     */
+    public AutoBidPayload getAutoBidStatus(String itemId, String userId) {
+        if (isBlank(itemId) || isBlank(userId)) return null;
 
-        com.auction.shared.model.payloads.AutoBidPayload activeConfig =
-                bidRepository.findActiveAutoBid(itemId, userId);
-        if (activeConfig != null) {
-            return activeConfig;
-        }
-
-        return new com.auction.shared.model.payloads.AutoBidPayload(itemId, userId, null, null, false);
+        AutoBidPayload config = bidRepository.findActiveAutoBid(itemId, userId);
+        return config != null ? config : new AutoBidPayload(itemId, userId, null, null, false);
     }
 
+    /**
+     * Hủy auto-bid.
+     */
     public boolean cancelAutoBid(String itemId, String userId) {
-        if (itemId == null || itemId.isBlank() || userId == null || userId.isBlank()) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(bidRepository.deactivateAutoBidIfPresent(itemId, userId));
+        if (isBlank(itemId) || isBlank(userId)) return false;
+        return bidRepository.deactivateAutoBidIfPresent(itemId, userId);
     }
 
-    public boolean placeBid(String itemId, String userId, double bidPrice) {
-        if (itemId == null || itemId.isBlank() || userId == null || userId.isBlank()) {
-            LOGGER.warning("Bid rejected: Invalid input - itemId or userId is empty");
-            return false;
+    // Private — wallet
+
+    /**
+     * Freeze tiền người bid mới, unfreeze tiền người bid cũ.
+     *
+     * FIX: Method ném Exception thay vì bọc lại thành SQLException,
+     * để caller có thể rollback đúng transaction rồi return false.
+     * Không tự rollback ở đây vì không giữ reference đến conn.
+     */
+    private void handleWalletMovement(Connection conn, String itemId,
+                                      String bidderId, double bidPrice,
+                                      String prevBidderId, double prevBidPrice) throws Exception {
+
+        // 1. Kiểm tra số dư
+        double[] balances = walletRepository.getBalances(conn, bidderId);
+        if (balances == null || balances.length == 0) {
+            throw DataException.of(ErrorCode.DATA_INTEGRITY_ERROR,
+                    "Không lấy được thông tin ví: " + bidderId);
         }
 
-        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
-            try (Connection conn = DatabaseManager.getConnection()) {
-                conn.setAutoCommit(false);
+        double balance = balances[0];
+        if (balance < bidPrice) {
+            throw InvalidBidException.of(ErrorCode.INSUFFICIENT_BALANCE,
+                    String.format("Số dư không đủ: có %.2f, cần %.2f (user=%s)",
+                            balance, bidPrice, bidderId));
+        }
 
-                Item item = itemRepository.findById(conn, itemId);
-                if (item == null) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: Item not found - " + itemId);
-                    return false;
+        // 2. Freeze cho người bid mới
+        if (!walletRepository.freezeAmount(conn, bidderId, bidPrice)) {
+            throw DataException.of(ErrorCode.WALLET_OPERATION_FAILED,
+                    "Không thể khóa số dư: " + bidderId);
+        }
+
+        // 3. Log FREEZE (không critical — chỉ warning nếu lỗi)
+        try {
+            txLogRepository.logFreeze(conn, bidderId, bidPrice, balance, balance - bidPrice, itemId);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Không ghi được log FREEZE", e);
+        }
+
+        // 4. Unfreeze cho người bid trước
+        if (prevBidderId != null && !prevBidderId.isBlank() && !prevBidderId.equals(bidderId)) {
+            if (!walletRepository.unfreezeAmount(conn, prevBidderId, prevBidPrice)) {
+                throw DataException.of(ErrorCode.WALLET_OPERATION_FAILED,
+                        "Không thể mở khóa số dư người cũ: " + prevBidderId);
+            }
+
+            // Log UNFREEZE
+            try {
+                double[] prevBal = walletRepository.getBalances(conn, prevBidderId);
+                if (prevBal != null && prevBal.length > 0) {
+                    txLogRepository.logUnfreeze(conn, prevBidderId, prevBidPrice,
+                            prevBal[0] - prevBidPrice, prevBal[0], itemId);
                 }
-
-                if (item.getSellerId().equals(userId)) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: Seller cannot bid - " + itemId);
-                    return false;
-                }
-
-                com.auction.shared.model.account.User user = new com.auction.server.repository.UserRepository().findById(userId);
-                if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: User is banned - " + userId);
-                    return false;
-                }
-
-                if (!isBiddingStatusAllowed(item)) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: Invalid item status - " + itemId);
-                    return false;
-                }
-
-                // Kiểm tra thời gian phiên đấu giá
-                try {
-                    validateAuctionTime(item);
-                } catch (AuctionClosedException e) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: " + e.getMessage());
-                    return false;
-                }
-
-                String lastBidder = bidRepository.findLastBidder(conn, itemId);
-                if (lastBidder != null && lastBidder.equals(userId)) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: Same user cannot bid consecutively - " + itemId);
-                    return false;
-                }
-
-                double minAllowedPrice = item.getHighestCurrentPrice() + item.getBidStep();
-
-                // Kiểm tra giá bid hợp lệ
-                try {
-                    validateBidPrice(bidPrice, minAllowedPrice);
-                } catch (InvalidBidException e) {
-                    conn.rollback();
-                    LOGGER.info("Bid rejected: " + e.getMessage());
-                    return false;
-                }
-
-                // Handle wallet movement before updating DB
-                try {
-                    if (!handleWalletMovement(conn, itemId, userId, bidPrice, item.getCurrentTopPLayerId(), item.getHighestCurrentPrice())) {
-                        conn.rollback();
-                        return false;
-                    }
-                } catch (SQLException e) {
-                    conn.rollback();
-                    LOGGER.log(Level.WARNING, "Bid rejected: Wallet operation failed - " + e.getMessage());
-                    return false;
-                }
-
-                String resolvedBidTime = LocalDateTime.now().toString();
-                LOGGER.info(String.format("[AUTO_BID_ROUND][MANUAL_BID] time=%s itemId=%s userId=%s itemCurrentPrice=%.2f bidStep=%.2f bidPrice=%.2f minAllowed=%.2f",
-                        LocalDateTime.now(), itemId, userId, item.getHighestCurrentPrice(), item.getBidStep(), bidPrice, minAllowedPrice));
-
-                boolean created = bidRepository.createBid(conn, itemId, userId, bidPrice, resolvedBidTime);
-                if (!created) {
-                    conn.rollback();
-                    LOGGER.warning("Bid rejected: Failed to create bid record in database");
-                    return false;
-                }
-
-                if (!itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId)) {
-                    conn.rollback();
-                    LOGGER.warning("Bid rejected: Failed to update current bidder in database");
-                    return false;
-                }
-
-                boolean isExtended = false;
-                LocalDateTime newEndTime = null;
-                long secondsRemaining = java.time.temporal.ChronoUnit.SECONDS.between(LocalDateTime.now(), item.getEndTime());
-                if (secondsRemaining < 60 && secondsRemaining >= 0) {
-                    newEndTime = LocalDateTime.now().plusSeconds(60);
-                    if (!itemRepository.extendEndTime(conn, itemId, newEndTime)) {
-                        conn.rollback();
-                        LOGGER.warning("Bid rejected: Failed to extend end time for anti-sniping");
-                        return false;
-                    }
-                    isExtended = true;
-                    LOGGER.info("Anti-sniping activated: end time extended to " + newEndTime);
-                }
-
-                FinalBid finalBid = runAutoBiddingRounds(conn, itemId, userId, bidPrice, resolvedBidTime);
-                conn.commit();
-                try {
-                    broadcastNewBid(itemId, finalBid);
-                    if (isExtended) {
-                        com.auction.shared.model.payloads.AuctionExtendedPayload extendedPayload = 
-                            new com.auction.shared.model.payloads.AuctionExtendedPayload(itemId, newEndTime.toString());
-                        AuctionRoomManager.getInstance().broadcastToRoom(itemId, SocketEventConstants.EVENT_AUCTION_EXTENDED, extendedPayload);
-                        LOGGER.fine("Broadcasted AUCTION_EXTENDED for item " + itemId);
-                    }
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Failed to broadcast for item " + itemId, e);
-                }
-                return true;
-
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Database connection error during placeBid", e);
-                return false;
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Unexpected error during placeBid", e);
-                return false;
+                LOGGER.log(Level.WARNING, "Không ghi được log UNFREEZE", e);
             }
         }
     }
 
-    private FinalBid runAutoBiddingRounds(Connection conn,
-                                          String itemId,
-                                          String leadingUserId,
-                                          double currentPrice,
-                                          String currentBidTime) throws SQLException {
+    // Private — auto-bid rounds
+
+    /**
+     * Chạy vòng lặp đối kháng giữa các auto-bid config.
+     * Mỗi vòng: chọn candidate → kiểm tra ví → xử lý ví → ghi bid.
+     * Dừng khi không còn candidate hợp lệ hoặc đạt MAX_ROUNDS.
+     *
+     * Ném Exception ra ngoài để caller rollback toàn bộ transaction.
+     */
+    private FinalBid runAutoBiddingRounds(Connection conn, String itemId,
+                                          String leadingUserId, double currentPrice,
+                                          String currentBidTime) throws Exception {
         String currentLeader = leadingUserId;
         double livePrice = currentPrice;
         String liveBidTime = currentBidTime;
 
         for (int round = 0; round < AUTO_BID_MAX_ROUNDS; round++) {
-            LOGGER.info(String.format("[AUTO_BID_ROUND][START] time=%s itemId=%s round=%d currentLeader=%s currentPrice=%.2f",
+            LOGGER.info(String.format(
+                    "[AUTO_BID_ROUND][START] time=%s itemId=%s round=%d leader=%s price=%.2f",
                     LocalDateTime.now(), itemId, round, currentLeader, livePrice));
+
             List<BidRepository.AutoBidConfig> autoBids = bidRepository.findActiveAutoBids(conn, itemId);
             if (autoBids.isEmpty()) {
-                LOGGER.info(String.format("[AUTO_BID_ROUND][STOP] time=%s itemId=%s reason=no_active_configs currentLeader=%s currentPrice=%.2f",
-                        LocalDateTime.now(), itemId, currentLeader, livePrice));
-                return new FinalBid(currentLeader, livePrice, liveBidTime);
+                LOGGER.info(String.format(
+                        "[AUTO_BID_ROUND][STOP] reason=no_active_configs leader=%s price=%.2f",
+                        currentLeader, livePrice));
+                break;
             }
 
-            AutoBidResolver.ResolvedAutoBid candidate = autoBidResolver.selectNextBid(autoBids, currentLeader, livePrice);
+            AutoBidResolver.ResolvedAutoBid candidate =
+                    autoBidResolver.selectNextBid(autoBids, currentLeader, livePrice);
             if (candidate == null) {
-                LOGGER.info(String.format("[AUTO_BID_ROUND][STOP] time=%s itemId=%s reason=no_valid_candidate currentLeader=%s currentPrice=%.2f",
-                        LocalDateTime.now(), itemId, currentLeader, livePrice));
-                return new FinalBid(currentLeader, livePrice, liveBidTime);
+                LOGGER.info(String.format(
+                        "[AUTO_BID_ROUND][STOP] reason=no_valid_candidate leader=%s price=%.2f",
+                        currentLeader, livePrice));
+                break;
             }
 
-            // 1. Check if candidate can afford it
-            try {
-                double[] candidateBalances = walletRepository.getBalances(conn, candidate.userId());
-                if (candidateBalances[0] < candidate.bidPrice()) {
-                    LOGGER.warning(String.format("[AUTO_BID_ROUND][SKIP] Insufficient funds for auto-bid user %s. Needs %.2f, has %.2f",
-                            candidate.userId(), candidate.bidPrice(), candidateBalances[0]));
-                    bidRepository.deactivateAutoBidIfPresent(conn, itemId, candidate.userId());
-                    continue; // Skip this candidate, try others in the list
-                }
-            } catch (Exception e) {
-                throw new SQLException("Failed to verify auto-bid candidate balance: " + e.getMessage(), e);
+            // Kiểm tra số dư của candidate
+            double[] candidateBalances = walletRepository.getBalances(conn, candidate.userId());
+            if (candidateBalances == null || candidateBalances.length == 0
+                    || candidateBalances[0] < candidate.bidPrice()) {
+                LOGGER.warning(String.format(
+                        "[AUTO_BID_ROUND][SKIP] Không đủ tiền: userId=%s needs=%.2f has=%.2f",
+                        candidate.userId(),
+                        candidate.bidPrice(),
+                        candidateBalances != null && candidateBalances.length > 0 ? candidateBalances[0] : 0d));
+                bidRepository.deactivateAutoBidIfPresent(conn, itemId, candidate.userId());
+                continue;
             }
 
-            // 2. Perform wallet movement
-            try {
-                if (!handleWalletMovement(conn, itemId, candidate.userId(), candidate.bidPrice(), currentLeader, livePrice)) {
-                    throw new SQLException("Failed to handle wallet movement for auto-bid candidate: " + candidate.userId());
-                }
-            } catch (Exception e) {
-                throw new SQLException("Failed to execute wallet movement for auto-bid: " + e.getMessage(), e);
-            }
+            // Xử lý ví
+            handleWalletMovement(conn, itemId,
+                    candidate.userId(), candidate.bidPrice(),
+                    currentLeader, livePrice);
 
+            // Ghi bid
             String bidTime = LocalDateTime.now().toString();
-            if (!bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime)) {
-                throw new SQLException("Failed to create auto bid in database");
-            }
-            if (!itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId())) {
-                throw new SQLException("Failed to update current price and bidder after auto bid in database");
-            }
-            LOGGER.info(String.format("[AUTO_BID_ROUND][ACCEPT] time=%s itemId=%s userId=%s bidPrice=%.2f",
-                    LocalDateTime.now(), itemId, candidate.userId(), candidate.bidPrice()));
+            bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime);
+            itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId());
 
-            livePrice = candidate.bidPrice();
+            LOGGER.info(String.format(
+                    "[AUTO_BID_ROUND][ACCEPT] time=%s itemId=%s userId=%s bidPrice=%.2f",
+                    bidTime, itemId, candidate.userId(), candidate.bidPrice()));
+
+            livePrice     = candidate.bidPrice();
             currentLeader = candidate.userId();
-            liveBidTime = bidTime;
+            liveBidTime   = bidTime;
         }
 
         return new FinalBid(currentLeader, livePrice, liveBidTime);
     }
 
-    private record FinalBid(String userId, double bidPrice, String bidTime) {
-    }
+    // Private — broadcast
 
-    private double computeImmediateAutoBidPrice(double currentPrice, double bidStep, double increment) {
-        double requiredIncrement = Math.max(bidStep, increment);
-        return currentPrice + requiredIncrement;
+    private void broadcastAfterBid(String itemId, FinalBid finalBid,
+                                   boolean isExtended, LocalDateTime newEndTime) {
+        try {
+            if (finalBid != null) {
+                BidPayload payload = new BidPayload(
+                        itemId, finalBid.userId(), finalBid.bidPrice(), finalBid.bidTime());
+                AuctionRoomManager.getInstance()
+                        .broadcastToRoom(itemId, SocketEventConstants.EVENT_NEW_BID, payload);
+                LOGGER.fine("Broadcast NEW_BID cho item " + itemId);
+            }
+
+            if (isExtended && newEndTime != null) {
+                com.auction.shared.model.payloads.AuctionExtendedPayload extPayload =
+                        new com.auction.shared.model.payloads.AuctionExtendedPayload(
+                                itemId, newEndTime.toString());
+                AuctionRoomManager.getInstance()
+                        .broadcastToRoom(itemId, SocketEventConstants.EVENT_AUCTION_EXTENDED, extPayload);
+                LOGGER.fine("Broadcast AUCTION_EXTENDED cho item " + itemId);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Broadcast thất bại cho item " + itemId, e);
+        }
     }
 
     private void broadcastNewBid(String itemId, FinalBid finalBid) {
-        BidPayload newBidData = new BidPayload(
-                itemId,
-                finalBid.userId(),
-                finalBid.bidPrice(),
-                finalBid.bidTime()
-        );
-
-        AuctionRoomManager.getInstance().broadcastToRoom(itemId, SocketEventConstants.EVENT_NEW_BID, newBidData);
-        LOGGER.fine("Broadcasted new bid for item " + itemId);
+        broadcastAfterBid(itemId, finalBid, false, null);
     }
 
-    private boolean isBiddingStatusAllowed(Item item) {
-        String storedStatus = normalizeStatus(item.getStoredStatus());
-        if (ItemStatusConstants.BANNED.equals(storedStatus) || ItemStatusConstants.ENDED.equals(storedStatus)) {
-            return false;
-        }
-
-        String computedStatus = normalizeStatus(item.getStatus());
-        return ItemStatusConstants.ONGOING.equals(computedStatus);
+    // Private — validation helpers (delegate sang BidValidator)
+    private double computeImmediateAutoBidPrice(double currentPrice, double bidStep, double increment) {
+        return currentPrice + Math.max(bidStep, increment);
     }
 
-    private String normalizeStatus(String status) {
-        return status == null ? "" : status.trim().toUpperCase();
+    private boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
+
+    // Private record
+
+    private record FinalBid(String userId, double bidPrice, String bidTime) {}
+
+    // Inner class — BidValidator
+    //Tách validate nghiệp vụ ra khỏi BidService.
+    // BidValidator nhận các object đã được load sẵn (Item, User),
+    // KHÔNG tự query DB — giúp giảm số lần query và dễ unit test.
+    // =========================================================================
 
     /**
-     * Kiểm tra xem phiên đấu giá có trong thời gian hợp lệ không
-     * @param item Item cần kiểm tra
-     * @throws AuctionClosedException nếu phiên đã kết thúc hoặc chưa bắt đầu
+     * Tập trung toàn bộ validate nghiệp vụ cho bid và auto-bid.
+     * Không phụ thuộc DB — chỉ làm việc với object đã được load.
      */
-    private void validateAuctionTime(Item item) throws AuctionClosedException {
-        LocalDateTime now = LocalDateTime.now();
+    public static class BidValidator {
+        private final double epsilon;
+        public BidValidator(double epsilon) {
+            this.epsilon = epsilon;
+        }
+        /** Validate cho manual bid. */
+        public void validateForManualBid(Item item, User user, String userId, double bidPrice)
+                throws InvalidBidException, AuctionClosedException {
 
-        if (now.isAfter(item.getEndTime())) {
-            throw AuctionClosedException.of(ErrorCode.AUCTION_ALREADY_CLOSED,
-                    String.format("Phiên đấu giá đã kết thúc lúc %s", item.getEndTime()));
+            validateItemAndUser(item, user, userId);
+            validateStatus(item);
+            validateAuctionTime(item);
+
+            double minAllowed = item.getHighestCurrentPrice() + item.getBidStep();
+            if (bidPrice + epsilon < minAllowed) {
+                throw InvalidBidException.of(ErrorCode.BID_PRICE_TOO_LOW,
+                        String.format("Giá bid %.2f thấp hơn tối thiểu %.2f", bidPrice, minAllowed));
+            }
         }
 
-        if (now.isBefore(item.getStartTime())) {
-            throw AuctionClosedException.of(ErrorCode.AUCTION_NOT_STARTED,
-                    String.format("Phiên đấu giá chưa bắt đầu, sẽ bắt đầu lúc %s", item.getStartTime()));
+        /** Validate cho auto-bid registration. */
+        public void validateForAutoBid(Item item, User user, String userId,
+                                       double maxBid, double increment)
+                throws InvalidBidException, AuctionClosedException {
+
+            validateItemAndUser(item, user, userId);
+            validateStatus(item);
+            validateAuctionTime(item);
+
+            if (increment + epsilon < item.getBidStep()) {
+                throw InvalidBidException.of(ErrorCode.INVALID_BID_PARAMETERS,
+                        String.format("Increment %.2f thấp hơn bidStep %.2f", increment, item.getBidStep()));
+            }
         }
 
+        //  Helpers
+
+        private void validateItemAndUser(Item item, User user, String userId)
+                throws InvalidBidException {
+
+            if (item.getSellerId().equals(userId)) {
+                throw InvalidBidException.of(ErrorCode.SELLER_CANNOT_BID,
+                        "Người bán không được tự đặt giá - itemId=" + item.getId());
+            }
+            if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
+                throw InvalidBidException.of(ErrorCode.INVALID_INPUT,
+                        "User bị cấm không được đặt giá - userId=" + userId);
+            }
+        }
+
+        private void validateStatus(Item item) throws InvalidBidException {
+            String stored   = normalize(item.getStoredStatus());
+            String computed = normalize(item.getStatus());
+
+            if (ItemStatusConstants.BANNED.equals(stored)
+                    || ItemStatusConstants.ENDED.equals(stored)
+                    || !ItemStatusConstants.ONGOING.equals(computed)) {
+                throw InvalidBidException.of(ErrorCode.INVALID_BID,
+                        "Item không ở trạng thái đấu giá hợp lệ - itemId=" + item.getId());
+            }
+        }
+
+        private void validateAuctionTime(Item item) throws AuctionClosedException {
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isAfter(item.getEndTime())) {
+                throw AuctionClosedException.of(ErrorCode.AUCTION_ALREADY_CLOSED,
+                        "Phiên đấu giá đã kết thúc lúc " + item.getEndTime());
+            }
+            if (now.isBefore(item.getStartTime())) {
+                throw AuctionClosedException.of(ErrorCode.AUCTION_NOT_STARTED,
+                        "Phiên đấu giá chưa bắt đầu, sẽ bắt đầu lúc " + item.getStartTime());
+            }
+        }
+
+        private String normalize(String status) {
+            return status == null ? "" : status.trim().toUpperCase();
+        }
     }
-
-    /**
-     * Kiểm tra xem giá bid có hợp lệ không
-     * @param bidPrice Giá bid được đề xuất
-     * @param minAllowedPrice Giá tối thiểu cho phép
-     * @throws InvalidBidException nếu giá bid không hợp lệ
-     */
-    private void validateBidPrice(double bidPrice, double minAllowedPrice) throws InvalidBidException {
-        if (bidPrice + PRICE_EPSILON < minAllowedPrice) {
-            throw InvalidBidException.of(ErrorCode.BID_PRICE_TOO_LOW,
-                    String.format("Giá bid %.2f thấp hơn giá tối thiểu %.2f", bidPrice, minAllowedPrice));
-        }
-    }
-
-
-
 }

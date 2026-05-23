@@ -1,12 +1,8 @@
 package com.auction.client.controller;
 
-import com.auction.client.service.AutoBidService;
+import com.auction.client.service.*;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
 import com.auction.client.service.AutoBidService.ValidationResult;
-import com.auction.client.service.BidHistoryService;
-import com.auction.client.service.ItemsService;
-import com.auction.client.service.NetworkService;
-import com.auction.client.service.ToastService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.CountdownTimerUtil;
 import com.auction.client.util.UserSession;
@@ -15,7 +11,6 @@ import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
-import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
@@ -24,16 +19,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.chart.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,15 +39,14 @@ import java.util.List;
 
 public class ItemPageController implements NetworkService.MessageListener {
 
-    // Constants
+    // ─── Constants ────────────────────────────────────────────────────────────
     private static final double IMAGE_WIDTH  = 700.0;
     private static final double IMAGE_HEIGHT = 450.0;
-    private static final double IMAGE_ARC    = 20.0;
     private static final double THUMB_WIDTH  = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
     private static final DateTimeFormatter DISPLAY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    // FXML: item info
+    // ─── FXML Bindings ────────────────────────────────────────────────────────
     @FXML
     private Label itemNameLabel;
     @FXML
@@ -73,7 +70,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private StackPane mainImageContainer;
 
-    // FXML: bid controls
     @FXML
     private TextField bidAmountField;
     @FXML
@@ -85,7 +81,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnSuggestStep2;
 
-    // FXML: bid history
     @FXML
     private ScrollPane historyScrollPane;
     @FXML
@@ -93,7 +88,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label totalBidsLabel;
 
-    // FXML: auto-bid
     @FXML
     private VBox autoBidForm;
     @FXML
@@ -107,9 +101,6 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Button btnAutoBidToggle;
 
-    // FXML: countdown timer
-    @FXML
-    private Label timeStatusLabel;
     @FXML
     private Label daysLabel;
     @FXML
@@ -119,20 +110,30 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private Label secsLabel;
 
-    // FXML: status overlay
     @FXML
     private VBox bidControlsContainer;
     @FXML
     private StackPane statusOverlay;
     @FXML
     private Label statusMessageLabel;
+    // ─── Bid Price Chart ─────────────────────────────────────
 
-    // State
+    @FXML
+    private AreaChart<String, Number> bidPriceChart;
+    @FXML
+    private CategoryAxis bidTimeAxis;
+    @FXML
+    private NumberAxis bidPriceAxis;
+
+
+    private XYChart.Series<String, Number> bidPriceSeries;
+
+    // ─── Core State ───────────────────────────────────────────────────────────
     private String itemId;
     private Item item;
     private double myLastBid = 0.0;
 
-    // Dependencies
+    // ─── Infrastructure Dependencies ──────────────────────────────────────────
     private final User user = UserSession.getInstance().getLoggedInUser();
     private final NetworkService network = NetworkService.getInstance();
     private final Gson gson = GsonUtil.getInstance();
@@ -145,7 +146,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     private final ItemStatusService statusUiService = new ItemStatusService();
     private CountdownTimerUtil countdownTimer;
 
-    // ─── Lifecycle ────────────────────────────────────────────────────────────
+    // ─── Lifecycle & Cleanup ──────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -157,6 +158,11 @@ public class ItemPageController implements NetworkService.MessageListener {
                 statusMessageLabel, bidControlsContainer, statusOverlay,
                 btnAutoBidToggle, submitBid, countdownTimer, autoBidManager
         );
+        if (bidPriceChart != null) {
+            bidPriceSeries = new XYChart.Series<>();
+            bidPriceChart.getData().add(bidPriceSeries);
+            bidPriceChart.setAnimated(false);
+        }
     }
 
     public void dispose() {
@@ -389,7 +395,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
     }
 
-    // ─── Bid history ──────────────────────────────────────────────────────────
+    // ─── Bid History Render ───────────────────────────────────────────────────
 
     private void loadBidHistory() {
         bidHistoryService.getHistory(itemId)
@@ -403,6 +409,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
+        renderBidPriceChart(bids);
 
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
@@ -420,6 +427,24 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
+    private void renderBidPriceChart(List<BidHistoryItemDTO> bids) {
+        if (bidPriceChart == null || bidPriceSeries == null) {
+            return;
+        }
+        bidPriceSeries.getData().clear();
+        if (bids == null || bids.isEmpty()) {
+            return;}
+        List<BidHistoryItemDTO> copy = new ArrayList<>(bids);
+        Collections.reverse(copy);
+        DateTimeFormatter chartFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+        for (BidHistoryItemDTO bid : copy) {
+            if (bid.bidTime == null)
+                continue;
+            String time = bid.bidTime.format(chartFormat);
+            bidPriceSeries.getData().add(new XYChart.Data<>(time, bid.bidPrice));
+        }
+    }
+
     private void toggleHistoryScroll(boolean visible) {
         if (historyScrollPane != null) {
             historyScrollPane.setVisible(visible);
@@ -427,11 +452,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
     }
 
-    // ─── Display & image ──────────────────────────────────────────────────────
-
-    private void displayDataItem(Item item) {
-        thumbnailContainer.getChildren().clear();
-        List<String> images = item.getImagesPath();
+    // ─── Core Display & Timers ────────────────────────────────────────────────
 
     private void displayDataItem(Item currentItem) {
         ClientImageUtil.setupThumbnailGallery(
