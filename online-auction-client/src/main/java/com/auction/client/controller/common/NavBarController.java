@@ -11,6 +11,8 @@ public class NavBarController {
     @FXML
     private Label lblUserName;
     @FXML
+    private Label lblBalance;
+    @FXML
     private TextField searchField;
     @FXML
     public void initialize() {
@@ -23,10 +25,15 @@ public class NavBarController {
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser != null && lblUserName != null) {
             lblUserName.setText(currentUser.getUsername());
-        } else {
-            lblUserName.setText("Guest");
         }
+        if (lblBalance != null) {
+            double availableBalance = currentUser.getBalance();
+            lblBalance.setText(String.format("$%,.2f", availableBalance));
+    } else {
+        if (lblUserName != null) lblUserName.setText("Guest");
+        if (lblBalance != null) lblBalance.setText("$0.00");
     }
+}
     public void handleSwitchToHome() {
         searchField.textProperty().unbindBidirectional(SearchStoreController.searchQueryProperty());
 
