@@ -22,6 +22,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
@@ -65,8 +66,21 @@ public class ItemEditController {
     private final Gson         gson         = GsonUtil.getInstance();
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
+    @FXML private VBox navBar; // Khai báo fx:id của NavBar include nếu có
+
     @FXML
     public void initialize() {
+        // Chạy ẩn đi nếu phát hiện form đang được mở trong một Stage Modal riêng biệt
+        Platform.runLater(() -> {
+            if (txtItemName.getScene() != null && txtItemName.getScene().getWindow() instanceof Stage stage) {
+                // Nếu là cửa sổ Modal popup, ẩn thanh NavBar đi cho gọn gàng
+                if (navBar != null) {
+                    navBar.setVisible(false);
+                    navBar.setManaged(false);
+                }
+            }
+        });
+
         setupTimeComboBoxes();
         setupAutoGrowTextArea();
     }
@@ -335,7 +349,16 @@ public class ItemEditController {
     }
 
     @FXML public void handleCancel(ActionEvent event) { navigateToMyAuctions(); }
-    @FXML public void handleClose() { navigateToMyAuctions(); }
+    @FXML
+    public void handleCloseAction(ActionEvent event) {
+        // Kiểm tra nếu Form đang nằm trong một Stage dạng popup window thì đóng cửa sổ đó lại
+        if (lblMessage.getScene() != null && lblMessage.getScene().getWindow() instanceof Stage stage) {
+            stage.close();
+        } else {
+            // SỬA LỖI Ở ĐÂY: Truyền lblMessage (Label) thay vì txtItemName (TextField)
+            NavigationUtil.handleSwitchToHomePage(lblMessage);
+        }
+    }
 
     private void navigateToMyAuctions() {
         NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions");

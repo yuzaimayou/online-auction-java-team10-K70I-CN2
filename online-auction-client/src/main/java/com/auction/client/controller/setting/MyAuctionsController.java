@@ -19,8 +19,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -59,7 +61,7 @@ public class MyAuctionsController {
 
         MyAuctionsTableHelper.setupTableColumns(
                 itemCol, categoryCol, statusCol, priceCol, endTimeCol, actionCol,
-                this::handleSwitchToItemEdit,
+                this::openEditModal,
                 this::handleDeleteItem,
                 this::handleViewItem
         );
@@ -210,5 +212,51 @@ public class MyAuctionsController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.show();
+    }
+
+    private void openEditModal(ItemSummary item) {
+        try {
+            // 1. Lấy root node của giao diện hiện tại để áp dụng hiệu ứng làm mờ (Blur)
+            Scene currentScene = auctionTable.getScene();
+            Parent rootVisual = currentScene.getRoot();
+
+            // Tạo độ mờ radius
+            GaussianBlur blurEffect = new GaussianBlur(10);
+            rootVisual.setEffect(blurEffect);
+
+            // 2. Tải file FXML của Form Edit
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com.auction.client/fxml/setting/ItemEdit.fxml")
+            );
+            Parent editFormRoot = loader.load();
+
+            // 3. Lấy Controller và truyền ID sản phẩm (SỬA LỖI TẠI ĐÂY)
+            ItemEditController editController = loader.getController();
+            editController.setItemId(item.getId()); // Gọi đúng hàm setItemId trong ItemEditController của bạn
+
+            // 4. Khởi tạo một Stage mới làm cửa sổ Layer Popup (Modal)
+            Stage modalStage = new Stage();
+            modalStage.initModality(Modality.APPLICATION_MODAL); // Khóa mọi tương tác ở trang gốc bên dưới
+            modalStage.initOwner(currentScene.getWindow());      // Gắn cửa sổ gốc làm chủ sở hữu
+            modalStage.setTitle("Chỉnh sửa sản phẩm - " + item.getName());
+
+            Scene modalScene = new Scene(editFormRoot);
+            modalStage.setScene(modalScene);
+
+            // 5. Khi đóng Modal -> Hủy bỏ hiệu ứng làm mờ ở trang gốc và tải lại bảng
+            modalStage.setOnHidden(e -> {
+                rootVisual.setEffect(null);
+
+                // Gọi hàm displayItems() đã có sẵn trong class để load lại danh sách từ DB
+                displayItems();
+            });
+
+            // Hiển thị modal và tạm dừng luồng chính cho tới khi modal này bị đóng
+            modalStage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Lỗi hệ thống", "Không thể hiển thị form chỉnh sửa sản phẩm.");
+        }
     }
 }
