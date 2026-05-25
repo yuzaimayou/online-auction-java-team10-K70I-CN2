@@ -86,8 +86,8 @@ public class AuctionFormController {
                 cbEndTime.getItems().add(time);
             }
         }
-        cbStartTime.setValue("06:50");
-        cbEndTime.setValue("10:37");
+        cbStartTime.setValue("00:00");
+        cbEndTime.setValue("00:00");
 
         // xuống dòng cho item desciption
         txtItemDesc.setWrapText(true);

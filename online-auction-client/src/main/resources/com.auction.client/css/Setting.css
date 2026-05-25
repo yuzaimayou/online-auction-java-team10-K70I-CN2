@@ -4,6 +4,13 @@
 
 .page-background {
     -fx-background-color: #f3f4f7;
+    -fx-alignment: center;
+}
+
+/* đảm bảo ScrollPane không phá layout center */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 .sidebar-card {
