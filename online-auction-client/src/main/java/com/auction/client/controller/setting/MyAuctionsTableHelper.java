@@ -48,7 +48,7 @@ public class MyAuctionsTableHelper {
         for (TableColumn<ItemSummary, ?> col : cols) col.setSortable(false);
     }
 
-    // CỘT SẢN PHẨM (Hình ảnh + Tên)
+    // CỘT SẢN PHẨM (Hình ảnh + Tên) - GIỮ NGUYÊN
     private static void setupItemColumn(TableColumn<ItemSummary, ItemSummary> col) {
         col.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue()));
         col.setCellFactory(param -> new TableCell<>() {
@@ -82,14 +82,14 @@ public class MyAuctionsTableHelper {
         });
     }
 
-    // ── 2. CỘT DANH MỤC (Phân tách rõ Style)
+    // CỘT DANH MỤC - GIỮ NGUYÊN
     private static void setupCategoryColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
         col.setCellFactory(column -> new TableCell<>() {
             private final Label label = new Label();
             {
                 label.getStyleClass().add("category-badge");
-                setAlignment(Pos.CENTER); // Căn giữa Badge trong Cell
+                setAlignment(Pos.CENTER);
             }
 
             @Override
@@ -101,7 +101,6 @@ public class MyAuctionsTableHelper {
                 }
 
                 label.setText(category);
-
                 label.getStyleClass().removeAll("cat-fashion", "cat-electronics", "cat-home", "cat-art", "cat-jewelry");
 
                 String cat = category.toLowerCase();
@@ -116,18 +115,17 @@ public class MyAuctionsTableHelper {
         });
     }
 
-    //  CỘT TRẠNG THÁI (Đầy đủ Live, Upcoming, Ended, Banned)
+    /**
+     * 🌟 CHỖ CHỈNH SỬA 1: CỘT TRẠNG THÁI
+     * Ưu tiên kiểm tra dữ liệu trạng thái thực tế từ Model (đã được cập nhật từ Socket/DB)
+     */
     private static void setupStatusColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data -> {
             ItemSummary item = data.getValue();
             if (item == null) return new SimpleStringProperty("");
 
-            if (item.getStatus() == AuctionStatus.BANNED) {
-                return new SimpleStringProperty("BANNED");
-            }
-
-            AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
-            return new SimpleStringProperty(status.name());
+            // Sử dụng hàm getStatus() đã bọc logic kiểm tra BANNED an toàn
+            return new SimpleStringProperty(item.getStatus().name());
         });
 
         col.setCellFactory(column -> new TableCell<>() {
@@ -160,7 +158,7 @@ public class MyAuctionsTableHelper {
                         label.getStyleClass().add("status-banned");
                     }
                     default -> {
-                        label.setText("");
+                        label.setText("Ongoing");
                         label.getStyleClass().add("status-live");
                     }
                 }
@@ -169,11 +167,10 @@ public class MyAuctionsTableHelper {
         });
     }
 
-    // CỘT GIÁ CẢ
+    // CỘT GIÁ CẢ - GIỮ NGUYÊN
     private static void setupPriceColumn(TableColumn<ItemSummary, String> col) {
         col.setCellValueFactory(data ->
                 new SimpleStringProperty(String.format("$%,.0f", data.getValue().getCurrentPrice())));
-        // Căn phải giá tiền cho đúng chuẩn UI
         col.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String price, boolean empty) {
@@ -188,7 +185,7 @@ public class MyAuctionsTableHelper {
         });
     }
 
-    //. CỘT THỜI GIAN KẾT THÚC (Căn giữa: Ngày ở trên - Giờ ở dưới)
+    // CỘT THỜI GIAN KẾT THÚC - GIỮ NGUYÊN
     private static void setupEndTimeColumn(TableColumn<ItemSummary, LocalDateTime> col) {
         col.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getEndTime()));
         col.setCellFactory(column -> new TableCell<>() {
@@ -216,6 +213,11 @@ public class MyAuctionsTableHelper {
             }
         });
     }
+
+    /**
+     * 🌟 CHỖ CHỈNH SỬA 2: CỘT HÀNH ĐỘNG (ACTION BUTTONS)
+     * Thay đổi cách lấy biến trạng thái động để đồng bộ với sự kiện Realtime thay đổi ngầm.
+     */
     private static void setupActionColumn(
             TableColumn<ItemSummary, ItemSummary> col,
             Consumer<ItemSummary> onEditAction,
@@ -253,15 +255,26 @@ public class MyAuctionsTableHelper {
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    // Chỉ hiện nút Edit khi item đang UPCOMING
-                    // ONGOING, ENDED, BANNED → ẩn nút Edit hoàn toàn
-                    AuctionStatus computed = item.getStatus() == AuctionStatus.BANNED
-                            ? AuctionStatus.BANNED
-                            : AuctionStatus.compute(item.getStartTime(), item.getEndTime());
+                    // Đọc chính xác trạng thái từ đối tượng Model thay vì tự ý ép tính toán lại thời gian máy tính khách
+                    AuctionStatus currentStatus = item.getStatus();
 
-                    boolean canEdit = computed == AuctionStatus.UPCOMING;
-                    editBtn.setVisible(canEdit);
-                    editBtn.setManaged(canEdit);
+                    if (currentStatus == AuctionStatus.BANNED) {
+                        // Trạng thái Banned kích hoạt: Ẩn ngay lập tức nút Edit và nút Delete
+                        editBtn.setVisible(false);
+                        editBtn.setManaged(false);
+                        deleteBtn.setVisible(false);
+                        deleteBtn.setManaged(false);
+                    } else {
+                        // Nếu sản phẩm bình thường, kiểm tra xem có được sửa không (Chỉ sửa khi trạng thái là UPCOMING)
+                        boolean canEdit = (currentStatus == AuctionStatus.UPCOMING);
+                        editBtn.setVisible(canEdit);
+                        editBtn.setManaged(canEdit);
+
+                        // Giữ nguyên hiển thị nút xoá
+                        deleteBtn.setVisible(true);
+                        deleteBtn.setManaged(true);
+                    }
+
                     setGraphic(container);
                 }
             }

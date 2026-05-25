@@ -50,13 +50,13 @@ public class ItemRepository {
     }
 
     private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
-
         String id = rs.getString("id");
         String name = rs.getString("name");
         String category = rs.getString("category");
         double currentPrice = rs.getDouble("current_price");
         String thumbnailUrl = null;
         String imagesData = rs.getString("image_path");
+
 
         if (imagesData != null && !imagesData.isBlank()) {
             List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
@@ -68,16 +68,47 @@ public class ItemRepository {
         LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
         LocalDateTime endTime = LocalDateTime.parse(rs.getString("end_time"));
 
-        ItemSummary itemSummary = new ItemSummary(
+        // 🌟 Kiểm tra xem cột seller_username có tồn tại trong ResultSet của câu SQL này không
+        String sellerUsername = null;
+        try {
+            sellerUsername = rs.getString("seller_username");
+            System.out.println("Seller: " + sellerUsername);
+        } catch (SQLException e) {
+            System.out.println("seller_username column NOT FOUND");
+        }
+
+        // 🌟 [FIX] Đọc status từ DB trước (để giữ đúng BANNED), chỉ compute() khi cột status không có trong ResultSet.
+        // Nếu dùng AuctionStatus.compute() thẳng thì BANNED sẽ bị overwrite thành ONGOING/UPCOMING/ENDED.
+        com.auction.shared.model.enums.AuctionStatus auctionStatus = null;
+        try {
+            String dbStatus = rs.getString("status");
+            if (dbStatus != null && !dbStatus.isBlank()) {
+                try {
+                    auctionStatus = com.auction.shared.model.enums.AuctionStatus.valueOf(dbStatus.toUpperCase());
+                } catch (IllegalArgumentException ignored) {
+                    // status DB không map được sang enum → fallback compute
+                }
+            }
+        } catch (SQLException ignored) {
+            // Cột status không tồn tại trong ResultSet của câu SQL này → compute bình thường
+        }
+        if (auctionStatus == null) {
+            auctionStatus = com.auction.shared.model.enums.AuctionStatus.compute(startTime, endTime);
+        }
+
+        // 🌟 Gọi Constructor mới có trường sellerUsername
+        return new ItemSummary(
                 id,
                 name,
                 category,
                 currentPrice,
                 thumbnailUrl,
                 startTime,
-                endTime
+                endTime,
+                auctionStatus,
+                sellerUsername
         );
-        return itemSummary;
+
     }
 
     private List<ItemSummary> executeSummaryQuery(String sql, Object... params) {
@@ -385,25 +416,32 @@ public class ItemRepository {
      * Được gọi từ ItemService.getItems() khi caller = "ADMIN".
      */
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
+        // Whitelist sort order để tránh SQL injection (thêm alias 'i.' vào trước trường sort)
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
-            case "start_time desc"    -> "start_time DESC";
-            case "current_price asc"  -> "current_price ASC";
-            case "current_price desc" -> "current_price DESC";
-            default                   -> "end_time ASC";
+            case "start_time desc"    -> "i.start_time DESC";
+            case "current_price asc"  -> "i.current_price ASC";
+            case "current_price desc" -> "i.current_price DESC";
+            default                   -> "i.end_time ASC";
         };
 
+        // 🌟 Thay đổi: Dùng LEFT JOIN để lấy trường username từ bảng users đặt tên alias là seller_username
+        // [FIX] Bổ sung i.status vào SELECT để mapRowToItemSummary đọc đúng trạng thái BANNED từ DB
+        // thay vì tính lại bằng AuctionStatus.compute() (vốn không biết về BANNED).
         String sql = String.format("""
-                SELECT id,
-                       name,
-                       category,
-                       current_price,
-                       image_path,
-                       start_time,
-                       end_time
-                FROM items
-                ORDER BY %s
-                LIMIT 10 OFFSET ?
-                """, safeSort);
+            SELECT i.id,
+                   i.name,
+                   i.category,
+                   i.current_price,
+                   i.image_path,
+                   i.start_time,
+                   i.end_time,
+                   i.status,
+                   u.username AS seller_username
+            FROM items i
+            LEFT JOIN users u ON i.seller_id = u.id
+            ORDER BY %s
+            LIMIT 10 OFFSET ?
+            """, safeSort);
 
         return executeSummaryQuery(sql, offset);
     }
