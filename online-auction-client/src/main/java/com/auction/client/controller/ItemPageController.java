@@ -195,9 +195,10 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         if (ItemStatusConstants.BANNED.equalsIgnoreCase(loadedItem.getStoredStatus())) {
             displayDataItem(loadedItem);
-            // statusUiService.applyBannedStateView(loadedItem);
+            statusUiService.applyBannedStateView(loadedItem); // hiện overlay "Auction Suspended"
             updateAutoBidUI(false);
             connectToRealTimeBidding();
+            loadBidHistory(); // ← thêm dòng này
             return;
         }
 
@@ -276,14 +277,10 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void uiHandleItemBanned() {
-        // CHỈ khóa hành vi
+        network.setListener(null); // dừng listen trước
+        if (countdownTimer != null) countdownTimer.stop();
         updateAutoBidUI(false);
-
-        bidControlsContainer.setDisable(true);
-        submitBid.setDisable(true);
-
-        // DỪNG realtime update (quan trọng)
-        network.setListener(null);
+        statusUiService.applyBannedStateView(item); // hiện overlay + message
     }
 
     private <T> T extractPayload(Object incomingData, Class<T> type) {
@@ -482,6 +479,9 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         // Kích hoạt Countdown đồng bộ thông qua Service ủy quyền
         statusUiService.startCountdown(item, () -> statusUiService.applyAuctionStatusView(item, user.getId()));
+        if (!ItemStatusConstants.BANNED.equalsIgnoreCase(currentItem.getStoredStatus())) {
+            statusUiService.startCountdown(item, () -> statusUiService.applyAuctionStatusView(item, user.getId()));
+        }
         updateMinimumBidLabel();
     }
 
