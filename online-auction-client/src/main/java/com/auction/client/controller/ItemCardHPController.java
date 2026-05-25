@@ -106,10 +106,15 @@ public class ItemCardHPController {
     }
 
     @FXML
-    public void handleSwitchToItemPage(MouseEvent event) {
-        if (timeline != null) timeline.stop();
-        NavigationUtil.handleSwitchToItemPage(
-                itemNameLabel,
+    public void handleSwitchToItemPage(
+            MouseEvent event
+    ) {
+        if (timeline != null) {
+            timeline.stop();}
+        if (currentItem == null) {
+            return;
+        }
+        NavigationUtil.switchToItemPage(event,
                 currentItem.getId(),
                 currentItem.getName()
         );

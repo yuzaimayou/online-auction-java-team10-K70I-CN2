@@ -2,7 +2,7 @@ package com.auction.client.controller.setting;
 
 import com.auction.client.service.DepositService;
 import com.auction.client.util.UserSession;
-import com.auction.client.service.ToastService;
+import com.auction.client.util.ToastUtil;
 import com.auction.shared.model.account.User;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -58,18 +58,18 @@ public class DepositController {
     private void handleConfirmDeposit(ActionEvent event) {
         String amountText = amountField.getText().trim();
         if (amountText.isEmpty()) {
-            ToastService.showError(amountField.getScene(), "Vui lòng nhập hoặc chọn số tiền muốn nạp!");
+            ToastUtil.showError(amountField.getScene(), "Vui lòng nhập hoặc chọn số tiền muốn nạp!");
             return;
         }
         if (paymentGroup.getSelectedToggle() == null) {
-            ToastService.showError(amountField.getScene(), "Vui lòng chọn phương thức thanh toán!");
+            ToastUtil.showError(amountField.getScene(), "Vui lòng chọn phương thức thanh toán!");
             return;
         }
         double amount;
         try {
             amount = Double.parseDouble(amountText);
         } catch (NumberFormatException e) {
-            ToastService.showError(amountField.getScene(), "Số tiền không hợp lệ!");
+            ToastUtil.showError(amountField.getScene(), "Số tiền không hợp lệ!");
             return;
         }
 
@@ -81,7 +81,7 @@ public class DepositController {
                     Platform.runLater(() -> {
                         currentUser.setBalance(newBalance);
 
-                        ToastService.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
+                        ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
                         handleBackToWallet(null);
                     });
                 })
@@ -89,7 +89,7 @@ public class DepositController {
                     Platform.runLater(() -> {
                         Throwable cause = ex.getCause();
                         String errorMsg = (cause != null) ? cause.getMessage() : ex.getMessage();
-                        ToastService.showError(amountField.getScene(), errorMsg);
+                        ToastUtil.showError(amountField.getScene(), errorMsg);
                     });
                     return null;
                 });

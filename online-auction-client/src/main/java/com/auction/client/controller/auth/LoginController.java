@@ -66,7 +66,12 @@ public class LoginController {
                                 lblMessage.setTextFill(Color.RED);
                                 lblMessage.setText("Account unverified. Redirecting to Verify...");
                             });
-                            pause.setOnFinished(e -> redirectToVerify(event, loggedInUser.getEmail()));
+                            pause.setOnFinished(
+                                    e -> NavigationUtil.switchToOtpScreen(
+                                            event,
+                                            loggedInUser.getEmail()
+                                    )
+                            );
                             pause.play();
                             return;
                         }
@@ -96,29 +101,8 @@ public class LoginController {
                 });
     }
 
-    private void redirectToVerify(ActionEvent event, String email) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Verify.fxml"));
-            Parent verifyRoot = loader.load();
-            VerifyController verifyController = loader.getController();
-            verifyController.setEmail(email);
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.getScene().setRoot(verifyRoot);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
     @FXML
     protected void handleSwitchToRegister(ActionEvent event) {
-        try {
-            Parent registerRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Register.fxml"));
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.getScene().setRoot(registerRoot);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        NavigationUtil.switchToRegister(event);
     }
 }

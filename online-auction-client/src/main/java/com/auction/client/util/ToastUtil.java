@@ -1,4 +1,4 @@
-package com.auction.client.service;
+package com.auction.client.util;
 
 import com.auction.client.controller.common.ToastController;
 import javafx.animation.*;
@@ -10,7 +10,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
-public class ToastService {
+public class ToastUtil {
     public static void showSuccess(Scene scene, String message) {
         show(scene, message, "toast-success");
     }
@@ -22,14 +22,14 @@ public class ToastService {
     }
     private static void show(Scene scene, String message, String styleClass) {
         try {
-            FXMLLoader loader = new FXMLLoader(ToastService.class.getResource("/com.auction.client/fxml/Toast.fxml"));
+            FXMLLoader loader = new FXMLLoader(ToastUtil.class.getResource("/com.auction.client/fxml/Toast.fxml"));
             Parent toastNode = loader.load();
 
             ToastController controller = loader.getController();
             controller.setMessage(message);
 
             toastNode.getStyleClass().add(styleClass);
-            String css = ToastService.class.getResource("/com.auction.client/css/Toast.css").toExternalForm();
+            String css = ToastUtil.class.getResource("/com.auction.client/css/Toast.css").toExternalForm();
             toastNode.getStylesheets().add(css);
 
             Parent root = scene.getRoot();
