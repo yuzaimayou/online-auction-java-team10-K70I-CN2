@@ -6,15 +6,10 @@ import com.auction.client.util.UserSession;
 import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class VerifyController {
@@ -53,25 +48,20 @@ public class VerifyController {
 
     private void addAutoJump(TextField current, TextField next, TextField previous) {
         current.textProperty().addListener((obs, oldVal, newVal) -> {
-            // 1. Bổ sung: Chặn không cho nhập chữ cái, chỉ cho phép nhập số
             if (!newVal.matches("\\d*")) {
                 current.setText(newVal.replaceAll("[^\\d]", ""));
                 return;
             }
-
-            // 2. GIẢI QUYẾT YÊU CẦU CỦA BẠN: Nếu chuỗi dài hơn 1 ký tự, ép nó về 1 ký tự đầu tiên
             if (newVal.length() > 1) {
                 current.setText(newVal.substring(0, 1));
-                return; // Lệnh setText ở trên sẽ tự động gọi lại Listener, nên ta return luôn tại đây
+                return;
             }
-            // Nếu đã nhập 1 ký tự và có ô tiếp theo
             if (newVal.length() == 1 && next != null) {
                 next.requestFocus();
             }
         });
 
         current.setOnKeyPressed(event -> {
-            // Nếu bấm xóa khi ô đang trống và có ô phía trước
             if (event.getCode() == KeyCode.BACK_SPACE && current.getText().isEmpty() && previous != null) {
                 previous.requestFocus();
             }
@@ -139,14 +129,8 @@ public class VerifyController {
     }
 
     @FXML
-    public void handleSwitchToLogin(ActionEvent event) {
-        try {
-            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.getScene().setRoot(loginRoot);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void handleSwitchToLogin(
+            ActionEvent event
+    ) {NavigationUtil.switchToLogin(event);
     }
 }

@@ -1,7 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.ItemsService;
-import com.auction.client.service.ToastService;
+import com.auction.client.util.ToastUtil;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
 import com.auction.shared.model.item.Item;
@@ -248,7 +248,7 @@ public class ItemEditController {
         if (files == null || files.isEmpty()) return;
 
         if (existingImagePaths.size() + newSelectedFiles.size() + files.size() > MAX_IMAGES) {
-            ToastService.showInfo(lblMessage.getScene(), "Tối đa " + MAX_IMAGES + " ảnh.");
+            ToastUtil.showInfo(lblMessage.getScene(), "Tối đa " + MAX_IMAGES + " ảnh.");
             return;
         }
         newSelectedFiles.addAll(files);
@@ -270,19 +270,19 @@ public class ItemEditController {
         Double bidStep = parsePositive(txtBidStep.getText());
 
         if (isAnyNull(itemName, itemDesc, selToggle, startDate, endDate, startTime, endTime)) {
-            ToastService.showInfo(lblMessage.getScene(), "Vui lòng điền đầy đủ thông tin.");
+            ToastUtil.showInfo(lblMessage.getScene(), "Vui lòng điền đầy đủ thông tin.");
             return;
         }
         if (initPrice == null || initPrice <= 0) {
-            ToastService.showInfo(lblMessage.getScene(), "Giá khởi điểm phải là số dương.");
+            ToastUtil.showInfo(lblMessage.getScene(), "Giá khởi điểm phải là số dương.");
             return;
         }
         if (bidStep == null || bidStep <= 0) {
-            ToastService.showInfo(lblMessage.getScene(), "Bước giá phải là số dương.");
+            ToastUtil.showInfo(lblMessage.getScene(), "Bước giá phải là số dương.");
             return;
         }
         if (bidStep > initPrice) {
-            ToastService.showError(lblMessage.getScene(), "Bước giá không được lớn hơn giá khởi điểm!");
+            ToastUtil.showError(lblMessage.getScene(), "Bước giá không được lớn hơn giá khởi điểm!");
             return;
         }
 
@@ -290,11 +290,11 @@ public class ItemEditController {
         LocalDateTime endDT = LocalDateTime.of(endDate, LocalTime.parse(endTime, TIME_FMT));
 
         if (!endDT.isAfter(startDT)) {
-            ToastService.showError(lblMessage.getScene(), "Thời gian kết thúc phải sau thời gian bắt đầu.");
+            ToastUtil.showError(lblMessage.getScene(), "Thời gian kết thúc phải sau thời gian bắt đầu.");
             return;
         }
         if (existingImagePaths.isEmpty() && newSelectedFiles.isEmpty()) {
-            ToastService.showInfo(lblMessage.getScene(), "Vui lòng chọn ít nhất một ảnh.");
+            ToastUtil.showInfo(lblMessage.getScene(), "Vui lòng chọn ít nhất một ảnh.");
             return;
         }
 
@@ -308,7 +308,7 @@ public class ItemEditController {
                 if (b64 != null) imagesConverted.add(b64);
             }
         } catch (Exception e) {
-            ToastService.showInfo(lblMessage.getScene(), "Lỗi xử lý ảnh: " + e.getMessage());
+            ToastUtil.showInfo(lblMessage.getScene(), "Lỗi xử lý ảnh: " + e.getMessage());
             return;
         }
 
@@ -329,12 +329,12 @@ public class ItemEditController {
                     isSaving = false;
 
                     if ("success".equals(res.getStatus())) {
-                        ToastService.showSuccess(lblMessage.getScene(), "Cập nhật thành công!");
+                        ToastUtil.showSuccess(lblMessage.getScene(), "Cập nhật thành công!");
                         PauseTransition delay = new PauseTransition(Duration.seconds(1.2));
                         delay.setOnFinished(e -> navigateToMyAuctions());
                         delay.play();
                     } else {
-                        ToastService.showError(lblMessage.getScene(), "Lỗi server: " + res.getMessage());
+                        ToastUtil.showError(lblMessage.getScene(), "Lỗi server: " + res.getMessage());
                     }
                 }))
                 .exceptionally(ex -> {
@@ -342,7 +342,7 @@ public class ItemEditController {
                         btnSave.setDisable(false);
                         btnSave.setText("Save Changes");
                         isSaving = false;
-                        ToastService.showError(lblMessage.getScene(), "Lỗi kết nối. Vui lòng thử lại.");
+                        ToastUtil.showError(lblMessage.getScene(), "Lỗi kết nối. Vui lòng thử lại.");
                     });
                     return null;
                 });
@@ -364,9 +364,11 @@ public class ItemEditController {
     }
 
     private void navigateToMyAuctions() {
-        NavigationUtil.handleSwitchToSetting(lblMessage, "myAuctions");
+        NavigationUtil.handleSwitchToSetting(
+                new ActionEvent(btnSave, btnSave),
+                "myAuctions"
+        );
     }
-
     // ──────────────────────────────────────────────────────────────────────────
     //  Helpers
     // ──────────────────────────────────────────────────────────────────────────

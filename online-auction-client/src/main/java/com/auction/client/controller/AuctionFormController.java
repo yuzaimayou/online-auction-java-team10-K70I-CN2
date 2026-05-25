@@ -1,7 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.ItemsService;
-import com.auction.client.util.AppConfig;
+import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
@@ -12,10 +12,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,12 +22,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.http.HttpClient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -38,7 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.auction.client.service.ToastService;
+import com.auction.client.util.ToastUtil;
 
 public class AuctionFormController {
     @FXML
@@ -160,22 +155,22 @@ public class AuctionFormController {
         //Kiem tra
         if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
                 || selectedFiles.isEmpty()) {
-            ToastService.showInfo(
+            ToastUtil.showInfo(
                     lblMessage.getScene(), "Please fill in all required fields.");
             return;
         }
         if (initPrice == -2 ) {
-            ToastService.showInfo(
+            ToastUtil.showInfo(
                     lblMessage.getScene(), "Price must be a positive number.");
             return;
         }
         if (bidStep == -2) {
-            ToastService.showInfo(
+            ToastUtil.showInfo(
                     lblMessage.getScene(), "Bid steps must be a positive number.");
             return;
         }
         if (bidStep > initPrice) {
-            ToastService.showError(
+            ToastUtil.showError(
                     lblMessage.getScene(), "Bid step cannot be greater than the starting price!");
             return;
         }
@@ -189,18 +184,18 @@ public class AuctionFormController {
         LocalDateTime now = LocalDateTime.now();
 
         if (startDateTime.isBefore(now)) {
-            ToastService.showError(
+            ToastUtil.showError(
                     lblMessage.getScene(),"Start time cannot be in the past.");
             return;
         }
 
         if (endDateTime.isBefore(now)) {
-            ToastService.showError(
+            ToastUtil.showError(
                     lblMessage.getScene(),"End time cannot be in the past.");
             return;
         }
         if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
-            ToastService.showError(
+            ToastUtil.showError(
                     lblMessage.getScene(),"End time must be strictly after the start time.");
             return;
         }
@@ -218,12 +213,12 @@ public class AuctionFormController {
                 }
             }
             if (imagesConverted == null) {
-                ToastService.showInfo(
+                ToastUtil.showInfo(
                         lblMessage.getScene(),"Image processing failed. Please try again.");
                 return;
             }
         } catch (IOException e) {
-            ToastService.showInfo(
+            ToastUtil.showInfo(
                     lblMessage.getScene(),"Error processing images: " + e.getMessage());
             e.printStackTrace();
         }
@@ -243,11 +238,15 @@ public class AuctionFormController {
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
                         Platform.runLater(() -> {
-                            ToastService.showSuccess(
+                            ToastUtil.showSuccess(
                                     lblMessage.getScene(), responseMessage.getMessage());
                         });
                         PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-                        pause.setOnFinished(e -> handleSwitchToHomePage());
+
+                        pause.setOnFinished(e ->
+                                NavigationUtil.handleSwitchToHomePage(lblMessage)
+                        );
+
                         pause.play();
                     } else {
 
@@ -255,7 +254,7 @@ public class AuctionFormController {
 
                         Platform.runLater(() -> {
 
-                            ToastService.showInfo(
+                            ToastUtil.showInfo(
                                     lblMessage.getScene(),responseMessage.getMessage());
 
                             smallAddBtn.setDisable(false);
@@ -275,7 +274,7 @@ public class AuctionFormController {
 
                     Platform.runLater(() -> {
 
-                        ToastService.showInfo(
+                        ToastUtil.showInfo(
                                 lblMessage.getScene(),"Failed to connect to server. Please submit again");
 
                         smallAddBtn.setDisable(false);
@@ -287,33 +286,6 @@ public class AuctionFormController {
 
                     return null;
                 });
-    }
-
-    public void handleSwitchToHomePage() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/HomePage.fxml"));
-            Parent root = loader.load();
-
-            HomePageController homePageController = loader.getController();
-            Scene currentScene = lblMessage.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-
-            currentScene.setRoot(root);
-            stage.setTitle(String.format("%s - Homepage", AppConfig.getAppName()));
-
-            PauseTransition refreshDelay =
-                    new PauseTransition(Duration.seconds(0.5));
-
-            refreshDelay.setOnFinished(event -> {
-                homePageController.refreshItems();
-            });
-
-            refreshDelay.play();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("The HomePage.fxml file was not found! Please check the path again.");
-        }
     }
 
     private List<File> selectedFiles = new ArrayList<>();
@@ -413,5 +385,9 @@ public class AuctionFormController {
         card.getChildren().addAll(imageContainer, btnDelete);
 
         return card;
+    }
+    @FXML
+    public void handleSwitchToHomePage(ActionEvent event) {
+        NavigationUtil.handleSwitchToHomePage(lblMessage);
     }
 }

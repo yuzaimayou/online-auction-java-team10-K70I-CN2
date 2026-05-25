@@ -5,6 +5,7 @@ import com.auction.client.service.AutoBidService.AutoBidDecision;
 import com.auction.client.service.AutoBidService.ValidationResult;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.CountdownTimerUtil;
+import com.auction.client.util.ToastUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.constant.SocketEventConstants;
@@ -181,7 +182,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
                         ex.printStackTrace();
-                        ToastService.showError(itemNameLabel.getScene(), "Failed to load item data");
+                        ToastUtil.showError(itemNameLabel.getScene(), "Failed to load item data");
                     });
                     return null;
                 });
@@ -277,7 +278,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     private void uiHandleItemBanned() {
         statusUiService.applyBannedStateView(item);
         updateAutoBidUI(false);
-        ToastService.showError(itemNameLabel.getScene(), "Sản phẩm này đã bị kiểm duyệt bởi quản trị viên.");
+        ToastUtil.showError(itemNameLabel.getScene(), "Sản phẩm này đã bị kiểm duyệt bởi quản trị viên.");
     }
 
     private <T> T extractPayload(Object incomingData, Class<T> type) {
@@ -296,20 +297,20 @@ public class ItemPageController implements NetworkService.MessageListener {
     public void bidHandle() {
         String input = bidAmountField.getText().trim();
         if (input.isEmpty()) {
-            ToastService.showInfo(bidAmountField.getScene(), "Please enter a bid amount.");
+            ToastUtil.showInfo(bidAmountField.getScene(), "Please enter a bid amount.");
             return;
         }
         try {
             double amount = Double.parseDouble(input);
             BidValidationService.ValidationResult result = bidValidationService.validate(item, user, amount, statusUiService.isOngoing(item));
             if (!result.ok()) {
-                ToastService.showError(bidAmountField.getScene(), result.errorMessage());
+                ToastUtil.showError(bidAmountField.getScene(), result.errorMessage());
                 return;
             }
             network.sendBid(item.getId(), user.getId(), amount, "");
             bidAmountField.clear();
         } catch (NumberFormatException e) {
-            ToastService.showError(bidAmountField.getScene(), "Invalid price format.");
+            ToastUtil.showError(bidAmountField.getScene(), "Invalid price format.");
         }
     }
 
@@ -333,7 +334,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     @FXML
     private void startAutoBid() {
         if (!statusUiService.isOngoing(item)) {
-            ToastService.showError(maxBidField.getScene(), "Auction is not active.");
+            ToastUtil.showError(maxBidField.getScene(), "Auction is not active.");
             return;
         }
         try {
@@ -342,21 +343,21 @@ public class ItemPageController implements NetworkService.MessageListener {
 
             ValidationResult result = autoBidManager.validate(item, max, step);
             if (!result.ok()) {
-                ToastService.showError(maxBidField.getScene(), result.errorMessage());
+                ToastUtil.showError(maxBidField.getScene(), result.errorMessage());
                 return;
             }
 
             autoBidManager.activate(max, step);
             network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
             updateAutoBidUI(true);
-            ToastService.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
+            ToastUtil.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
 
             boolean isLeading = user.getId().equals(autoBidManager.getLastBidderId());
             userCurrentBidLabel.setText(isLeading
                     ? String.format("Your current bid: $ %.0f (Leading)", item.getCurrentPrice())
                     : "Auto-bidding...");
         } catch (NumberFormatException e) {
-            ToastService.showError(maxBidField.getScene(), "Please enter valid numbers.");
+            ToastUtil.showError(maxBidField.getScene(), "Please enter valid numbers.");
         }
     }
 
@@ -376,7 +377,7 @@ public class ItemPageController implements NetworkService.MessageListener {
             case LEADING -> userCurrentBidLabel.setText(decision.statusText());
             case MAX_REACHED -> {
                 updateAutoBidUI(false);
-                ToastService.showInfo(userCurrentBidLabel.getScene(), decision.statusText());
+                ToastUtil.showInfo(userCurrentBidLabel.getScene(), decision.statusText());
             }
             case OUTBID_AND_REBID -> {
                 userCurrentBidLabel.setText(decision.statusText());
@@ -402,7 +403,7 @@ public class ItemPageController implements NetworkService.MessageListener {
                 .thenAccept(bids -> Platform.runLater(() -> renderBidHistory(bids)))
                 .exceptionally(ex -> {
                     ex.printStackTrace();
-                    Platform.runLater(() -> ToastService.showError(historyBidContainer.getScene(), "Failed to load bid history"));
+                    Platform.runLater(() -> ToastUtil.showError(historyBidContainer.getScene(), "Failed to load bid history"));
                     return null;
                 });
     }

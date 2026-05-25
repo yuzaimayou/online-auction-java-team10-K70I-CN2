@@ -7,7 +7,6 @@ public class ToastController {
 
     @FXML
     private Label messageLabel;
-
     public void setMessage(String message) {
         messageLabel.setText(message);
     }

@@ -4,20 +4,17 @@ import com.auction.client.controller.common.NavBarController;
 import com.auction.client.controller.common.SearchStoreController;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
-import com.auction.client.service.ToastService;
+import com.auction.client.util.NavigationUtil;
+import com.auction.client.util.ToastUtil;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.ItemSummary;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.List;
@@ -75,7 +72,7 @@ public class HomePageController {
                     e.printStackTrace();
                     Platform.runLater(() -> {
                         if (mainScrollPane.getScene() != null) {
-                            ToastService.showError(mainScrollPane.getScene(), "Cannot load auction items.");
+                            ToastUtil.showError(mainScrollPane.getScene(), "Cannot load auction items.");
                         }
                     });
                     return null;
@@ -167,22 +164,8 @@ public class HomePageController {
 
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
-            Parent root = loader.load();
-
-            Scene currentScene = ((Node) event.getSource()).getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-            currentScene.setRoot(root);
-            stage.setTitle("Online Auction System - Add Item");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            ToastService.showError(((Node) event.getSource()).getScene(), "Could not open Auction Form page.");
-        }
+        NavigationUtil.handleSwitchToAuctionFormPage(event);
     }
-
     public void refreshItems() {
         fetchItemsFromServer();
     }
