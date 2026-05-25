@@ -134,6 +134,31 @@ public class ItemsService {
                 });
     }
 
+    /**
+     * [ADMIN ONLY] Lấy toàn bộ items kể cả BANNED, kèm seller_username từ JOIN SQL phía server.
+     * Truyền caller=ADMIN để server biết đây là admin request và gọi findAllItemsForAdmin().
+     */
+    public CompletableFuture<List<ItemSummary>> getItemsForAdmin() {
+        String url = String.format("%s/api/items?caller=ADMIN", AppConfig.getHttpUrl());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenApply(body -> {
+                    ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
+                    if (!"success".equals(response.getStatus())) {
+                        throw new RuntimeException(response.getMessage());
+                    }
+                    Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
+                    JsonElement jsonElement = gson.toJsonTree(response.getData());
+                    return gson.fromJson(jsonElement, listType);
+                });
+    }
+
     // GET ITEMS (search / filter)
     public CompletableFuture<List<ItemSummary>> getItems(String search, String category) {
         StringBuilder url = new StringBuilder(

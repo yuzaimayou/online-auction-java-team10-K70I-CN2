@@ -163,7 +163,7 @@ public class ItemStatusService {
 
         statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
         statusMessageLabel.getStyleClass().add("status-ended");
-        statusMessageLabel.setText("⛔ Phát hiện hành vi trạng thái bất thường của phòng đấu giá. Không thể truy cập.");
+        statusMessageLabel.setText("⛔ Auction Suspended by Admin");
 
         if (item != null) item.setStatus(ItemStatusConstants.BANNED);
     }

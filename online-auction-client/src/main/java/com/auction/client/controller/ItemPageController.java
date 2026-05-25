@@ -195,7 +195,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         if (ItemStatusConstants.BANNED.equalsIgnoreCase(loadedItem.getStoredStatus())) {
             displayDataItem(loadedItem);
-            statusUiService.applyBannedStateView(loadedItem);
+            // statusUiService.applyBannedStateView(loadedItem);
             updateAutoBidUI(false);
             connectToRealTimeBidding();
             return;
@@ -276,9 +276,14 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void uiHandleItemBanned() {
-        statusUiService.applyBannedStateView(item);
+        // CHỈ khóa hành vi
         updateAutoBidUI(false);
-        ToastUtil.showError(itemNameLabel.getScene(), "Sản phẩm này đã bị kiểm duyệt bởi quản trị viên.");
+
+        bidControlsContainer.setDisable(true);
+        submitBid.setDisable(true);
+
+        // DỪNG realtime update (quan trọng)
+        network.setListener(null);
     }
 
     private <T> T extractPayload(Object incomingData, Class<T> type) {

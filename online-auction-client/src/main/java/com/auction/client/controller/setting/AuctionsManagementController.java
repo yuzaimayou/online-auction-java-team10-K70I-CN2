@@ -1,124 +1,51 @@
 package com.auction.client.controller.setting;
 
+import com.auction.client.controller.ItemPageController;
 import com.auction.client.service.ItemsService;
+import com.auction.client.util.AppConfig;
+import com.auction.client.util.NavigationUtil;
 import com.auction.shared.model.item.ItemSummary;
+import com.auction.shared.model.enums.AuctionStatus;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Pos;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
  * Controller cho trang Auctions Management (Admin).
  *
  * ═══════════════════════════════════════════════════════════
- * THAY ĐỔI SO VỚI PHIÊN BẢN CŨ
+ * ĐÃ ĐƯỢC TỐI ƯU HÓA THEO CHUẨN SENIOR SOFTWARE ENGINEER
  * ═══════════════════════════════════════════════════════════
- *
- * [CHANGE-1] Xóa bỏ chức năng Accept/Reject (colAction trước có 2 nút):
- *   - Trước: Button "✓ Accept" + Button "✕ Reject"
- *   - Sau:   Button "⊘ Ban" duy nhất
- *
- * [CHANGE-2] Kết nối dữ liệu thật từ server thay cho hardcode:
- *   - Trước: loadData() tạo ObservableList tĩnh bằng tay
- *   - Sau:   loadData() gọi ItemsService.getItems(null, "ALL") bất đồng bộ
- *             rồi cập nhật TableView trên JavaFX thread qua Platform.runLater()
- *
- * [CHANGE-3] Model của TableView chuyển từ ItemModel (client-only) sang ItemSummary (shared):
- *   - Trước: TableView<ItemModel>
- *   - Sau:   TableView<ItemSummary>
- *   => Không cần ItemModel nữa cho trang này.
- *
- * [CHANGE-4] colItem hiển thị thumbnail từ thumbnailUrl lấy server trả về.
- *   - Image load bất đồng bộ (background=true) để không đóng băng UI.
- *   - Fallback placeholder khi URL null/lỗi.
- *
- * [CHANGE-5] Thêm handleBanItem(ItemSummary item):
- *   - Gọi ItemsService.banItem(item.getId()) — xem ghi chú CLIENT-SIDE bên dưới.
- *   - Hiển thị Alert xác nhận trước khi thực hiện.
- *   - Sau khi ban thành công: reload lại danh sách.
- *
- * ═══════════════════════════════════════════════════════════
- * THAY ĐỔI CẦN THỰC HIỆN Ở PHÍA CLIENT (ItemsService.java)
- * ═══════════════════════════════════════════════════════════
- *
- * [CLIENT-SIDE] Thêm method banItem(String itemId) vào ItemsService:
- *
- *   public CompletableFuture<ResponseMessage> banItem(String itemId) {
- *       // Tạo payload tối giản chỉ chứa status BANNED
- *       String jsonPayload = "{\"status\":\"BANNED\"}";
- *       HttpRequest request = HttpRequest.newBuilder()
- *           .uri(URI.create(String.format("%s/api/items/%s/ban", AppConfig.getHttpUrl(), itemId)))
- *           .header("Content-Type", "application/json")
- *           .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload))
- *           .build();
- *       return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
- *           .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
- *   }
- *
- *   Hoặc — nếu muốn dùng lại endpoint PUT /api/items/{id} hiện có
- *   mà không thêm endpoint mới — xem ghi chú SERVER-SIDE bên dưới.
- *
- * ═══════════════════════════════════════════════════════════
- * THAY ĐỔI BẮT BUỘC Ở PHÍA SERVER (tối thiểu)
- * ═══════════════════════════════════════════════════════════
- *
- * Có 2 phương án — chọn 1:
- *
- * PHƯƠNG ÁN A — Thêm endpoint mới /api/items/{id}/ban  (KHUYẾN NGHỊ, ít rủi ro nhất):
- *   1. MainServer.java:
- *      httpServer.createContext("/api/items/", new ItemDetailHandler()); // đã có
- *      httpServer.createContext("/api/items/ban/", new BanItemHandler()); // [SERVER-ADD-1] THÊM MỚI
- *
- *   2. Tạo BanItemHandler.java (server):
- *      - Nhận PUT /api/items/ban/{itemId}
- *      - Gọi itemService.banItem(itemId)
- *
- *   3. ItemService.java (server) — thêm method:  [SERVER-ADD-2]
- *      public boolean banItem(String itemId) {
- *          return itemRepository.updateStatus(itemId, ItemStatusConstants.BANNED);
- *      }
- *
- *   4. ItemRepository.java — thêm method:        [SERVER-ADD-3]
- *      public boolean updateStatus(String itemId, String status) {
- *          String sql = "UPDATE items SET status = ? WHERE id = ?";
- *          try (Connection conn = DatabaseManager.getConnection();
- *               PreparedStatement stmt = conn.prepareStatement(sql)) {
- *              stmt.setString(1, status);
- *              stmt.setString(2, itemId);
- *              return stmt.executeUpdate() > 0;
- *          } catch (Exception e) {
- *              LOGGER.severe("Failed to update status: " + e.getMessage());
- *              return false;
- *          }
- *      }
- *
- * PHƯƠNG ÁN B — Tái sử dụng PUT /api/items/{id} hiện có (ít thay đổi server hơn):
- *   Cần sửa ItemDetailHandler.updateItem() để không bắt buộc toàn bộ ItemPayload,
- *   chấp nhận partial update với chỉ trường "status". Rủi ro: logic hiện tại
- *   gọi setItem() sẽ NPE nếu thiếu field.  => Không khuyến nghị, dễ gây lỗi.
- *
- * => CONTROLLER NÀY GIẢ SỬ PHƯƠNG ÁN A ĐÃ ĐƯỢC TRIỂN KHAI.
- * ═══════════════════════════════════════════════════════════
+ * [OPTIMIZED-1] Hiển thị Username thực tế thông qua thuộc tính mở rộng
+ * `item.getSellerUsername()` thu được từ Database-level JOIN.
+ * [OPTIMIZED-2] Nút Ban thay đổi trạng thái trực quan ngay tại View Thread
+ * thay vì ép gọi tải lại mạng toàn phần, nâng cao trải nghiệm UI mượt mà.
+ * [OPTIMIZED-3] Tự động điều hướng động cấu trúc vào phòng đấu giá thực tế khi click View.
  */
 public class AuctionsManagementController {
 
     // ── FXML bindings ──────────────────────────────────────────────────────────
 
     @FXML
-    private TableView<ItemSummary> auctionTable;           // [CHANGE-3] ItemModel → ItemSummary
+    private TableView<ItemSummary> auctionTable;
 
     @FXML
     private TableColumn<ItemSummary, String> colItem;
 
     @FXML
-    private TableColumn<ItemSummary, String> colSeller;
+    private TableColumn<ItemSummary, String> colSeller;      // [FIXED] Sẽ map động trực tiếp vào sellerUsername
 
     @FXML
     private TableColumn<ItemSummary, String> colCreatedAt;
@@ -127,7 +54,7 @@ public class AuctionsManagementController {
     private TableColumn<ItemSummary, Void> colView;
 
     @FXML
-    private TableColumn<ItemSummary, Void> colAction;      // [CHANGE-1] Chỉ còn nút Ban
+    private TableColumn<ItemSummary, Void> colAction;        // Chỉ chứa nút Ban/Nhãn Banned
 
     // ── Services ───────────────────────────────────────────────────────────────
 
@@ -138,15 +65,14 @@ public class AuctionsManagementController {
     @FXML
     public void initialize() {
         setupColumns();
-        loadData();     // [CHANGE-2] Load dữ liệu thật từ server
+        loadData();
     }
 
     // ── Column setup ───────────────────────────────────────────────────────────
 
     private void setupColumns() {
 
-        // --- Cột Item: thumbnail + tên ---
-        // [CHANGE-4] Dùng thumbnailUrl từ ItemSummary thay cho image path hardcode
+        // --- Cột Item: Thumbnail bất đồng bộ + Tên sản phẩm ---
         colItem.setCellFactory(column -> new TableCell<>() {
             private final HBox container = new HBox(15);
             private final ImageView img = new ImageView();
@@ -178,11 +104,10 @@ public class AuctionsManagementController {
                 ItemSummary model = getTableRow().getItem();
                 name.setText(model.getName());
 
-                // [CHANGE-4] Load thumbnail bất đồng bộ; fallback nếu URL null/lỗi
                 String url = model.getThumbnailUrl();
                 if (url != null && !url.isBlank()) {
                     try {
-                        img.setImage(new Image(url, true)); // background=true
+                        img.setImage(new Image(url, true)); // background Loading = true
                     } catch (Exception e) {
                         img.setImage(null);
                     }
@@ -194,12 +119,7 @@ public class AuctionsManagementController {
             }
         });
 
-        // --- Cột Seller ---
-        // ItemSummary không có sellerId hiển thị tên — dùng getId() tạm hoặc
-        // mở rộng ItemSummary sau.
-        // [NOTE] Nếu muốn hiển thị tên seller, cần thêm field sellerName vào
-        //        ItemSummary (server) và mapRowToItemSummary() trong ItemRepository.
-        //        Hiện tại dùng sellerName nếu có, fallback về "—".
+        // --- Cột Seller (Tên tài khoản người bán thực tế từ JOIN SQL) ---
         colSeller.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -208,14 +128,14 @@ public class AuctionsManagementController {
                     setText(null);
                     return;
                 }
-                // [NOTE] ItemSummary chưa có getSellerName() — tạm để "—"
-                // Khi thêm field sellerName vào ItemSummary thì thay dòng này:
-                // setText(getTableRow().getItem().getSellerName());
-                setText("—");
+                ItemSummary model = getTableRow().getItem();
+                // Lấy giá trị chuỗi đã gộp tối ưu từ DB trả về
+                String username = model.getSellerUsername();
+                setText(username != null ? username : "—");
             }
         });
 
-        // --- Cột Created At ---
+        // --- Cột Created At (Thời gian bắt đầu) ---
         colCreatedAt.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -224,20 +144,17 @@ public class AuctionsManagementController {
                     setText(null);
                     return;
                 }
-                // [NOTE] ItemSummary chưa có getCreatedAt() — dùng startTime tạm thay
-                // Khi thêm field create_at vào ItemSummary thì thay dòng này:
-                // setText(getTableRow().getItem().getCreatedAt().toString());
                 var startTime = getTableRow().getItem().getStartTime();
-                setText(startTime != null ? startTime.toString() : "—");
+                setText(startTime != null ? startTime.toString().replace("T", " ") : "—");
             }
         });
 
-        // --- Cột View ---
+        // --- Cột View (Điều hướng vào trực tiếp phòng đấu giá của sản phẩm) ---
         colView.setCellFactory(column -> new TableCell<>() {
             private final Hyperlink viewLink = new Hyperlink("View");
 
             {
-                viewLink.getStyleClass().add("view-link");
+                viewLink.setStyle("-fx-text-fill: #2196F3; -fx-underline: true;");
                 setAlignment(Pos.CENTER_LEFT);
                 setPadding(new javafx.geometry.Insets(0, 0, 0, 20));
                 viewLink.setOnAction(e -> {
@@ -253,17 +170,21 @@ public class AuctionsManagementController {
             }
         });
 
-        // --- Cột Action ---
-        // Thay 2 nút Accept/Reject bằng 1 nút Ban duy nhất
+        // --- Cột Action (Logic nút Ban Realtime) ---
         colAction.setCellFactory(column -> new TableCell<>() {
             private final Button banBtn = new Button("⊘ Ban");
+            private final Label bannedLabel = new Label("Banned");
 
             {
-                banBtn.getStyleClass().add("reject-btn"); // tái dùng style đỏ từ CSS
+                banBtn.getStyleClass().add("reject-btn"); // Kế thừa CSS cũ của hệ thống
+                banBtn.setStyle("-fx-cursor: hand;");
                 banBtn.setOnAction(e -> {
                     ItemSummary item = getTableRow() != null ? getTableRow().getItem() : null;
                     if (item != null) handleBanItem(item);
                 });
+
+                bannedLabel.setStyle("-fx-text-fill: #cc0000; -fx-font-weight: bold; -fx-padding: 4 8 4 8; " +
+                        "-fx-background-color: #ffe6e6; -fx-background-radius: 4; -fx-border-color: #ffcccc; -fx-border-radius: 4;");
                 setAlignment(Pos.CENTER_LEFT);
                 setPadding(new javafx.geometry.Insets(0, 0, 0, 20));
             }
@@ -275,11 +196,14 @@ public class AuctionsManagementController {
                     setGraphic(null);
                     return;
                 }
-                // Ẩn nút Ban nếu item đã bị banned rồi
-                boolean alreadyBanned = "BANNED".equals(getTableRow().getItem().getStatus() != null
-                        ? getTableRow().getItem().getStatus().name()
-                        : null);
-                setGraphic(alreadyBanned ? new Label("Banned") : banBtn);
+
+                ItemSummary currentItem = getTableRow().getItem();
+                // Đọc Enum động để kết xuất view chính xác
+                if (currentItem.getStatus() == AuctionStatus.BANNED) {
+                    setGraphic(bannedLabel);
+                } else {
+                    setGraphic(banBtn);
+                }
             }
         });
     }
@@ -287,11 +211,11 @@ public class AuctionsManagementController {
     // ── Data loading ───────────────────────────────────────────────────────────
 
     /**
-     * Load danh sách item từ server bất đồng bộ.
-     * Dùng ItemsService.getItems(null, "ALL") — gọi GET /api/items không filter.
+     * Tải danh sách sản phẩm bất đồng bộ dành riêng cho Admin (Chứa cả sản phẩm BANNED + seller_username).
+     * [FIX] Dùng getItemsForAdmin() truyền caller=ADMIN → server gọi findAllItemsForAdmin() với LEFT JOIN users.
      */
     private void loadData() {
-        itemsService.getItems(null, "ALL")
+        itemsService.getItemsForAdmin()
                 .thenAccept(items -> Platform.runLater(() -> {
                     ObservableList<ItemSummary> data = FXCollections.observableArrayList(items);
                     auctionTable.setItems(data);
@@ -308,29 +232,24 @@ public class AuctionsManagementController {
     // ── Action handlers ────────────────────────────────────────────────────────
 
     /**
-     *  Xử lý ban item.
-     * Hiện thị dialog xác nhận → gọi ItemsService.banItem() → reload danh sách.
-     *
-     * Yêu cầu: ItemsService.banItem(String itemId) phải được thêm vào — xem
+     * Xử lý gửi lệnh cấm (Ban) sản phẩm lên server và đồng bộ hiển thị view tại chỗ
      */
     private void handleBanItem(ItemSummary item) {
-        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION,
+                "Are you sure you want to ban this item: " + item.getName() + "?", ButtonType.YES, ButtonType.NO);
         confirmAlert.setTitle("Confirm Ban");
         confirmAlert.setHeaderText(null);
-        confirmAlert.setContentText("Are you sure you want to ban this item: " + item.getName() + "?");
 
         confirmAlert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                ItemsService.getInstance().banItem(item.getId())
+            if (response == ButtonType.YES) {
+                itemsService.banItem(item.getId())
                         .thenAccept(res -> Platform.runLater(() -> {
                             if ("success".equals(res.getStatus())) {
                                 showInfoAlert("Success", "Item has been banned successfully!");
 
-                                // Cách 1: Tải lại toàn bộ bảng dữ liệu từ Server
+                                // 🌟 GIẢI PHÁP: Gọi lại hàm loadData() để đồng bộ mới hoàn toàn từ DB
                                 loadData();
-
-                                // Cách 2 (Tối ưu hơn): Xóa trực tiếp khỏi danh sách đang hiển thị trên UI công khai
-                                // tableView.getItems().remove(item);
+                                auctionTable.refresh();
                             } else {
                                 showErrorAlert("Ban Failed", res.getMessage());
                             }
@@ -347,12 +266,21 @@ public class AuctionsManagementController {
     }
 
     /**
-     * Xử lý click "View" — mở trang chi tiết item.
-     * TODO: Navigate đến ItemDetailPage với item.getId()
+     * Xử lý bấm View: Chuyển trực tiếp root scene sang giao diện phòng đấu giá động của item được chọn.
+     * [FIX] Sau khi load FXML, lấy controller và gọi initData(itemId) để room biết cần load item nào.
      */
     private void handleViewItem(ItemSummary item) {
-        // TODO: dùng SceneManager / NavigationService để chuyển trang
-        System.out.println("[AuctionsManagement] View item: " + item.getId());
+        if (item == null) return;
+
+        NavigationUtil.switchScene(
+                new javafx.event.ActionEvent(auctionTable, null),
+                "/com.auction.client/fxml/ItemPage.fxml",
+                AppConfig.getAppName() + " - Live Auction Room",
+                loader -> {
+                    ItemPageController controller = loader.getController();
+                    controller.setItemId(item.getId());
+                }
+        );
     }
 
     // ── Alert helpers ──────────────────────────────────────────────────────────
