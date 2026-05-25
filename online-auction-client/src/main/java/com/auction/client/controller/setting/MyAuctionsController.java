@@ -21,6 +21,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -36,13 +37,22 @@ public class MyAuctionsController {
     // ── FXML fields ────────────────────────────────────────────────────────────
     // FIX [dead code]: xoá các ToggleButton navigation thừa — việc điều hướng
     // sidebar đã được SettingController xử lý, nested controller không cần lặp lại
-    @FXML private TableView<ItemSummary>              auctionTable;
-    @FXML private TableColumn<ItemSummary, ItemSummary> itemCol;
-    @FXML private TableColumn<ItemSummary, String>    categoryCol;
-    @FXML private TableColumn<ItemSummary, String>    statusCol;
-    @FXML private TableColumn<ItemSummary, String>    priceCol;
-    @FXML private TableColumn<ItemSummary, LocalDateTime> endTimeCol;
-    @FXML private TableColumn<ItemSummary, ItemSummary> actionCol;
+    @FXML
+    private TableView<ItemSummary>              auctionTable;
+    @FXML
+    private TableColumn<ItemSummary, ItemSummary> itemCol;
+    @FXML
+    private TableColumn<ItemSummary, String>    categoryCol;
+    @FXML
+    private TableColumn<ItemSummary, String>    statusCol;
+    @FXML
+    private TableColumn<ItemSummary, String>    priceCol;
+    @FXML
+    private TableColumn<ItemSummary, LocalDateTime> endTimeCol;
+    @FXML
+    private TableColumn<ItemSummary, ItemSummary> actionCol;
+    @FXML
+    private StackPane rootContainer;
 
     // ── Dependencies ───────────────────────────────────────────────────────────
     private final ItemsService itemsService = ItemsService.getInstance();
@@ -216,47 +226,30 @@ public class MyAuctionsController {
 
     private void openEditModal(ItemSummary item) {
         try {
-            // 1. Lấy root node của giao diện hiện tại để áp dụng hiệu ứng làm mờ (Blur)
-            Scene currentScene = auctionTable.getScene();
-            Parent rootVisual = currentScene.getRoot();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemEdit.fxml"));
+            Parent editForm = loader.load();
+            ItemEditController controller = loader.getController();
 
-            // Tạo độ mờ radius
-            GaussianBlur blurEffect = new GaussianBlur(10);
-            rootVisual.setEffect(blurEffect);
+            controller.setItemId(item.getId());
+            StackPane sceneRoot = (StackPane) auctionTable.getScene().getRoot();
 
-            // 2. Tải file FXML của Form Edit
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com.auction.client/fxml/setting/ItemEdit.fxml")
-            );
-            Parent editFormRoot = loader.load();
+            StackPane overlay = new StackPane();
+            overlay.getStyleClass().add("popup-overlay");
+            overlay.setStyle("-fx-background-color: rgba(0,0,0,0.5);");
 
-            // 3. Lấy Controller và truyền ID sản phẩm (SỬA LỖI TẠI ĐÂY)
-            ItemEditController editController = loader.getController();
-            editController.setItemId(item.getId()); // Gọi đúng hàm setItemId trong ItemEditController của bạn
+            overlay.prefWidthProperty().bind(sceneRoot.widthProperty());
+            overlay.prefHeightProperty().bind(sceneRoot.heightProperty());
 
-            // 4. Khởi tạo một Stage mới làm cửa sổ Layer Popup (Modal)
-            Stage modalStage = new Stage();
-            modalStage.initModality(Modality.APPLICATION_MODAL); // Khóa mọi tương tác ở trang gốc bên dưới
-            modalStage.initOwner(currentScene.getWindow());      // Gắn cửa sổ gốc làm chủ sở hữu
-            modalStage.setTitle("Chỉnh sửa sản phẩm - " + item.getName());
-
-            Scene modalScene = new Scene(editFormRoot);
-            modalStage.setScene(modalScene);
-
-            // 5. Khi đóng Modal -> Hủy bỏ hiệu ứng làm mờ ở trang gốc và tải lại bảng
-            modalStage.setOnHidden(e -> {
-                rootVisual.setEffect(null);
-
-                // Gọi hàm displayItems() đã có sẵn trong class để load lại danh sách từ DB
+            overlay.setOnMouseClicked(e -> {
+                sceneRoot.getChildren().remove(overlay);
                 displayItems();
             });
 
-            // Hiển thị modal và tạm dừng luồng chính cho tới khi modal này bị đóng
-            modalStage.showAndWait();
-
+            editForm.setOnMouseClicked(e -> e.consume());
+            overlay.getChildren().add(editForm);
+            sceneRoot.getChildren().add(overlay);
         } catch (IOException e) {
             e.printStackTrace();
-            showError("Lỗi hệ thống", "Không thể hiển thị form chỉnh sửa sản phẩm.");
         }
     }
 }

@@ -7,11 +7,13 @@
 
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.auction.client.controller.ItemEditController">
-    <VBox styleClass="root-container"
-          stylesheets="@../css/AuctionFormPage.css">
+           fx:controller="com.auction.client.controller.ItemEditController"
+           alignment="CENTER"
+           stylesheets="@../css/AuctionFormPage.css">
 
-        <fx:include fx:id="navBar" source="NavBar.fxml"/>
+    <VBox styleClass="form-card-popup"
+          prefWidth="900"
+          spacing="35">
 
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" VBox.vgrow="ALWAYS"
                     style="-fx-background: transparent; -fx-background-color: transparent;">
@@ -28,7 +30,7 @@
 
                         <AnchorPane>
                             <Label fx:id="lblMessage" text="" style="-fx-font-weight: bold;" AnchorPane.leftAnchor="0" AnchorPane.topAnchor="10"/>
-                            <Button fx:id="btnClose" onAction="#handleClose" text="✕"
+                            <Button fx:id="btnClose" onAction="#handleCloseAction" text="✕"
                                     styleClass="close-button" AnchorPane.rightAnchor="0"/>
                         </AnchorPane>
 
