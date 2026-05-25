@@ -350,13 +350,16 @@ public class ItemEditController {
 
     @FXML public void handleCancel(ActionEvent event) { navigateToMyAuctions(); }
     @FXML
-    public void handleCloseAction(ActionEvent event) {
-        // Kiểm tra nếu Form đang nằm trong một Stage dạng popup window thì đóng cửa sổ đó lại
-        if (lblMessage.getScene() != null && lblMessage.getScene().getWindow() instanceof Stage stage) {
-            stage.close();
-        } else {
-            // SỬA LỖI Ở ĐÂY: Truyền lblMessage (Label) thay vì txtItemName (TextField)
-            NavigationUtil.handleSwitchToHomePage(lblMessage);
+    public void handleCloseAction(ActionEvent event){
+        Button btn=(Button)event.getSource();
+        StackPane overlay =
+                (StackPane)
+                        btn.getScene()
+                                .lookup(".popup-overlay");
+        if(overlay!=null){
+            ((StackPane)overlay.getParent())
+                    .getChildren()
+                    .remove(overlay);
         }
     }
 

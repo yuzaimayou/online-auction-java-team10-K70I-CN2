@@ -4,39 +4,42 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox prefWidth="1000.0" spacing="18.0" styleClass="content-card"
-      HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" minHeight="-Infinity" maxHeight="Infinity"
-      stylesheets="@../../css/MyAuctionsPage.css"
-      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.MyAuctionsController">
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.auction.client.controller.setting.MyAuctionsController">
 
-    <padding>
-        <Insets bottom="24.0" left="28.0" right="28.0" top="24.0"/>
-    </padding>
-    <Label styleClass="content-title" text="My Auctions"/>
+    <VBox prefWidth="1000.0" spacing="18.0" styleClass="content-card"
+          HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" minHeight="-Infinity" maxHeight="Infinity"
+          stylesheets="@../../css/MyAuctionsPage.css"
+    >
 
-    <HBox spacing="15.0" alignment="CENTER_LEFT">
-        <TextField fx:id="searchField" promptText="Search auctions" prefHeight="45.0" prefWidth="280.0"
-                   styleClass="search-field"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <ComboBox fx:id="statusFilter" prefHeight="45.0" prefWidth="150.0" promptText="All Status"
-                  styleClass="status-filter"/>
-        <Button text="Filter" prefHeight="45.0" prefWidth="110.0" styleClass="filter-btn-custom">
-        </Button>
-    </HBox>
+        <padding>
+            <Insets bottom="24.0" left="28.0" right="28.0" top="24.0"/>
+        </padding>
+        <Label styleClass="content-title" text="My Auctions"/>
 
-    <TableView fx:id="auctionTable" VBox.vgrow="ALWAYS" styleClass="auction-table">
-        <columns>
-            <TableColumn fx:id="itemCol" prefWidth="220.0" text="Item"/>
-            <TableColumn fx:id="categoryCol" prefWidth="150.0" text="Category"/>
-            <TableColumn fx:id="statusCol" prefWidth="120.0" text="Status"/>
-            <TableColumn fx:id="priceCol" prefWidth="100.0" text="Price"/>
-            <TableColumn fx:id="endTimeCol" prefWidth="130.0" text="End Time" styleClass="end-time-column-style"/>
-            <TableColumn fx:id="actionCol" prefWidth="220.0" text="Action"/>
-        </columns>
-        <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-        </columnResizePolicy>
-    </TableView>
+        <HBox spacing="15.0" alignment="CENTER_LEFT">
+            <TextField fx:id="searchField" promptText="Search auctions" prefHeight="45.0" prefWidth="280.0"
+                       styleClass="search-field"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <ComboBox fx:id="statusFilter" prefHeight="45.0" prefWidth="150.0" promptText="All Status"
+                      styleClass="status-filter"/>
+            <Button text="Filter" prefHeight="45.0" prefWidth="110.0" styleClass="filter-btn-custom">
+            </Button>
+        </HBox>
 
-</VBox>
+        <TableView fx:id="auctionTable" VBox.vgrow="ALWAYS" styleClass="auction-table">
+            <columns>
+                <TableColumn fx:id="itemCol" prefWidth="220.0" text="Item"/>
+                <TableColumn fx:id="categoryCol" prefWidth="150.0" text="Category"/>
+                <TableColumn fx:id="statusCol" prefWidth="120.0" text="Status"/>
+                <TableColumn fx:id="priceCol" prefWidth="100.0" text="Price"/>
+                <TableColumn fx:id="endTimeCol" prefWidth="130.0" text="End Time" styleClass="end-time-column-style"/>
+                <TableColumn fx:id="actionCol" prefWidth="220.0" text="Action"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+
+    </VBox>
+</StackPane>
