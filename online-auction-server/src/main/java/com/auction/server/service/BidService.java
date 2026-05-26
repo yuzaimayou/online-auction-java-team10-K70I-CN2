@@ -3,13 +3,13 @@ package com.auction.server.service;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.*;
 import com.auction.server.util.AuctionLockManager;
-import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.exception.AuctionClosedException;
 import com.auction.shared.exception.DataException;
 import com.auction.shared.exception.ErrorCode;
 import com.auction.shared.exception.InvalidBidException;
 import com.auction.shared.model.account.User;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
@@ -542,12 +542,12 @@ public class BidService {
         }
 
         private void validateStatus(Item item) throws InvalidBidException {
-            String stored   = normalize(item.getStoredStatus());
-            String computed = normalize(item.getStatus());
+            AuctionStatus stored   = item.getStoredStatus();       // AuctionStatus.BANNED...
+            AuctionStatus computed = item.getStatus();
 
-            if (ItemStatusConstants.BANNED.equals(stored)
-                    || ItemStatusConstants.ENDED.equals(stored)
-                    || !ItemStatusConstants.ONGOING.equals(computed)) {
+            if (stored == AuctionStatus.BANNED
+                    || stored == AuctionStatus.ENDED
+                    || computed != AuctionStatus.ONGOING) {
                 throw InvalidBidException.of(ErrorCode.INVALID_BID,
                         "Item không ở trạng thái đấu giá hợp lệ - itemId=" + item.getId());
             }
@@ -563,10 +563,6 @@ public class BidService {
                 throw AuctionClosedException.of(ErrorCode.AUCTION_NOT_STARTED,
                         "Phiên đấu giá chưa bắt đầu, sẽ bắt đầu lúc " + item.getStartTime());
             }
-        }
-
-        private String normalize(String status) {
-            return status == null ? "" : status.trim().toUpperCase();
         }
     }
 }

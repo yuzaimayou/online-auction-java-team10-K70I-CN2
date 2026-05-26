@@ -97,6 +97,12 @@ public class HomePageController {
                     cardBox.setPrefWidth(280);
                     cardBox.setMinWidth(280);
                     cardBox.setMaxWidth(280);
+                    cardBox.setPrefWidth(280);
+                    cardBox.setMinWidth(280);
+                    cardBox.setMaxWidth(280);
+
+                    cardBox.setCache(true);
+                    cardBox.setCacheShape(true);
 
                     ItemCardHPController cardController = loader.getController();
                     cardController.setData(item);

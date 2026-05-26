@@ -38,23 +38,16 @@ public class ItemCardHPController {
 
     @FXML
     public void initialize() {
+
         if (imageContainer == null) return;
 
-        Rectangle clip = new Rectangle(CONTAINER_W, CONTAINER_H);
-        clip.setArcWidth(30);
-        clip.setArcHeight(30);
-        imageContainer.setClip(clip);
-        itemImage.setPreserveRatio(false);
-
-        itemImage.imageProperty().addListener((observable, oldImage, newImage) -> {
-            if (newImage != null) {
-                newImage.widthProperty().addListener((obs, oldW, newW) ->
-                        ClientImageUtil.applyObjectFitCoverToImageView(itemImage, newImage, CONTAINER_W, CONTAINER_H));
-                newImage.heightProperty().addListener((obs, oldH, newH) ->
-                        ClientImageUtil.applyObjectFitCoverToImageView(itemImage, newImage, CONTAINER_W, CONTAINER_H));
-                ClientImageUtil.applyObjectFitCoverToImageView(itemImage, newImage, CONTAINER_W, CONTAINER_H);
-            }
-        });
+        itemImage.setSmooth(true);
+        itemImage.setCache(true);
+        ClientImageUtil.makeResponsiveCover(
+                itemImage,
+                imageContainer,
+                30
+        );
     }
 
     // Public API
@@ -68,7 +61,8 @@ public class ItemCardHPController {
         itemNameLabel.setText(name);
 
         if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().isEmpty()) {
-            ClientImageUtil.displayImage(item.getThumbnailUrl(), "images", itemImage, 400, 400);
+            ClientImageUtil.displayImage(item.getThumbnailUrl(), "images", itemImage, CONTAINER_W * 2, CONTAINER_H * 2
+            );
         }
 
         updateUI();
