@@ -25,11 +25,13 @@ public class ClientImageUtil {
                                     ImageView imageView,
                                     double reqWidth,
                                     double reqHeight) {
-        String imageUrl  = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
-        String cacheKey  = imageUrl + "_" + reqWidth + "x" + reqHeight;
+        String imageUrl = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
+
+        String cacheKey = imageUrl + "_" + reqWidth + "x" + reqHeight;
 
         Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
             try {
+                System.out.println("Loading image: " + imageUrl);
                 return new Image(imageUrl, reqWidth, reqHeight, true, true);
             } catch (Exception e) {
                 System.err.println("Failed to load image: " + imageUrl);
@@ -126,7 +128,7 @@ public class ClientImageUtil {
             if (imgW == 0 || imgH == 0) return;
 
             double targetRatio = targetW / targetH;
-            double sourceRatio = imgW   / imgH;
+            double sourceRatio = imgW / imgH;
             double viewW, viewH, viewX, viewY;
 
             if (sourceRatio > targetRatio) {
@@ -167,8 +169,10 @@ public class ClientImageUtil {
 
             StackPane thumbPane = new StackPane();
             thumbPane.getStyleClass().add("thumbnail-container");
-            thumbPane.setMinWidth(thumbWidth);   thumbPane.setMaxWidth(thumbWidth);
-            thumbPane.setMinHeight(thumbHeight);  thumbPane.setMaxHeight(thumbHeight);
+            thumbPane.setMinWidth(thumbWidth);
+            thumbPane.setMaxWidth(thumbWidth);
+            thumbPane.setMinHeight(thumbHeight);
+            thumbPane.setMaxHeight(thumbHeight);
 
             if (isFirst) {
                 thumbPane.getStyleClass().add("active-thumb");

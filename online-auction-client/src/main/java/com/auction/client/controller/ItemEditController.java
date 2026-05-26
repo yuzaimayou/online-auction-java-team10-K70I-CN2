@@ -4,6 +4,7 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.service.ToastService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
+import com.auction.client.util.UserSession;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.GsonUtil;
@@ -36,26 +37,40 @@ import java.util.List;
 public class ItemEditController {
 
     // ── FXML Fields ──
-    @FXML private TextField    txtItemName;
-    @FXML private TextArea     txtItemDesc;
-    @FXML private ToggleGroup  categoryGroup;
-    @FXML private TextField    txtInitPrice;
-    @FXML private TextField    txtBidStep;
+    @FXML
+    private TextField txtItemName;
+    @FXML
+    private TextArea txtItemDesc;
+    @FXML
+    private ToggleGroup categoryGroup;
+    @FXML
+    private TextField txtInitPrice;
+    @FXML
+    private TextField txtBidStep;
 
-    @FXML private DatePicker       startDateP;
-    @FXML private ComboBox<String> cbStartTime;
-    @FXML private DatePicker       endDateP;
-    @FXML private ComboBox<String> cbEndTime;
+    @FXML
+    private DatePicker startDateP;
+    @FXML
+    private ComboBox<String> cbStartTime;
+    @FXML
+    private DatePicker endDateP;
+    @FXML
+    private ComboBox<String> cbEndTime;
 
-    @FXML private VBox  dragDropArea;
-    @FXML private HBox  imagesPreviewContainer;
-    @FXML private VBox  smallAddBtn;
+    @FXML
+    private VBox dragDropArea;
+    @FXML
+    private HBox imagesPreviewContainer;
+    @FXML
+    private VBox smallAddBtn;
 
-    @FXML private Label  lblMessage;
-    @FXML private Button btnSave;
+    @FXML
+    private Label lblMessage;
+    @FXML
+    private Button btnSave;
 
     // ── State ──
-    private String  currentItemId;
+    private String currentItemId;
     private boolean isSaving = false;
 
     private List<String> existingImagePaths = new ArrayList<>();
@@ -63,10 +78,11 @@ public class ItemEditController {
 
     private static final int MAX_IMAGES = 5;
     private final ItemsService itemsService = ItemsService.getInstance();
-    private final Gson         gson         = GsonUtil.getInstance();
+    private final Gson gson = GsonUtil.getInstance();
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @FXML private VBox navBar; // Khai báo fx:id của NavBar include nếu có
+    @FXML
+    private VBox navBar; // Khai báo fx:id của NavBar include nếu có
 
     @FXML
     public void initialize() {
@@ -154,12 +170,18 @@ public class ItemEditController {
         ImageView iv = new ImageView();
         // ClientImageUtil set bất đồng bộ, logic resize sẽ chạy khi image load xong
         ClientImageUtil.displayImage(imgPath, "images", iv, 80, 60);
-        return createThumbCard(iv, () -> { existingImagePaths.remove(imgPath); renderImageStrip(); });
+        return createThumbCard(iv, () -> {
+            existingImagePaths.remove(imgPath);
+            renderImageStrip();
+        });
     }
 
     private StackPane buildLocalThumb(File file) {
         ImageView iv = new ImageView(new Image(file.toURI().toString()));
-        return createThumbCard(iv, () -> { newSelectedFiles.remove(file); renderImageStrip(); });
+        return createThumbCard(iv, () -> {
+            newSelectedFiles.remove(file);
+            renderImageStrip();
+        });
     }
 
     // FIX: Clone chuẩn logic "Object-fit Cover bằng Container Clip" từ AuctionFormController
@@ -299,23 +321,29 @@ public class ItemEditController {
         }
 
         List<String[]> imagesConverted = new ArrayList<>();
+        System.out.println("Existing paths: " + existingImagePaths);
         try {
             for (String oldPath : existingImagePaths) {
-                imagesConverted.add(new String[]{oldPath, null});
+                String[] b64 = new String[]{oldPath, null};
+                System.out.println("oldPath " + b64);
+                imagesConverted.add(b64);
+
             }
             for (File f : newSelectedFiles) {
                 String[] b64 = com.auction.shared.util.ImageUtil.convertImgToBase64(f);
+                System.out.println("String" + b64);
                 if (b64 != null) imagesConverted.add(b64);
             }
         } catch (Exception e) {
             ToastService.showInfo(lblMessage.getScene(), "Lỗi xử lý ảnh: " + e.getMessage());
             return;
         }
+        System.out.println("Converted images: " + imagesConverted);
 
         ItemPayload payload = new ItemPayload(
                 itemName, selToggle.getUserData().toString(), itemDesc,
                 imagesConverted, startDT, endDT,
-                initPrice, bidStep, currentItemId
+                initPrice, bidStep, UserSession.getInstance().getCurrentUserId()
         );
 
         isSaving = true;
@@ -348,16 +376,20 @@ public class ItemEditController {
                 });
     }
 
-    @FXML public void handleCancel(ActionEvent event) { navigateToMyAuctions(); }
     @FXML
-    public void handleCloseAction(ActionEvent event){
-        Button btn=(Button)event.getSource();
+    public void handleCancel(ActionEvent event) {
+        navigateToMyAuctions();
+    }
+
+    @FXML
+    public void handleCloseAction(ActionEvent event) {
+        Button btn = (Button) event.getSource();
         StackPane overlay =
                 (StackPane)
                         btn.getScene()
                                 .lookup(".popup-overlay");
-        if(overlay!=null){
-            ((StackPane)overlay.getParent())
+        if (overlay != null) {
+            ((StackPane) overlay.getParent())
                     .getChildren()
                     .remove(overlay);
         }
