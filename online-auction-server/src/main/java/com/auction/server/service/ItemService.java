@@ -2,6 +2,8 @@ package com.auction.server.service;
 
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
+import com.auction.server.repository.WalletRepository;
+import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.server.util.StringUtil;
 import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
@@ -257,7 +259,7 @@ public class ItemService {
                 double currentPrice = item.getHighestCurrentPrice();
 
                 if (currentBidderId != null && !currentBidderId.trim().isEmpty()) {
-                    com.auction.server.repository.WalletRepository walletRepo = new com.auction.server.repository.WalletRepository();
+                    WalletRepository walletRepo = new WalletRepository();
                     // Unfreeze amount
                     if (!walletRepo.unfreezeAmount(conn, currentBidderId, currentPrice)) {
                         conn.rollback();
@@ -265,7 +267,7 @@ public class ItemService {
                     }
 
                     // Log unfreeze
-                    com.auction.server.repository.WalletTransactionRepository txLogRepo = new com.auction.server.repository.WalletTransactionRepository();
+                    WalletTransactionRepository txLogRepo = new WalletTransactionRepository();
                     double[] balances = walletRepo.getBalances(conn, currentBidderId);
                     if (balances != null && balances.length >= 2) {
                         txLogRepo.logUnfreeze(conn, currentBidderId, currentPrice, balances[1] + currentPrice, balances[1], itemId);

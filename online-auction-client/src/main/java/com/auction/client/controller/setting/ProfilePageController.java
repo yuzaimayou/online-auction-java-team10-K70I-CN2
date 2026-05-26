@@ -1,7 +1,9 @@
 package com.auction.client.controller.setting;
 
+import com.auction.client.service.WalletService;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -38,8 +40,32 @@ public class ProfilePageController {
         if (profileInfoBtn != null) {
             profileInfoBtn.setSelected(true);
         }
+
         displayUserData();
-        updateWalletBalances();
+
+        // chỉ load 1 nguồn chính
+        refreshWallet();
+
+        UserSession.getInstance().addListener(() -> {
+            Platform.runLater(() -> {
+                displayUserData();
+                refreshWallet();
+            });
+        });
+
+        WalletService.getInstance()
+                .fetchAndSync()
+                .thenAccept(balances -> {
+                    if (balances != null) {
+                        Platform.runLater(() -> {
+                            loadWalletData(
+                                    balances[0],
+                                    balances[1],
+                                    balances[0] + balances[1]
+                            );
+                        });
+                    }
+                });
     }
 
     private void displayUserData() {
@@ -88,22 +114,18 @@ public class ProfilePageController {
         if (totalBalanceLabel != null)
             totalBalanceLabel.setText(String.format("$%,.2f", total));
     }
-
-    /** Đọc dữ liệu số dư trực tiếp từ User Session hiện tại */
-    private void updateWalletBalances() {
+    private void refreshWallet() {
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser != null) {
             double available = currentUser.getBalance();
             double frozen = currentUser.getFrozenBalance();
             double total = available + frozen;
 
-            // Gọi lại hàm loadWalletData để tránh lặp code (DRY Principle)
             loadWalletData(available, frozen, total);
         } else {
             displayWalletPlaceholder();
         }
     }
-
     /** Hiển thị trạng thái loading khi chờ WalletService cập nhật. */
     private void displayWalletPlaceholder() {
         if (availableBalanceLabel != null) availableBalanceLabel.setText("Loading...");

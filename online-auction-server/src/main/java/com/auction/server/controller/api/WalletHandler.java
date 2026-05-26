@@ -111,6 +111,58 @@ public class WalletHandler {
             }
         }
     }
+    // GET /api/wallet/balance?userId=...
+    public static class BalanceHandler implements HttpHandler {
+
+        private final WalletService walletService = new WalletService();
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, error("Chỉ hỗ trợ GET"));
+                return;
+            }
+
+            try {
+                String query = exchange.getRequestURI().getQuery();
+                String userId = null;
+                if (query != null) {
+                    for (String param : query.split("&")) {
+                        if (param.startsWith("userId=")) {
+                            userId = param.substring("userId=".length());
+                            break;
+                        }
+                    }
+                }
+
+                if (userId == null || userId.isBlank()) {
+                    sendResponse(exchange, 400, error("Cần userId"));
+                    return;
+                }
+
+                double[] balances = walletService.getBalance(userId);
+                if (balances == null) {
+                    sendResponse(exchange, 404, error("Không tìm thấy user: " + userId));
+                    return;
+                }
+
+                JsonObject data = new JsonObject();
+                data.addProperty("balance",       balances[0]);
+                data.addProperty("frozenBalance", balances[1]);
+
+                JsonObject resp = new JsonObject();
+                resp.addProperty("status",  "success");
+                resp.addProperty("message", "OK");
+                resp.add("data", data);
+
+                sendResponse(exchange, 200, resp.toString());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendResponse(exchange, 500, error("Lỗi server: " + e.getMessage()));
+            }
+        }
+    }
 
     // Đọc body từ request
     private static String readBody(HttpExchange exchange) throws IOException {

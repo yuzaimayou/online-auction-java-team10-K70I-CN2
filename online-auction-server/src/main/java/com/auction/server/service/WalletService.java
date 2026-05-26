@@ -227,4 +227,18 @@ public class WalletService {
                     : "BidResult{FAIL, reason=" + errorMessage + "}";
         }
     }
+    // Đọc số dư hiện tại của user từ DB
+    public double[] getBalance(String userId) {
+        if (userId == null || userId.isBlank()) return null;
+        Connection conn = null;
+        try {
+            conn = DatabaseManager.getConnection();
+            return walletRepo.getBalances(conn, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            close(conn);
+        }
+    }
 }
