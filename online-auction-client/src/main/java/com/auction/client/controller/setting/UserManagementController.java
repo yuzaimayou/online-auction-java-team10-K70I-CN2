@@ -66,7 +66,7 @@ public class UserManagementController {
                 banBtn.getStyleClass().add("ban-btn");
                 banBtn.setOnAction(event -> {
                     UserModel user = getTableView().getItems().get(getIndex());
-                    System.out.println("Banning user: " + user.getUserName());
+                    System.out.println("Banning auth: " + user.getUserName());
                 });
             }
             @Override

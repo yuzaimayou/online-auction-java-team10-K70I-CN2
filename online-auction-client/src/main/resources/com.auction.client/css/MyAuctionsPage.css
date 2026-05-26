@@ -1,4 +1,6 @@
-/* --- Cấu trúc nền tảng --- */
+/* ==========================================================================
+   1. CẤU TRÚC NỀN TẢNG & CARD
+   ========================================================================== */
 .page-root {
     -fx-font-family: "Segoe UI", "Arial", system-ui;
 }
@@ -20,7 +22,9 @@
     -fx-text-fill: #1976f3;
 }
 
-/* --- Sidebar & User Profile --- */
+/* ==========================================================================
+   2. SIDEBAR & USER PROFILE
+   ========================================================================== */
 .sidebar-card {
     -fx-background-color: #ffffff;
     -fx-background-radius: 10;
@@ -67,7 +71,9 @@
     -fx-text-fill: white;
 }
 
-/* --- Search & Filter Bar --- */
+/* ==========================================================================
+   3. THANH TÌM KIẾM & BỘ LỌC (SEARCH & FILTER)
+   ========================================================================== */
 .search-field {
     -fx-background-color: #f8fafc;
     -fx-background-radius: 12;
@@ -77,10 +83,6 @@
     -fx-padding: 0 15 0 35;
     -fx-font-size: 14px;
     -fx-text-fill: #475569;
-    -fx-background-image: url("https://img.icons8.com/material-outlined/24/94a3b8/search--v1.png");
-    -fx-background-repeat: no-repeat;
-    -fx-background-position: left 10 center;
-    -fx-background-size: 18;
 }
 
 .search-field:focused {
@@ -112,7 +114,6 @@
     -fx-font-weight: bold;
     -fx-padding: 0 20;
     -fx-cursor: hand;
-    -fx-transition: all 0.2s;
 }
 
 .filter-btn-custom:hover {
@@ -120,7 +121,9 @@
     -fx-border-color: #2563eb;
 }
 
-/* TableView */
+/* ==========================================================================
+   4. GIAO DIỆN BẢNG (TABLEVIEW)
+   ========================================================================== */
 .auction-table {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
@@ -143,16 +146,16 @@
     -fx-font-size: 13px;
 }
 
-/* Row Style & Tắt hiệu ứng chọn màu xanh */
+/* Row Style - FIX: Đồng nhất kích thước hàng (80px để chứa vừa Avatar/Nội dung) */
 .auction-table .table-row-cell {
-    -fx-cell-size: 80px; /* Độ cao lớn cho ảnh và 2 dòng text */
+    -fx-cell-size: 80px;
     -fx-background-color: white;
     -fx-border-color: transparent transparent #f1f5f9 transparent;
 }
 
 .auction-table .table-row-cell:selected,
 .auction-table .table-row-cell:focused {
-    -fx-background-color: #f8fafc; /* Màu xám rất nhạt thay vì xanh */
+    -fx-background-color: #f8fafc;
     -fx-background-insets: 0;
 }
 
@@ -160,36 +163,63 @@
     -fx-background-color: #f9fafb;
 }
 
+/* Ẩn các hàng trống ở cuối bảng */
+.auction-table .table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.auction-table .table-row-cell:empty .table-cell {
+    -fx-border-width: 0px;
+    -fx-graphic: null;
+    -fx-text: null;
+}
+
 .auction-table .table-cell {
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 10px;
+    -fx-padding: 8px 12px;
     -fx-text-fill: #334155;
 }
 
-/* --- Nội dung chi tiết trong bảng --- */
 .item-name-label {
     -fx-font-size: 14px;
     -fx-font-weight: 700;
     -fx-text-fill: #1e293b;
 }
 
+/* ==========================================================================
+   5. BADGES & LABELS (STATUS / CATEGORY / TIME)
+   ========================================================================== */
+
+/* Cột thời gian kết thúc */
 .end-time-column-style {
-    -fx-font-size: 13px;
-    -fx-text-fill: #64748b;
-    -fx-line-spacing: 3px;
+    -fx-alignment: CENTER; /* Căn giữa cột */
 }
 
-/* rạng thái & Danh mục */
+.end-time-date {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+}
+
+.end-time-hour {
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #94a3b8;
+}
+
+/* Trạng thái (Status Badges) */
 .status-badge-base {
-    -fx-padding: 5 14;
-    -fx-background-radius: 20;
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 20px;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
+    -fx-alignment: center;
 }
 
 .status-upcoming {
     -fx-background-color: #fff3c4;
-    -fx-text-fill: #eea504;;
+    -fx-text-fill: #eea504;
 }
 
 .status-live {
@@ -198,15 +228,26 @@
 }
 
 .status-ended {
-    -fx-background-color: #bdbdbd;
-    -fx-text-fill: white;
+    -fx-background-color: #e5e7eb; /* Màu xám dịu mắt hơn bdbdbd cổ điển */
+    -fx-text-fill: #4b5563;
 }
 
+/* ⛔ TRẠNG THÁI BANNED MỚI THÊM */
+.status-banned {
+    -fx-background-color: #fee2e2; /* Nền đỏ nhạt nhẹ nhàng */
+    -fx-text-fill: #dc2626;        /* Chữ đỏ đậm cảnh báo */
+    -fx-border-color: #fca5a5;     /* Viền đỏ hồng mỏng */
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}
+
+/* Danh mục (Category Badges) */
 .category-badge {
-    -fx-padding: 4 12;
-    -fx-background-radius: 8;
+    -fx-padding: 5px 12px;
+    -fx-background-radius: 8px;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
+    -fx-alignment: center;
 }
 
 .cat-fashion {
@@ -234,7 +275,9 @@
     -fx-text-fill: #d97706;
 }
 
-/* --- Action Buttons --- */
+/* ==========================================================================
+   6. NÚT HÀNH ĐỘNG (ACTION BUTTONS)
+   ========================================================================== */
 .action-btn-edit {
     -fx-background-color: white;
     -fx-text-fill: #2f63e0;
@@ -243,32 +286,28 @@
     -fx-background-radius: 8;
     -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-transition: all 0.2s ease-in-out; /* Tạo hiệu ứng chuyển đổi mượt */
 }
 
 .action-btn-edit:hover {
     -fx-background-color: #f1f5f9;
     -fx-border-color: #2f63e0;
     -fx-text-fill: #1d4ed8;
-    /* Hiệu ứng nhấc nhẹ nút lên khi hover */
     -fx-translate-y: -1px;
 }
 
 .action-btn-edit:pressed {
     -fx-background-color: #e2e8f0;
-    -fx-scale-x: 0.95; /* Hiệu ứng lún xuống khi nhấn */
+    -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
     -fx-translate-y: 0px;
 }
 
-/* Nút View (Dạng Fill xanh - để bạn đồng bộ luôn) */
 .action-btn-view {
     -fx-background-color: #3b82f6;
     -fx-text-fill: white;
     -fx-background-radius: 8;
     -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-transition: all 0.2s;
 }
 
 .action-btn-view:hover {
@@ -283,7 +322,6 @@
     -fx-scale-y: 0.95;
 }
 
-/* Nút Delete (Dạng Outline đỏ) */
 .action-btn-delete {
     -fx-background-color: white;
     -fx-text-fill: #ef4444;
@@ -292,7 +330,6 @@
     -fx-background-radius: 8;
     -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-transition: all 0.2s;
 }
 
 .action-btn-delete:hover {
@@ -307,7 +344,7 @@
     -fx-scale-y: 0.95;
 }
 
-/* --- Pagination --- */
+/* Phân trang (Pagination) */
 .pagination-info {
     -fx-text-fill: #94a3b8;
     -fx-font-size: 13px;
@@ -319,28 +356,9 @@
     -fx-background-radius: 6;
 }
 
-/* Kiểu cho nhãn Ngày (To và Đậm) */
-.end-time-date {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1e293b; /* Màu xanh đen đậm hiện đại */
-}
-
-/* Kiểu cho nhãn Giờ (Nhỏ và màu Xám) */
-.end-time-hour {
-    -fx-font-size: 11px;
-    -fx-font-weight: normal;
-    -fx-text-fill: #94a3b8; /* Màu xám nhẹ (Slate 400) */
-}
-
-
-/* Đảm bảo cột có đủ không gian hiển thị */
-.end-time-column-style {
-    -fx-alignment: CENTER-LEFT;
-}
-
-
-/* Giao diện tổng thể của hộp thoại */
+/* ==========================================================================
+   7. HỘP THOẠI (DIALOG PANE / ALERTS)
+   ========================================================================== */
 .dialog-pane {
     -fx-background-color: white;
     -fx-padding: 10px;
@@ -349,7 +367,6 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 10, 0, 0, 5);
 }
 
-/* Header (Tiêu đề) */
 .dialog-pane .header-panel {
     -fx-background-color: #f8f9fa;
     -fx-background-radius: 15px 15px 0px 0px;
@@ -367,23 +384,19 @@
     -fx-text-fill: #2c3e50;
 }
 
-/* Khu vực nội dung */
 .dialog-pane .content {
     -fx-padding: 20px;
 }
 
-/* Nút bấm (Button) */
 .dialog-pane .button {
     -fx-background-radius: 8px;
     -fx-padding: 8 20 8 20;
     -fx-cursor: hand;
     -fx-font-weight: bold;
-    -fx-transition: all 0.3s;
 }
 
-/* Nút OK / Xóa (Thường là mặc định) */
 .dialog-pane .button:default {
-    -fx-background-color: #e74c3c; /* Màu đỏ cho hành động xóa */
+    -fx-background-color: #e74c3c;
     -fx-text-fill: white;
 }
 
@@ -391,7 +404,6 @@
     -fx-background-color: #c0392b;
 }
 
-/* Nút Cancel / Thoát */
 .dialog-pane .button:cancel {
     -fx-background-color: #ecf0f1;
     -fx-text-fill: #7f8c8d;

@@ -6,6 +6,14 @@ import java.time.LocalDateTime;
  * Lưu trữ thông tin từng lần đặt giá
  * Requirement 3.1.3: Tham gia đấu giá
  */
+/**
+ * Shared bid-history row model.
+ *
+ * <p>Production bid placement is handled by BidService -> AutoBidResolver ->
+ * AuctionRoomManager in the server module. This class is still used by the
+ * client bid-history UI and by prototype/demo auction classes, so it is not
+ * deprecated.</p>
+ */
 public class BidTransaction {
     private String transactionId;
     private String auctionId;
@@ -14,6 +22,7 @@ public class BidTransaction {
     private LocalDateTime bidTime;
     private boolean isAutoBid;
 
+    public BidTransaction() {}
     public BidTransaction(String transactionId, String auctionId, String bidderId,
                           double bidAmount, LocalDateTime bidTime) {
         // [ERROR HANDLING] Validate all parameters

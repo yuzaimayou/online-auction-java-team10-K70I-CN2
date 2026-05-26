@@ -4,23 +4,30 @@ public class Admin extends User {
 
     public Admin(String id, String username, String password) {
         super(id, username, password);
-        this.role = "Admin"; // Set specific role
     }
 
+    public Admin(String id, String username, String password, String email, boolean isVerify) {
+        super(id, username, password, email, isVerify);
+    }
+
+    @Override
+    protected String getDefaultRole() {
+        return "Admin";
+    }
     /**
-     * Delete a user from the system
-     * Validates user ID and prevents self-deletion
+     * Delete a auth from the system
+     * Validates auth ID and prevents self-deletion
      */
     public void deleteUser(String userId) {
         if (userId == null || userId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Error: Invalid user ID to delete (cannot be empty)!");
+            throw new IllegalArgumentException("Error: Invalid auth ID to delete (cannot be empty)!");
         }
 
         if (userId.equals(this.id)) {
             throw new IllegalStateException("Error: Admin cannot delete themselves!");
         }
 
-        System.out.println("Admin " + this.username + " deleted user: " + userId);
+        System.out.println("Admin " + this.username + " deleted auth: " + userId);
     }
 
     /**
@@ -36,18 +43,24 @@ public class Admin extends User {
     }
 
     /**
-     * Suspend a user account
-     * Validates user ID
+     * Suspend a auth account
+     * Validates auth ID
      */
     public void suspendUser(String userId) {
         if (userId == null || userId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Error: Invalid user ID to suspend (cannot be empty)!");
+            throw new IllegalArgumentException("Error: Invalid auth ID to suspend (cannot be empty)!");
         }
 
         if (userId.equals(this.id)) {
             throw new IllegalStateException("Error: Admin cannot suspend themselves!");
         }
 
-        System.out.println("Admin " + this.username + " suspended user: " + userId);
+        System.out.println("Admin " + this.username + " suspended auth: " + userId);
+    }
+    @Override
+    public String toString() {
+        return "Admin{id='" + id + "', username='" + username + "', email='" + email +
+                "', isVerify=" + isVerify + ", balance=" + balance +
+                ", role='" + getRole() + "'}";
     }
 }

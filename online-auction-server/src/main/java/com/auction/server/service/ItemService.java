@@ -3,17 +3,17 @@ package com.auction.server.service;
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.util.StringUtil;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
-import com.auction.shared.util.GsonUtil;
 import com.auction.shared.util.ImageUtil;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,39 +23,41 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class ItemService {
-    private static ItemService instance;
+    private static final ItemService instance = new ItemService();
 
     private final ItemRepository itemRepository = ItemRepository.getInstance();
     private final AiServiceClient aiServiceClient = AiServiceClient.getInstance();
-    private Gson gson = GsonUtil.getInstance();
 
     public static ItemService getInstance() {
-        if (instance == null) {
-            instance = new ItemService();
-        }
         return instance;
     }
 
     public List<ItemSummary> getAllItemsBySeller(String sellerId) {
         if (sellerId == null || sellerId.trim().isEmpty()) {
-            return null; // Hoặc trả về list rỗng tùy logic của bạn
+            return null;
         }
-        // Gọi hàm từ ItemRepository
         return itemRepository.findAllBySellerId(sellerId);
     }
 
-    //Lay nhieu item
+    /**
+     * Lấy danh sách item theo query string.
+     * <p>
+     * [UPDATE] Hỗ trợ tham số caller=ADMIN:
+     * - Nếu caller=ADMIN → gọi findAllItemsForAdmin() để trả về toàn bộ item kể cả BANNED
+     * (admin cần nhìn thấy item đã ban để quản lý).
+     * - Nếu không có caller → gọi findAllItems() như cũ, đã loại BANNED ra khỏi kết quả.
+     */
     public List<ItemSummary> getItems(String query) {
         if (query == null || query.trim().isEmpty()) {
-            return itemRepository.findAllItems("s", 0);
+            return itemRepository.findAllItems("end_time ASC", 0, null);
         }
+
         int page = 0;
         if (query.contains("page=")) {
             try {
                 page = Integer.parseInt(extractParam(query, "page"));
             } catch (NumberFormatException e) {
                 page = 0;
-                e.printStackTrace();
             }
         }
 
@@ -71,7 +73,25 @@ public class ItemService {
             }
         }
 
-        //lay cac san pham theo keyword
+        // Parse category filter (null = no filter = ALL)
+        String category = null;
+        if (query.contains("category=")) {
+            String raw = extractParam(query, "category");
+            if (raw != null && !raw.isBlank()) {
+                try {
+                    category = java.net.URLDecoder.decode(raw, java.nio.charset.StandardCharsets.UTF_8);
+                } catch (Exception e) {
+                    category = raw;
+                }
+            }
+        }
+
+        // [NEW] Admin caller: trả về tất cả item kể cả BANNED
+        if (query.contains("caller=ADMIN")) {
+            return itemRepository.findAllItemsForAdmin(sortOrder, page);
+        }
+
+        // Lấy theo keyword + category (public)
         if (query.contains("search=")) {
             try {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
@@ -81,26 +101,24 @@ public class ItemService {
                         page = Integer.parseInt(extractParam(query, "page"));
                     } catch (NumberFormatException e) {
                         page = 0;
-                        e.printStackTrace();
                     }
                 }
-                return getItemsByKeyword(input, page);
+                return getItemsByKeyword(input, category, page);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-
         }
 
-        //lay san pham theo id
+        // Lấy theo sellerId
         if (query.contains("sellerId")) {
             String sellerId = extractParam(query, "sellerId");
             return itemRepository.findAllBySellerId(sellerId);
         }
 
-
-        List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page);
-        System.out.println("Fetched " + items.size() + " items with sort order: ");
-        return itemRepository.findAllItems(sortOrder, page);
+        // Mặc định: trang chủ public, loại bỏ BANNED, filter theo category nếu có
+        List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page, category);
+        System.out.println("Fetched " + items.size() + " items" + (category != null ? " in category: " + category : ""));
+        return items;
     }
 
 
@@ -116,9 +134,18 @@ public class ItemService {
 
         String userId = itemData.getUserId();
         List<String> imagesPath = new ArrayList<>();
+        System.out.println("Setting item with data:");
+        System.out.println(userId);
+        System.out.println(itemName);
+        System.out.println("----");
         for (String[] image : imagesConverted) {
-            String path = ImageUtil.convertBase64ToImg(image[0], image[1]);
-            imagesPath.add(path);
+            if (image[1] == null) {
+                imagesPath.add(image[0]);
+            } else {
+                String path = ImageUtil.convertBase64ToImg(image[0], image[1]);
+                imagesPath.add(path);
+            }
+
         }
 
         return new Item(
@@ -135,6 +162,12 @@ public class ItemService {
     }
 
     public boolean addItem(ItemPayload itemData) {
+        com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
+        if (seller != null && "banned_user".equalsIgnoreCase(seller.getRole())) {
+            System.out.println("Item creation rejected: User is banned.");
+            return false;
+        }
+
         Item item = setItem(itemData);
         boolean created = itemRepository.createItem(item);
 
@@ -161,6 +194,8 @@ public class ItemService {
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
         Item item = setItem(itemData);
+        System.out.println("sellerid: " + item.getSellerId());
+        System.out.println("image" + item.getImagesPath());
         return itemRepository.updateItem(item, itemId);
     }
 
@@ -179,7 +214,7 @@ public class ItemService {
         return itemRepository.deleteItem(itemId);
     }
 
-    private List<ItemSummary> getItemsByKeyword(String input, int page) throws SQLException {
+    private List<ItemSummary> getItemsByKeyword(String input, String category, int page) throws SQLException {
         if (input == null || input.trim().isEmpty()) {
             return null;
         }
@@ -187,7 +222,7 @@ public class ItemService {
                 .filter(word -> !word.isEmpty())
                 .collect(Collectors.toList());
         int offset = page * 10;
-        return itemRepository.searchItems(keywords, offset);
+        return itemRepository.searchItems(keywords, category, offset);
     }
 
 
@@ -204,5 +239,75 @@ public class ItemService {
 
     public double getUserLastBid(String itemId, String userId) {
         return itemRepository.getUserLastBid(itemId, userId);
+    }
+
+    public boolean banItem(String itemId) {
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return false;
+        }
+
+        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
+            Connection conn = null;
+            try {
+                conn = com.auction.server.database.DatabaseManager.getConnection();
+                conn.setAutoCommit(false);
+
+                Item item = itemRepository.findById(conn, itemId);
+                if (item == null || ItemStatusConstants.BANNED.equalsIgnoreCase(item.getStatus())) {
+                    conn.rollback();
+                    return false;
+                }
+
+                // Update status to BANNED
+                if (!itemRepository.updateStatus(conn, itemId, ItemStatusConstants.BANNED)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                String currentBidderId = item.getCurrentTopPLayerId();
+                double currentPrice = item.getHighestCurrentPrice();
+
+                if (currentBidderId != null && !currentBidderId.trim().isEmpty()) {
+                    com.auction.server.repository.WalletRepository walletRepo = new com.auction.server.repository.WalletRepository();
+                    // Unfreeze amount
+                    if (!walletRepo.unfreezeAmount(conn, currentBidderId, currentPrice)) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    // Log unfreeze
+                    com.auction.server.repository.WalletTransactionRepository txLogRepo = new com.auction.server.repository.WalletTransactionRepository();
+                    double[] balances = walletRepo.getBalances(conn, currentBidderId);
+                    if (balances != null && balances.length >= 2) {
+                        txLogRepo.logUnfreeze(conn, currentBidderId, currentPrice, balances[1] + currentPrice, balances[1], itemId);
+                    }
+
+                    // Do NOT clear current_bidder_id and current_price per requirements.
+                }
+
+                // Deactivate all auto bids
+                com.auction.server.repository.BidRepository bidRepo = new com.auction.server.repository.BidRepository();
+                bidRepo.deactivateAllAutoBids(conn, itemId);
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (Exception ignored) {
+                    }
+                }
+                e.printStackTrace();
+                return false;
+            } finally {
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
     }
 }

@@ -81,13 +81,19 @@ public class VerifyService {
     public boolean verifyOtp(String email, String otp) {
         OtpInfo info = otpStorage.get(email);
 
-        if (info == null || info.isExpired() || !info.getOtp().equals(otp)) {
-
+        if (info == null) {
+            return false;
+        }
+        if (info.isExpired()) {
+            otpStorage.remove(email);
+            return false;
+        }
+        if (!info.getOtp().equals(otp)) {
             return false;
         }
 
         otpStorage.remove(email); // Remove OTP after successful verification
-        userRepository.enableUser(email); // Enable user account after successful verification
+        userRepository.enableUser(email); // Enable auth account after successful verification
         return true;
     }
 

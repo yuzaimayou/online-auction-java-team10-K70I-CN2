@@ -139,8 +139,11 @@ public class DatabaseInit {
             stmt.execute("ALTER TABLE items ADD COLUMN image_path TEXT NOT NULL DEFAULT ''");
         } catch (Exception ignored) {
         }
+        // [FIX BUG #4] Trước đây default là 'PENDING' — không tồn tại trong AuctionStatus enum.
+        // AuctionStatus.valueOf("PENDING") ném IllegalArgumentException.
+        // Nay đổi thành 'UPCOMING' để khớp với AuctionStatus.UPCOMING.
         try {
-            stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'PENDING'");
+            stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'UPCOMING'");
         } catch (Exception ignored) {
         }
         try {
