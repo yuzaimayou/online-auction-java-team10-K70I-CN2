@@ -2,10 +2,15 @@ package com.auction.client.util;
 
 import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
+import javafx.application.Platform;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserSession {
     private static volatile UserSession instance;
     private User loggedInUser;
+    private final List<Runnable> listeners = new ArrayList<>();
 
     public static UserSession getInstance() {
         if (instance == null) {
@@ -17,9 +22,18 @@ public class UserSession {
         }
         return instance;
     }
+    public void addListener(Runnable r) {
+        listeners.add(r);
+    }
 
+    private void notifyChanged() {
+        for (Runnable r : new ArrayList<>(listeners)) {
+            Platform.runLater(r); // 🔥 QUAN TRỌNG NHẤT
+        }
+    }
     public void setLoggedInUser(User user) {
         loggedInUser = user;
+        notifyChanged();
     }
 
     public User getLoggedInUser() {

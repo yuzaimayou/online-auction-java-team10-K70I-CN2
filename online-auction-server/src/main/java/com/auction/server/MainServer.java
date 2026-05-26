@@ -50,6 +50,7 @@ public class MainServer {
             // Wallet & settlement endpoints
             httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());
             httpServer.createContext("/api/auction/settle", new WalletHandler.SettleHandler());
+            httpServer.createContext("/api/wallet/balance", new WalletHandler.BalanceHandler());
 
             httpServer.setExecutor(Executors.newFixedThreadPool(50));
             httpServer.start();

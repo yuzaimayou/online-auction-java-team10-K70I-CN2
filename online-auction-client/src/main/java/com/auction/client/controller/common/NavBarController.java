@@ -19,22 +19,21 @@ public class NavBarController {
     @FXML
     public void initialize() {
         refreshUserInfo();
-
+        UserSession.getInstance().addListener(this::refreshUserInfo);
         searchField.textProperty().bindBidirectional(SearchStoreController.searchQueryProperty());
     }
 
     public void refreshUserInfo() {
         User currentUser = UserSession.getInstance().getLoggedInUser();
-        if (currentUser != null && lblUserName != null) {
-            lblUserName.setText(currentUser.getUsername());
+
+        if (currentUser == null) {
+            lblUserName.setText("Guest");
+            lblBalance.setText("$0.00");
+            return;
         }
-        if (lblBalance != null) {
-            double availableBalance = currentUser.getBalance();
-            lblBalance.setText(String.format("$%,.2f", availableBalance));
-        } else {
-            if (lblUserName != null) lblUserName.setText("Guest");
-            if (lblBalance != null) lblBalance.setText("$0.00");
-        }
+
+        lblUserName.setText(currentUser.getUsername());
+        lblBalance.setText(String.format("$%,.2f", currentUser.getBalance()));
     }
 
     public void handleSwitchToHome() {
