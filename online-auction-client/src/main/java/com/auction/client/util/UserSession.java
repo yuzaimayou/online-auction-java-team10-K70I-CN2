@@ -4,59 +4,77 @@ import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
 import javafx.application.Platform;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UserSession {
+
     private static volatile UserSession instance;
+
     private User loggedInUser;
-    private final List<Runnable> listeners = new ArrayList<>();
+
+    private final List<Runnable> listeners =
+            new CopyOnWriteArrayList<>();
+
+    private UserSession(){}
 
     public static UserSession getInstance() {
-        if (instance == null) {
-            synchronized (UserSession.class) {
-                if (instance == null) {
-                    instance = new UserSession();
+        if(instance==null){
+            synchronized (UserSession.class){
+                if(instance==null){
+                    instance=new UserSession();
                 }
             }
         }
         return instance;
     }
-    public void addListener(Runnable r) {
-        listeners.add(r);
+
+    public void addListener(Runnable listener){
+        listeners.add(listener);
     }
 
-    private void notifyChanged() {
-        for (Runnable r : new ArrayList<>(listeners)) {
-            Platform.runLater(r); // 🔥 QUAN TRỌNG NHẤT
+    public void removeListener(Runnable listener){
+        listeners.remove(listener);
+    }
+
+    private void notifyChanged(){
+
+        for(Runnable listener:listeners){
+            Platform.runLater(listener);
         }
     }
-    public void setLoggedInUser(User user) {
-        loggedInUser = user;
+
+    public void setLoggedInUser(User user){
+        this.loggedInUser=user;
         notifyChanged();
     }
 
-    public User getLoggedInUser() {
+    public User getLoggedInUser(){
         return loggedInUser;
     }
-    public String getCurrentUserId() {
-        return loggedInUser != null ? loggedInUser.getId() : null;
+
+    public String getCurrentUserId(){
+        return loggedInUser!=null
+                ? loggedInUser.getId()
+                : null;
     }
 
-    public boolean isAdmin() {
+    public boolean isLoggedIn(){
+        return loggedInUser!=null;
+    }
+
+    public boolean isAdmin(){
         return loggedInUser instanceof Admin;
     }
 
-    /**
-     * Trả về Admin object nếu người đăng nhập là Admin, null nếu không phải.
-     * Dùng khi cần gọi Admin-specific actions (deleteUser, suspendUser...).
-     */
-    public Admin getAsAdmin() {
-        if (loggedInUser instanceof Admin admin) return admin;
-        return null;
+    public Admin getAsAdmin(){
+        return loggedInUser instanceof Admin admin
+                ? admin
+                : null;
     }
 
-    public void cleanUserSession() {
-        loggedInUser = null;
+    public void cleanUserSession(){
+        loggedInUser=null;
+        notifyChanged();
     }
 }

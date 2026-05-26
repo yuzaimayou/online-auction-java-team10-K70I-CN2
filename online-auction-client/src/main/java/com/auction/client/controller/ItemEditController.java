@@ -81,19 +81,12 @@ public class ItemEditController {
     private final Gson gson = GsonUtil.getInstance();
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @FXML
-    private VBox navBar; // Khai báo fx:id của NavBar include nếu có
 
     @FXML
     public void initialize() {
         // Chạy ẩn đi nếu phát hiện form đang được mở trong một Stage Modal riêng biệt
         Platform.runLater(() -> {
             if (txtItemName.getScene() != null && txtItemName.getScene().getWindow() instanceof Stage stage) {
-                // Nếu là cửa sổ Modal popup, ẩn thanh NavBar đi cho gọn gàng
-                if (navBar != null) {
-                    navBar.setVisible(false);
-                    navBar.setManaged(false);
-                }
             }
         });
 
@@ -177,10 +170,10 @@ public class ItemEditController {
     }
 
     private StackPane buildLocalThumb(File file) {
-        ImageView iv = new ImageView(new Image(file.toURI().toString()));
-        return createThumbCard(iv, () -> {
-            newSelectedFiles.remove(file);
-            renderImageStrip();
+        ImageView iv = new ImageView(
+                new Image(file.toURI().toString(), 500, 500, true, true)
+        );
+        return createThumbCard(iv, () -> {newSelectedFiles.remove(file);renderImageStrip();
         });
     }
 
@@ -189,70 +182,22 @@ public class ItemEditController {
         double fixedWidth = 80;
         double fixedHeight = 60;
 
-        // Container cố định kích thước
         StackPane imageContainer = new StackPane();
         imageContainer.getStyleClass().add("image-border-container");
         imageContainer.setAlignment(Pos.CENTER);
+
         imageContainer.setPrefSize(fixedWidth, fixedHeight);
         imageContainer.setMinSize(fixedWidth, fixedHeight);
         imageContainer.setMaxSize(fixedWidth, fixedHeight);
 
-        // Bật preserveRatio để chống méo ảnh (Quan trọng)
-        iv.setPreserveRatio(true);
-
-        Runnable applyFitCover = () -> {
-            Image img = iv.getImage();
-            if (img == null) return;
-
-            double imgW = img.getWidth();
-            double imgH = img.getHeight();
-            if (imgW == 0 || imgH == 0) return;
-
-            double imgRatio = imgW / imgH;
-            double containerRatio = fixedWidth / fixedHeight;
-
-            // Thuật toán: Tràn viền theo chiều nào thiếu
-            if (imgRatio > containerRatio) {
-                iv.setFitHeight(fixedHeight);
-                iv.setFitWidth(0); // Reset width để tỉ lệ tự kéo
-            } else {
-                iv.setFitWidth(fixedWidth);
-                iv.setFitHeight(0); // Reset height để tỉ lệ tự kéo
-            }
-        };
-
-        // Bắt sự kiện khi tải ảnh hoàn tất để tính toán lại
-        iv.imageProperty().addListener((obs, oldImg, newImg) -> {
-            if (newImg != null) {
-                if (newImg.getProgress() < 1.0) {
-                    newImg.progressProperty().addListener((o, ov, nv) -> {
-                        if (nv.doubleValue() >= 1.0) Platform.runLater(applyFitCover);
-                    });
-                } else {
-                    Platform.runLater(applyFitCover);
-                }
-            }
-        });
-
-        // Áp dụng nếu ảnh (local) đã load sẵn lập tức
-        if (iv.getImage() != null && iv.getImage().getProgress() >= 1.0) {
-            applyFitCover.run();
-        }
-
-        // Cắt bo góc và phần thừa trên chính Container
-        Rectangle clip = new Rectangle(fixedWidth, fixedHeight);
-        clip.setArcWidth(12); // Tùy chỉnh độ cong góc
-        clip.setArcHeight(12);
-        imageContainer.setClip(clip);
-
+        iv.setPreserveRatio(false);
+        ClientImageUtil.makeResponsiveCover(iv, imageContainer, 12);
         imageContainer.getChildren().add(iv);
 
-        // Nút xóa ảnh
         Button btnDel = new Button("✕");
         btnDel.getStyleClass().add("delete-photo-btn");
         StackPane.setAlignment(btnDel, Pos.TOP_RIGHT);
         btnDel.setOnAction(e -> onDelete.run());
-
         return new StackPane(imageContainer, btnDel);
     }
 

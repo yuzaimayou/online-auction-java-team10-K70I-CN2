@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 import com.auction.shared.util.LocalDateTimeAdapter;
@@ -174,29 +175,23 @@ public class AuctionFormController {
                     lblMessage.getScene(), "Bid step cannot be greater than the starting price!");
             return;
         }
-        //Xu ly thoi gian
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        LocalTime parsedStartTime = LocalTime.parse(startTime, timeFormatter);
-        LocalTime parsedEndTime = LocalTime.parse(endTime, timeFormatter);
 
+        LocalTime parsedStartTime = LocalTime.parse(startTime);
+        LocalTime parsedEndTime = LocalTime.parse(endTime);
         LocalDateTime startDateTime = LocalDateTime.of(startDate, parsedStartTime);
         LocalDateTime endDateTime = LocalDateTime.of(endDate, parsedEndTime);
         LocalDateTime now = LocalDateTime.now();
 
-        if (startDateTime.isBefore(now)) {
-            ToastUtil.showError(
-                    lblMessage.getScene(),"Start time cannot be in the past.");
+        if (!startDateTime.isAfter(now)) {
+            ToastUtil.showError(lblMessage.getScene(),
+                    "Start time must be after current time."
+            );
             return;
         }
-
-        if (endDateTime.isBefore(now)) {
-            ToastUtil.showError(
-                    lblMessage.getScene(),"End time cannot be in the past.");
-            return;
-        }
-        if (endDateTime.isBefore(startDateTime) || endDateTime.equals(startDateTime)) {
-            ToastUtil.showError(
-                    lblMessage.getScene(),"End time must be strictly after the start time.");
+        if (!endDateTime.isAfter(startDateTime)) {
+            ToastUtil.showError(lblMessage.getScene(),
+                    "End time must be after start time."
+            );
             return;
         }
         //Xu ly phan loai san pham

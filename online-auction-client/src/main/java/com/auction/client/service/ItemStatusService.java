@@ -1,10 +1,12 @@
 package com.auction.client.service;
 
 import com.auction.client.util.CountdownTimerUtil;
+import com.auction.client.util.DateTimeUtil;
 import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
+
 import javafx.application.Platform;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -21,19 +23,6 @@ public class ItemStatusService {
 
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
 
-    // =========================================================================
-    // 1. COMMON LOGIC (Dùng chung cho cả Item và ItemSummary)
-    // =========================================================================
-
-    public AuctionStatus computeStatus(LocalDateTime start, LocalDateTime end) {
-        return AuctionStatus.compute(start, end);
-    }
-
-    public String formatPrice(double price) {
-        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
-        return "$ " + formatter.format(price) + " USD";
-    }
-
     public String formatTimeLeft(LocalDateTime from, LocalDateTime to) {
         if (to == null || from == null) return "N/A";
         if (from.isAfter(to)) return "00d 00h 00m 00s";
@@ -45,56 +34,87 @@ public class ItemStatusService {
 
         return String.format("%02dd %02dh %02dm %02ds", days, hours, minutes, seconds);
     }
-
-    // =========================================================================
-    // 2. LOGIC CHO THẺ CARD (STATELESS - Truyền UI Node vào tham số)
-    // =========================================================================
-
-    public AuctionStatus resolveStatus(ItemSummary item) {
-        if (item == null) return AuctionStatus.ENDED;
-        return computeStatus(item.getStartTime(), item.getEndTime());
+    // COMMON
+    public String formatPrice(double price) {
+        NumberFormat formatter =
+                NumberFormat.getInstance(new Locale("vi","VN"));
+        return "$ " + formatter.format(price) + " USD";
     }
 
-    public void updateCardUi(ItemSummary item, Label statusLabel, Label priceTitleLabel,
-                             Label priceLabel, Label endTimeLabel, Label timeTitleLabel) {
-        if (item == null) return;
+    public AuctionStatus resolveStatus(Item item){
+        if(item==null){
+            return AuctionStatus.ENDED;
+        }
+        // Item.getStatus() giờ trả về AuctionStatus enum → so sánh bằng ==
+        if(item.getStatus() == AuctionStatus.BANNED){
+            return AuctionStatus.BANNED;
+        }
+        return AuctionStatus.compute(item.getStartTime(), item.getEndTime());
+    }
 
-        AuctionStatus status = resolveStatus(item);
+    public AuctionStatus resolveStatus(ItemSummary item){
+        if(item==null){
+            return AuctionStatus.ENDED;
+        }
+        // ItemSummary.getStatus() trả về AuctionStatus enum → so sánh bằng ==
+        if(item.getStatus() == AuctionStatus.BANNED){
+            return AuctionStatus.BANNED;
+        }
+        return AuctionStatus.compute(
+                item.getStartTime(),
+                item.getEndTime()
+        );
+    }
+
+    // Helper dùng trong Controller để check ONGOING
+    public boolean isOngoing(Item item){
+        return resolveStatus(item) == AuctionStatus.ONGOING;
+    }
+    // CARD UI
+    public void updateCardUi(
+            ItemSummary item,
+            Label statusLabel,
+            Label priceTitleLabel,
+            Label priceLabel,
+            Label endTimeLabel,
+            Label timeTitleLabel
+    ){
+
+        AuctionStatus status=resolveStatus(item);
         LocalDateTime now = LocalDateTime.now();
 
-        switch (status) {
+        switch(status){
             case UPCOMING -> {
-                statusLabel.setText("UPCOMING");
+                statusLabel.setText(ItemStatusConstants.UPCOMING);
                 statusLabel.setStyle("-fx-background-color: #fff3c4; -fx-text-fill: #eea504;");
                 priceTitleLabel.setText("START PRICE");
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
                 endTimeLabel.setText(formatTimeLeft(now, item.getStartTime()));
-                timeTitleLabel.setText("Starts on " + item.getStartTime().format(dateFormatter));
+                timeTitleLabel.setText("Starts: "+ DateTimeUtil.format(item.getStartTime()));
             }
             case ONGOING -> {
-                statusLabel.setText("LIVE");
+                statusLabel.setText(ItemStatusConstants.ONGOING);
                 statusLabel.setStyle("-fx-background-color: #ecfdf5; -fx-text-fill: #10b981;");
                 priceTitleLabel.setText("CURRENT BID");
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
                 endTimeLabel.setText(formatTimeLeft(now, item.getEndTime()));
-                timeTitleLabel.setText("Ends on " + item.getEndTime().format(dateFormatter));
+                timeTitleLabel.setText("Ends: "+ DateTimeUtil.format(item.getEndTime()));
             }
-            default -> { // ENDED hoặc BANNED
-                statusLabel.setText("ENDED");
+            case ENDED -> {
+                statusLabel.setText(ItemStatusConstants.ENDED);
                 statusLabel.setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white;");
                 priceTitleLabel.setText("FINAL PRICE");
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
                 endTimeLabel.setText("Auction Ended");
-                if (item.getEndTime() != null) {
-                    timeTitleLabel.setText("Ended on " + item.getEndTime().format(dateFormatter));
-                }
+                timeTitleLabel.setText("Ended: "+ DateTimeUtil.format(item.getEndTime()));
             }
+
         }
     }
 
-    // =========================================================================
-    // 3. LOGIC CHO TRANG CHI TIẾT (STATEFUL - Lưu trữ UI Node)
-    // =========================================================================
+    //===================================================
+    // DETAIL PAGE
+    //===================================================
 
     private Label statusMessageLabel;
     private VBox bidControlsContainer;
@@ -104,40 +124,33 @@ public class ItemStatusService {
     private CountdownTimerUtil countdownTimer;
     private AutoBidService autoBidManager;
 
-    public void attachUiControls(Label statusMessageLabel, VBox bidControlsContainer, StackPane statusOverlay,
-                                 Button btnAutoBidToggle, Button submitBid, CountdownTimerUtil countdownTimer,
-                                 AutoBidService autoBidManager) {
-        this.statusMessageLabel = statusMessageLabel;
-        this.bidControlsContainer = bidControlsContainer;
-        this.statusOverlay = statusOverlay;
-        this.btnAutoBidToggle = btnAutoBidToggle;
-        this.submitBid = submitBid;
-        this.countdownTimer = countdownTimer;
-        this.autoBidManager = autoBidManager;
+    public void attachUiControls(
+            Label statusMessageLabel,
+            VBox bidControlsContainer,
+            StackPane statusOverlay,
+            Button btnAutoBidToggle,
+            Button submitBid,
+            CountdownTimerUtil countdownTimer,
+            AutoBidService autoBidManager
+    ){
+
+        this.statusMessageLabel=statusMessageLabel;
+        this.bidControlsContainer=bidControlsContainer;
+        this.statusOverlay=statusOverlay;
+        this.btnAutoBidToggle=btnAutoBidToggle;
+        this.submitBid=submitBid;
+        this.countdownTimer=countdownTimer;
+        this.autoBidManager=autoBidManager;
     }
 
-    public AuctionStatus resolveStatus(Item item) {
-        if (item == null) return AuctionStatus.ENDED;
-        return computeStatus(item.getStartTime(), item.getEndTime());
-    }
-
-    public boolean isOngoing(Item item) {
-        return resolveStatus(item) == AuctionStatus.ONGOING;
-    }
-
-    public void applyAuctionStatusView(Item item, String currentUserId) {
-        if (item == null) return;
-
-        if (item.getSellerId().equals(currentUserId)) {
-            restrictOwnerInteractions();
+    public void applyAuctionStatusView(Item item, String currentUserId){
+        if(item==null) return;
+        if(item.getSellerId().equals(currentUserId)){restrictOwnerInteractions();
             return;
         }
 
-        AuctionStatus status = resolveStatus(item);
-        item.setStatus(status.getDisplayName());
-        statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
-
-        switch (status) {
+        AuctionStatus status= resolveStatus(item);
+        switch(status){
             case ONGOING -> {
                 toggleInteractiveControlMode(true);
                 submitBid.setDisable(autoBidManager.isActive());
@@ -156,41 +169,65 @@ public class ItemStatusService {
         }
     }
 
-    public void applyBannedStateView(Item item) {
-        if (countdownTimer != null) countdownTimer.stop();
-        toggleInteractiveControlMode(false);
+    public void startCountdown(
+            Item item,
+            Runnable callback
+    ){
+
+        AuctionStatus status=
+                resolveStatus(item);
+
+        LocalDateTime targetTime=null;
+
+        if(status==AuctionStatus.UPCOMING){
+            targetTime=item.getStartTime();
+        }
+
+        else if(status==AuctionStatus.ONGOING){
+            targetTime=item.getEndTime();
+        }
+
+        countdownTimer.startFor(
+                targetTime,
+                ()-> Platform.runLater(callback)
+        );
+    }
+
+    public void applyBannedStateView(Item item){
+        countdownTimer.stop();
         autoBidManager.deactivate();
+        toggleInteractiveControlMode(false);
 
         statusMessageLabel.getStyleClass().removeAll("status-ended", "status-upcoming");
         statusMessageLabel.getStyleClass().add("status-ended");
-        statusMessageLabel.setText("⛔ Auction Suspended by Admin");
+        statusMessageLabel.setText("⛔ Auction suspended by Admin");
 
-        if (item != null) item.setStatus(ItemStatusConstants.BANNED);
+        item.setStatus(AuctionStatus.BANNED);
     }
 
-    public void restrictOwnerInteractions() {
+    public void restrictOwnerInteractions(){
+
         bidControlsContainer.setDisable(true);
+
         btnAutoBidToggle.setDisable(true);
+
         toggleInteractiveControlMode(false);
-        statusMessageLabel.setText("👤 You are the owner of this item");
+
+        statusMessageLabel.setText(
+                "👤 You own this item"
+        );
     }
 
-    public void startCountdown(Item item, Runnable onStatusTransition) {
-        AuctionStatus status = resolveStatus(item);
-        LocalDateTime targetTime = (status == AuctionStatus.UPCOMING) ? item.getStartTime()
-                : (status == AuctionStatus.ONGOING)  ? item.getEndTime() : null;
+    private void toggleInteractiveControlMode(
+            boolean enable
+    ){
 
-        countdownTimer.startFor(targetTime, () -> {
-            AuctionStatus newStatus = resolveStatus(item);
-            item.setStatus(newStatus.getDisplayName());
-            Platform.runLater(onStatusTransition);
-        });
-    }
+        bidControlsContainer.setVisible(enable);
 
-    private void toggleInteractiveControlMode(boolean isInteractive) {
-        bidControlsContainer.setVisible(isInteractive);
-        bidControlsContainer.setManaged(isInteractive);
-        statusOverlay.setVisible(!isInteractive);
-        statusOverlay.setManaged(!isInteractive);
+        bidControlsContainer.setManaged(enable);
+
+        statusOverlay.setVisible(!enable);
+
+        statusOverlay.setManaged(!enable);
     }
 }

@@ -3,15 +3,12 @@ package com.auction.client.controller;
 import com.auction.client.service.*;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
 import com.auction.client.service.AutoBidService.ValidationResult;
-import com.auction.client.util.ClientImageUtil;
-import com.auction.client.util.CountdownTimerUtil;
-import com.auction.client.util.ToastUtil;
-import com.auction.client.util.UserSession;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.client.util.*;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
@@ -41,11 +38,10 @@ import java.util.List;
 public class ItemPageController implements NetworkService.MessageListener {
 
     // ─── Constants ────────────────────────────────────────────────────────────
-    private static final double IMAGE_WIDTH  = 700.0;
-    private static final double IMAGE_HEIGHT = 450.0;
+    private static final double IMAGE_WIDTH = 1400.0;
+    private static final double IMAGE_HEIGHT = 900.0;
     private static final double THUMB_WIDTH  = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
-    private static final DateTimeFormatter DISPLAY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     // ─── FXML Bindings ────────────────────────────────────────────────────────
     @FXML
@@ -151,14 +147,18 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     @FXML
     public void initialize() {
+        itemImage.setPreserveRatio(false);
+        itemImage.setSmooth(true);
+        itemImage.setCache(false);
+
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
-
-        // Cấu hình gắn các Control sang Service để ủy quyền quản lý
         statusUiService.attachUiControls(
-                statusMessageLabel, bidControlsContainer, statusOverlay,
-                btnAutoBidToggle, submitBid, countdownTimer, autoBidManager
+                statusMessageLabel, bidControlsContainer,
+                statusOverlay, btnAutoBidToggle,
+                submitBid, countdownTimer, autoBidManager
         );
+
         if (bidPriceChart != null) {
             bidPriceSeries = new XYChart.Series<>();
             bidPriceChart.getData().add(bidPriceSeries);
@@ -193,7 +193,7 @@ public class ItemPageController implements NetworkService.MessageListener {
         this.myLastBid = loadedItem.getMyLastBid();
         autoBidManager.setLastBidderId(loadedItem.getCurrentTopPLayerId());
 
-        if (ItemStatusConstants.BANNED.equalsIgnoreCase(loadedItem.getStoredStatus())) {
+        if (loadedItem.getStoredStatus() == AuctionStatus.BANNED) {
             displayDataItem(loadedItem);
             statusUiService.applyBannedStateView(loadedItem); // hiện overlay "Auction Suspended"
             updateAutoBidUI(false);
@@ -267,10 +267,9 @@ public class ItemPageController implements NetworkService.MessageListener {
         try {
             LocalDateTime newEndTime = LocalDateTime.parse(rawEndTime);
             item.setEndTime(newEndTime);
-            endTimeLabel.setText(newEndTime.format(DISPLAY_DATE_FORMAT));
-
-            // Gọi qua Status Service để khởi động lại Countdown đích mới
-            statusUiService.startCountdown(item, () -> statusUiService.applyAuctionStatusView(item, user.getId()));
+            endTimeLabel.setText(DateTimeUtil.format(newEndTime));
+            statusUiService.startCountdown(item,
+                    () -> statusUiService.applyAuctionStatusView(item, user.getId()));
         } catch (Exception e) {
             System.err.println("[AUCTION_EXTENDED] Error parsing end time: " + e.getMessage());
         }
@@ -467,20 +466,21 @@ public class ItemPageController implements NetworkService.MessageListener {
 
         itemNameLabel.setText(currentItem.getName());
         sellerLabel.setText(currentItem.getSellerId());
-        currentPriceLabel.setText(String.format("$ %.0f", currentItem.getCurrentPrice()));
-        startPriceLabel.setText(String.format("$ %.0f", currentItem.getStartingPrice()));
-        bidStepLabel.setText(String.format("$ %.0f", currentItem.getBidStep()));
+        currentPriceLabel.setText(statusUiService.formatPrice(currentItem.getCurrentPrice()));
+        startPriceLabel.setText(statusUiService.formatPrice(currentItem.getStartingPrice()));
+        bidStepLabel.setText(statusUiService.formatPrice(currentItem.getBidStep()));
 
-        startTimeLabel.setText(currentItem.getStartTime() != null ? currentItem.getStartTime().format(DISPLAY_DATE_FORMAT) : "N/A");
-        endTimeLabel.setText(currentItem.getEndTime() != null ? currentItem.getEndTime().format(DISPLAY_DATE_FORMAT) : "N/A");
+        startTimeLabel.setText(DateTimeUtil.format(currentItem.getStartTime()));
+        endTimeLabel.setText(DateTimeUtil.format(currentItem.getEndTime()));
 
         if (btnSuggestStep1 != null) btnSuggestStep1.setText(String.format("$ %.0f", currentItem.getBidStep()));
         if (btnSuggestStep2 != null) btnSuggestStep2.setText(String.format("$ %.0f", currentItem.getBidStep() * 2));
 
         // Kích hoạt Countdown đồng bộ thông qua Service ủy quyền
-        statusUiService.startCountdown(item, () -> statusUiService.applyAuctionStatusView(item, user.getId()));
-        if (!ItemStatusConstants.BANNED.equalsIgnoreCase(currentItem.getStoredStatus())) {
-            statusUiService.startCountdown(item, () -> statusUiService.applyAuctionStatusView(item, user.getId()));
+        AuctionStatus status = currentItem.getStoredStatus();
+        if (status != AuctionStatus.BANNED) {
+            statusUiService.startCountdown(item,
+                    () -> statusUiService.applyAuctionStatusView(item, user.getId()));
         }
         updateMinimumBidLabel();
     }

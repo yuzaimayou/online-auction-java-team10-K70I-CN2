@@ -25,21 +25,22 @@ public class ClientImageUtil {
                                     ImageView imageView,
                                     double reqWidth,
                                     double reqHeight) {
-        String imageUrl = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
 
-        String cacheKey = imageUrl + "_" + reqWidth + "x" + reqHeight;
+        String imageUrl = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
+        String cacheKey = imageUrl;
 
         Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
             try {
                 System.out.println("Loading image: " + imageUrl);
-                return new Image(imageUrl, reqWidth, reqHeight, true, true);
+                return new Image(imageUrl, true);
             } catch (Exception e) {
-                System.err.println("Failed to load image: " + imageUrl);
                 e.printStackTrace();
                 return null;
             }
         });
 
+        imageView.setSmooth(true);
+        imageView.setCache(false);
         imageView.setImage(fxImage);
     }
 
@@ -106,10 +107,8 @@ public class ClientImageUtil {
     /**
      * Áp dụng chế độ Object-Fit: Cover căn đều khung nhìn ImageView cho ảnh Thumbnail
      */
-    public static void applyObjectFitCoverToImageView(ImageView imageView,
-                                                      Image img,
-                                                      double targetW,
-                                                      double targetH) {
+    public static void applyObjectFitCoverToImageView(ImageView imageView, Image img,
+                                                      double targetW, double targetH) {
         if (img == null || imageView == null) return;
 
         if (img.getProgress() < 1.0) {
@@ -123,6 +122,8 @@ public class ClientImageUtil {
         }
 
         Platform.runLater(() -> {
+            imageView.setSmooth(true);
+
             double imgW = img.getWidth();
             double imgH = img.getHeight();
             if (imgW == 0 || imgH == 0) return;
@@ -150,13 +151,8 @@ public class ClientImageUtil {
     /**
      * Hàm dựng bộ sưu tập ảnh Thu nhỏ (Thumbnail Gallery) cho trang chi tiết sản phẩm
      */
-    public static void setupThumbnailGallery(HBox thumbnailContainer,
-                                             ImageView itemImage,
-                                             List<String> images,
-                                             double thumbWidth,
-                                             double thumbHeight,
-                                             double imageWidth,
-                                             double imageHeight) {
+    public static void setupThumbnailGallery(HBox thumbnailContainer, ImageView itemImage, List<String> images,
+                                             double thumbWidth, double thumbHeight, double imageWidth, double imageHeight) {
         thumbnailContainer.getChildren().clear();
         if (images == null || images.isEmpty()) return;
 
@@ -180,28 +176,28 @@ public class ClientImageUtil {
             }
 
             ImageView thumbView = new ImageView();
+
+            thumbView.setSmooth(true);
+            thumbView.setCache(true);
             thumbView.setFitWidth(thumbWidth);
             thumbView.setFitHeight(thumbHeight);
             thumbView.setPreserveRatio(false);
-
             thumbView.imageProperty().addListener((obs, oldImg, newImg) -> {
                 if (newImg != null) {
                     applyObjectFitCoverToImageView(thumbView, newImg, thumbWidth, thumbHeight);
                 }
             });
 
-            displayImage(imgPath, "images", thumbView, imageWidth, imageHeight);
+            displayImage(imgPath, "images", thumbView, thumbWidth * 3, thumbHeight * 3);
             thumbPane.getChildren().add(thumbView);
 
-            // Sự kiện click để đổi ảnh lớn chính
             thumbPane.setOnMouseClicked(e -> {
-                Image clicked = thumbView.getImage();
-                if (clicked != null) {
-                    itemImage.setImage(clicked);
-                } else {
-                    displayImage(imgPath, "images", itemImage, thumbWidth, thumbHeight);
-                }
-                thumbnailContainer.getChildren().forEach(n -> n.getStyleClass().remove("active-thumb"));
+                displayImage(imgPath, "images", itemImage, imageWidth * 2, imageHeight * 2
+                );
+
+                thumbnailContainer.getChildren().forEach(
+                        n -> n.getStyleClass().remove("active-thumb")
+                );
                 thumbPane.getStyleClass().add("active-thumb");
             });
 
