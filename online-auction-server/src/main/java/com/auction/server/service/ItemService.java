@@ -43,11 +43,11 @@ public class ItemService {
 
     /**
      * Lấy danh sách item theo query string.
-     *
+     * <p>
      * [UPDATE] Hỗ trợ tham số caller=ADMIN:
-     *   - Nếu caller=ADMIN → gọi findAllItemsForAdmin() để trả về toàn bộ item kể cả BANNED
-     *     (admin cần nhìn thấy item đã ban để quản lý).
-     *   - Nếu không có caller → gọi findAllItems() như cũ, đã loại BANNED ra khỏi kết quả.
+     * - Nếu caller=ADMIN → gọi findAllItemsForAdmin() để trả về toàn bộ item kể cả BANNED
+     * (admin cần nhìn thấy item đã ban để quản lý).
+     * - Nếu không có caller → gọi findAllItems() như cũ, đã loại BANNED ra khỏi kết quả.
      */
     public List<ItemSummary> getItems(String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -136,9 +136,18 @@ public class ItemService {
 
         String userId = itemData.getUserId();
         List<String> imagesPath = new ArrayList<>();
+        System.out.println("Setting item with data:");
+        System.out.println(userId);
+        System.out.println(itemName);
+        System.out.println("----");
         for (String[] image : imagesConverted) {
-            String path = ImageUtil.convertBase64ToImg(image[0], image[1]);
-            imagesPath.add(path);
+            if (image[1] == null) {
+                imagesPath.add(image[0]);
+            } else {
+                String path = ImageUtil.convertBase64ToImg(image[0], image[1]);
+                imagesPath.add(path);
+            }
+
         }
 
         return new Item(
@@ -187,6 +196,8 @@ public class ItemService {
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
         Item item = setItem(itemData);
+        System.out.println("sellerid: " + item.getSellerId());
+        System.out.println("image" + item.getImagesPath());
         return itemRepository.updateItem(item, itemId);
     }
 
@@ -272,7 +283,7 @@ public class ItemService {
                     if (balances != null && balances.length >= 2) {
                         txLogRepo.logUnfreeze(conn, currentBidderId, currentPrice, balances[1] + currentPrice, balances[1], itemId);
                     }
-                    
+
                     // Do NOT clear current_bidder_id and current_price per requirements.
                 }
 
@@ -286,7 +297,8 @@ public class ItemService {
                 if (conn != null) {
                     try {
                         conn.rollback();
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
                 e.printStackTrace();
                 return false;
@@ -294,7 +306,8 @@ public class ItemService {
                 if (conn != null) {
                     try {
                         conn.close();
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
