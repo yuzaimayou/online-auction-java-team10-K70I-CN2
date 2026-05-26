@@ -53,7 +53,7 @@ public class WalletHandler {
                     resp.addProperty("message", "Nạp " + amount + " vào tài khoản " + userId);
                     sendResponse(exchange, 200, resp.toString());
                 } else {
-                    sendResponse(exchange, 400, error("Nạp tiền thất bại — không tìm thấy user"));
+                    sendResponse(exchange, 400, error("Nạp tiền thất bại — không tìm thấy auth"));
                 }
 
             } catch (Exception e) {

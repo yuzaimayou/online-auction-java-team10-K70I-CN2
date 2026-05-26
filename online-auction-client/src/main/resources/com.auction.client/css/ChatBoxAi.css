@@ -1,0 +1,81 @@
+.chat-container {
+    -fx-background-color: white;
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-border-color: #f0f0f0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 5);
+    -fx-overflow: hidden;
+}
+
+.chat-header {
+    -fx-background-color: #1a2a47; /* Màu xanh đen như ảnh */
+    -fx-background-radius: 25 25 0 0;
+}
+
+.header-icon { -fx-text-fill: white; -fx-font-size: 16px; }
+.header-text { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; }
+
+.window-control-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+.chat-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.suggest-btn {
+    -fx-background-color: white;
+    -fx-border-color: #4485f4;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-text-fill: #4485f4;
+    -fx-font-size: 11px;
+    -fx-padding: 5 12;
+    -fx-cursor: hand;
+}
+
+.suggest-btn:hover { -fx-background-color: #f0f7ff; }
+
+.chat-input {
+    -fx-background-color: #f4f4f4;
+    -fx-background-radius: 20;
+    -fx-padding: 8 15;
+}
+
+.send-btn {
+    -fx-background-color: #4485f4;
+    -fx-text-fill: white;
+    -fx-background-radius: 50;
+    -fx-min-width: 35;
+    -fx-min-height: 35;
+}
+
+.chat-container {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 15, 0, 0, 5);
+}
+
+.chat-header {
+    -fx-background-color: #1a2a47;
+    -fx-background-radius: 20 20 0 0;
+}
+
+.chat-input {
+    -fx-background-radius: 20;
+    -fx-background-color: #f4f4f4;
+    -fx-padding: 8 12;
+}
+
+.chat-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+

@@ -12,6 +12,7 @@ public class HttpResponseUtil {
 
     public static void sendMessage(HttpExchange exchange, int statusCode, ResponseMessage responseMessage) throws IOException {
         String jsonResponse = gson.toJson(responseMessage);
+        System.out.println("DEBUG - HTTP Response JSON: " + jsonResponse);
         byte[] bytes = jsonResponse.getBytes("utf-8");
 
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");

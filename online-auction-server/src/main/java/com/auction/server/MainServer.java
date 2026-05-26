@@ -5,6 +5,8 @@ import com.auction.server.controller.ClientHandler;
 import com.auction.server.controller.api.*;
 import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
+import com.auction.server.service.AuctionSchedulerService;
+import com.auction.server.service.ItemService;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -25,7 +27,12 @@ public class MainServer {
         DatabaseManager.init();
         DatabaseInit.init();
 
-        //start http server
+        // Start auction scheduler: polls every 5 s to transition
+        // UPCOMING -> ONGOING and ONGOING -> ENDED in the database.
+        new AuctionSchedulerService(null).start();
+        System.out.println("Auction scheduler started.");
+
+        // start http server
         try {
             System.out.println("Starting HTTP server...");
             HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -34,14 +41,15 @@ public class MainServer {
             httpServer.createContext("/api/verify-account", new VerifyHandler());
             httpServer.createContext("/api/send-otp", new SendOtp());
             httpServer.createContext("/api/items", new ItemsHandler());
+            httpServer.createContext("/api/items/ban", new BanItemHandler());
+            httpServer.createContext("/api/users/ban", new BanUserHandler());
             httpServer.createContext("/api/items/", new ItemDetailHandler());
             httpServer.createContext("/api/history/", new HistoryHandler());
-            //ngix da xu ly viec /images
-            //httpServer.createContext("/images", new StaticFileServer.ImageHandler());
+            // ngix da xu ly viec /images
+            // httpServer.createContext("/images", new StaticFileServer.ImageHandler());
             // Wallet & settlement endpoints
             httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());
             httpServer.createContext("/api/auction/settle", new WalletHandler.SettleHandler());
-
 
             httpServer.setExecutor(Executors.newFixedThreadPool(50));
             httpServer.start();
@@ -52,7 +60,7 @@ public class MainServer {
             return;
         }
 
-        //start socket server
+        // start socket server
         try (ServerSocket serverSocket = new ServerSocket(9090)) {
             System.out.println("Starting Socket server...");
             System.out.println("Socket server started on port 9090");

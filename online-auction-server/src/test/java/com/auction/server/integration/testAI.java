@@ -7,7 +7,7 @@ public class testAI {
 
     public static void main(String[] agrs) {
         String checkKey = dotenv.get("GEMINI_API_KEY");
-        if (checkKey == null && checkKey.isEmpty()) {
+        if (checkKey == null || checkKey.isEmpty()) {
             System.err.println("LỖI: Chưa tìm thấy biến môi trường GEMINI_API_KEY.");
             System.err.println("Vui lòng cấu hình biến môi trường trước khi chạy!");
             return;

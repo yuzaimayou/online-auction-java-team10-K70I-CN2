@@ -4,42 +4,48 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
-<HBox fx:id="rootNode" prefHeight="1024.0" prefWidth="1440.0"
+
+<HBox fx:id="rootNode" alignment="CENTER"
       xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.user.LoginController">
+      fx:controller="com.auction.client.controller.auth.LoginController">
     <stylesheets>
         <URL value="@../../css/AuthPage.css"/>
     </stylesheets>
 
-    <StackPane HBox.hgrow="ALWAYS" styleClass="image-container, login-image-bg">
+    <StackPane HBox.hgrow="ALWAYS" styleClass="image-container, login-image-bg"
+               minWidth="0" prefWidth="400.0">
     </StackPane>
 
-    <VBox alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="500.0" style="-fx-background-color: #ffffff;">
+    <VBox alignment="CENTER" HBox.hgrow="ALWAYS" style="-fx-background-color: #ffffff;"
+          minWidth="380.0" prefWidth="400.0">
+
         <padding>
-            <Insets bottom="50.0" left="100.0" right="100.0" top="50.0"/>
+            <Insets bottom="20.0" left="40.0" right="40.0" top="20.0"/>
         </padding>
 
-        <VBox alignment="CENTER" maxWidth="450.0" spacing="30.0">
+        <VBox alignment="CENTER" maxWidth="400.0" spacing="25.0" VBox.vgrow="SOMETIMES">
             <Label fx:id="lblMessage" wrapText="true" textAlignment="CENTER"/>
-            <Label id="main-title" text="Sign in"/>
+            <Label id="main-title" text="Sign in" style="-fx-font-size: 2.5em; -fx-font-weight: bold;"/>
 
-            <VBox spacing="15.0">
+            <VBox spacing="15.0" fillWidth="true">
                 <VBox spacing="8.0">
                     <Label styleClass="title" text="Username"/>
-                    <TextField fx:id="txtUsername" styleClass="textBox"/>
+                    <TextField fx:id="txtUsername" styleClass="textBox" prefHeight="45.0"/>
                 </VBox>
 
                 <VBox spacing="8.0">
                     <Label styleClass="title" text="Password"/>
-                    <PasswordField fx:id="txtPassword" styleClass="textBox"/>
+                    <PasswordField fx:id="txtPassword" styleClass="textBox" prefHeight="45.0"/>
                 </VBox>
             </VBox>
 
-            <Button onAction="#handleLogin" defaultButton="true" styleClass="submitButton" text="Sign in"/>
+            <Button onAction="#handleLogin" defaultButton="true"
+                    styleClass="submitButton" text="Sign in"
+                    maxWidth="Infinity" prefHeight="50.0"/>
 
             <HBox alignment="CENTER" spacing="8.0">
-                <Label style="-fx-font-size: 16;" text="New to Auction?"/>
+                <Label style="-fx-font-size: 14;" text="New to Auction?"/>
                 <Button onAction="#handleSwitchToRegister" styleClass="switchButton" text="Create an account"/>
             </HBox>
         </VBox>

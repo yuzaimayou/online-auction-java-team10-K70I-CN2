@@ -52,7 +52,9 @@ public class ItemDetailPageController {
      * @param itemId ID của sản phẩm cần xem chi tiết
      */
     public void loadItemData(String itemId) {
-        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(AppConfig.getHttpUrl() + "/api/items/" + itemId))
                 .GET()

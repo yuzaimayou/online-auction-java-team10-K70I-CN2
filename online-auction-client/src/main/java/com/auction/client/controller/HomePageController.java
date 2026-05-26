@@ -1,14 +1,12 @@
 package com.auction.client.controller;
 
+import com.auction.client.controller.common.NavBarController;
+import com.auction.client.controller.common.SearchStoreController;
+import com.auction.client.service.ItemsService;
 import com.auction.client.service.NetworkService;
 import com.auction.client.service.ToastService;
-import com.auction.client.util.AppConfig;
-import com.auction.shared.message.ResponseMessage;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.ItemSummary;
-import com.auction.shared.util.GsonUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -16,33 +14,25 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class HomePageController {
 
-    //network
-    private NetworkService network = NetworkService.getInstance();
-    private Gson gson = new GsonUtil().getInstance();
-    private List<ItemSummary> masterItemList;
+    // Dependencies
+    private final NetworkService network      = NetworkService.getInstance();
+    private final ItemsService   itemsService = ItemsService.getInstance();
+    // State
     private String currentCategory = "ALL";
-    private static final HttpClient httpClient = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_2)
-            .build();
 
+    // FXML fields
     @FXML
-    private ScrollPane mainScrollPane;
+    private javafx.scene.control.ScrollPane mainScrollPane;
     @FXML
     private FlowPane ongoingAuctionsContainer;
     @FXML
@@ -58,13 +48,13 @@ public class HomePageController {
     @FXML
     private NavBarController navBarController;
 
+    // ─Lifecycle
     @FXML
     public void initialize() {
-        SearchStoreController.searchQueryProperty().addListener((obs, oldVal, newVal) -> {
-            applyFilter();
-        });
-        NetworkService.getInstance().leaveRoom();
-        System.out.println("Đã vào trang chủ!");
+        network.leaveRoom();
+        SearchStoreController.searchQueryProperty().addListener(
+                (obs, oldVal, newVal) -> fetchItemsFromServer()
+        );
 
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
             double width = newVal.doubleValue() - 40;
@@ -73,185 +63,133 @@ public class HomePageController {
             endedAuctionsContainer.setPrefWidth(width);
         });
 
-        getDataItemsAndDisplay();
+        fetchItemsFromServer();
     }
 
-    @FXML
-    private void getDataItemsAndDisplay() {
-        System.out.println("Dang tien hanh lay du lieu");
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
-                .GET()
-                .build();
-        httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
-                .thenApply(java.net.http.HttpResponse::body)
-                .thenAccept(responseBody -> {
-                    try {
-                        ResponseMessage res = gson.fromJson(responseBody, ResponseMessage.class);
-                        if ("success".equals(res.getStatus())) {
-                            Type listType = new TypeToken<List<ItemSummary>>() {
-                            }.getType();
-                            JsonElement jsonElement = gson.toJsonTree(res.getData());
-                            List<ItemSummary> dataItems = gson.fromJson(jsonElement, listType);
-                            Platform.runLater(() -> {
-                                this.masterItemList = dataItems;
-                                applyFilter();
-                            });
-                        } else {
-                            Platform.runLater(() ->
-                                    ToastService.showError(mainScrollPane.getScene(), "Lỗi: " + res.getMessage())
-                            );
-                        }
-                    } catch (Exception e) {
-                        Platform.runLater(() ->
-                                ToastService.showError(mainScrollPane.getScene(), "Dữ liệu máy chủ không phản hồi đúng định dạng.")
-                        );
-                    }
-                })
+    // Data fetching
+    private void fetchItemsFromServer() {
+        String search = SearchStoreController.getSearchQuery();
+        itemsService.getItems(search, currentCategory)
+                .thenAccept(items -> Platform.runLater(() -> loadItemsToUI(items)))
                 .exceptionally(e -> {
-                    Platform.runLater(() ->
-                            ToastService.showError(mainScrollPane.getScene(), "Không thể kết nối tới Server. Vui lòng thử lại!")
-                    );
+                    e.printStackTrace();
+                    Platform.runLater(() -> {
+                        if (mainScrollPane.getScene() != null) {
+                            ToastService.showError(mainScrollPane.getScene(), "Cannot load auction items.");
+                        }
+                    });
                     return null;
                 });
     }
 
-    private void applyFilter() {
-        if (masterItemList == null)
-            return;
-        String query = SearchStoreController.getSearchQuery().toLowerCase().trim();
-
-        List<ItemSummary> filtered = masterItemList.stream()
-                .filter(item -> {
-                    // Lọc theo Category
-                    boolean matchesCategory = currentCategory.equals("ALL") ||
-                            (item.getCategory() != null && item.getCategory().equalsIgnoreCase(currentCategory));
-
-                    // Lọc theo Search Query
-                    boolean matchesSearch = query.isEmpty() ||
-                            (item.getName() != null && item.getName().toLowerCase().contains(query));
-
-                    return matchesCategory && matchesSearch;
-                })
-                .collect(Collectors.toList());
-
-        loadItemsToUI(filtered);
-    }
-
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
-        Platform.runLater(() -> {
-            ongoingAuctionsContainer.getChildren().clear();
-            upcomingAuctionsContainer.getChildren().clear();
-            endedAuctionsContainer.getChildren().clear();
+        ongoingAuctionsContainer.getChildren().clear();
+        upcomingAuctionsContainer.getChildren().clear();
+        endedAuctionsContainer.getChildren().clear();
 
-            int ongoingCount = 0;
-            int upcomingCount = 0;
-            int endedCount = 0;
+        int ongoingCount = 0, upcomingCount = 0, endedCount = 0;
 
+        if (itemsFromServer != null) {
             for (ItemSummary item : itemsFromServer) {
-                try {
-                    FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
-                    VBox cardBox = fxmlLoader.load();
+                if (item.getStatus() == AuctionStatus.BANNED) continue;
 
+                try {
+                    FXMLLoader loader = new FXMLLoader(
+                            getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
+                    VBox cardBox = loader.load();
                     cardBox.setPrefWidth(280);
                     cardBox.setMinWidth(280);
                     cardBox.setMaxWidth(280);
 
-                    ItemCardHPController cardHPController = fxmlLoader.getController();
-                    cardHPController.setData(item);
+                    ItemCardHPController cardController = loader.getController();
+                    cardController.setData(item);
+                    AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
 
-                    String status = (item.getStatus() != null)
-                            ? item.getStatus().toString().toUpperCase() : "";
-
-                    if (status.contains("ONGOING") || status.contains("LIVE")) {
-                        ongoingAuctionsContainer.getChildren().add(cardBox);
-                        ongoingCount++;
-                    } else if (status.contains("UPCOMING")) {
-                        upcomingAuctionsContainer.getChildren().add(cardBox);
-                        upcomingCount++;
-                    } else {
-                        endedAuctionsContainer.getChildren().add(cardBox);
-                        endedCount++;
+                    switch (status) {
+                        case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
+                        case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
+                        case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
-        });
+        }
+
+        updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
     }
 
     private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
-        ongoingSection.setVisible(ongoing > 0);
-        ongoingSection.setManaged(ongoing > 0);
-
-        upcomingSection.setVisible(upcoming > 0);
-        upcomingSection.setManaged(upcoming > 0);
-
-        endedSection.setVisible(ended > 0);
-        endedSection.setManaged(ended > 0);
+        setSectionVisible(ongoingSection,  ongoing  > 0);
+        setSectionVisible(upcomingSection, upcoming > 0);
+        setSectionVisible(endedSection,    ended    > 0);
     }
 
-    // event handlers
+    private void setSectionVisible(VBox section, boolean visible) {
+        section.setVisible(visible);
+        section.setManaged(visible);
+    }
+
+    // Event handlers
     @FXML
     private void handleCategoryClick(MouseEvent event) {
-        VBox clicked = (VBox) event.getSource();
-        String category = clicked.getId();
-        boolean isReset = category.equalsIgnoreCase(currentCategory);
+        VBox clickedBox = (VBox) event.getSource();
+        String rawId = clickedBox.getId();
 
-        if (isReset) {
+        if (rawId == null || rawId.isBlank()) return;
+        String targetCategory = switch (rawId.toUpperCase()) {
+            case "FASHION"     -> "Fashion";
+            case "ELECTRONICS" -> "Electronics";
+            case "HOME"        -> "Home";
+            case "ART"         -> "Art";
+            case "BOOK"       -> "Book";
+            case "JEWELRY"     -> "Jewelry";
+            case "SPORTS"      -> "Sports";
+            default            -> rawId;
+        };
+        if (targetCategory.equalsIgnoreCase(currentCategory)) {
             currentCategory = "ALL";
         } else {
-            currentCategory = category;
+            currentCategory = targetCategory;
         }
-        clicked.getParent().getChildrenUnmodifiable().forEach(node -> {
-            node.getStyleClass().remove("active-category");
+
+        clickedBox.getParent().getChildrenUnmodifiable().forEach(node -> {
+            if (node instanceof VBox) {
+                node.getStyleClass().remove("active-category");
+            }
         });
 
         if (!"ALL".equals(currentCategory)) {
-            clicked.getStyleClass().add("active-category");
+            clickedBox.getStyleClass().add("active-category");
         }
-        applyFilter();
+        fetchItemsFromServer();
     }
 
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com.auction.client/fxml/AuctionFormPage.fxml"));
             Parent root = loader.load();
-            Node sourceNode = (Node) event.getSource();
 
-            //AuctionFormController auctionFormController = loader.getController();
-
-            Scene currentScene = sourceNode.getScene();
+            Scene currentScene = ((Node) event.getSource()).getScene();
             Stage stage = (Stage) currentScene.getWindow();
-
             currentScene.setRoot(root);
             stage.setTitle("Online Auction System - Add Item");
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Không tìm thấy file AuctionFormPage.fxml! Kiểm tra lại đường dẫn.");
+            ToastService.showError(((Node) event.getSource()).getScene(), "Could not open Auction Form page.");
         }
     }
 
-    // utilities
     public void refreshItems() {
-        System.out.println("Refreshing homepage items...");
-        Platform.runLater(() -> {
-            ongoingAuctionsContainer.getChildren().clear();
-            upcomingAuctionsContainer.getChildren().clear();
-            endedAuctionsContainer.getChildren().clear();
-        });
-        getDataItemsAndDisplay();
+        fetchItemsFromServer();
     }
 
     public void refreshNavBarInfo() {
         if (navBarController != null) {
             navBarController.refreshUserInfo();
-        } else {
-            System.out.println("Cảnh báo: Không kết nối được với NavBarController..");
         }
     }
 }
-
