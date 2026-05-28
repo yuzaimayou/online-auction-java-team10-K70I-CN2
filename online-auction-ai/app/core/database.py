@@ -23,11 +23,11 @@ def get_db_connection():
 def init_db():
     db = get_db_connection()
 
-    # Dọn dẹp bảng cũ
-    db.execute("DROP TABLE IF EXISTS vec_docs;")
-    db.execute("DROP TABLE IF EXISTS docs_info;")
-    db.execute("DROP TABLE IF EXISTS vec_items;")
-    db.execute("DROP TABLE IF EXISTS items_info;")
+    # # Dọn dẹp bảng cũ
+    # db.execute("DROP TABLE IF EXISTS vec_docs;")
+    # db.execute("DROP TABLE IF EXISTS docs_info;")
+    # db.execute("DROP TABLE IF EXISTS vec_items;")
+    # db.execute("DROP TABLE IF EXISTS items_info;")
 
     # Bảng Vector cho Tài liệu (384 chiều)
     db.execute("""
