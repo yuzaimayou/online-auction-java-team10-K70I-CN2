@@ -1,16 +1,20 @@
 package com.auction.client.service;
 
 import com.auction.client.util.AppConfig;
+import com.auction.client.util.UserSession;
+import com.auction.client.validation.AuctionFormValidator;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.account.User;
-import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
+import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.GsonUtil;
+import com.auction.shared.util.ImageUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -18,6 +22,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -120,27 +128,119 @@ public class ItemsService {
                 .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
     }
     // ITEM - CRUD
-    public CompletableFuture<ResponseMessage> createItem(String jsonPayload) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
+    public CompletableFuture<ResponseMessage> createItem(
+            String itemName, String itemDesc, String category,
+            LocalDate startDate, LocalDate endDate,
+            String startTime, String endTime,
+            String initPriceStr, String bidStepStr,
+            List<File> selectedFiles) {
+        try {
+            Double initPrice = AuctionFormValidator.parsePositive(initPriceStr);
+            Double bidStep = AuctionFormValidator.parsePositive(bidStepStr);
+            LocalDateTime startDateTime = LocalDateTime.of(startDate, LocalTime.parse(startTime));
+            LocalDateTime endDateTime = LocalDateTime.of(endDate, LocalTime.parse(endTime));
 
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+            List<String[]> imagesConverted = new ArrayList<>();
+
+            for (File file : selectedFiles) {
+                String[] base64 = ImageUtil.convertImgToBase64(file);
+
+                if (base64 != null) {
+                    imagesConverted.add(base64);
+                }
+            }
+
+            String userId = UserSession.getInstance()
+                            .getLoggedInUser()
+                            .getId();
+
+            ItemPayload payload = new ItemPayload(
+                            itemName, category, itemDesc, imagesConverted,
+                            startDateTime, endDateTime,
+                            initPrice, bidStep, userId);
+
+            String jsonPayload = gson.toJson(payload);
+            HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(String.format("%s/api/items",
+                                    AppConfig.getHttpUrl())))
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                            .build();
+
+            return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(response ->
+                                    gson.fromJson(response.body(), ResponseMessage.class));
+        } catch (IOException e) {
+            CompletableFuture<ResponseMessage> failed = new CompletableFuture<>();
+            failed.completeExceptionally(e);
+            return failed;
+        }
     }
 
-    public CompletableFuture<ResponseMessage> updateItem(String jsonPayload, String itemId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s",
-                        AppConfig.getHttpUrl(), itemId)))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
+    public CompletableFuture<ResponseMessage> updateItem(
+            String itemName, String itemDesc, String category,
+            LocalDate startDate, LocalDate endDate,
+            String startTime, String endTime,
+            String initPriceStr, String bidStepStr,
+            List<String> existingImagePaths, List<File> newFiles, String itemId) {
+        try {
+            List<File> allImages = new ArrayList<>(newFiles);
+            AuctionFormValidator.Result result = AuctionFormValidator.validateUpdate(
+                            itemName, itemDesc, category,
+                            startDate, endDate,
+                            startTime, endTime,
+                            initPriceStr, bidStepStr, allImages);
 
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+            if(!result.isValid()){
+                CompletableFuture<ResponseMessage> failed = new CompletableFuture<>();
+                failed.complete(new ResponseMessage("error", result.getError().message, null)
+                );
+                return failed;
+            }
+
+            Double initPrice = AuctionFormValidator.parsePositive(initPriceStr);
+            Double bidStep = AuctionFormValidator.parsePositive(bidStepStr);
+            LocalDateTime startDateTime= LocalDateTime.of(startDate, LocalTime.parse(startTime));
+
+            LocalDateTime endDateTime= LocalDateTime.of(endDate, LocalTime.parse(endTime));
+
+            List<String[]> images = new ArrayList<>();
+
+            for(String oldPath:existingImagePaths){
+                images.add(new String[]{oldPath, null}
+                );
+            }
+            for(File file:newFiles){
+                String[] base64= ImageUtil.convertImgToBase64(file);
+
+                if(base64!=null){
+                    images.add(base64);
+                }
+            }
+            ItemPayload payload = new ItemPayload(
+                            itemName, category, itemDesc, images,
+                            startDateTime, endDateTime, initPrice, bidStep,
+                            UserSession.getInstance().getCurrentUserId()
+            );
+            HttpRequest request = HttpRequest.newBuilder()
+                            .uri(
+                                    URI.create(String.format("%s/api/items/%s",
+                                            AppConfig.getHttpUrl(), itemId)))
+                            .header("Content-Type", "application/json")
+                            .PUT(
+                                    HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                            .build();
+            return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(response -> gson.fromJson(
+                                            response.body(),
+                                            ResponseMessage.class));
+        }
+        catch(Exception e){
+            CompletableFuture<ResponseMessage> failed= new CompletableFuture<>();
+            failed.completeExceptionally(e);
+
+            return failed;
+        }
     }
 
     public CompletableFuture<ResponseMessage> deleteItem(String itemId) {
@@ -188,27 +288,6 @@ public class ItemsService {
                         throw new RuntimeException(response.getMessage());
                     }
                     Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
-                    JsonElement jsonElement = gson.toJsonTree(response.getData());
-                    return gson.fromJson(jsonElement, listType);
-                });
-    }
-
-    // BID HISTORY
-    public CompletableFuture<List<BidTransaction>> getBidHistory(String itemId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/bids/history/%s",
-                        AppConfig.getHttpUrl(), itemId)))
-                .GET()
-                .build();
-
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(body -> {
-                    ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
-                    if (!"success".equals(response.getStatus()) || response.getData() == null) {
-                        throw new RuntimeException(response.getMessage());
-                    }
-                    Type listType = new TypeToken<List<BidTransaction>>() {}.getType();
                     JsonElement jsonElement = gson.toJsonTree(response.getData());
                     return gson.fromJson(jsonElement, listType);
                 });

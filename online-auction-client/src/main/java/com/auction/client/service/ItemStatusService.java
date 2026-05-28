@@ -15,20 +15,17 @@ import javafx.scene.layout.VBox;
 
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 public class ItemStatusService {
 
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
-
     public String formatTimeLeft(LocalDateTime from, LocalDateTime to) {
         if (to == null || from == null) return "N/A";
         if (from.isAfter(to)) return "00d 00h 00m 00s";
 
-        long days    = ChronoUnit.DAYS.between(from, to);
-        long hours   = ChronoUnit.HOURS.between(from, to)   % 24;
+        long days = ChronoUnit.DAYS.between(from, to);
+        long hours = ChronoUnit.HOURS.between(from, to)   % 24;
         long minutes = ChronoUnit.MINUTES.between(from, to) % 60;
         long seconds = ChronoUnit.SECONDS.between(from, to) % 60;
 
@@ -36,8 +33,7 @@ public class ItemStatusService {
     }
     // COMMON
     public String formatPrice(double price) {
-        NumberFormat formatter =
-                NumberFormat.getInstance(new Locale("vi","VN"));
+        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi","VN"));
         return "$ " + formatter.format(price) + " USD";
     }
 
@@ -45,7 +41,6 @@ public class ItemStatusService {
         if(item==null){
             return AuctionStatus.ENDED;
         }
-        // Item.getStatus() giờ trả về AuctionStatus enum → so sánh bằng ==
         if(item.getStatus() == AuctionStatus.BANNED){
             return AuctionStatus.BANNED;
         }
@@ -56,7 +51,6 @@ public class ItemStatusService {
         if(item==null){
             return AuctionStatus.ENDED;
         }
-        // ItemSummary.getStatus() trả về AuctionStatus enum → so sánh bằng ==
         if(item.getStatus() == AuctionStatus.BANNED){
             return AuctionStatus.BANNED;
         }
@@ -66,11 +60,9 @@ public class ItemStatusService {
         );
     }
 
-    // Helper dùng trong Controller để check ONGOING
     public boolean isOngoing(Item item){
         return resolveStatus(item) == AuctionStatus.ONGOING;
     }
-    // CARD UI
     public void updateCardUi(
             ItemSummary item,
             Label statusLabel,
@@ -79,13 +71,11 @@ public class ItemStatusService {
             Label endTimeLabel,
             Label timeTitleLabel
     ){
-
         AuctionStatus status=resolveStatus(item);
         LocalDateTime now = LocalDateTime.now();
-
+        statusLabel.setText(status.getDisplayName());
         switch(status){
             case UPCOMING -> {
-                statusLabel.setText(ItemStatusConstants.UPCOMING);
                 statusLabel.setStyle("-fx-background-color: #fff3c4; -fx-text-fill: #eea504;");
                 priceTitleLabel.setText("START PRICE");
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
@@ -93,7 +83,6 @@ public class ItemStatusService {
                 timeTitleLabel.setText("Starts: "+ DateTimeUtil.format(item.getStartTime()));
             }
             case ONGOING -> {
-                statusLabel.setText(ItemStatusConstants.ONGOING);
                 statusLabel.setStyle("-fx-background-color: #ecfdf5; -fx-text-fill: #10b981;");
                 priceTitleLabel.setText("CURRENT BID");
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
@@ -101,7 +90,6 @@ public class ItemStatusService {
                 timeTitleLabel.setText("Ends: "+ DateTimeUtil.format(item.getEndTime()));
             }
             case ENDED -> {
-                statusLabel.setText(ItemStatusConstants.ENDED);
                 statusLabel.setStyle("-fx-background-color: #9e9e9e; -fx-text-fill: white;");
                 priceTitleLabel.setText("FINAL PRICE");
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
@@ -206,28 +194,16 @@ public class ItemStatusService {
     }
 
     public void restrictOwnerInteractions(){
-
         bidControlsContainer.setDisable(true);
-
         btnAutoBidToggle.setDisable(true);
-
         toggleInteractiveControlMode(false);
-
-        statusMessageLabel.setText(
-                "👤 You own this item"
-        );
+        statusMessageLabel.setText("👤 You are the owner of this item");
     }
 
-    private void toggleInteractiveControlMode(
-            boolean enable
-    ){
-
+    private void toggleInteractiveControlMode(boolean enable){
         bidControlsContainer.setVisible(enable);
-
         bidControlsContainer.setManaged(enable);
-
         statusOverlay.setVisible(!enable);
-
         statusOverlay.setManaged(!enable);
     }
 }

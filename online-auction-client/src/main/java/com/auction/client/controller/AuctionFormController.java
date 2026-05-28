@@ -2,13 +2,9 @@ package com.auction.client.controller;
 
 import com.auction.client.service.ItemsService;
 import com.auction.client.util.NavigationUtil;
-import com.auction.client.util.UserSession;
-import com.auction.shared.model.enums.AuctionStatus;
-import com.auction.shared.model.payloads.ItemPayload;
-import com.auction.shared.util.ImageUtil;
-import com.auction.shared.util.LocalDateTimeAdapter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.auction.client.util.ToastUtil;
+import com.auction.client.validation.AuctionFormValidator;
+import com.auction.client.validation.AuctionFormValidator.Result;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -20,25 +16,27 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.auction.client.util.ToastUtil;
-
+/**
+ * Trách nhiệm:
+ *   1. Thu thập data từ UI
+ *   2. Validate format qua AuctionFormValidator
+ *   3. Giao ItemsService xử lý
+ *   4. Hiển thị kết quả
+ * Không biết gì về: JSON, base64, userId, ItemPayload.
+ */
 public class AuctionFormController {
+
     @FXML
-    private Label lblMessage;
+    private Label  lblMessage;
     @FXML
     private TextField txtItemName;
     @FXML
@@ -47,8 +45,6 @@ public class AuctionFormController {
     private DatePicker startDateP;
     @FXML
     private DatePicker endDateP;
-    @FXML
-    private ImageView imageViewItem;
     @FXML
     private ComboBox<String> cbStartTime;
     @FXML
@@ -67,322 +63,191 @@ public class AuctionFormController {
     private VBox smallAddBtn;
     @FXML
     private Button btnSubmit;
-    private File selectedImageFile;
-    private Gson gson = new GsonBuilder()
-            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .create();
-    private final ItemsService itemsService = ItemsService.getInstance();
+
+    private final List<File> selectedFiles = new ArrayList<>();
+    private static final int MAX_IMAGES = 5;
     private boolean isSubmitting = false;
 
+    // ── Dependency ────────────────────────────────────────────────────────────
+    private final ItemsService itemsService = ItemsService.getInstance();
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
-        cbStartTime.getItems().clear();
-        cbEndTime.getItems().clear();
+        populateTimePickers();
+        setupDescriptionAutoResize();
+    }
+    // ── Event handlers ────────────────────────────────────────────────────────
 
-        for (int hour = 0; hour < 24; hour++) {
-            for (int minute = 0; minute < 60; minute += 30) {
-                String time = String.format("%02d:%02d", hour, minute);
+    @FXML
+    public void handleAddItem(ActionEvent event) {
+        if (isSubmitting) return;
+
+        String itemName = txtItemName.getText().trim();
+        String itemDesc = txtItemDesc.getText().trim();
+        String category = getSelectedCategory();
+        LocalDate startDate = startDateP.getValue();
+        LocalDate endDate = endDateP.getValue();
+        String startTime = cbStartTime.getValue();
+        String endTime = cbEndTime.getValue();
+        String initPriceStr = txtInitPrice.getText().trim();
+        String bidStepStr = txtBidStep.getText().trim();
+
+        // 2. Validate
+        Result result = AuctionFormValidator.validateCreate(
+                itemName, itemDesc, category, startDate, endDate, startTime, endTime,
+                initPriceStr, bidStepStr, selectedFiles
+        );
+        if (!result.isValid()) {
+            showValidationError(result);
+            return;
+        }
+
+        // 3. Submit — service tự lo phần còn lại
+        isSubmitting = true;
+        setSubmitEnabled(false);
+        itemsService.createItem(
+                        itemName, itemDesc, category,
+                        startDate, endDate, startTime, endTime,
+                        initPriceStr, bidStepStr, selectedFiles
+                )
+                .thenAccept(response -> {
+                    if ("success".equals(response.getStatus())) {
+                        Platform.runLater(() ->
+                                ToastUtil.showSuccess(lblMessage.getScene(), response.getMessage()));
+                        PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
+                        pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
+                        pause.play();
+                    } else {
+                        isSubmitting = false;
+                        Platform.runLater(() -> {
+                            ToastUtil.showInfo(lblMessage.getScene(), response.getMessage());
+                            setSubmitEnabled(true);
+                        });
+                    }
+                })
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    isSubmitting = false;
+                    Platform.runLater(() -> {
+                        ToastUtil.showInfo(lblMessage.getScene(),
+                                "Failed to connect to server. Please submit again");
+                        setSubmitEnabled(true);
+                    });
+                    return null;
+                });
+    }
+
+    @FXML
+    public void handleChooseImage() {
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.webp"));
+
+        List<File> files = chooser.showOpenMultipleDialog(dragDropArea.getScene().getWindow());
+        if (files == null) return;
+
+        if (selectedFiles.size() + files.size() > MAX_IMAGES) {
+            ToastUtil.showInfo(lblMessage.getScene(), "Only upload max " + MAX_IMAGES + " images");
+            return;
+        }
+        selectedFiles.addAll(files);
+        refreshImagePreview();
+    }
+
+    @FXML
+    public void handleSwitchToHomePage(ActionEvent event) {
+        NavigationUtil.handleSwitchToHomePage(lblMessage);
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+
+    private void populateTimePickers() {
+        for (int h = 0; h < 24; h++) {
+            for (int m = 0; m < 60; m += 30) {
+                String time = String.format("%02d:%02d", h, m);
                 cbStartTime.getItems().add(time);
                 cbEndTime.getItems().add(time);
             }
         }
         cbStartTime.setValue("00:00");
         cbEndTime.setValue("00:00");
+    }
 
-        // xuống dòng cho item desciption
+    private void setupDescriptionAutoResize() {
         txtItemDesc.setWrapText(true);
-        txtItemDesc.textProperty().addListener((observable, oldValue, newValue) -> {
-            javafx.scene.text.Text helper = new javafx.scene.text.Text();
-            helper.setText(newValue);
+        txtItemDesc.textProperty().addListener((obs, oldVal, newVal) -> {
+            javafx.scene.text.Text helper = new javafx.scene.text.Text(newVal);
             helper.setFont(txtItemDesc.getFont());
-
             helper.setWrappingWidth(txtItemDesc.getWidth() - 40);
-
-            double textHeight = helper.getLayoutBounds().getHeight();
-            double newHeight = textHeight + 40;
-
-            txtItemDesc.setPrefHeight(Math.max(80, newHeight));
+            txtItemDesc.setPrefHeight(Math.max(80, helper.getLayoutBounds().getHeight() + 40));
         });
-
     }
 
-
-    private boolean isAnyNull(Object... items) {
-        for (Object item : items) {
-            if (item == null) return true;
-        }
-        return false;
+    private String getSelectedCategory() {
+        Toggle toggle = categoryGroup.getSelectedToggle();
+        return toggle != null ? toggle.getUserData().toString() : null;
     }
 
-    private Double convertNumeric(String str) {
-        if (str == null || str.isEmpty()) {
-            return null;
-        }
-        try {
-            double d = Double.parseDouble(str);
-            if (d <= 0) {
-                return -2.0;
-            }
-            return d;
-        } catch (NumberFormatException e) {
-            return -2.0;
+    private void showValidationError(Result result) {
+        String msg = result.getError().message;
+        switch (result.getError()) {
+            case BID_STEP_EXCEEDS_PRICE,
+                 START_TIME_IN_PAST,
+                 END_TIME_BEFORE_START -> ToastUtil.showError(lblMessage.getScene(), msg);
+            default                    -> ToastUtil.showInfo(lblMessage.getScene(), msg);
         }
     }
 
-
-    @FXML
-    public void handleAddItem(ActionEvent event) {
-        if (isSubmitting) {
-            return;
-        }
-
-        String itemName = txtItemName.getText().trim();
-        String itemDesc = txtItemDesc.getText().trim();
-        Toggle selectedToggle = categoryGroup.getSelectedToggle();
-        String selectedCategory;
-        //time
-        LocalDate startDate = startDateP.getValue();
-        LocalDate endDate = endDateP.getValue();
-        String startTime = cbStartTime.getValue();
-        String endTime = cbEndTime.getValue();
-
-        //price
-        Double initPrice = convertNumeric(txtInitPrice.getText().trim());
-        Double bidStep = convertNumeric(txtBidStep.getText().trim());
-        //User id
-        String userId = UserSession.getInstance().getLoggedInUser().getId();
-
-        //Kiem tra
-        if (isAnyNull(itemName, itemDesc, selectedToggle, startDate, endDate, startTime, endTime, initPrice, bidStep)
-                || selectedFiles.isEmpty()) {
-            ToastUtil.showInfo(
-                    lblMessage.getScene(), "Please fill in all required fields.");
-            return;
-        }
-        if (initPrice == -2 ) {
-            ToastUtil.showInfo(
-                    lblMessage.getScene(), "Price must be a positive number.");
-            return;
-        }
-        if (bidStep == -2) {
-            ToastUtil.showInfo(
-                    lblMessage.getScene(), "Bid steps must be a positive number.");
-            return;
-        }
-        if (bidStep > initPrice) {
-            ToastUtil.showError(
-                    lblMessage.getScene(), "Bid step cannot be greater than the starting price!");
-            return;
-        }
-
-        LocalTime parsedStartTime = LocalTime.parse(startTime);
-        LocalTime parsedEndTime = LocalTime.parse(endTime);
-        LocalDateTime startDateTime = LocalDateTime.of(startDate, parsedStartTime);
-        LocalDateTime endDateTime = LocalDateTime.of(endDate, parsedEndTime);
-        LocalDateTime now = LocalDateTime.now();
-
-        if (!startDateTime.isAfter(now)) {
-            ToastUtil.showError(lblMessage.getScene(),
-                    "Start time must be after current time."
-            );
-            return;
-        }
-        if (!endDateTime.isAfter(startDateTime)) {
-            ToastUtil.showError(lblMessage.getScene(),
-                    "End time must be after start time."
-            );
-            return;
-        }
-        //Xu ly phan loai san pham
-        selectedCategory = selectedToggle.getUserData().toString();
-        //Xu ly hinh anh
-        List<String[]> imagesConverted = new ArrayList<>();
-        try {
-            if (selectedFiles != null && !selectedFiles.isEmpty()) {
-                for (File file : selectedFiles) {
-                    String[] base64 = ImageUtil.convertImgToBase64(file);
-                    if (base64 != null) {
-                        imagesConverted.add(base64);
-                    }
-                }
-            }
-            if (imagesConverted == null) {
-                ToastUtil.showInfo(
-                        lblMessage.getScene(),"Image processing failed. Please try again.");
-                return;
-            }
-        } catch (IOException e) {
-            ToastUtil.showInfo(
-                    lblMessage.getScene(),"Error processing images: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        ItemPayload payload = new ItemPayload(itemName, selectedCategory, itemDesc, imagesConverted, startDateTime, endDateTime, initPrice, bidStep, userId);
-        String jsonPayload = gson.toJson(payload);
-        isSubmitting = true;
-
-        Platform.runLater(() -> {
-            smallAddBtn.setDisable(true);
-            smallAddBtn.setOpacity(0.5);
-
-            btnSubmit.setDisable(true);
-            btnSubmit.setText("Creating...");
-        });
-        itemsService.createItem(jsonPayload)
-                .thenAccept(responseMessage -> {
-                    if ("success".equals(responseMessage.getStatus())) {
-                        Platform.runLater(() -> {
-                            ToastUtil.showSuccess(
-                                    lblMessage.getScene(), responseMessage.getMessage());
-                        });
-                        PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
-
-                        pause.setOnFinished(e ->
-                                NavigationUtil.handleSwitchToHomePage(lblMessage)
-                        );
-
-                        pause.play();
-                    } else {
-
-                        isSubmitting = false;
-
-                        Platform.runLater(() -> {
-
-                            ToastUtil.showInfo(
-                                    lblMessage.getScene(),responseMessage.getMessage());
-
-                            smallAddBtn.setDisable(false);
-                            smallAddBtn.setOpacity(1);
-
-                            Button clickedButton = (Button) event.getSource();
-                            clickedButton.setDisable(false);
-                            clickedButton.setText("Add Item");
-                        });
-                    }
-                })
-                .exceptionally(e -> {
-
-                    e.printStackTrace();
-
-                    isSubmitting = false;
-
-                    Platform.runLater(() -> {
-
-                        ToastUtil.showInfo(
-                                lblMessage.getScene(),"Failed to connect to server. Please submit again");
-
-                        smallAddBtn.setDisable(false);
-                        smallAddBtn.setOpacity(1);
-
-                        btnSubmit.setDisable(false);
-                        btnSubmit.setText("Add Item");
-                    });
-
-                    return null;
-                });
+    private void setSubmitEnabled(boolean enabled) {
+        smallAddBtn.setDisable(!enabled);
+        smallAddBtn.setOpacity(enabled ? 1.0 : 0.5);
+        btnSubmit.setDisable(!enabled);
+        btnSubmit.setText(enabled ? "Add Item" : "Creating...");
     }
 
-    private List<File> selectedFiles = new ArrayList<>();
-    private final int MAX_IMAGES = 5;
+    private void refreshImagePreview() {
+        boolean hasFiles = !selectedFiles.isEmpty();
+        dragDropArea.setVisible(!hasFiles);
+        dragDropArea.setManaged(!hasFiles);
+        imagesPreviewContainer.setVisible(hasFiles);
+        imagesPreviewContainer.setManaged(hasFiles);
 
-    public void handleChooseImage() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.webp"));
-
-        List<File> files = fileChooser.showOpenMultipleDialog(dragDropArea.getScene().getWindow());
-
-        if (files != null) {
-            if (selectedFiles.size() + files.size() > MAX_IMAGES) {
-                Platform.runLater(() -> {
-                    lblMessage.setTextFill(Color.RED);
-                    lblMessage.setText("Only upload max " + MAX_IMAGES + " images");
-                });
-                return;
-            }
-
-            selectedFiles.addAll(files);
-
-            lblMessage.setText("");
-            updateUI();
-        }
-    }
-
-    private void updateUI() {
-        if (selectedFiles.isEmpty()) {
-            dragDropArea.setVisible(true);
-            dragDropArea.setManaged(true);
-            imagesPreviewContainer.setVisible(false);
-            imagesPreviewContainer.setManaged(false);
-        } else {
-            dragDropArea.setVisible(false);
-            dragDropArea.setManaged(false);
-            imagesPreviewContainer.setVisible(true);
-            imagesPreviewContainer.setManaged(true);
-
-            imagesPreviewContainer.getChildren().removeIf(node -> node != smallAddBtn);
-
-            for (File file : selectedFiles) {
-                imagesPreviewContainer.getChildren().add(imagesPreviewContainer.getChildren().indexOf(smallAddBtn), createImageCard(file));
-            }
-
+        if (hasFiles) {
+            imagesPreviewContainer.getChildren().removeIf(n -> n != smallAddBtn);
+            int idx = imagesPreviewContainer.getChildren().indexOf(smallAddBtn);
+            for (File f : selectedFiles)
+                imagesPreviewContainer.getChildren().add(idx++, createImageCard(f));
             smallAddBtn.setVisible(selectedFiles.size() < MAX_IMAGES);
         }
     }
 
     private StackPane createImageCard(File file) {
-        StackPane card = new StackPane();
-        card.setPickOnBounds(false);
+        final double W = 150, H = 120;
 
-        double fixedWidth = 150;
-        double fixedHeight = 120;
-
-        VBox imageContainer = new VBox();
-        imageContainer.getStyleClass().add("image-border-container");
-        imageContainer.setAlignment(Pos.CENTER);
-        imageContainer.setMinWidth(fixedWidth);
-        imageContainer.setMaxWidth(fixedWidth);
-        imageContainer.setMinHeight(fixedHeight);
-        imageContainer.setMaxHeight(fixedHeight);
-
-        ImageView iv = new ImageView();
-        Image img = new Image(file.toURI().toString());
-
-        iv.setImage(img);
+        ImageView iv = new ImageView(new Image(file.toURI().toString()));
         iv.setPreserveRatio(true);
+        double ratio = iv.getImage().getWidth() / iv.getImage().getHeight();
+        if (ratio > W / H) iv.setFitHeight(H); else iv.setFitWidth(W);
 
-        double imgRatio = img.getWidth() / img.getHeight();
-        double containerRatio = fixedWidth / fixedHeight;
-
-        if (imgRatio > containerRatio) {
-            iv.setFitHeight(fixedHeight);
-        } else {
-            iv.setFitWidth(fixedWidth);
-        }
-
-        Rectangle clip = new Rectangle(fixedWidth, fixedHeight);
+        VBox box = new VBox(iv);
+        box.getStyleClass().add("image-border-container");
+        box.setAlignment(Pos.CENTER);
+        box.setMinSize(W, H);
+        box.setMaxSize(W, H);
+        Rectangle clip = new Rectangle(W, H);
         clip.setArcWidth(20);
         clip.setArcHeight(20);
-        imageContainer.setClip(clip);
+        box.setClip(clip);
 
-        imageContainer.getChildren().add(iv);
+        Button del = new Button("✕");
+        del.getStyleClass().add("delete-photo-btn");
+        StackPane.setAlignment(del, Pos.TOP_RIGHT);
+        del.setOnAction(e -> { selectedFiles.remove(file); refreshImagePreview(); });
 
-        Button btnDelete = new Button("✕");
-        btnDelete.getStyleClass().add("delete-photo-btn");
-
-        StackPane.setAlignment(btnDelete, Pos.TOP_RIGHT);
-
-        btnDelete.setOnAction(e -> {
-            selectedFiles.remove(file);
-            updateUI();
-        });
-
-        card.getChildren().addAll(imageContainer, btnDelete);
-
+        StackPane card = new StackPane(box, del);
+        card.setPickOnBounds(false);
         return card;
-    }
-    @FXML
-    public void handleSwitchToHomePage(ActionEvent event) {
-        NavigationUtil.handleSwitchToHomePage(lblMessage);
     }
 }
