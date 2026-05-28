@@ -5,7 +5,7 @@ import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
@@ -67,10 +67,10 @@ public class WalletService {
                     return BidResult.fail("Bạn đang là người đặt giá cao nhất cho sản phẩm này");
                 }
 
-                String status = item.getStatus();
-                if (!ItemStatusConstants.ONGOING.equalsIgnoreCase(status)) {
+                AuctionStatus status = item.getStatus();
+                if (status != AuctionStatus.ONGOING) {
                     rollback(conn);
-                    return BidResult.fail("Phiên đấu giá không đang hoạt động (status=" + status + ")");
+                    return BidResult.fail("Phiên đấu giá không đang hoạt động (status=" + status.name() + ")");
                 }
 
                 if (LocalDateTime.now().isAfter(item.getEndTime())) {

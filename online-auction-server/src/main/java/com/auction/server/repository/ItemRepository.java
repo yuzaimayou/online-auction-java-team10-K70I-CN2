@@ -2,7 +2,7 @@ package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.util.StringUtil;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
@@ -319,7 +319,7 @@ public class ItemRepository {
 
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
-        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != 'BANNED' AND (");
+        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != '" + AuctionStatus.BANNED.name() + "' AND (");
         for (int i = 0; i < keywords.size(); i++) {
             sql.append("LOWER(search_name) LIKE ?");
             if (i < keywords.size() - 1) sql.append(" AND ");
@@ -392,7 +392,7 @@ public class ItemRepository {
                 ORDER BY %s
                 LIMIT 10 OFFSET ?
                 """,
-                ItemStatusConstants.BANNED,
+                AuctionStatus.BANNED.name(),
                 filterCategory ? "AND LOWER(category) = LOWER(?)" : "",
                 safeSort);
 
@@ -511,9 +511,10 @@ public class ItemRepository {
 
     // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
     public boolean markEnded(Connection conn, String itemId) {
-        String sql = "UPDATE items SET status = '" + ItemStatusConstants.ENDED + "' WHERE id = ?";
+        String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, itemId);
+            stmt.setString(1, AuctionStatus.ENDED.name());
+            stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
@@ -585,29 +586,29 @@ public class ItemRepository {
         try (Connection conn = DatabaseManager.getConnection()) {
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
-                ps.setString(1, ItemStatusConstants.ONGOING);
+                ps.setString(1, AuctionStatus.ONGOING.name());
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) updatedId.add(rs.getString("id"));
                 }
             }
 
             try (PreparedStatement ps = conn.prepareStatement(updateEndedSql)) {
-                ps.setString(1, ItemStatusConstants.ENDED);
-                ps.setString(2, ItemStatusConstants.ONGOING);
+                ps.setString(1, AuctionStatus.ENDED.name());
+                ps.setString(2, AuctionStatus.ONGOING.name());
                 int rows = ps.executeUpdate();
                 logStatusUpdate("ONGOING->ENDED", rows);
             }
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
-                ps.setString(1, ItemStatusConstants.UPCOMING);
+                ps.setString(1, AuctionStatus.UPCOMING.name());
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) updatedId.add(rs.getString("id"));
                 }
             }
 
             try (PreparedStatement ps = conn.prepareStatement(updateOngoingSql)) {
-                ps.setString(1, ItemStatusConstants.ONGOING);
-                ps.setString(2, ItemStatusConstants.UPCOMING);
+                ps.setString(1, AuctionStatus.ONGOING.name());
+                ps.setString(2, AuctionStatus.UPCOMING.name());
                 int rows = ps.executeUpdate();
                 logStatusUpdate("UPCOMING->ONGOING", rows);
             }
@@ -648,13 +649,13 @@ public class ItemRepository {
         return 0.0;
     }
 
-    public boolean updateStatus(String itemId, String status) {
+    public boolean updateStatus(String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            stmt.setString(1, status);
+            stmt.setString(1, status.name());
             stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
@@ -663,10 +664,10 @@ public class ItemRepository {
         }
     }
 
-    public boolean updateStatus(Connection conn, String itemId, String status) {
+    public boolean updateStatus(Connection conn, String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, status);
+            stmt.setString(1, status.name());
             stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {

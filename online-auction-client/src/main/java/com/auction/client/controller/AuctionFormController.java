@@ -1,6 +1,7 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.ItemsService;
+import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.ToastUtil;
 import com.auction.client.validation.AuctionFormValidator;
@@ -9,14 +10,10 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
@@ -24,6 +21,7 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Trách nhiệm:
@@ -35,41 +33,38 @@ import java.util.List;
  */
 public class AuctionFormController {
 
-    @FXML
-    private Label  lblMessage;
-    @FXML
-    private TextField txtItemName;
-    @FXML
-    private ToggleGroup categoryGroup;
-    @FXML
-    private DatePicker startDateP;
-    @FXML
-    private DatePicker endDateP;
-    @FXML
-    private ComboBox<String> cbStartTime;
-    @FXML
-    private ComboBox<String> cbEndTime;
-    @FXML
-    private TextArea txtItemDesc;
-    @FXML
-    private TextField txtInitPrice;
-    @FXML
-    private TextField txtBidStep;
-    @FXML
-    private VBox dragDropArea;
-    @FXML
-    private HBox imagesPreviewContainer;
-    @FXML
-    private VBox smallAddBtn;
-    @FXML
-    private Button btnSubmit;
+    // ── Constants ─────────────────────────────────────────────────────────────
+    private static final int    MAX_IMAGES        = 5;
+    private static final double NAV_DELAY_SECONDS = 0.5;
+    private static final String STATUS_SUCCESS    = "success";
 
-    private final List<File> selectedFiles = new ArrayList<>();
-    private static final int MAX_IMAGES = 5;
-    private boolean isSubmitting = false;
+    // ── FXML fields ───────────────────────────────────────────────────────────
+    @FXML private Label            lblMessage;
+    @FXML private TextField        txtItemName;
+    @FXML private ToggleGroup      categoryGroup;
+    @FXML private DatePicker       startDateP;
+    @FXML private DatePicker       endDateP;
+    @FXML private ComboBox<String> cbStartTime;
+    @FXML private ComboBox<String> cbEndTime;
+    @FXML private TextArea         txtItemDesc;
+    @FXML private TextField        txtInitPrice;
+    @FXML private TextField        txtBidStep;
+    @FXML private VBox             dragDropArea;
+    @FXML private HBox             imagesPreviewContainer;
+    @FXML private VBox             smallAddBtn;
+    @FXML private Button           btnSubmit;
+
+    private final List<File>    selectedFiles = new ArrayList<>();
+    // FIX: dùng AtomicBoolean tránh race condition giữa JavaFX thread
+    // và CompletableFuture callback thread
+    private final AtomicBoolean isSubmitting  = new AtomicBoolean(false);
 
     // ── Dependency ────────────────────────────────────────────────────────────
-    private final ItemsService itemsService = ItemsService.getInstance();
+    private final ItemsService itemsService;
+
+    public AuctionFormController() {
+        this.itemsService = ItemsService.getInstance();
+    }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -78,26 +73,23 @@ public class AuctionFormController {
         populateTimePickers();
         setupDescriptionAutoResize();
     }
+
     // ── Event handlers ────────────────────────────────────────────────────────
 
     @FXML
     public void handleAddItem(ActionEvent event) {
-        if (isSubmitting) return;
+        if (isSubmitting.get()) return;
 
-        String itemName = txtItemName.getText().trim();
-        String itemDesc = txtItemDesc.getText().trim();
-        String category = getSelectedCategory();
-        LocalDate startDate = startDateP.getValue();
-        LocalDate endDate = endDateP.getValue();
-        String startTime = cbStartTime.getValue();
-        String endTime = cbEndTime.getValue();
-        String initPriceStr = txtInitPrice.getText().trim();
-        String bidStepStr = txtBidStep.getText().trim();
+        // 1. Thu thập data từ UI
+        FormData data = collectFormData();
 
         // 2. Validate
         Result result = AuctionFormValidator.validateCreate(
-                itemName, itemDesc, category, startDate, endDate, startTime, endTime,
-                initPriceStr, bidStepStr, selectedFiles
+                data.itemName, data.itemDesc, data.category,
+                data.startDate, data.endDate,
+                data.startTime, data.endTime,
+                data.initPriceStr, data.bidStepStr,
+                selectedFiles
         );
         if (!result.isValid()) {
             showValidationError(result);
@@ -105,22 +97,25 @@ public class AuctionFormController {
         }
 
         // 3. Submit — service tự lo phần còn lại
-        isSubmitting = true;
+        isSubmitting.set(true);
         setSubmitEnabled(false);
+
         itemsService.createItem(
-                        itemName, itemDesc, category,
-                        startDate, endDate, startTime, endTime,
-                        initPriceStr, bidStepStr, selectedFiles
+                        data.itemName, data.itemDesc, data.category,
+                        data.startDate, data.endDate,
+                        data.startTime, data.endTime,
+                        data.initPriceStr, data.bidStepStr,
+                        selectedFiles
                 )
                 .thenAccept(response -> {
-                    if ("success".equals(response.getStatus())) {
+                    if (STATUS_SUCCESS.equals(response.getStatus())) {
                         Platform.runLater(() ->
                                 ToastUtil.showSuccess(lblMessage.getScene(), response.getMessage()));
-                        PauseTransition pause = new PauseTransition(Duration.seconds(0.5));
+                        PauseTransition pause = new PauseTransition(Duration.seconds(NAV_DELAY_SECONDS));
                         pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         pause.play();
                     } else {
-                        isSubmitting = false;
+                        isSubmitting.set(false);
                         Platform.runLater(() -> {
                             ToastUtil.showInfo(lblMessage.getScene(), response.getMessage());
                             setSubmitEnabled(true);
@@ -129,7 +124,7 @@ public class AuctionFormController {
                 })
                 .exceptionally(e -> {
                     e.printStackTrace();
-                    isSubmitting = false;
+                    isSubmitting.set(false);
                     Platform.runLater(() -> {
                         ToastUtil.showInfo(lblMessage.getScene(),
                                 "Failed to connect to server. Please submit again");
@@ -159,6 +154,54 @@ public class AuctionFormController {
     @FXML
     public void handleSwitchToHomePage(ActionEvent event) {
         NavigationUtil.handleSwitchToHomePage(lblMessage);
+    }
+
+    // ── Data helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * Thu thập toàn bộ input từ form vào một object duy nhất.
+     * Giúp handleAddItem không bị rối với quá nhiều biến local.
+     */
+    private FormData collectFormData() {
+        return new FormData(
+                txtItemName.getText().trim(),
+                txtItemDesc.getText().trim(),
+                getSelectedCategory(),
+                startDateP.getValue(),
+                endDateP.getValue(),
+                cbStartTime.getValue(),
+                cbEndTime.getValue(),
+                txtInitPrice.getText().trim(),
+                txtBidStep.getText().trim()
+        );
+    }
+
+    /** Simple data holder cho form input — không có logic. */
+    private static final class FormData {
+        final String itemName;
+        final String itemDesc;
+        final String    category;
+        final LocalDate startDate;
+        final LocalDate endDate;
+        final String    startTime;
+        final String    endTime;
+        final String    initPriceStr;
+        final String    bidStepStr;
+
+        FormData(String itemName, String itemDesc, String category,
+                 LocalDate startDate, LocalDate endDate,
+                 String startTime, String endTime,
+                 String initPriceStr, String bidStepStr) {
+            this.itemName     = itemName;
+            this.itemDesc     = itemDesc;
+            this.category     = category;
+            this.startDate    = startDate;
+            this.endDate      = endDate;
+            this.startTime    = startTime;
+            this.endTime      = endTime;
+            this.initPriceStr = initPriceStr;
+            this.bidStepStr   = bidStepStr;
+        }
     }
 
     // ── UI helpers ────────────────────────────────────────────────────────────
@@ -217,37 +260,15 @@ public class AuctionFormController {
         if (hasFiles) {
             imagesPreviewContainer.getChildren().removeIf(n -> n != smallAddBtn);
             int idx = imagesPreviewContainer.getChildren().indexOf(smallAddBtn);
-            for (File f : selectedFiles)
-                imagesPreviewContainer.getChildren().add(idx++, createImageCard(f));
+            for (File f : selectedFiles) {
+
+                StackPane card = ClientImageUtil.createImageCard(f, () -> {
+                    selectedFiles.remove(f);
+                    refreshImagePreview();
+                });
+                imagesPreviewContainer.getChildren().add(idx++, card);
+            }
             smallAddBtn.setVisible(selectedFiles.size() < MAX_IMAGES);
         }
-    }
-
-    private StackPane createImageCard(File file) {
-        final double W = 150, H = 120;
-
-        ImageView iv = new ImageView(new Image(file.toURI().toString()));
-        iv.setPreserveRatio(true);
-        double ratio = iv.getImage().getWidth() / iv.getImage().getHeight();
-        if (ratio > W / H) iv.setFitHeight(H); else iv.setFitWidth(W);
-
-        VBox box = new VBox(iv);
-        box.getStyleClass().add("image-border-container");
-        box.setAlignment(Pos.CENTER);
-        box.setMinSize(W, H);
-        box.setMaxSize(W, H);
-        Rectangle clip = new Rectangle(W, H);
-        clip.setArcWidth(20);
-        clip.setArcHeight(20);
-        box.setClip(clip);
-
-        Button del = new Button("✕");
-        del.getStyleClass().add("delete-photo-btn");
-        StackPane.setAlignment(del, Pos.TOP_RIGHT);
-        del.setOnAction(e -> { selectedFiles.remove(file); refreshImagePreview(); });
-
-        StackPane card = new StackPane(box, del);
-        card.setPickOnBounds(false);
-        return card;
     }
 }

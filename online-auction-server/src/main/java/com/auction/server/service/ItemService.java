@@ -1,12 +1,13 @@
 package com.auction.server.service;
 
+import com.auction.server.database.DatabaseManager;
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.server.util.AuctionLockManager;
 import com.auction.server.util.StringUtil;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.model.payloads.ItemPayload;
@@ -252,17 +253,17 @@ public class ItemService {
         synchronized (AuctionLockManager.getItemLock(itemId)) {
             Connection conn = null;
             try {
-                conn = com.auction.server.database.DatabaseManager.getConnection();
+                conn = DatabaseManager.getConnection();
                 conn.setAutoCommit(false);
 
                 Item item = itemRepository.findById(conn, itemId);
-                if (item == null || ItemStatusConstants.BANNED.equalsIgnoreCase(item.getStatus())) {
+                if (item == null || item.getStatus() == AuctionStatus.BANNED) {
                     conn.rollback();
                     return false;
                 }
 
                 // Update status to BANNED
-                if (!itemRepository.updateStatus(conn, itemId, ItemStatusConstants.BANNED)) {
+                if (!itemRepository.updateStatus(conn, itemId, AuctionStatus.BANNED)) {
                     conn.rollback();
                     return false;
                 }
