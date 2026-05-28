@@ -4,6 +4,7 @@ import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.server.util.AuctionLockManager;
 import com.auction.server.util.StringUtil;
 import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
@@ -248,7 +249,7 @@ public class ItemService {
             return false;
         }
 
-        synchronized (com.auction.server.util.AuctionLockManager.getItemLock(itemId)) {
+        synchronized (AuctionLockManager.getItemLock(itemId)) {
             Connection conn = null;
             try {
                 conn = com.auction.server.database.DatabaseManager.getConnection();

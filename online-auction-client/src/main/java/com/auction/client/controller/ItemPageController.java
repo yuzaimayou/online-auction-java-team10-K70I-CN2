@@ -4,6 +4,7 @@ import com.auction.client.service.*;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
 import com.auction.client.service.AutoBidService.ValidationResult;
 import com.auction.client.util.*;
+import com.auction.client.validation.BidValidationService;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+
 import java.util.List;
 
 public class ItemPageController implements NetworkService.MessageListener {
@@ -142,6 +143,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     // Tách Service xử lý Status
     private final ItemStatusService statusUiService = new ItemStatusService();
     private CountdownTimerUtil countdownTimer;
+
 
     // ─── Lifecycle & Cleanup ──────────────────────────────────────────────────
 
@@ -276,10 +278,9 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void uiHandleItemBanned() {
-        network.setListener(null); // dừng listen trước
-        if (countdownTimer != null) countdownTimer.stop();
+        network.setListener(null);
         updateAutoBidUI(false);
-        statusUiService.applyBannedStateView(item); // hiện overlay + message
+        statusUiService.applyBannedStateView(item);
     }
 
     private <T> T extractPayload(Object incomingData, Class<T> type) {
@@ -411,6 +412,7 @@ public class ItemPageController implements NetworkService.MessageListener {
 
     private void renderBidHistory(List<BidHistoryItemDTO> bids) {
         historyBidContainer.getChildren().clear();
+
         renderBidPriceChart(bids);
 
         if (bids == null || bids.isEmpty()) {
@@ -420,11 +422,16 @@ public class ItemPageController implements NetworkService.MessageListener {
         }
 
         toggleHistoryScroll(true);
-        int totalCount = bids.size();
-        totalBidsLabel.setText(totalCount + " bids");
-        for (int i = 0; i < totalCount; i++) {
+        totalBidsLabel.setText(bids.size() + " bids");
+
+        int total = bids.size();
+        for (int i = 0; i < total; i++) {
             historyBidContainer.getChildren().add(
-                    BidHistoryService.createBidRow(totalCount - i, bids.get(i), user.getUsername())
+                    BidHistoryUiRenderer.createRow(
+                            total - i,
+                            bids.get(i),
+                            user.getUsername()
+                    )
             );
         }
     }
@@ -438,11 +445,10 @@ public class ItemPageController implements NetworkService.MessageListener {
             return;}
         List<BidHistoryItemDTO> copy = new ArrayList<>(bids);
         Collections.reverse(copy);
-        DateTimeFormatter chartFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
         for (BidHistoryItemDTO bid : copy) {
             if (bid.bidTime == null)
                 continue;
-            String time = bid.bidTime.format(chartFormat);
+            String time = DateTimeUtil.formatForChart(bid.bidTime);
             bidPriceSeries.getData().add(new XYChart.Data<>(time, bid.bidPrice));
         }
     }

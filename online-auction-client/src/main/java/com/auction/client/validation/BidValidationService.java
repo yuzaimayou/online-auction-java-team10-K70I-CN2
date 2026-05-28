@@ -1,4 +1,4 @@
-package com.auction.client.service;
+package com.auction.client.validation;
 
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.item.Item;
