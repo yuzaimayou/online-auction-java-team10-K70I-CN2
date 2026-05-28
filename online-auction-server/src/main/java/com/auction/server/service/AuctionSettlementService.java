@@ -4,7 +4,7 @@ import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
@@ -44,13 +44,13 @@ public class AuctionSettlementService {
                 }
 
                 boolean expired = java.time.LocalDateTime.now().isAfter(item.getEndTime());
-                String status = item.getStatus();
-                if (!expired && !ItemStatusConstants.ENDED.equalsIgnoreCase(status)) {
+                AuctionStatus status = item.getStatus();
+                if (!expired && status != AuctionStatus.ENDED) {
                     rollback(conn);
-                    return SettlementResult.fail("Phiên chưa kết thúc (status=" + status + ")");
+                    return SettlementResult.fail("Phiên chưa kết thúc (status=" + status.name() + ")");
                 }
 
-                if (ItemStatusConstants.BANNED.equalsIgnoreCase(status)) {
+                if (status == AuctionStatus.BANNED) {
                     rollback(conn);
                     return SettlementResult.fail("Item bị BAN, không thể thanh toán");
                 }

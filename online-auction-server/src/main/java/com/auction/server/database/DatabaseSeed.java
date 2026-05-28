@@ -1,7 +1,7 @@
 package com.auction.server.database;
 
 import com.auction.server.config.AppConfig;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -70,11 +70,11 @@ public class DatabaseSeed {
 
                 System.out.println("2. Creating seed accounts...");
                 // Roles are strictly ADMIN and USER. Passwords are all 123.
-                insertUser(conn, "admin", "123", "ADMIN", "admin@test.local", 10000.0);
-                insertUser(conn, "seller1", "123", "USER", "seller1@test.local", 10000.0);
-                insertUser(conn, "test1", "123", "USER", "test1@test.local", 10000.0);
-                insertUser(conn, "test2", "123", "USER", "test2@test.local", 10000.0);
-                insertUser(conn, "test3", "123", "USER", "test3@test.local", 10000.0);
+                insertUser(conn, "admin",   "123", "ADMIN", "admin@test.local",   10000.0);
+                insertUser(conn, "seller1", "123", "USER",  "seller1@test.local", 10000.0);
+                insertUser(conn, "test1",   "123", "USER",  "test1@test.local",   10000.0);
+                insertUser(conn, "test2",   "123", "USER",  "test2@test.local",   10000.0);
+                insertUser(conn, "test3",   "123", "USER",  "test3@test.local",   10000.0);
 
                 System.out.println("3. Creating seed auction items...");
                 LocalDateTime now = LocalDateTime.now();
@@ -91,7 +91,7 @@ public class DatabaseSeed {
                         now.plusMinutes(30),
                         "electronics",
                         5.0,
-                        ItemStatusConstants.ONGOING
+                        AuctionStatus.ONGOING
                 );
 
                 // B. Upcoming Auction
@@ -106,7 +106,7 @@ public class DatabaseSeed {
                         now.plusMinutes(40),
                         "electronics",
                         10.0,
-                        ItemStatusConstants.UPCOMING
+                        AuctionStatus.UPCOMING
                 );
 
                 // C. Ended Auction with no bids
@@ -121,7 +121,7 @@ public class DatabaseSeed {
                         now.minusMinutes(5),
                         "books",
                         2.0,
-                        ItemStatusConstants.ENDED
+                        AuctionStatus.ENDED
                 );
 
                 conn.commit();
@@ -137,7 +137,8 @@ public class DatabaseSeed {
         return UUID.nameUUIDFromBytes(username.getBytes()).toString();
     }
 
-    private static void insertUser(Connection conn, String username, String password, String role, String email, double balance) throws Exception {
+    private static void insertUser(Connection conn, String username, String password,
+                                   String role, String email, double balance) throws Exception {
         String sql = """
                 INSERT INTO users(id, username, password, role, isVerify, email, balance, frozen_balance)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -166,29 +167,29 @@ public class DatabaseSeed {
                                    LocalDateTime endTime,
                                    String category,
                                    double bidStep,
-                                   String status) throws Exception {
+                                   AuctionStatus status) throws Exception {
         String sql = """
                 INSERT INTO items(id, name, description, start_price, current_price, seller_id, start_time, end_time,
                                   category, bid_step, image_path, create_at, top_player_id, search_name, status, current_bidder_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, prefixId(labelId));
-            stmt.setString(2, name);
-            stmt.setString(3, description);
-            stmt.setDouble(4, startPrice);
-            stmt.setDouble(5, currentPrice);
-            stmt.setString(6, sellerId);
-            stmt.setString(7, startTime.toString());
-            stmt.setString(8, endTime.toString());
-            stmt.setString(9, category);
+            stmt.setString(1,  prefixId(labelId));
+            stmt.setString(2,  name);
+            stmt.setString(3,  description);
+            stmt.setDouble(4,  startPrice);
+            stmt.setDouble(5,  currentPrice);
+            stmt.setString(6,  sellerId);
+            stmt.setString(7,  startTime.toString());
+            stmt.setString(8,  endTime.toString());
+            stmt.setString(9,  category);
             stmt.setDouble(10, bidStep);
             stmt.setString(11, "[]");
             stmt.setString(12, LocalDateTime.now().toString());
-            stmt.setString(13, null); // top_player_id is null
+            stmt.setString(13, null);          // top_player_id starts as null
             stmt.setString(14, name.toLowerCase());
-            stmt.setString(15, status);
-            stmt.setString(16, null); // current_bidder_id starts as null
+            stmt.setString(15, status.name()); // AuctionStatus enum → String cho DB
+            stmt.setString(16, null);          // current_bidder_id starts as null
             stmt.executeUpdate();
         }
     }

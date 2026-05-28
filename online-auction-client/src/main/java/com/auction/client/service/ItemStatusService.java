@@ -2,7 +2,6 @@ package com.auction.client.service;
 
 import com.auction.client.util.CountdownTimerUtil;
 import com.auction.client.util.DateTimeUtil;
-import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;

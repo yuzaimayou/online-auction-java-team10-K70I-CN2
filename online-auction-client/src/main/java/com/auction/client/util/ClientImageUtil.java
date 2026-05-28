@@ -1,19 +1,28 @@
 package com.auction.client.util;
 
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientImageUtil {
+
+    // ── Constants ─────────────────────────────────────────────────────────────
+    private static final double IMAGE_CARD_WIDTH  = 150;
+    private static final double IMAGE_CARD_HEIGHT = 120;
+    private static final double IMAGE_CARD_ARC    = 20;
 
     private static final Map<String, Image> imageCache = new ConcurrentHashMap<>();
 
@@ -156,7 +165,6 @@ public class ClientImageUtil {
         thumbnailContainer.getChildren().clear();
         if (images == null || images.isEmpty()) return;
 
-        // Đặt mặc định hiển thị ảnh đầu tiên lên khung lớn
         displayImage(images.get(0), "images", itemImage, imageWidth * 2, imageHeight * 2);
 
         boolean isFirst = true;
@@ -176,7 +184,6 @@ public class ClientImageUtil {
             }
 
             ImageView thumbView = new ImageView();
-
             thumbView.setSmooth(true);
             thumbView.setCache(true);
             thumbView.setFitWidth(thumbWidth);
@@ -192,9 +199,7 @@ public class ClientImageUtil {
             thumbPane.getChildren().add(thumbView);
 
             thumbPane.setOnMouseClicked(e -> {
-                displayImage(imgPath, "images", itemImage, imageWidth * 2, imageHeight * 2
-                );
-
+                displayImage(imgPath, "images", itemImage, imageWidth * 2, imageHeight * 2);
                 thumbnailContainer.getChildren().forEach(
                         n -> n.getStyleClass().remove("active-thumb")
                 );
@@ -203,6 +208,47 @@ public class ClientImageUtil {
 
             thumbnailContainer.getChildren().add(thumbPane);
         }
+    }
+
+    /**
+     * Dựng card hiển thị ảnh local (File) đã chọn từ máy người dùng.
+     * Chuyển từ AuctionFormController — controller không cần biết về layout card.
+     *
+     * @param file           File ảnh local cần hiển thị
+     * @param onRemove       Callback được gọi khi người dùng bấm nút xóa (✕)
+     * @return               StackPane card hoàn chỉnh, sẵn sàng thêm vào container
+     */
+    public static StackPane createImageCard(File file, Runnable onRemove) {
+        ImageView iv = new ImageView(new Image(file.toURI().toString()));
+        iv.setPreserveRatio(true);
+
+        double ratio = iv.getImage().getWidth() / iv.getImage().getHeight();
+        if (ratio > IMAGE_CARD_WIDTH / IMAGE_CARD_HEIGHT) {
+            iv.setFitHeight(IMAGE_CARD_HEIGHT);
+        } else {
+            iv.setFitWidth(IMAGE_CARD_WIDTH);
+        }
+
+        VBox box = new VBox(iv);
+        box.getStyleClass().add("image-border-container");
+        box.setAlignment(Pos.CENTER);
+        box.setMinSize(IMAGE_CARD_WIDTH, IMAGE_CARD_HEIGHT);
+        box.setMaxSize(IMAGE_CARD_WIDTH, IMAGE_CARD_HEIGHT);
+
+        Rectangle clip = new Rectangle(IMAGE_CARD_WIDTH, IMAGE_CARD_HEIGHT);
+        clip.setArcWidth(IMAGE_CARD_ARC);
+        clip.setArcHeight(IMAGE_CARD_ARC);
+        box.setClip(clip);
+
+        Button del = new Button("✕");
+        del.getStyleClass().add("delete-photo-btn");
+        StackPane.setAlignment(del, Pos.TOP_RIGHT);
+        // callback do caller truyền vào — util không biết gì về selectedFiles hay controller
+        del.setOnAction(e -> onRemove.run());
+
+        StackPane card = new StackPane(box, del);
+        card.setPickOnBounds(false);
+        return card;
     }
 
     public static void clearCache() {

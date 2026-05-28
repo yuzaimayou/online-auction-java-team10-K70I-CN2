@@ -4,7 +4,7 @@ import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,7 +64,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void validBidSucceedsAndUpdatesCurrentBidder() throws Exception {
-        String itemId = item("valid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("valid", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidder = user("bidder");
 
@@ -77,7 +77,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void bidLowerThanCurrentPriceIsRejected() throws Exception {
-        String itemId = item("low", 20.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("low", 20.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidder = user("bidder");
 
@@ -90,7 +90,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void bidBelowRequiredBidStepIsRejected() throws Exception {
-        String itemId = item("step", 20.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("step", 20.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidder = user("bidder");
 
@@ -102,7 +102,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void bidAfterAuctionEndedIsRejected() throws Exception {
-        String itemId = item("ended", 10.0, 5.0, ItemStatusConstants.ENDED,
+        String itemId = item("ended", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(30), LocalDateTime.now().minusMinutes(1), null);
         String bidder = user("bidder");
 
@@ -114,7 +114,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void bidBeforeAuctionStartsIsRejected() throws Exception {
-        String itemId = item("upcoming", 10.0, 5.0, ItemStatusConstants.UPCOMING,
+        String itemId = item("upcoming", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidder = user("bidder");
 
@@ -126,7 +126,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void twoConcurrentBiddersCannotBothBecomeFinalWinner() throws Exception {
-        String itemId = item("two-race", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("two-race", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String lowBidder = user("low-bidder");
         String highBidder = user("high-bidder");
@@ -156,7 +156,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void twentyConcurrentBiddersLeaveExactlyOneHighestBidder() throws Exception {
-        String itemId = item("twenty-race", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("twenty-race", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         List<Callable<Boolean>> tasks = new ArrayList<>();
         List<String> bidders = new ArrayList<>();
@@ -191,7 +191,7 @@ class ProductionBiddingFlowTest {
     @Test
     void antiSnipingExtendsEndTimeForValidBidInsideFinalMinute() throws Exception {
         LocalDateTime originalEnd = LocalDateTime.now().plusSeconds(30);
-        String itemId = item("snipe", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("snipe", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), originalEnd, null);
         String bidder = user("bidder");
 
@@ -206,7 +206,7 @@ class ProductionBiddingFlowTest {
     @Test
     void antiSnipingDoesNotExtendOutsideFinalMinute() throws Exception {
         LocalDateTime originalEnd = LocalDateTime.now().plusMinutes(5);
-        String itemId = item("no-snipe", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("no-snipe", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), originalEnd, null);
         String bidder = user("bidder");
 
@@ -218,7 +218,7 @@ class ProductionBiddingFlowTest {
     @Test
     void autoBidRegisterOnlyWhenUserAlreadyLeads() throws Exception {
         String leader = user("leader");
-        String itemId = item("auto-register-only", 20.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("auto-register-only", 20.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), leader);
         insertBid(itemId, leader, 20.0);
 
@@ -232,7 +232,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void twoAutoBidsCompeteAndHigherMaxWinsWithoutExceedingMax() throws Exception {
-        String itemId = item("auto-compete", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("auto-compete", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String first = user("first");
         String second = user("second");
@@ -267,11 +267,11 @@ class ProductionBiddingFlowTest {
 
     @Test
     void itemRepositoryUpdateStatusTransitionsOnlyEligibleRows() throws Exception {
-        String upcomingToOngoing = item("status-upcoming", 10.0, 5.0, ItemStatusConstants.UPCOMING,
+        String upcomingToOngoing = item("status-upcoming", 10.0, 5.0, AuctionStatus.UPCOMING,
                 LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(30), null);
-        String ongoingToEnded = item("status-ended", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String ongoingToEnded = item("status-ended", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(30), LocalDateTime.now().minusMinutes(1), null);
-        String remainsOngoing = item("status-ongoing", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String remainsOngoing = item("status-ongoing", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(30), null);
 
         List<String> updatedIds = itemRepository.updateStatus();
@@ -279,9 +279,9 @@ class ProductionBiddingFlowTest {
         assertTrue(updatedIds.contains(upcomingToOngoing));
         assertTrue(updatedIds.contains(ongoingToEnded));
         assertFalse(updatedIds.contains(remainsOngoing));
-        assertEquals(ItemStatusConstants.ONGOING, storedStatus(upcomingToOngoing));
-        assertEquals(ItemStatusConstants.ENDED, storedStatus(ongoingToEnded));
-        assertEquals(ItemStatusConstants.ONGOING, storedStatus(remainsOngoing));
+        assertEquals(AuctionStatus.ONGOING.name(), storedStatus(upcomingToOngoing));
+        assertEquals(AuctionStatus.ENDED.name(), storedStatus(ongoingToEnded));
+        assertEquals(AuctionStatus.ONGOING.name(), storedStatus(remainsOngoing));
     }
 
     private List<Boolean> runConcurrent(List<Callable<Boolean>> tasks) throws Exception {
@@ -333,7 +333,7 @@ class ProductionBiddingFlowTest {
     private String item(String label,
                         double currentPrice,
                         double bidStep,
-                        String status,
+                        AuctionStatus status,
                         LocalDateTime startTime,
                         LocalDateTime endTime,
                         String currentBidderId) throws Exception {
@@ -359,7 +359,7 @@ class ProductionBiddingFlowTest {
             stmt.setString(12, LocalDateTime.now().toString());
             stmt.setString(13, null);
             stmt.setString(14, "junit item " + label);
-            stmt.setString(15, status);
+            stmt.setString(15, status.name());
             stmt.setString(16, currentBidderId);
             stmt.executeUpdate();
         }
@@ -481,7 +481,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void manualBidShouldFreezeMoneyForHighestBidder() throws Exception {
-        String itemId = item("wallet-freeze", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-freeze", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidder = user("wallet-bidder");
 
@@ -498,7 +498,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void outbidShouldReleasePreviousLeaderAndFreezeNewLeader() throws Exception {
-        String itemId = item("wallet-outbid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-outbid", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidderA = user("bidder-a");
         String bidderB = user("bidder-b");
@@ -517,7 +517,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void sameBidderBiddingAgainShouldLockNewAmount() throws Exception {
-        String itemId = item("wallet-rebid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-rebid", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidderA = user("bidder-a");
         String bidderB = user("bidder-b");
@@ -538,7 +538,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void insufficientBalanceShouldRejectBidAndNotMutateState() throws Exception {
-        String itemId = item("wallet-insufficient", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-insufficient", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String poorBidder = prefix + "-poor";
         
@@ -574,7 +574,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void autoBidShouldFreezeAndReleaseCorrectly() throws Exception {
-        String itemId = item("wallet-autobid", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-autobid", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String first = user("first");
         String second = user("second");
@@ -599,7 +599,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void currentLeaderCannotBidAgainAndWalletDoesNotChange() throws Exception {
-        String itemId = item("wallet-consecutive", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-consecutive", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String bidder = user("consecutive-bidder");
 
@@ -617,7 +617,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void autoBidCandidateWithInsufficientFundsIsSkippedSafely() throws Exception {
-        String itemId = item("wallet-auto-poor", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-auto-poor", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String rich = user("rich-autobidder");
         String poor = prefix + "-poor-autobidder";
@@ -671,7 +671,7 @@ class ProductionBiddingFlowTest {
 
     @Test
     void settlementCannotDoubleChargeAndShouldNotRaceWithBidProcessing() throws Exception {
-        String itemId = item("wallet-settle", 10.0, 5.0, ItemStatusConstants.ONGOING,
+        String itemId = item("wallet-settle", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
         String seller = prefix + "-user-seller-wallet-settle";
         String bidder = user("settle-bidder");
@@ -681,7 +681,7 @@ class ProductionBiddingFlowTest {
         // Explicitly end the auction in DB
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("UPDATE items SET status = ?, end_time = ? WHERE id = ?")) {
-            stmt.setString(1, ItemStatusConstants.ENDED);
+            stmt.setString(1, AuctionStatus.ENDED.name());
             stmt.setString(2, LocalDateTime.now().minusMinutes(5).toString());
             stmt.setString(3, itemId);
             stmt.executeUpdate();
