@@ -1,9 +1,11 @@
 package com.auction.server.integration;
 
+import com.auction.server.service.ChatbotService;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class testAI {
     private static final Dotenv dotenv = Dotenv.load();
+    private static final ChatbotService chatBot = ChatbotService.getInstance();
 
     public static void main(String[] agrs) {
         String checkKey = dotenv.get("GEMINI_API_KEY");
@@ -13,11 +15,8 @@ public class testAI {
             return;
         }
         System.out.println("1. Đang khởi tạo kết nối với Gemini API...");
-        GeminiIntegration geminiClient = new GeminiIntegration();
-        String testPrompt = "Dựa vào câu nói sau của người dùng, nếu liên quan đến giá tiền hãy chuyển về đơn vị tiền tệ USD, hãy trích xuất các tiêu chí tìm kiếm sản phẩm theo định dạng JSON.\n" +
-                "Chỉ trả về JSON, không giải thích gì thêm.\n" +
-                "Các trường cần có: \"category\" (Electronics, Art, Vehicle, Fashion), \"keyword\", \"maxPrice\".\n" +
-                "Câu nói của người dùng: \"Tôi đang tìm một bức tranh phong cảnh giá dưới 10 triệu vnd để treo phòng khách.\"";
+
+        String testPrompt = " tìm kiếm cho tôi áo đấu của yamal";
 
         System.out.println("2. Đang gửi prompt thử nghiệm:");
         System.out.println("   " + testPrompt.replace("\n", "\n   "));
@@ -25,7 +24,8 @@ public class testAI {
 
         // Gọi API
         long startTime = System.currentTimeMillis();
-        String response = geminiClient.callGeminiApi(testPrompt);
+        //String response = geminiClient.callGeminiApi(testPrompt);
+        String response = chatBot.processUserMessage(testPrompt);
         long endTime = System.currentTimeMillis();
 
         // In kết quả

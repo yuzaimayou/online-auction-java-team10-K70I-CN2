@@ -74,6 +74,47 @@ async def index_documents(file: UploadFile = File(...)):
         db.close()
 
 
+@router.get("/get-docs")
+async def load_all_docs_context() -> dict:
+    db = get_db_connection()
+    try:
+        rows = db.execute("""
+                          SELECT id,
+                                 chunk_id,
+                                 doc_name,
+                                 title,
+                                 path,
+                                 content
+                          FROM docs_info
+                          ORDER BY id ASC
+                          """).fetchall()
+        context = ""
+        docs = []
+        for row in rows:
+            docs.append(f"""
+[DOC_CHUNK_ID]: {row["chunk_id"]}
+[DOC_NAME]: {row["doc_name"]}
+[TITLE]: {row["title"]}
+[PATH]: {row["path"]}
+[CONTENT]:
+{row["content"]}
+""".strip())
+        return {
+            "status": "success",
+            "data": "\n\n---\n\n".join(docs)
+        }
+
+
+    except Exception as e:
+        print("GET DOCS ERROR:", str(e))
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    finally:
+        db.close()
+
+
 @router.post("/search-docs")
 async def search_docs(query: str = Query(...), top_k: int = 3):
     db = get_db_connection()
