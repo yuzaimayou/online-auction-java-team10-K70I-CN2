@@ -4,8 +4,6 @@ import com.auction.server.repository.UserRepository;
 import com.auction.shared.model.account.User;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -107,19 +105,6 @@ class AuthServiceTest {
     }
 
     private AuthService createAuthService(UserRepository repo, VerifyService verifyService) {
-        AuthService authService = new AuthService();
-        overrideField(authService, "userRepository", repo);
-        overrideField(authService, "verifyService", verifyService);
-        return authService;
-    }
-
-    private void overrideField(Object target, String fieldName, Object value) {
-        try {
-            Field field = AuthService.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to override field: " + fieldName, e);
-        }
+        return new AuthService(repo, verifyService);
     }
 }

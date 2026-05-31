@@ -53,7 +53,7 @@ public class HistoryRepository {
                 FROM bids b
                 JOIN users u ON b.user_id = u.id
                 WHERE b.item_id = ?
-                ORDER BY b.bid_time DESC
+                ORDER BY datetime(replace(b.bid_time, 'T', ' ')) DESC, b.id DESC
                 """;
         List<BidHistoryItemDTO> bidHistoryItemDTOS = new ArrayList<>();
         try (
