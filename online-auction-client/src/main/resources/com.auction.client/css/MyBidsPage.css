@@ -179,3 +179,35 @@
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
 }
+/* Kiểu dáng nhãn trạng thái chung */
+.status-badge-base {
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 20px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+/* 1. WINNING: Đang dẫn đầu (Nền xanh lá cực nhạt, chữ xanh lục) */
+.status-winning {
+    -fx-background-color: #ecfdf5;
+    -fx-text-fill: #059669;
+}
+
+/* 2. WON: Đã thắng chung cuộc (Nền xanh dương quý phái hoặc vàng gold, ở đây chọn xanh dương sáng để sang trọng) */
+.status-won {
+    -fx-background-color: #eff6ff;
+    -fx-text-fill: #1d4ed8;
+    -fx-border-color: #bfdbfe;
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}
+
+/* 3. OUTBID: Bị vượt giá / Thua cuộc (Nền đỏ nhạt, chữ đỏ đậm cảnh báo) */
+.status-outbid {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fca5a5;
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}

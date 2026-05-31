@@ -1,10 +1,13 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.service.ItemsService;
-import com.auction.client.util.*;
+import com.auction.client.util.AlertUtil;
+import com.auction.client.util.ClientImageUtil;
+import com.auction.client.util.NavigationUtil;
+import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
-import com.auction.shared.model.item.MyBidSummary;          // ← KHÁC
+import com.auction.shared.model.item.MyBidSummary;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -12,6 +15,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import java.time.LocalDateTime;
@@ -19,19 +23,27 @@ import static com.auction.client.util.AuctionTableCellFactory.disableSorting;
 
 public class MyBidsController {
 
-    @FXML private TableView<MyBidSummary> bidsTable;          // ← KHÁC
-    @FXML private TableColumn<MyBidSummary, MyBidSummary> itemCol;
-    @FXML private TableColumn<MyBidSummary, String> currentBidCol;
-    @FXML private TableColumn<MyBidSummary, String> yourBidCol; // ← KHÁC (cột mới)
-    @FXML private TableColumn<MyBidSummary, String> statusCol;
-    @FXML private TableColumn<MyBidSummary, LocalDateTime> endTimeCol;
-    @FXML private TableColumn<MyBidSummary, MyBidSummary> actionCol;
-    @FXML private TextField searchField;
+    @FXML
+    private TableView<MyBidSummary> bidsTable;
+    @FXML
+    private TableColumn<MyBidSummary, MyBidSummary> itemCol;
+    @FXML
+    private TableColumn<MyBidSummary, String> currentBidCol;
+    @FXML
+    private TableColumn<MyBidSummary, String> yourBidCol;
+    @FXML
+    private TableColumn<MyBidSummary, String> statusCol;
+    @FXML
+    private TableColumn<MyBidSummary, LocalDateTime> endTimeCol;
+    @FXML
+    private TableColumn<MyBidSummary, MyBidSummary> actionCol;
+    @FXML
+    private TextField searchField;
 
     private final ItemsService itemsService = ItemsService.getInstance();
     private final User loggedInUser = UserSession.getInstance().getLoggedInUser();
-    private final ObservableList<MyBidSummary> masterData = FXCollections.observableArrayList(); // ← KHÁC
-    private FilteredList<MyBidSummary> filteredData;           // ← KHÁC
+    private final ObservableList<MyBidSummary> masterData = FXCollections.observableArrayList();
+    private FilteredList<MyBidSummary> filteredData;
 
     @FXML
     public void initialize() {
@@ -46,7 +58,6 @@ public class MyBidsController {
     }
 
     private void setupColumns() {
-        // Giống MyAuctionsController
         itemCol.setCellValueFactory(p -> new SimpleObjectProperty<>(p.getValue()));
         itemCol.setCellFactory(col -> new TableCell<>() {
             private final javafx.scene.image.ImageView img = new javafx.scene.image.ImageView();
@@ -57,7 +68,7 @@ public class MyBidsController {
                 img.setPreserveRatio(true);
                 name.getStyleClass().add("item-name-label");
                 container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-                setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                setAlignment(Pos.CENTER_LEFT);
                 setPadding(new javafx.geometry.Insets(0, 0, 0, 20));
             }
             @Override
@@ -72,8 +83,6 @@ public class MyBidsController {
                 setGraphic(container);
             }
         });
-
-        // Current Bid — giá phiên hiện tại
         currentBidCol.setCellValueFactory(d ->
                 new SimpleStringProperty(String.format("$%,.0f", d.getValue().getCurrentPrice()))
         );
@@ -85,7 +94,7 @@ public class MyBidsController {
                 setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
             }
         });
-        // ← KHÁC: Your Bid — giá cao nhất người dùng đặt
+
         yourBidCol.setCellValueFactory(d ->
                 new SimpleStringProperty(String.format("$%,.0f", d.getValue().getMyHighestBid()))
         );
@@ -97,14 +106,22 @@ public class MyBidsController {
                 setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
             }
         });
-        // ← KHÁC: Status với logic WON / WINNING
+
         statusCol.setCellValueFactory(d -> {
             MyBidSummary item = d.getValue();
-            if (item.isWinner() && item.getStatus() == AuctionStatus.ENDED)
-                return new SimpleStringProperty("WON");
-            if (item.isWinner() && item.getStatus() == AuctionStatus.ONGOING)
-                return new SimpleStringProperty("WINNING");
-            return new SimpleStringProperty(item.getStatus().name());
+
+            if (item.isWinner()) {
+                // Nếu mình giữ giá cao nhất và phiên kết thúc -> THẮNG
+                if (item.getStatus() == AuctionStatus.ENDED) {
+                    return new SimpleStringProperty("WON");
+                } else {
+                    // Nếu giữ giá cao nhất khi phiên vẫn chạy -> ĐANG THẮNG
+                    return new SimpleStringProperty("WINNING");
+                }
+            } else {
+                // Tất cả các trường hợp còn lại (Bị người khác đè giá, trượt đấu giá, hoặc bị banned) -> BỊ VƯỢT GIÁ
+                return new SimpleStringProperty("OUTBID");
+            }
         });
         statusCol.setCellFactory(col -> new TableCell<>() {
             private final Label label = new Label();
@@ -113,14 +130,24 @@ public class MyBidsController {
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
                 if (empty || status == null) { setGraphic(null); return; }
-                label.getStyleClass().removeAll("status-upcoming","status-ended","status-banned","status-live","status-won");
+                label.getStyleClass().removeAll("status-winning", "status-won", "status-outbid", "status-upcoming", "status-ended", "status-banned", "status-live");
+
                 switch (status) {
-                    case "WON"     -> { label.setText("🏆 Won");     label.getStyleClass().add("status-ended"); }
-                    case "WINNING" -> { label.setText("🔥 Winning"); label.getStyleClass().add("status-live"); }
-                    case "UPCOMING"-> { label.setText("Upcoming");   label.getStyleClass().add("status-upcoming"); }
-                    case "ENDED"   -> { label.setText("Ended");      label.getStyleClass().add("status-ended"); }
-                    case "BANNED"  -> { label.setText("⛔ Banned");  label.getStyleClass().add("status-banned"); }
-                    default        -> { label.setText("Ongoing");    label.getStyleClass().add("status-live"); }
+                    case "WON" -> {
+                        label.setText("Won");
+                        label.getStyleClass().add("status-won");
+                    }
+                    case "WINNING" -> {
+                        label.setText("Winning");
+                        label.getStyleClass().add("status-winning");
+                    }
+                    case "OUTBID" -> {
+                        label.setText("Outbid");
+                        label.getStyleClass().add("status-outbid");
+                    }
+                    default -> {
+                        label.setText(status);
+                    }
                 }
                 setGraphic(label);
             }
@@ -147,7 +174,6 @@ public class MyBidsController {
             }
         });
 
-        // Action — mở ItemPage, giống MyAuctionsController
         actionCol.setCellValueFactory(p -> new SimpleObjectProperty<>(p.getValue()));
         actionCol.setCellFactory(col -> new TableCell<>() {
             private final Button viewBtn = new Button("View");
@@ -181,7 +207,6 @@ public class MyBidsController {
         );
     }
 
-    // ← KHÁC: gọi getMyBids() thay vì getAllFromSeller()
     private void loadData() {
         if (loggedInUser == null) return;
         itemsService.getMyBids()

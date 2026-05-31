@@ -1,39 +1,35 @@
 package com.auction.client.controller;
 
 import com.auction.client.service.ItemsService;
-import com.auction.client.util.ToastUtil;
-import com.auction.client.util.ClientImageUtil;
+import com.auction.client.ui.ItemImageEditManager;
 import com.auction.client.util.NavigationUtil;
+import com.auction.client.util.ToastUtil;
 import com.auction.client.util.UiUtil;
 import com.auction.client.validation.AuctionFormValidator;
+import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.Item;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ItemEditController {
 
-    // ── FXML Fields ──
+    // ── FXML Fields ───────────────────────────────────────────────────────────
     @FXML
     private TextField txtItemName;
     @FXML
-    private TextArea txtItemDesc;
+    private TextArea  txtItemDesc;
     @FXML
     private ToggleGroup categoryGroup;
     @FXML
@@ -58,39 +54,32 @@ public class ItemEditController {
     private VBox smallAddBtn;
 
     @FXML
-    private Label lblMessage;
+    private Label  lblMessage;
     @FXML
     private Button btnSave;
 
-    // ── State ──
+    // ── State & Managers ──────────────────────────────────────────────────────
     private String currentItemId;
     private boolean isSaving = false;
+    private ItemImageEditManager imageManager;
 
-    private List<String> existingImagePaths = new ArrayList<>();
-    private final List<File> newSelectedFiles = new ArrayList<>();
-
-    private static final int MAX_IMAGES = 5;
     private final ItemsService itemsService = ItemsService.getInstance();
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         UiUtil.populateHalfHourSlots(cbStartTime, cbEndTime);
         UiUtil.autoGrowTextArea(txtItemDesc, 120);
+        Platform.runLater(() -> this.imageManager = new ItemImageEditManager(
+                dragDropArea, imagesPreviewContainer, smallAddBtn, btnSave.getScene()
+        ));
     }
 
     public void setItemId(String id) {
         this.currentItemId = id;
         itemsService.getItemById(id, "")
                 .thenAccept(item -> Platform.runLater(() -> populateForm(item)))
-                .exceptionally(ex -> {
-                    Platform.runLater(() ->
-                            ToastUtil.showError(
-                                    lblMessage.getScene(),
-                                    "Không thể tải thông tin sản phẩm."
-                            )
-                    );
-                    return null;
-                });
+                .exceptionally(this::handleFetchException);
     }
 
     private void populateForm(Item item) {
@@ -112,96 +101,23 @@ public class ItemEditController {
             cbEndTime.setValue(snapToSlot(item.getEndTime().toLocalTime()));
         }
 
-        existingImagePaths = item.getImagesPath() != null ? new ArrayList<>(item.getImagesPath()) : new ArrayList<>();
-        newSelectedFiles.clear();
-
-        renderImageStrip();
-    }
-
-    private void renderImageStrip() {
-        int total = existingImagePaths.size() + newSelectedFiles.size();
-        boolean hasImages = total > 0;
-
-        dragDropArea.setVisible(!hasImages);
-        dragDropArea.setManaged(!hasImages);
-        imagesPreviewContainer.setVisible(hasImages);
-        imagesPreviewContainer.setManaged(hasImages);
-
-        if (!hasImages) return;
-        imagesPreviewContainer.getChildren().clear();
-        for (String imgPath : existingImagePaths) {
-            imagesPreviewContainer.getChildren().add(
-                    ClientImageUtil.createServerImageCard(imgPath, () -> {
-                        existingImagePaths.remove(imgPath);
-                        renderImageStrip();
-                    })
-            );
-        }
-        for (File file : newSelectedFiles) {
-            imagesPreviewContainer.getChildren().add(
-                    ClientImageUtil.createImageCard(file, () -> {
-                        newSelectedFiles.remove(file);
-                        renderImageStrip();
-                    })
-            );
-        }
-        if (total < MAX_IMAGES) {
-            imagesPreviewContainer.getChildren().add(smallAddBtn);
+        if (imageManager != null) {
+            imageManager.initData(item.getImagesPath());
         }
     }
 
-
-    //  Event Handlers & API Call
+    // ── Event Handlers ────────────────────────────────────────────────────────
     @FXML
     public void handleChooseImage() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Chọn ảnh sản phẩm");
-        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.webp"));
-
-        List<File> files = fc.showOpenMultipleDialog(btnSave.getScene().getWindow());
-        if (files == null || files.isEmpty()) return;
-
-        if (existingImagePaths.size() + newSelectedFiles.size() + files.size() > MAX_IMAGES) {
-            ToastUtil.showInfo(lblMessage.getScene(), "Tối đa " + MAX_IMAGES + " ảnh.");
-            return;
+        if (imageManager != null) {
+            imageManager.chooseImages(btnSave.getScene().getWindow());
         }
-        newSelectedFiles.addAll(files);
-        renderImageStrip();
-    }
-
-    private String getSelectedCategory() {
-        Toggle toggle = categoryGroup.getSelectedToggle();
-        return toggle != null ? toggle.getUserData().toString() : null;
-    }
-    private void showValidationError(AuctionFormValidator.Result result) {
-        String msg = result.getError().message;
-
-        switch (result.getError()) {
-            case BID_STEP_EXCEEDS_PRICE,
-                 START_TIME_IN_PAST,
-                 END_TIME_BEFORE_START ->
-                    ToastUtil.showError(lblMessage.getScene(), msg);
-            default ->
-                    ToastUtil.showInfo(lblMessage.getScene(), msg);
-        }
-    }
-
-    private void setSaveEnabled(boolean enabled) {
-        btnSave.setDisable(!enabled);
-        btnSave.setText(enabled ? "Save Changes" : "Đang lưu..."
-        );
-        smallAddBtn.setDisable(!enabled);
-        smallAddBtn.setOpacity(enabled ? 1 : 0.5
-        );
-    }
-    private void resetSubmitState() {
-        isSaving = false;
-        setSaveEnabled(true);
     }
 
     @FXML
     public void handleSaveChanges(ActionEvent event) {
-        if (isSaving) return;
+        if (isSaving || imageManager == null) return;
+
         String itemName = txtItemName.getText().trim();
         String itemDesc = txtItemDesc.getText().trim();
         String category = getSelectedCategory();
@@ -210,70 +126,79 @@ public class ItemEditController {
         String startTime = cbStartTime.getValue();
         String endTime = cbEndTime.getValue();
 
-        List<File> allImages = new ArrayList<>(newSelectedFiles);
-        existingImagePaths.forEach(img -> allImages.add(new File(img)));
+        List<File> allImages = imageManager.getAllImagesAsFiles();
 
         AuctionFormValidator.Result result = AuctionFormValidator.validateUpdate(
-                        itemName, itemDesc, category,
-                        startDate, endDate, startTime, endTime,
-                        txtInitPrice.getText().trim(), txtBidStep.getText().trim(), allImages);
+                itemName, itemDesc, category,
+                startDate, endDate, startTime, endTime,
+                txtInitPrice.getText().trim(), txtBidStep.getText().trim(), allImages
+        );
+
         if (!result.isValid()) {
             showValidationError(result);
             return;
         }
-        isSaving = true;
-        setSaveEnabled(false);
+
+        setSaveState(true);
 
         itemsService.updateItem(
                         itemName, itemDesc, category,
                         startDate, endDate, startTime, endTime,
                         txtInitPrice.getText().trim(), txtBidStep.getText().trim(),
-                        existingImagePaths, newSelectedFiles, currentItemId
+                        imageManager.getExistingImagePaths(),
+                        imageManager.getNewSelectedFiles(),
+                        currentItemId
                 )
-                .thenAccept(response ->
-                        Platform.runLater(() -> {
-                            resetSubmitState();
-                            if ("success".equals(response.getStatus())) {
-                                ToastUtil.showSuccess(lblMessage.getScene(), response.getMessage());
-                                PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
-
-                                pause.setOnFinished(e -> navigateToMyAuctions());
-                                pause.play();
-                            } else {
-                                ToastUtil.showError(lblMessage.getScene(), response.getMessage()
-                                );
-                            }
-                        })
-                )
-                .exceptionally(ex -> {
-                    Platform.runLater(() -> {
-                        resetSubmitState();
-                        ToastUtil.showError(lblMessage.getScene(),
-                                "Lỗi kết nối. Vui lòng thử lại."
-                        );
-                    });
-                    return null;
-                });
+                .thenAccept(this::handleSaveResponse)
+                .exceptionally(this::handleSaveException);
     }
+
     @FXML
     public void handleCloseAction(ActionEvent event) {
         Button btn = (Button) event.getSource();
         StackPane overlay = (StackPane) btn.getScene().lookup(".popup-overlay");
         if (overlay != null) {
-            ((StackPane) overlay.getParent())
-                    .getChildren()
-                    .remove(overlay);
+            ((StackPane) overlay.getParent()).getChildren().remove(overlay);
         }
     }
-    private void navigateToMyAuctions() {
-        NavigationUtil.handleSwitchToSetting(
-                new ActionEvent(btnSave, btnSave),
-                "myAuctions"
-        );
+
+    // ── Response Handlers (Async Callbacks) ───────────────────────────────────
+    private void handleSaveResponse(ResponseMessage response) {
+        Platform.runLater(() -> {
+            setSaveState(false);
+            if ("success".equals(response.getStatus())) {
+                ToastUtil.showSuccess(lblMessage.getScene(), response.getMessage());
+                PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
+                pause.setOnFinished(e -> NavigationUtil.handleSwitchToSetting(
+                        new ActionEvent(btnSave, btnSave), "myAuctions"
+                ));
+                pause.play();
+            } else {
+                ToastUtil.showError(lblMessage.getScene(), response.getMessage());
+            }
+        });
     }
-    // ──────────────────────────────────────────────────────────────────────────
-    //  Helpers
-    // ──────────────────────────────────────────────────────────────────────────
+
+    private Void handleSaveException(Throwable ex) {
+        ex.printStackTrace();
+        Platform.runLater(() -> {
+            setSaveState(false);
+            ToastUtil.showError(lblMessage.getScene(), "Lỗi kết nối. Vui lòng thử lại.");
+        });
+        return null;
+    }
+
+    private Void handleFetchException(Throwable ex) {
+        ex.printStackTrace();
+        Platform.runLater(() -> ToastUtil.showError(lblMessage.getScene(), "Không thể tải thông tin sản phẩm."));
+        return null;
+    }
+
+    // ── Private UI Helpers ────────────────────────────────────────────────────
+    private String getSelectedCategory() {
+        Toggle toggle = categoryGroup.getSelectedToggle();
+        return toggle != null ? toggle.getUserData().toString() : null;
+    }
 
     private void selectCategoryToggle(String categoryName) {
         if (categoryName == null || categoryGroup == null) return;
@@ -283,6 +208,23 @@ public class ItemEditController {
                 break;
             }
         }
+    }
+
+    private void showValidationError(AuctionFormValidator.Result result) {
+        String msg = result.getError().message;
+        switch (result.getError()) {
+            case BID_STEP_EXCEEDS_PRICE, START_TIME_IN_PAST, END_TIME_BEFORE_START ->
+                    ToastUtil.showError(lblMessage.getScene(), msg);
+            default -> ToastUtil.showInfo(lblMessage.getScene(), msg);
+        }
+    }
+
+    private void setSaveState(boolean saving) {
+        this.isSaving = saving;
+        btnSave.setDisable(saving);
+        btnSave.setText(saving ? "Đang lưu..." : "Save Changes");
+        smallAddBtn.setDisable(saving);
+        smallAddBtn.setOpacity(saving ? 0.5 : 1.0);
     }
 
     private String snapToSlot(LocalTime time) {

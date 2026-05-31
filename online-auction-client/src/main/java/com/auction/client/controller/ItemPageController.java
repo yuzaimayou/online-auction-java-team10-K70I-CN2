@@ -1,17 +1,17 @@
 package com.auction.client.controller;
 
 import com.auction.client.network.AuctionRoomListener;
+import com.auction.client.network.BidHistoryService;
 import com.auction.client.network.NetworkService;
 import com.auction.client.service.*;
 import com.auction.client.ui.*;
 import com.auction.client.util.*;
+import com.auction.client.validation.AutoBidValidationService;
 import com.auction.client.validation.BidValidationService;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
-import com.auction.shared.util.GsonUtil;
-import com.google.gson.Gson;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
@@ -105,18 +105,18 @@ public class ItemPageController  {
     private StackPane statusOverlay;
     @FXML
     private Label statusMessageLabel;
-    // ─── Bid Price Chart ─────────────────────────────────────
 
+    // ─── Bid Price Chart ─────────────────────────────────────
     @FXML
     private AreaChart<String, Number> bidPriceChart;
     @FXML
     private CategoryAxis bidTimeAxis;
     @FXML
     private NumberAxis bidPriceAxis;
+
     private BidPanelController bidPanel;
     private AutoBidUiHandler autoBidHandler;
     private BidHistoryPanel historyPanel;
-
 
     private XYChart.Series<String, Number> bidPriceSeries;
 
@@ -128,26 +128,25 @@ public class ItemPageController  {
     // ─── Infrastructure Dependencies ──────────────────────────────────────────
     private final User user = UserSession.getInstance().getLoggedInUser();
     private final NetworkService network = NetworkService.getInstance();
-    private final Gson gson = GsonUtil.getInstance();
     private final ItemsService itemsService = ItemsService.getInstance();
     private final BidHistoryService bidHistoryService = BidHistoryService.getInstance();
     private final AutoBidService autoBidManager = new AutoBidService();
     private final BidValidationService bidValidationService = new BidValidationService();
+    private final AutoBidValidationService autoBidValidationService = new AutoBidValidationService();
 
-    // Tách Service xử lý Status
     private final ItemStatusService statusUiService = new ItemStatusService();
     private CountdownTimerUtil countdownTimer;
 
-
     // ─── Lifecycle & Cleanup ──────────────────────────────────────────────────
-
     @FXML
     public void initialize() {
         itemImage.setPreserveRatio(false);
         itemImage.setSmooth(true);
         itemImage.setCache(false);
 
+        // Hàm makeResponsiveCover xử lý thuần túy thuộc tính hiển thị (Viewport Binding) nên vẫn ở Util
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
+
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
         bidPanel = new BidPanelController(
                 statusMessageLabel, bidControlsContainer, statusOverlay,
@@ -160,14 +159,13 @@ public class ItemPageController  {
             bidPriceChart.setAnimated(false);
         }
         autoBidHandler = new AutoBidUiHandler(
-                autoBidManager, network, user, statusUiService,
+                autoBidManager, autoBidValidationService, network, user, statusUiService,
                 autoBidForm, autoBidActiveStatus,
                 maxBidField, autoBidStepField, userCurrentBidLabel,
                 btnAutoBidToggle, submitBid,
-                () -> item,        // Supplier<Item>
-                () -> myLastBid    // Supplier<Double>
+                () -> item,
+                () -> myLastBid
         );
-
         historyPanel = new BidHistoryPanel(
                 bidHistoryService, user,
                 historyBidContainer, historyScrollPane,
@@ -183,7 +181,6 @@ public class ItemPageController  {
     }
 
     // ─── Data Initialization ──────────────────────────────────────────────────
-
     public void setItemId(String id) {
         this.itemId = id;
         itemsService.getItemById(id, user.getId())
@@ -204,7 +201,7 @@ public class ItemPageController  {
 
         if (loadedItem.getStoredStatus() == AuctionStatus.BANNED) {
             displayDataItem(loadedItem);
-            bidPanel.applyBannedStateView(loadedItem); // hiện overlay "Auction Suspended"
+            bidPanel.applyBannedStateView(loadedItem);
             autoBidHandler.updateUi(false);
             connectToRealTimeBidding();
             historyPanel.load(itemId);
@@ -230,10 +227,7 @@ public class ItemPageController  {
         }
     }
 
-
-
     // ─── UI Mutators ──────────────────────────────────────────────────────────
-
     private void uiHandleNewBid(BidPayload bidPayload) {
         autoBidManager.setLastBidderId(bidPayload.getUserId());
         item.setCurrentTopPLayerId(bidPayload.getUserId());
@@ -266,7 +260,6 @@ public class ItemPageController  {
     }
 
     // ─── Manual & Auto Bidding Interactions ───────────────────────────────────
-
     @FXML
     public void bidHandle() {
         String input = bidAmountField.getText().trim();
@@ -313,9 +306,8 @@ public class ItemPageController  {
     }
 
     // ─── Core Display & Timers ────────────────────────────────────────────────
-
     private void displayDataItem(Item currentItem) {
-        ClientImageUtil.setupThumbnailGallery(
+        ImageCardFactory.setupThumbnailGallery(
                 thumbnailContainer, itemImage, currentItem.getImagesPath(),
                 THUMB_WIDTH, THUMB_HEIGHT, IMAGE_WIDTH, IMAGE_HEIGHT
         );
@@ -341,7 +333,6 @@ public class ItemPageController  {
         if (btnSuggestStep1 != null) btnSuggestStep1.setText(String.format("$ %.0f", currentItem.getBidStep()));
         if (btnSuggestStep2 != null) btnSuggestStep2.setText(String.format("$ %.0f", currentItem.getBidStep() * 2));
 
-        // Kích hoạt Countdown đồng bộ thông qua Service ủy quyền
         AuctionStatus status = currentItem.getStoredStatus();
         if (status != AuctionStatus.BANNED) {
             bidPanel.startCountdown(item,

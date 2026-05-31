@@ -1,6 +1,5 @@
-package com.auction.client.service;
+package com.auction.client.util;
 
-import com.auction.client.util.DateTimeUtil;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
@@ -28,7 +27,7 @@ public class ItemStatusService {
     // COMMON
     public String formatPrice(double price) {
         NumberFormat formatter = NumberFormat.getInstance(new Locale("vi","VN"));
-        return "$ " + formatter.format(price) + " USD";
+        return "$ " + formatter.format(price) ;
     }
 
     public AuctionStatus resolveStatus(Item item){

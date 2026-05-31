@@ -9,7 +9,7 @@
 
     <VBox prefWidth="1000.0" spacing="18.0" styleClass="content-card"
           HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" minHeight="-Infinity" maxHeight="Infinity"
-          stylesheets="@../../css/MyBids.css"
+          stylesheets="@../../css/MyBidsPage.css"
     >
 
         <padding>

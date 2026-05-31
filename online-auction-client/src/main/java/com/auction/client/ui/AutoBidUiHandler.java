@@ -3,9 +3,9 @@ package com.auction.client.ui;
 import com.auction.client.network.NetworkService;
 import com.auction.client.service.AutoBidService;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
-import com.auction.client.service.AutoBidService.ValidationResult;
-import com.auction.client.service.ItemStatusService;
+import com.auction.client.util.ItemStatusService;
 import com.auction.client.util.ToastUtil;
+import com.auction.client.validation.AutoBidValidationService; // Import validator mới
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.item.Item;
 import javafx.scene.control.Button;
@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 public class AutoBidUiHandler {
 
     private final AutoBidService autoBidManager;
+    private final AutoBidValidationService autoBidValidator; // Khai báo validator mới
     private final NetworkService network;
     private final User user;
     private final ItemStatusService statusService;
@@ -30,11 +31,12 @@ public class AutoBidUiHandler {
     private final Label userCurrentBidLabel;
     private final Button btnAutoBidToggle;
     private final Button submitBid;
-    private final Supplier<Item> itemSupplier;   // lấy item hiện tại từ controller
+    private final Supplier<Item> itemSupplier;
     private final Supplier<Double> myLastBidSupplier;
 
     public AutoBidUiHandler(
             AutoBidService autoBidManager,
+            AutoBidValidationService autoBidValidator, // Nhận validator từ Controller
             NetworkService network,
             User user,
             ItemStatusService statusService,
@@ -49,6 +51,7 @@ public class AutoBidUiHandler {
             Supplier<Double> myLastBidSupplier
     ) {
         this.autoBidManager      = autoBidManager;
+        this.autoBidValidator    = autoBidValidator;
         this.network             = network;
         this.user                = user;
         this.statusService       = statusService;
@@ -79,11 +82,13 @@ public class AutoBidUiHandler {
             double max  = Double.parseDouble(maxBidField.getText().trim());
             double step = Double.parseDouble(autoBidStepField.getText().trim());
 
-            ValidationResult result = autoBidManager.validate(item, max, step);
+            // Thay đổi 1: Gọi hàm validate từ AutoBidValidationService
+            AutoBidValidationService.ValidationResult result = autoBidValidator.validate(item, max, step);
             if (!result.ok()) {
                 ToastUtil.showError(maxBidField.getScene(), result.errorMessage());
                 return;
             }
+
             autoBidManager.activate(max, step);
             network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
             updateUi(true);
@@ -105,20 +110,28 @@ public class AutoBidUiHandler {
 
     public void handleDecision(double serverPrice, String topBidderId) {
         Item item = itemSupplier.get();
-        AutoBidDecision decision = autoBidManager.decideBid(
-                topBidderId, serverPrice, user.getId(),
-                myLastBidSupplier.get(), statusService.isOngoing(item));
 
+        // Thay đổi 2: Gọi hàm decideBid gọn nhẹ (không truyền myLastBid sang Service nữa)
+        AutoBidDecision decision = autoBidManager.decideBid(
+                topBidderId, serverPrice, user.getId(), statusService.isOngoing(item));
+
+        // Thay đổi 3: Đưa toàn bộ việc render chuỗi text về đúng UI Handler tại đây
         switch (decision.type()) {
             case AUCTION_ENDED -> stop();
             case INACTIVE      -> {}
-            case LEADING       -> userCurrentBidLabel.setText(decision.statusText());
+            case LEADING       -> {
+                userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f (Leading)", serverPrice));
+            }
             case MAX_REACHED   -> {
                 updateUi(false);
-                ToastUtil.showInfo(userCurrentBidLabel.getScene(), decision.statusText());
+                ToastUtil.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!");
             }
             case OUTBID_AND_REBID -> {
-                userCurrentBidLabel.setText(decision.statusText());
+                double myLastBid = myLastBidSupplier.get();
+                String statusText = myLastBid > 0
+                        ? String.format("Your current bid: $ %.0f (Outbid — auto-bidding...)", myLastBid)
+                        : "Auto-bidding...";
+                userCurrentBidLabel.setText(statusText);
                 network.sendBid(item.getId(), user.getId(), decision.nextBidPrice(), "");
             }
         }

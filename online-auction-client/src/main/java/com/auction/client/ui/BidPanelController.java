@@ -1,7 +1,7 @@
 package com.auction.client.ui;
 
 import com.auction.client.service.AutoBidService;
-import com.auction.client.service.ItemStatusService;
+import com.auction.client.util.ItemStatusService;
 import com.auction.client.util.CountdownTimerUtil;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;

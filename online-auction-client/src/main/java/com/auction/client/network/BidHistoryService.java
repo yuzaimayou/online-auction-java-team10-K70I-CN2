@@ -1,4 +1,4 @@
-package com.auction.client.service;
+package com.auction.client.network;
 
 import com.auction.client.util.AppConfig;
 import com.auction.shared.message.ResponseMessage;
