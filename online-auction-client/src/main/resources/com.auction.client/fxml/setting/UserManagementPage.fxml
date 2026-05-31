@@ -29,7 +29,6 @@
             <TableColumn fx:id="colEmail" text="Email" prefWidth="250.0" />
             <TableColumn fx:id="colStatus" text="Status" prefWidth="120.0" />
             <TableColumn fx:id="colRole" text="Role" prefWidth="120.0" />
-            <TableColumn fx:id="colJoinDate" text="Join Date" prefWidth="120.0" />
             <TableColumn fx:id="colAction" text="Action" prefWidth="100.0" />
         </columns>
         <columnResizePolicy>
