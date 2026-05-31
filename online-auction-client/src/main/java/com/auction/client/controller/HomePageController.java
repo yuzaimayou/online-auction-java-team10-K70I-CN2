@@ -2,8 +2,9 @@ package com.auction.client.controller;
 
 import com.auction.client.controller.common.NavBarController;
 import com.auction.client.controller.common.SearchStoreController;
-import com.auction.client.service.ItemsService;
 import com.auction.client.network.NetworkService;
+import com.auction.client.service.ItemsService;
+import com.auction.client.ui.ItemCardFactory;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.ToastUtil;
 import com.auction.shared.model.enums.AuctionStatus;
@@ -11,7 +12,8 @@ import com.auction.shared.model.item.ItemSummary;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
@@ -19,17 +21,20 @@ import javafx.scene.layout.VBox;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Trách nhiệm:
+ * 1. Lắng nghe thay đổi (Search, Category, Resize).
+ * 2. Gọi ItemsService để lấy dữ liệu.
+ * 3. Yêu cầu ItemCardFactory tạo giao diện và gắn vào vùng chứa.
+ */
 public class HomePageController {
 
-    // Dependencies
-    private final NetworkService network      = NetworkService.getInstance();
-    private final ItemsService   itemsService = ItemsService.getInstance();
-    // State
-    private String currentCategory = "ALL";
+    private final NetworkService network = NetworkService.getInstance();
+    private final ItemsService itemsService = ItemsService.getInstance();
+    private String currentCategory  = "ALL";
 
-    // FXML fields
     @FXML
-    private javafx.scene.control.ScrollPane mainScrollPane;
+    private ScrollPane mainScrollPane;
     @FXML
     private FlowPane ongoingAuctionsContainer;
     @FXML
@@ -45,81 +50,115 @@ public class HomePageController {
     @FXML
     private NavBarController navBarController;
 
-    // ─Lifecycle
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         network.leaveRoom();
+
         SearchStoreController.searchQueryProperty().addListener(
                 (obs, oldVal, newVal) -> fetchItemsFromServer()
         );
 
+        // Bind chiều rộng linh hoạt cho các vùng chứa
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
-            double width = newVal.doubleValue() - 40;
-            ongoingAuctionsContainer.setPrefWidth(width);
-            upcomingAuctionsContainer.setPrefWidth(width);
-            endedAuctionsContainer.setPrefWidth(width);
+            double containerWidth = newVal.doubleValue() - 40;
+            ongoingAuctionsContainer.setPrefWidth(containerWidth);
+            upcomingAuctionsContainer.setPrefWidth(containerWidth);
+            endedAuctionsContainer.setPrefWidth(containerWidth);
         });
 
         fetchItemsFromServer();
     }
 
-    // Data fetching
+    // ── Data Fetching ─────────────────────────────────────────────────────────
     private void fetchItemsFromServer() {
         String search = SearchStoreController.getSearchQuery();
         itemsService.getItems(search, currentCategory)
-                .thenAccept(items -> Platform.runLater(() -> loadItemsToUI(items)))
-                .exceptionally(e -> {
-                    e.printStackTrace();
-                    Platform.runLater(() -> {
-                        if (mainScrollPane.getScene() != null) {
-                            ToastUtil.showError(mainScrollPane.getScene(), "Cannot load auction items.");
-                        }
-                    });
-                    return null;
-                });
+                .thenAccept(this::processFetchResponse)
+                .exceptionally(this::processFetchException);
     }
 
+    private void processFetchResponse(List<ItemSummary> items) {
+        Platform.runLater(() -> loadItemsToUI(items));
+    }
+
+    private Void processFetchException(Throwable e) {
+        e.printStackTrace();
+        Platform.runLater(() -> {
+            if (mainScrollPane.getScene() != null) {
+                ToastUtil.showError(mainScrollPane.getScene(), "Cannot load auction items.");
+            }
+        });
+        return null;
+    }
+
+    // ── UI Rendering ──────────────────────────────────────────────────────────
     public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
-        ongoingAuctionsContainer.getChildren().clear();
-        upcomingAuctionsContainer.getChildren().clear();
-        endedAuctionsContainer.getChildren().clear();
+        clearAllContainers();
+
+        if (itemsFromServer == null || itemsFromServer.isEmpty()) {
+            updateSectionVisibility(0, 0, 0);
+            return;
+        }
 
         int ongoingCount = 0, upcomingCount = 0, endedCount = 0;
 
-        if (itemsFromServer != null) {
-            for (ItemSummary item : itemsFromServer) {
-                if (item.getStatus() == AuctionStatus.BANNED) continue;
+        for (ItemSummary item : itemsFromServer) {
+            if (item.getStatus() == AuctionStatus.BANNED) continue;
 
-                try {
-                    FXMLLoader loader = new FXMLLoader(
-                            getClass().getResource("/com.auction.client/fxml/ItemCardHP.fxml"));
-                    VBox cardBox = loader.load();
-                    cardBox.setPrefWidth(280);
-                    cardBox.setMinWidth(280);
-                    cardBox.setMaxWidth(280);
-                    cardBox.setPrefWidth(280);
-                    cardBox.setMinWidth(280);
-                    cardBox.setMaxWidth(280);
+            try {
+                VBox cardBox = ItemCardFactory.createCard(item);
+                AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
 
-                    cardBox.setCache(true);
-                    cardBox.setCacheShape(true);
-
-                    ItemCardHPController cardController = loader.getController();
-                    cardController.setData(item);
-                    AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
-
-                    switch (status) {
-                        case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
-                        case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
-                        case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                switch (status) {
+                    case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
+                    case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
+                    case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
                 }
+            } catch (IOException e) {
+                System.err.println("Failed to load item card: " + item.getName());
+                e.printStackTrace();
             }
         }
 
         updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
+    }
+
+    // ── Event Handlers ────────────────────────────────────────────────────────
+    @FXML
+    private void handleCategoryClick(MouseEvent event) {
+        VBox clickedBox = (VBox) event.getSource();
+        String rawId = clickedBox.getId();
+        if (rawId == null || rawId.isBlank()) return;
+
+        String targetCategory = rawId.substring(0, 1).toUpperCase() + rawId.substring(1).toLowerCase();
+
+        currentCategory = targetCategory.equalsIgnoreCase(currentCategory) ? "ALL" : targetCategory;
+
+        updateCategoryUIStyle(clickedBox);
+        fetchItemsFromServer();
+    }
+
+    @FXML
+    public void handleSwitchToAuctionFormPage(ActionEvent event) {
+        NavigationUtil.handleSwitchToAuctionFormPage(event);
+    }
+
+    public void refreshItems() {
+        fetchItemsFromServer();
+    }
+
+    public void refreshNavBarInfo() {
+        if (navBarController != null) {
+            navBarController.refreshUserInfo();
+        }
+    }
+
+    // ── UI Helpers ────────────────────────────────────────────────────────────
+    private void clearAllContainers() {
+        ongoingAuctionsContainer.getChildren().clear();
+        upcomingAuctionsContainer.getChildren().clear();
+        endedAuctionsContainer.getChildren().clear();
     }
 
     private void updateSectionVisibility(int ongoing, int upcoming, int ended) {
@@ -133,52 +172,14 @@ public class HomePageController {
         section.setManaged(visible);
     }
 
-    // Event handlers
-    @FXML
-    private void handleCategoryClick(MouseEvent event) {
-        VBox clickedBox = (VBox) event.getSource();
-        String rawId = clickedBox.getId();
-
-        if (rawId == null || rawId.isBlank()) return;
-        String targetCategory = switch (rawId.toUpperCase()) {
-            case "FASHION"     -> "Fashion";
-            case "ELECTRONICS" -> "Electronics";
-            case "HOME"        -> "Home";
-            case "ART"         -> "Art";
-            case "BOOK"       -> "Book";
-            case "JEWELRY"     -> "Jewelry";
-            case "SPORTS"      -> "Sports";
-            default            -> rawId;
-        };
-        if (targetCategory.equalsIgnoreCase(currentCategory)) {
-            currentCategory = "ALL";
-        } else {
-            currentCategory = targetCategory;
-        }
-
-        clickedBox.getParent().getChildrenUnmodifiable().forEach(node -> {
+    private void updateCategoryUIStyle(VBox clickedBox) {
+        for (Node node : clickedBox.getParent().getChildrenUnmodifiable()) {
             if (node instanceof VBox) {
                 node.getStyleClass().remove("active-category");
             }
-        });
-
+        }
         if (!"ALL".equals(currentCategory)) {
             clickedBox.getStyleClass().add("active-category");
-        }
-        fetchItemsFromServer();
-    }
-
-    @FXML
-    public void handleSwitchToAuctionFormPage(ActionEvent event) {
-        NavigationUtil.handleSwitchToAuctionFormPage(event);
-    }
-    public void refreshItems() {
-        fetchItemsFromServer();
-    }
-
-    public void refreshNavBarInfo() {
-        if (navBarController != null) {
-            navBarController.refreshUserInfo();
         }
     }
 }

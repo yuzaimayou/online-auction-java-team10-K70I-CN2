@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.service.ItemStatusService;
+import com.auction.client.util.ItemStatusService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
 import com.auction.shared.model.item.ItemSummary;
@@ -9,105 +9,135 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
+/**
+ * Trách nhiệm:
+ * 1. Hiển thị thông tin tổng quan của một phiên đấu giá.
+ * 2. Đếm ngược thời gian và tự động cập nhật UI khi chuyển trạng thái.
+ */
 public class ItemCardHPController {
 
-    private static final double CONTAINER_W = 280.0;
-    private static final double CONTAINER_H = 240.0;
+    // ── Constants ─────────────────────────────────────────────────────────────
+    private static final double CONTAINER_W   = 280.0;
+    private static final double CONTAINER_H   = 240.0;
+    private static final double CORNER_RADIUS = 30.0;
 
-    private ItemSummary currentItem;
-    private Timeline    timeline;
+    // ── State & Dependencies ──────────────────────────────────────────────────
+    private ItemSummary   currentItem;
+    private Timeline      timeline;
     private AuctionStatus lastStatus;
 
-    // Khởi tạo Service gộp chung
+    // (Lưu ý: Nếu ItemStatusService không chứa state, em nên dùng Singleton hoặc biến static để tối ưu bộ nhớ)
     private final ItemStatusService statusUiService = new ItemStatusService();
 
-    @FXML private StackPane imageContainer;
-    @FXML private ImageView itemImage;
-    @FXML private Label itemNameLabel;
-    @FXML private Label statusLabel;
-    @FXML private Label endTimeLabel;
-    @FXML private Label priceLabel;
-    @FXML private Label priceTitleLabel;
-    @FXML private Label timeTitleLabel;
+    // ── FXML Fields ───────────────────────────────────────────────────────────
+    @FXML
+    private StackPane imageContainer;
+    @FXML
+    private ImageView itemImage;
+    @FXML
+    private Label itemNameLabel;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Label endTimeLabel;
+    @FXML
+    private Label priceLabel;
+    @FXML
+    private Label priceTitleLabel;
+    @FXML
+    private Label timeTitleLabel;
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
-
         if (imageContainer == null) return;
 
         itemImage.setSmooth(true);
         itemImage.setCache(true);
-        ClientImageUtil.makeResponsiveCover(
-                itemImage,
-                imageContainer,
-                30
-        );
+        ClientImageUtil.makeResponsiveCover(itemImage, imageContainer, CORNER_RADIUS);
+
+        itemNameLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
     }
 
-    // Public API
+    // ── Public API ────────────────────────────────────────────────────────────
     public void setData(ItemSummary item) {
         this.currentItem = item;
+        if (currentItem == null) return;
 
-        String name = item.getName();
-        if (name != null && name.length() > 50) {
-            name = name.substring(0, 47) + "...";
-        }
-        itemNameLabel.setText(name);
-
-        if (item.getThumbnailUrl() != null && !item.getThumbnailUrl().isEmpty()) {
-            ClientImageUtil.displayImage(item.getThumbnailUrl(), "images", itemImage, CONTAINER_W * 2, CONTAINER_H * 2
-            );
-        }
+        itemNameLabel.setText(item.getName());
+        loadThumbnail(item.getThumbnailUrl());
 
         updateUI();
         startCountdown();
     }
 
-    private void updateUI() {
-        if (currentItem == null) return;
-
-        // Ủy quyền hoàn toàn việc vẽ UI cho Service chung
-        statusUiService.updateCardUi(currentItem, statusLabel, priceTitleLabel, priceLabel, endTimeLabel, timeTitleLabel);
-
-        // Tối ưu giải phóng tài nguyên CPU nếu phòng kết thúc
-        if (statusUiService.resolveStatus(currentItem) == AuctionStatus.ENDED && timeline != null) {
-            timeline.stop();
+    // ── UI Helpers ────────────────────────────────────────────────────────────
+    private void loadThumbnail(String thumbnailUrl) {
+        if (thumbnailUrl != null && !thumbnailUrl.isBlank()) {
+            ClientImageUtil.displayImage(
+                    thumbnailUrl,
+                    "images",
+                    itemImage,
+                    CONTAINER_W * 2,
+                    CONTAINER_H * 2
+            );
         }
     }
 
-    private void startCountdown() {
-        if (timeline != null) timeline.stop();
-        lastStatus = statusUiService.resolveStatus(currentItem);
+    private void updateUI() {
+        statusUiService.updateCardUi(
+                currentItem, statusLabel, priceTitleLabel, priceLabel, endTimeLabel, timeTitleLabel
+        );
+    }
 
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            AuctionStatus newStatus = statusUiService.resolveStatus(currentItem);
-            if (newStatus != lastStatus) {
-                lastStatus = newStatus;
-                if (newStatus == AuctionStatus.ENDED && timeline != null) {
-                    timeline.stop();
-                }
-            }
-            updateUI();
-        }));
+    // ── Timer Logic ───────────────────────────────────────────────────────────
+    private void startCountdown() {
+        stopCountdown();
+
+        lastStatus = statusUiService.resolveStatus(currentItem);
+        if (lastStatus == AuctionStatus.ENDED) {
+            return;
+        }
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> checkAndTransitionStatus()));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
 
-    @FXML
-    public void handleSwitchToItemPage(
-            MouseEvent event
-    ) {
-        if (timeline != null) {
-            timeline.stop();}
-        if (currentItem == null) {
-            return;
+    private void checkAndTransitionStatus() {
+        AuctionStatus newStatus = statusUiService.resolveStatus(currentItem);
+
+        updateUI();
+
+        if (newStatus != lastStatus) {
+            lastStatus = newStatus;
+            if (newStatus == AuctionStatus.ENDED) {
+                stopCountdown();
+            }
         }
-        NavigationUtil.switchToItemPage(event,
+    }
+
+    private void stopCountdown() {
+        if (timeline != null) {
+            timeline.stop();
+            timeline = null;
+        }
+    }
+
+    // ── Event Handlers ────────────────────────────────────────────────────────
+    @FXML
+    public void handleSwitchToItemPage(MouseEvent event) {
+        if (currentItem == null) return;
+
+        stopCountdown();
+
+        NavigationUtil.switchToItemPage(
+                event,
                 currentItem.getId(),
                 currentItem.getName()
         );

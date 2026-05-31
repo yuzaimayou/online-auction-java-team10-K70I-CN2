@@ -1,6 +1,6 @@
 package com.auction.client.ui;
 
-import com.auction.client.service.BidHistoryService;
+import com.auction.client.network.BidHistoryService;
 import com.auction.client.util.ToastUtil;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.dto.BidHistoryItemDTO;

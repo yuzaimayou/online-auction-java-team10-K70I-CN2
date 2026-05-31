@@ -1,47 +1,25 @@
 package com.auction.client.util;
 
 import javafx.application.Platform;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 
-import java.io.File;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientImageUtil {
 
-    // ── Constants ─────────────────────────────────────────────────────────────
-    private static final double IMAGE_CARD_WIDTH  = 150;
-    private static final double IMAGE_CARD_HEIGHT = 120;
-    private static final double IMAGE_CARD_ARC    = 20;
-
     private static final Map<String, Image> imageCache = new ConcurrentHashMap<>();
 
-    /**
-     * Tải và hiển thị hình ảnh từ server tĩnh kèm cache dữ liệu
-     */
-    public static void displayImage(String imageName,
-                                    String source,
-                                    ImageView imageView,
-                                    double reqWidth,
-                                    double reqHeight) {
-
+    public static void displayImage(String imageName, String source, ImageView imageView, double reqWidth, double reqHeight) {
         String imageUrl = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
-        String cacheKey = imageUrl;
-
-        Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
+        Image fxImage = imageCache.computeIfAbsent(imageUrl, key -> {
             try {
                 System.out.println("Loading image: " + imageUrl);
-                return new Image(imageUrl, true);
+                return new Image(imageUrl, true); // Load bất đồng bộ để tránh đơ UI
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -49,13 +27,9 @@ public class ClientImageUtil {
         });
 
         imageView.setSmooth(true);
-        imageView.setCache(false);
         imageView.setImage(fxImage);
     }
 
-    /**
-     * Cấu hình ảnh hiển thị dạng Cover co giãn linh hoạt theo Container chính và bo góc tròn
-     */
     public static void makeResponsiveCover(ImageView imageView, Region container, double arcRadius) {
         imageView.setManaged(false);
         imageView.setLayoutX(0);
@@ -113,18 +87,13 @@ public class ClientImageUtil {
         });
     }
 
-    /**
-     * Áp dụng chế độ Object-Fit: Cover căn đều khung nhìn ImageView cho ảnh Thumbnail
-     */
-    public static void applyObjectFitCoverToImageView(ImageView imageView, Image img,
-                                                      double targetW, double targetH) {
+    public static void applyObjectFitCoverToImageView(ImageView imageView, Image img, double targetW, double targetH) {
         if (img == null || imageView == null) return;
 
         if (img.getProgress() < 1.0) {
             img.progressProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal.doubleValue() >= 1.0) {
-                    Platform.runLater(() ->
-                            applyObjectFitCoverToImageView(imageView, img, targetW, targetH));
+                    Platform.runLater(() -> applyObjectFitCoverToImageView(imageView, img, targetW, targetH));
                 }
             });
             return;
@@ -132,7 +101,6 @@ public class ClientImageUtil {
 
         Platform.runLater(() -> {
             imageView.setSmooth(true);
-
             double imgW = img.getWidth();
             double imgH = img.getHeight();
             if (imgW == 0 || imgH == 0) return;
@@ -155,126 +123,6 @@ public class ClientImageUtil {
 
             imageView.setViewport(new Rectangle2D(viewX, viewY, viewW, viewH));
         });
-    }
-
-    /**
-     * Hàm dựng bộ sưu tập ảnh Thu nhỏ (Thumbnail Gallery) cho trang chi tiết sản phẩm
-     */
-    public static void setupThumbnailGallery(HBox thumbnailContainer, ImageView itemImage, List<String> images,
-                                             double thumbWidth, double thumbHeight, double imageWidth, double imageHeight) {
-        thumbnailContainer.getChildren().clear();
-        if (images == null || images.isEmpty()) return;
-
-        displayImage(images.get(0), "images", itemImage, imageWidth * 2, imageHeight * 2);
-
-        boolean isFirst = true;
-        for (String imgPath : images) {
-            if (imgPath == null || imgPath.isBlank()) continue;
-
-            StackPane thumbPane = new StackPane();
-            thumbPane.getStyleClass().add("thumbnail-container");
-            thumbPane.setMinWidth(thumbWidth);
-            thumbPane.setMaxWidth(thumbWidth);
-            thumbPane.setMinHeight(thumbHeight);
-            thumbPane.setMaxHeight(thumbHeight);
-
-            if (isFirst) {
-                thumbPane.getStyleClass().add("active-thumb");
-                isFirst = false;
-            }
-
-            ImageView thumbView = new ImageView();
-            thumbView.setSmooth(true);
-            thumbView.setCache(true);
-            thumbView.setFitWidth(thumbWidth);
-            thumbView.setFitHeight(thumbHeight);
-            thumbView.setPreserveRatio(false);
-            thumbView.imageProperty().addListener((obs, oldImg, newImg) -> {
-                if (newImg != null) {
-                    applyObjectFitCoverToImageView(thumbView, newImg, thumbWidth, thumbHeight);
-                }
-            });
-
-            displayImage(imgPath, "images", thumbView, thumbWidth * 3, thumbHeight * 3);
-            thumbPane.getChildren().add(thumbView);
-
-            thumbPane.setOnMouseClicked(e -> {
-                displayImage(imgPath, "images", itemImage, imageWidth * 2, imageHeight * 2);
-                thumbnailContainer.getChildren().forEach(
-                        n -> n.getStyleClass().remove("active-thumb")
-                );
-                thumbPane.getStyleClass().add("active-thumb");
-            });
-
-            thumbnailContainer.getChildren().add(thumbPane);
-        }
-    }
-
-    /**
-     * Dựng card hiển thị ảnh local (File) đã chọn từ máy người dùng.
-     * Chuyển từ AuctionFormController — controller không cần biết về layout card.
-     *
-     * @param file           File ảnh local cần hiển thị
-     * @param onRemove       Callback được gọi khi người dùng bấm nút xóa (✕)
-     * @return               StackPane card hoàn chỉnh, sẵn sàng thêm vào container
-     */
-    public static StackPane createImageCard(File file, Runnable onRemove) {
-        ImageView iv = new ImageView(new Image(file.toURI().toString()));
-        iv.setPreserveRatio(true);
-
-        double ratio = iv.getImage().getWidth() / iv.getImage().getHeight();
-        if (ratio > IMAGE_CARD_WIDTH / IMAGE_CARD_HEIGHT) {
-            iv.setFitHeight(IMAGE_CARD_HEIGHT);
-        } else {
-            iv.setFitWidth(IMAGE_CARD_WIDTH);
-        }
-
-        VBox box = new VBox(iv);
-        box.getStyleClass().add("image-border-container");
-        box.setAlignment(Pos.CENTER);
-        box.setMinSize(IMAGE_CARD_WIDTH, IMAGE_CARD_HEIGHT);
-        box.setMaxSize(IMAGE_CARD_WIDTH, IMAGE_CARD_HEIGHT);
-
-        Rectangle clip = new Rectangle(IMAGE_CARD_WIDTH, IMAGE_CARD_HEIGHT);
-        clip.setArcWidth(IMAGE_CARD_ARC);
-        clip.setArcHeight(IMAGE_CARD_ARC);
-        box.setClip(clip);
-
-        Button del = new Button("✕");
-        del.getStyleClass().add("delete-photo-btn");
-        StackPane.setAlignment(del, Pos.TOP_RIGHT);
-        // callback do caller truyền vào — util không biết gì về selectedFiles hay controller
-        del.setOnAction(e -> onRemove.run());
-
-        StackPane card = new StackPane(box, del);
-        card.setPickOnBounds(false);
-        return card;
-    }
-
-    private static StackPane buildThumbCard(ImageView iv, Runnable onRemove,
-                                            double w, double h) {
-        StackPane imageContainer = new StackPane();
-        imageContainer.getStyleClass().add("image-border-container");
-        imageContainer.setAlignment(javafx.geometry.Pos.CENTER);
-        imageContainer.setPrefSize(w, h);
-        imageContainer.setMinSize(w, h);
-        imageContainer.setMaxSize(w, h);
-
-        makeResponsiveCover(iv, imageContainer, 12);
-        imageContainer.getChildren().add(iv);
-
-        Button btnDel = new Button("✕");
-        btnDel.getStyleClass().add("delete-photo-btn");
-        StackPane.setAlignment(btnDel, javafx.geometry.Pos.TOP_RIGHT);
-        btnDel.setOnAction(e -> onRemove.run());
-
-        return new StackPane(imageContainer, btnDel);
-    }
-    public static StackPane createServerImageCard(String imgPath, Runnable onRemove) {
-        ImageView iv = new ImageView();
-        displayImage(imgPath, "images", iv, 80, 60);
-        iv.setPreserveRatio(false);
-        return buildThumbCard(iv, onRemove, 80, 60);
     }
 
     public static void clearCache() {

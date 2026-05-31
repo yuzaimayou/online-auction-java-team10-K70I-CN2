@@ -1,6 +1,5 @@
 package com.auction.client.controller.setting;
 
-import com.auction.client.service.DepositService;
 import com.auction.client.service.WalletService;
 import com.auction.client.util.UserSession;
 import com.auction.client.util.ToastUtil;
@@ -66,6 +65,7 @@ public class DepositController {
             ToastUtil.showError(amountField.getScene(), "Vui lòng chọn phương thức thanh toán!");
             return;
         }
+
         double amount;
         try {
             amount = Double.parseDouble(amountText);
@@ -77,13 +77,16 @@ public class DepositController {
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser == null) return;
 
-        DepositService.getInstance().deposit(currentUser.getId(), amount, currentUser.getBalance())
+        // ĐÃ SỬA: Gọi WalletService thay vì DepositService.
+        // Bỏ tham số currentUser.getBalance() ở cuối.
+        WalletService.getInstance().deposit(currentUser.getId(), amount)
                 .thenAccept(newBalance -> {
-                    WalletService.getInstance().fetchAndSync()
-                            .thenAccept(balances -> Platform.runLater(() -> {
-                                ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
-                                handleBackToWallet(null); // navigate SAU khi fetchAndSync xong
-                            }));
+                    // ĐÃ SỬA: Không cần gọi thêm WalletService.getInstance().fetchAndSync() nữa.
+                    // Vì hàm deposit() trong WalletService đã tự động setBalance vào UserSession rồi!
+                    Platform.runLater(() -> {
+                        ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
+                        handleBackToWallet(null);
+                    });
                 })
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {

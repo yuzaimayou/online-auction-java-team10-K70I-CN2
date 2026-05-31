@@ -1,14 +1,13 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.model.UserModel;
-import com.auction.client.service.HttpClientProvider;
+import com.auction.client.network.HttpClientProvider;
 import com.auction.client.util.UserSession;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

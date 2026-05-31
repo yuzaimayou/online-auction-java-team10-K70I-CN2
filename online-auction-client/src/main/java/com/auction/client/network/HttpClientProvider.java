@@ -1,4 +1,4 @@
-package com.auction.client.service;
+package com.auction.client.network;
 
 import java.net.http.HttpClient;
 
