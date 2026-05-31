@@ -1,4 +1,4 @@
-package com.auction.client.service;
+package com.auction.client.ui;
 
 import com.auction.client.util.DateTimeUtil;
 import com.auction.shared.model.dto.BidHistoryItemDTO;

@@ -1,12 +1,14 @@
 package com.auction.client.controller;
 
+import com.auction.client.network.AuctionRoomListener;
+import com.auction.client.network.NetworkService;
 import com.auction.client.service.*;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
 import com.auction.client.service.AutoBidService.ValidationResult;
+import com.auction.client.ui.BidHistoryUiRenderer;
+import com.auction.client.ui.ItemStatusService;
 import com.auction.client.util.*;
 import com.auction.client.validation.BidValidationService;
-import com.auction.shared.constant.SocketEventConstants;
-import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
 import com.auction.shared.model.enums.AuctionStatus;
@@ -14,8 +16,6 @@ import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
@@ -29,14 +29,11 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 import java.time.LocalDateTime;
 
 import java.util.List;
 
-public class ItemPageController implements NetworkService.MessageListener {
+public class ItemPageController  {
 
     // ─── Constants ────────────────────────────────────────────────────────────
     private static final double IMAGE_WIDTH = 1400.0;
@@ -211,41 +208,19 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void connectToRealTimeBidding() {
-        network.setListener(this);
+        network.setAuctionRoomListener(new AuctionRoomListener() {
+            public void onNewBid(BidPayload p)             { Platform.runLater(() -> uiHandleNewBid(p)); }
+            public void onAuctionExtended(LocalDateTime t) { Platform.runLater(() -> uiHandleAuctionExtended(t)); }
+            public void onItemBanned(String id)            { if (id.equals(itemId)) Platform.runLater(() -> uiHandleItemBanned()); }
+        });
+
         boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
         if (!connected) {
             System.err.println("Failed to connect to auction room: " + item.getId());
         }
     }
 
-    // ─── Realtime Network Event Handlers (Background) ─────────────────────────
 
-    @Override
-    public void onMessageReceived(ResponseMessage response) {
-        String event = response.getMessage();
-
-        switch (event) {
-            case SocketEventConstants.EVENT_NEW_BID -> {
-                if (!SocketEventConstants.STATUS_SUCCESS_LOWER.equals(response.getStatus())) return;
-                BidPayload payload = extractPayload(response.getData(), BidPayload.class);
-                if (payload != null) Platform.runLater(() -> uiHandleNewBid(payload));
-            }
-            case SocketEventConstants.EVENT_AUCTION_EXTENDED -> {
-                JsonObject data = extractPayload(response.getData(), JsonObject.class);
-                if (data != null && data.has("endTime")) {
-                    Platform.runLater(() -> uiHandleAuctionExtended(data.get("endTime").getAsString()));
-                }
-            }
-            case SocketEventConstants.EVENT_ITEM_BANNED -> {
-                JsonObject data = extractPayload(response.getData(), JsonObject.class);
-                if (data != null && data.has("itemId")) {
-                    if (data.get("itemId").getAsString().equals(this.itemId)) {
-                        Platform.runLater(this::uiHandleItemBanned);
-                    }
-                }
-            }
-        }
-    }
 
     // ─── UI Mutators ──────────────────────────────────────────────────────────
 
@@ -265,32 +240,17 @@ public class ItemPageController implements NetworkService.MessageListener {
         loadBidHistory();
     }
 
-    private void uiHandleAuctionExtended(String rawEndTime) {
-        try {
-            LocalDateTime newEndTime = LocalDateTime.parse(rawEndTime);
-            item.setEndTime(newEndTime);
-            endTimeLabel.setText(DateTimeUtil.format(newEndTime));
-            statusUiService.startCountdown(item,
-                    () -> statusUiService.applyAuctionStatusView(item, user.getId()));
-        } catch (Exception e) {
-            System.err.println("[AUCTION_EXTENDED] Error parsing end time: " + e.getMessage());
-        }
+    private void uiHandleAuctionExtended(LocalDateTime newEndTime) {
+        item.setEndTime(newEndTime);
+        endTimeLabel.setText(DateTimeUtil.format(newEndTime));
+        statusUiService.startCountdown(item,
+                () -> statusUiService.applyAuctionStatusView(item, user.getId()));
     }
 
     private void uiHandleItemBanned() {
         network.setListener(null);
         updateAutoBidUI(false);
         statusUiService.applyBannedStateView(item);
-    }
-
-    private <T> T extractPayload(Object incomingData, Class<T> type) {
-        try {
-            JsonElement element = gson.toJsonTree(incomingData);
-            return gson.fromJson(element, type);
-        } catch (Exception e) {
-            System.err.println("Failed mapping json tree payload data: " + e.getMessage());
-            return null;
-        }
     }
 
     // ─── Manual & Auto Bidding Interactions ───────────────────────────────────
@@ -411,9 +371,7 @@ public class ItemPageController implements NetworkService.MessageListener {
     }
 
     private void renderBidHistory(List<BidHistoryItemDTO> bids) {
-        historyBidContainer.getChildren().clear();
-
-        renderBidPriceChart(bids);
+        BidHistoryUiRenderer.renderChart(bids, bidPriceSeries);
 
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
@@ -433,23 +391,6 @@ public class ItemPageController implements NetworkService.MessageListener {
                             user.getUsername()
                     )
             );
-        }
-    }
-
-    private void renderBidPriceChart(List<BidHistoryItemDTO> bids) {
-        if (bidPriceChart == null || bidPriceSeries == null) {
-            return;
-        }
-        bidPriceSeries.getData().clear();
-        if (bids == null || bids.isEmpty()) {
-            return;}
-        List<BidHistoryItemDTO> copy = new ArrayList<>(bids);
-        Collections.reverse(copy);
-        for (BidHistoryItemDTO bid : copy) {
-            if (bid.bidTime == null)
-                continue;
-            String time = DateTimeUtil.formatForChart(bid.bidTime);
-            bidPriceSeries.getData().add(new XYChart.Data<>(time, bid.bidPrice));
         }
     }
 
