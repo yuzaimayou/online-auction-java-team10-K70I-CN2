@@ -1,0 +1,181 @@
+/* ==========================================================================
+   1. CẤU TRÚC NỀN TẢNG & CARD (ĐỒNG BỘ MY AUCTIONS)
+   ========================================================================== */
+.page-root {
+    -fx-font-family: "Segoe UI", "Arial", system-ui;
+}
+
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
+}
+
+.content-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1976f3;
+}
+
+/* ==========================================================================
+   2. THANH TÌM KIẾM (SEARCH FIELD)
+   ========================================================================== */
+.search-field {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1.5;
+    -fx-padding: 0 15 0 15;
+    -fx-font-size: 14px;
+    -fx-text-fill: #475569;
+}
+
+.search-field:focused {
+    -fx-border-color: #3b82f6;
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(59, 130, 246, 0.1), 5, 0, 0, 0);
+}
+
+/* ==========================================================================
+   3. GIAO DIỆN BẢNG HIỆN ĐẠI (TABLEVIEW)
+   ========================================================================== */
+.auction-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.auction-table .column-header-background {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.auction-table .column-header {
+    -fx-background-color: transparent;
+    -fx-padding: 12;
+    -fx-size: 50;
+}
+
+.auction-table .column-header .label {
+    -fx-text-fill: #64748b;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+/* Đồng nhất chiều cao dòng (80px) để chứa vừa ảnh Thumbnail sản phẩm */
+.auction-table .table-row-cell {
+    -fx-cell-size: 80px;
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #f1f5f9 transparent;
+}
+
+.auction-table .table-row-cell:selected,
+.auction-table .table-row-cell:focused {
+    -fx-background-color: #f8fafc;
+    -fx-background-insets: 0;
+}
+
+.auction-table .table-row-cell:hover {
+    -fx-background-color: #f9fafb;
+}
+
+/* Ẩn dòng thừa bị trống ở cuối bảng */
+.auction-table .table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.auction-table .table-row-cell:empty .table-cell {
+    -fx-border-width: 0px;
+    -fx-graphic: null;
+    -fx-text: null;
+}
+
+.auction-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8px 12px;
+    -fx-text-fill: #334155;
+}
+
+/* Tên sản phẩm hiển thị trong bảng */
+.item-name-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1e293b;
+}
+
+/* ==========================================================================
+   4. LABELS & BADGES (STATUS & TIME COLS)
+   ========================================================================== */
+.end-time-column-style {
+    -fx-alignment: CENTER;
+}
+
+.end-time-date {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+}
+
+.end-time-hour {
+    -fx-font-size: 11px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #94a3b8;
+}
+
+/* Kiểu dáng các nhãn trạng thái (Won, Winning, Ended,...) */
+.status-badge-base {
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 20px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.status-upcoming {
+    -fx-background-color: #fff3c4;
+    -fx-text-fill: #eea504;
+}
+
+.status-live {
+    -fx-background-color: #ecfdf5;
+    -fx-text-fill: #059669;
+}
+
+.status-ended {
+    -fx-background-color: #e5e7eb;
+    -fx-text-fill: #4b5563;
+}
+
+.status-banned {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fca5a5;
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}
+
+/* ==========================================================================
+   5. NÚT HÀNH ĐỘNG (ACTION COLS)
+   ========================================================================== */
+.action-btn-view {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8px 20px;
+}
+
+.action-btn-view:hover {
+    -fx-background-color: #2563eb;
+    -fx-effect: dropshadow(three-pass-box, rgba(59, 130, 246, 0.3), 8, 0, 0, 4);
+    -fx-translate-y: -1px;
+}
+
+.action-btn-view:pressed {
+    -fx-background-color: #1d4ed8;
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}

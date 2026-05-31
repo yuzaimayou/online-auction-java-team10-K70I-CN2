@@ -1,5 +1,6 @@
 package com.auction.server.service;
 
+import com.auction.server.config.AppConfig;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
@@ -16,6 +17,8 @@ import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

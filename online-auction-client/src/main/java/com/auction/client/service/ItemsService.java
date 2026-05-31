@@ -278,4 +278,22 @@ public class ItemsService {
                     return gson.fromJson(jsonElement, listType);
                 });
     }
+    public CompletableFuture<List<com.auction.shared.model.item.MyBidSummary>> getMyBids() {
+        String userId = UserSession.getInstance().getLoggedInUser().getId();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(AppConfig.getHttpUrl() + "/api/mybids?userId=" + userId))
+                .GET()
+                .build();
+
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenApply(body -> {
+                    ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
+                    if (!"success".equals(response.getStatus()))
+                        throw new RuntimeException(response.getMessage());
+                    java.lang.reflect.Type listType =
+                            new TypeToken<List<com.auction.shared.model.item.MyBidSummary>>(){}.getType();
+                    return gson.fromJson(gson.toJsonTree(response.getData()), listType);
+                });
+    }
 }
