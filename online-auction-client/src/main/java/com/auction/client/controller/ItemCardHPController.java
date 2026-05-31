@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.ui.ItemStatusService;
+import com.auction.client.service.ItemStatusService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
 import com.auction.shared.model.item.ItemSummary;

@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class BidHistoryService {
 
     private static volatile BidHistoryService instance;
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final HttpClient httpClient = HttpClientProvider.get();
     private final Gson gson = GsonUtil.getInstance();
 
     public static BidHistoryService getInstance() {

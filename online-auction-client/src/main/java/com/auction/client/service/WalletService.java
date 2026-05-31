@@ -18,7 +18,7 @@ public class WalletService {
     private static final WalletService instance = new WalletService();
     public static WalletService getInstance() { return instance; }
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final HttpClient httpClient = HttpClientProvider.get();
     private final Gson gson = new Gson();
 
     private WalletService() {}
@@ -42,7 +42,7 @@ public class WalletService {
                 // Thay toàn bộ phần thenApply trong fetchAndSync():
                 .thenApply(body -> {
                     try {
-                        // Parse response ngoài cùng
+                        System.out.println(body);
                         JsonObject response = gson.fromJson(body, JsonObject.class);
                         if (!"success".equals(response.get("status").getAsString())) return null;
 

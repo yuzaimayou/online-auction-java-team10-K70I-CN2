@@ -34,6 +34,7 @@ public class ProfilePageController {
     private Label frozenBalanceLabel;
     @FXML
     private Label totalBalanceLabel;
+    private Runnable sessionListener;
 
     @FXML
     public void initialize() {
@@ -43,29 +44,13 @@ public class ProfilePageController {
 
         displayUserData();
 
-        // chỉ load 1 nguồn chính
         refreshWallet();
-
-        UserSession.getInstance().addListener(() -> {
-            Platform.runLater(() -> {
-                displayUserData();
-                refreshWallet();
-            });
-        });
-
-        WalletService.getInstance()
-                .fetchAndSync()
-                .thenAccept(balances -> {
-                    if (balances != null) {
-                        Platform.runLater(() -> {
-                            loadWalletData(
-                                    balances[0],
-                                    balances[1],
-                                    balances[0] + balances[1]
-                            );
-                        });
-                    }
-                });
+        sessionListener = () -> {
+            displayUserData();
+            refreshWallet();
+        };
+        UserSession.getInstance().addListener(sessionListener);
+        WalletService.getInstance().fetchAndSync();
     }
 
     private void displayUserData() {
@@ -153,6 +138,12 @@ public class ProfilePageController {
     private void handleDepositAction(ActionEvent event) {
         if (SettingController.getInstance() != null) {
             SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/DepositPage.fxml");
+        }
+    }
+    public void dispose() {
+        if (sessionListener != null) {
+            UserSession.getInstance().removeListener(sessionListener);
+            sessionListener = null;
         }
     }
 }

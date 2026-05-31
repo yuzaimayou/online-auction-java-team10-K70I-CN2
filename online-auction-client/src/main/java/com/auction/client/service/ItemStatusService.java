@@ -1,17 +1,11 @@
-package com.auction.client.ui;
+package com.auction.client.service;
 
-import com.auction.client.service.AutoBidService;
-import com.auction.client.util.CountdownTimerUtil;
 import com.auction.client.util.DateTimeUtil;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 
-import javafx.application.Platform;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 import java.text.NumberFormat;
 import java.time.LocalDateTime;

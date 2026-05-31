@@ -15,11 +15,13 @@ public class NavBarController {
     private Label lblBalance;
     @FXML
     private TextField searchField;
+    private Runnable walletListener;
 
     @FXML
     public void initialize() {
         refreshUserInfo();
-        UserSession.getInstance().addListener(this::refreshUserInfo);
+        walletListener = this::refreshUserInfo;
+        UserSession.getInstance().addListener(walletListener);
         searchField.textProperty().bindBidirectional(SearchStoreController.searchQueryProperty());
     }
 
@@ -35,15 +37,25 @@ public class NavBarController {
         lblUserName.setText(currentUser.getUsername());
         lblBalance.setText(String.format("$%,.2f", currentUser.getBalance()));
     }
+    public void dispose() {
+        if (walletListener != null) {
+            UserSession.getInstance().removeListener(walletListener);
+            walletListener = null;
+        }
+        if (searchField != null) {
+            searchField.textProperty().unbindBidirectional(
+                    SearchStoreController.searchQueryProperty());
+        }
+    }
 
     public void handleSwitchToHome() {
-        searchField.textProperty().unbindBidirectional(SearchStoreController.searchQueryProperty());
+        dispose();
         SearchStoreController.reset();
         NavigationUtil.handleSwitchToHomePage(lblUserName);
     }
 
     public void handleSwitchToSetting() {
-        searchField.textProperty().unbindBidirectional(SearchStoreController.searchQueryProperty());
+        dispose();
         NavigationUtil.handleSwitchToSetting(new ActionEvent(lblUserName, null));
     }
 }
