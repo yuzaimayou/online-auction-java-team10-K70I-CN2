@@ -1,12 +1,15 @@
-package com.auction.client.service;
+package com.auction.client.network;
 
+import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.RequestMessage;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.enums.ActionType;
 import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import com.auction.shared.model.payloads.RoomPayload;
+import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,7 +26,7 @@ public class NetworkService {
 
     private static volatile NetworkService instance;
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.getInstance();
 
     private Socket socket;
     private PrintWriter out;
@@ -35,9 +38,13 @@ public class NetworkService {
     }
 
     private volatile MessageListener currentListener;
+    private volatile AuctionRoomListener auctionRoomListener;
 
     public void setCurrentListener(MessageListener listener) {
         this.currentListener = listener;
+    }
+    public void setAuctionRoomListener(AuctionRoomListener listener) {
+        this.auctionRoomListener = listener;
     }
 
     private NetworkService() {
@@ -78,10 +85,8 @@ public class NetworkService {
     }
 
     private void startListeningThread() {
-        if (listenerThread != null && listenerThread.isAlive()) {
+        if (listenerThread != null && listenerThread.isAlive() && !listenerThread.isInterrupted())
             return;
-        }
-
         listenerThread = new Thread(() -> {
             try {
                 String jsonRes;
@@ -93,12 +98,12 @@ public class NetworkService {
                     } else if ("join_room_fail".equals(response.getStatus())) {
                         throw new IOException("Failed to join the auction room: " + response.getMessage());
                     }
-                    if (currentListener != null) {
-                        currentListener.onMessageReceived(response);
+                    if (auctionRoomListener != null) {
+                        dispatchToListener(response, auctionRoomListener);
                     }
                 }
             } catch (IOException e) {
-                System.err.println("Connection closed by server or error occurred: " + e.getMessage());
+                System.err.println("Connection closed: " + e.getMessage());
                 closeConnection();
             }
         });
@@ -161,6 +166,11 @@ public class NetworkService {
             if (socket != null && !socket.isClosed()) socket.close();
             if (listenerThread != null && listenerThread.isAlive()) {
                 listenerThread.interrupt();
+                try {
+                    listenerThread.join(2000); // chờ tối đa 2 giây
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
             }
             System.out.println("Connection to server closed.");
         } catch (IOException e) {
@@ -171,6 +181,26 @@ public class NetworkService {
             socket = null;
             listenerThread = null;
             currentListener = null;
+        }
+    }
+    private void dispatchToListener(ResponseMessage response, AuctionRoomListener listener) {
+        String event = response.getMessage();
+        switch (event) {
+            case SocketEventConstants.EVENT_NEW_BID -> {
+                if (!SocketEventConstants.STATUS_SUCCESS_LOWER.equals(response.getStatus())) return;
+                BidPayload payload = gson.fromJson(gson.toJsonTree(response.getData()), BidPayload.class);
+                if (payload != null) listener.onNewBid(payload);
+            }
+            case SocketEventConstants.EVENT_AUCTION_EXTENDED -> {
+                JsonObject data = gson.fromJson(gson.toJsonTree(response.getData()), JsonObject.class);
+                if (data != null && data.has("endTime"))
+                    listener.onAuctionExtended(LocalDateTime.parse(data.get("endTime").getAsString()));
+            }
+            case SocketEventConstants.EVENT_ITEM_BANNED -> {
+                JsonObject data = gson.fromJson(gson.toJsonTree(response.getData()), JsonObject.class);
+                if (data != null && data.has("itemId"))
+                    listener.onItemBanned(data.get("itemId").getAsString());
+            }
         }
     }
 }

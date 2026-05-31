@@ -1,6 +1,6 @@
 package com.auction.client.controller;
 
-import com.auction.client.service.ItemStatusService;
+import com.auction.client.ui.ItemStatusService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
 import com.auction.shared.model.item.ItemSummary;
@@ -12,7 +12,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 public class ItemCardHPController {

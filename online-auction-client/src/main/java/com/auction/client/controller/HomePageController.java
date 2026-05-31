@@ -3,7 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.controller.common.NavBarController;
 import com.auction.client.controller.common.SearchStoreController;
 import com.auction.client.service.ItemsService;
-import com.auction.client.service.NetworkService;
+import com.auction.client.network.NetworkService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.ToastUtil;
 import com.auction.shared.model.enums.AuctionStatus;

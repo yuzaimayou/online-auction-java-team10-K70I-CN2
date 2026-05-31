@@ -174,7 +174,7 @@ public class ItemRepository {
             stmt.setString(9, item.getCategory());
             stmt.setDouble(10, item.getBidStep());
             stmt.setString(11, gson.toJson(item.getImagesPath()));
-            stmt.setString(12, item.getStatus());
+            stmt.setString(12, item.getStatus().name());
             stmt.setString(13, item.getCreate_at().toString());
             stmt.setString(14, search_name);
 
@@ -219,7 +219,7 @@ public class ItemRepository {
             stmt.setString(8, item.getCategory());
             stmt.setDouble(9, item.getBidStep());
             stmt.setString(10, gson.toJson(item.getImagesPath()));
-            stmt.setString(11, item.getStatus());
+            stmt.setString(11, item.getStatus().name());
             stmt.setString(12, StringUtil.removeAccents(item.getName()));
             stmt.setString(13, itemId);
 
@@ -505,7 +505,7 @@ public class ItemRepository {
         item.setId(rs.getString("id"));
         item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
         String dbStatus = rs.getString("status");
-        if (dbStatus != null) item.setStatus(dbStatus);
+        if (dbStatus != null) item.setStatus(AuctionStatus.fromString(dbStatus));
         return item;
     }
 
