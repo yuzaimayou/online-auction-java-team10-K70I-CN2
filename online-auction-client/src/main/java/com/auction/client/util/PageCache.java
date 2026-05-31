@@ -1,7 +1,7 @@
 package com.auction.client.util;
 
-import com.auction.client.controller.HomePageController;
-import com.auction.client.controller.ItemPageController;
+import com.auction.client.controller.common.HomePageController;
+import com.auction.client.controller.auction.ItemPageController;
 import javafx.scene.Parent;
 
 public class PageCache {

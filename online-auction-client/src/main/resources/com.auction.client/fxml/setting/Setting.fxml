@@ -8,7 +8,7 @@
 <VBox prefHeight="700.0" prefWidth="1100.0"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.SettingController"
+      fx:controller="com.auction.client.controller.user.SettingController"
       stylesheets="@../../css/Setting.css"
       styleClass="page-root">
 

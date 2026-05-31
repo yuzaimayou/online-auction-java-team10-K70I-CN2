@@ -2,7 +2,7 @@ package com.auction.client.controller.auth;
 
 import com.auction.client.service.AuthService;
 import com.auction.client.util.NavigationUtil;
-import com.auction.client.util.UserSession;
+import com.auction.client.service.UserSession;
 import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,7 +10,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
-import java.io.IOException;
 
 public class VerifyController {
     private String email;

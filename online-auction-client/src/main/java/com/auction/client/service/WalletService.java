@@ -2,7 +2,6 @@ package com.auction.client.service;
 
 import com.auction.client.network.HttpClientProvider;
 import com.auction.client.util.AppConfig;
-import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import com.auction.shared.util.GsonUtil; // Dùng chung Gson chuẩn của dự án
 import com.google.gson.Gson;

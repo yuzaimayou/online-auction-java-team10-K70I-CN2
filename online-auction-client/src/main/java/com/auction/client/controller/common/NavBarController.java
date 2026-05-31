@@ -1,7 +1,7 @@
 package com.auction.client.controller.common;
 
 import com.auction.client.util.NavigationUtil;
-import com.auction.client.util.UserSession;
+import com.auction.client.service.UserSession;
 import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

@@ -1,7 +1,6 @@
 package com.auction.client.service;
 
 import com.auction.client.network.ItemApiClient;
-import com.auction.client.util.UserSession;
 import com.auction.client.validation.AuctionFormValidator;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.Item;

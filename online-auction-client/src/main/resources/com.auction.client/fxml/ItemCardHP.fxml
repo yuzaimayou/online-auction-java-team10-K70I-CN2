@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/25"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.auction.client.controller.ItemCardHPController"
+      fx:controller="com.auction.client.controller.auction.ItemCardHPController"
       styleClass="auction-card"
       onMouseClicked="#handleSwitchToItemPage">
 
