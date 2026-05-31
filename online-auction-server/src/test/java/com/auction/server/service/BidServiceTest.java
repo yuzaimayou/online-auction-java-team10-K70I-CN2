@@ -1,44 +1,91 @@
 package com.auction.server.service;
 
-
-import com.auction.server.repository.BidRepository;
-import com.auction.server.repository.ItemRepository;
+import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.exception.AuctionClosedException;
+import com.auction.shared.exception.InvalidBidException;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.item.Item;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class BidServiceTest {
 
+    private static final double EPSILON = 0.000001d;
+
     @Test
-    void should_reject_bid_when_same_user_bids_twice() throws Exception {
-        BidRepository bidRepo = mock(BidRepository.class);
-        ItemRepository itemRepo = mock(ItemRepository.class);
-        AutoBidResolver resolver = new AutoBidResolver(0.000001);
-
-        BidService service = new BidService(bidRepo, itemRepo, resolver);
-
-        Item item = mock(Item.class);
+    void validateForManualBid_rejects_seller_bidding() {
+        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
         when(item.getSellerId()).thenReturn("seller1");
-        when(item.getEndTime()).thenReturn(LocalDateTime.now().plusHours(1));
+
+        User user = new User("seller1", "seller", "pass");
+
+        assertThrows(InvalidBidException.class,
+                () -> validator.validateForManualBid(item, user, "seller1", 200.0));
+    }
+
+    @Test
+    void validateForManualBid_rejects_bid_below_minimum() {
+        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
         when(item.getHighestCurrentPrice()).thenReturn(1000.0);
         when(item.getBidStep()).thenReturn(50.0);
 
-        when(itemRepo.findById("item1")).thenReturn(item);
+        User user = new User("u1", "alice", "pass");
 
-        Connection conn = mock(Connection.class);
-        when(bidRepo.findLastBidder(conn, "item1")).thenReturn("user1");
+        assertThrows(InvalidBidException.class,
+                () -> validator.validateForManualBid(item, user, "u1", 1000.0));
+    }
 
-        // Nếu bạn refactor thêm: cho phép truyền conn vào placeBid để mock
-        // hoặc mock DatabaseManager.getConnection bằng wrapper.
+    @Test
+    void validateForManualBid_rejects_when_auction_not_started() {
+        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        Item item = baseItem(LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusMinutes(10));
 
-        // Ví dụ giả định placeBid đã nhận conn (sau refactor):
-        // boolean result = service.placeBid(conn, "item1", "user1", 1100, null);
-        // assertFalse(result);
+        User user = new User("u1", "alice", "pass");
+
+        assertThrows(AuctionClosedException.class,
+                () -> validator.validateForManualBid(item, user, "u1", 200.0));
+    }
+
+    @Test
+    void validateForManualBid_accepts_valid_bid() {
+        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
+        when(item.getHighestCurrentPrice()).thenReturn(100.0);
+        when(item.getBidStep()).thenReturn(10.0);
+
+        User user = new User("u1", "alice", "pass");
+
+        assertDoesNotThrow(() -> validator.validateForManualBid(item, user, "u1", 120.0));
+    }
+
+    @Test
+    void validateForAutoBid_rejects_increment_below_bid_step() {
+        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
+        when(item.getBidStep()).thenReturn(50.0);
+
+        User user = new User("u1", "alice", "pass");
+
+        assertThrows(InvalidBidException.class,
+                () -> validator.validateForAutoBid(item, user, "u1", 200.0, 10.0));
+    }
+
+    private Item baseItem(LocalDateTime startTime, LocalDateTime endTime) {
+        Item item = mock(Item.class);
+        when(item.getSellerId()).thenReturn("seller-default");
+        when(item.getHighestCurrentPrice()).thenReturn(100.0);
+        when(item.getBidStep()).thenReturn(10.0);
+        when(item.getStartTime()).thenReturn(startTime);
+        when(item.getEndTime()).thenReturn(endTime);
+        when(item.getStoredStatus()).thenReturn(ItemStatusConstants.ONGOING);
+        when(item.getStatus()).thenReturn(ItemStatusConstants.ONGOING);
+        when(item.getId()).thenReturn("item-1");
+        return item;
     }
 }
