@@ -25,7 +25,15 @@ public class WalletHandler {
     // Body: { "userId": "...", "amount": 500.0 }
     public static class DepositHandler implements HttpHandler {
 
-        private final WalletService walletService = new WalletService();
+        private final WalletService walletService;
+
+        public DepositHandler() {
+            this(new WalletService());
+        }
+
+        DepositHandler(WalletService walletService) {
+            this.walletService = walletService;
+        }
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -67,7 +75,15 @@ public class WalletHandler {
     // Body: { "itemId": "..." }
     public static class SettleHandler implements HttpHandler {
 
-        private final AuctionSettlementService settlementService = new AuctionSettlementService();
+        private final AuctionSettlementService settlementService;
+
+        public SettleHandler() {
+            this(new AuctionSettlementService());
+        }
+
+        SettleHandler(AuctionSettlementService settlementService) {
+            this.settlementService = settlementService;
+        }
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
