@@ -3,15 +3,10 @@ package com.auction.client.controller;
 import com.auction.client.network.AuctionRoomListener;
 import com.auction.client.network.NetworkService;
 import com.auction.client.service.*;
-import com.auction.client.service.AutoBidService.AutoBidDecision;
-import com.auction.client.service.AutoBidService.ValidationResult;
-import com.auction.client.ui.BidHistoryUiRenderer;
-import com.auction.client.ui.BidPanelController;
-import com.auction.client.ui.ItemStatusService;
+import com.auction.client.ui.*;
 import com.auction.client.util.*;
 import com.auction.client.validation.BidValidationService;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.dto.BidHistoryItemDTO;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.BidPayload;
@@ -31,8 +26,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
-
-import java.util.List;
 
 public class ItemPageController  {
 
@@ -121,6 +114,8 @@ public class ItemPageController  {
     @FXML
     private NumberAxis bidPriceAxis;
     private BidPanelController bidPanel;
+    private AutoBidUiHandler autoBidHandler;
+    private BidHistoryPanel historyPanel;
 
 
     private XYChart.Series<String, Number> bidPriceSeries;
@@ -164,6 +159,20 @@ public class ItemPageController  {
             bidPriceChart.getData().add(bidPriceSeries);
             bidPriceChart.setAnimated(false);
         }
+        autoBidHandler = new AutoBidUiHandler(
+                autoBidManager, network, user, statusUiService,
+                autoBidForm, autoBidActiveStatus,
+                maxBidField, autoBidStepField, userCurrentBidLabel,
+                btnAutoBidToggle, submitBid,
+                () -> item,        // Supplier<Item>
+                () -> myLastBid    // Supplier<Double>
+        );
+
+        historyPanel = new BidHistoryPanel(
+                bidHistoryService, user,
+                historyBidContainer, historyScrollPane,
+                totalBidsLabel, bidPriceSeries
+        );
     }
 
     public void dispose() {
@@ -196,23 +205,23 @@ public class ItemPageController  {
         if (loadedItem.getStoredStatus() == AuctionStatus.BANNED) {
             displayDataItem(loadedItem);
             bidPanel.applyBannedStateView(loadedItem); // hiện overlay "Auction Suspended"
-            updateAutoBidUI(false);
+            autoBidHandler.updateUi(false);
             connectToRealTimeBidding();
-            loadBidHistory(); // ← thêm dòng này
+            historyPanel.load(itemId);
             return;
         }
 
         displayDataItem(loadedItem);
         bidPanel.applyAuctionStatusView(loadedItem, user.getId());
         connectToRealTimeBidding();
-        loadBidHistory();
+        historyPanel.load(itemId);
     }
 
     private void connectToRealTimeBidding() {
         network.setAuctionRoomListener(new AuctionRoomListener() {
-            public void onNewBid(BidPayload p)             { Platform.runLater(() -> uiHandleNewBid(p)); }
+            public void onNewBid(BidPayload p) { Platform.runLater(() -> uiHandleNewBid(p)); }
             public void onAuctionExtended(LocalDateTime t) { Platform.runLater(() -> uiHandleAuctionExtended(t)); }
-            public void onItemBanned(String id)            { if (id.equals(itemId)) Platform.runLater(() -> uiHandleItemBanned()); }
+            public void onItemBanned(String id) { if (id.equals(itemId)) Platform.runLater(() -> uiHandleItemBanned()); }
         });
 
         boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
@@ -237,8 +246,10 @@ public class ItemPageController  {
         currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
         bidPanel.applyAuctionStatusView(item, user.getId());
         updateMinimumBidLabel();
-        handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
-        loadBidHistory();
+        autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
+        historyPanel.load(itemId);
+
+        WalletService.getInstance().fetchAndSync();
     }
 
     private void uiHandleAuctionExtended(LocalDateTime newEndTime) {
@@ -250,7 +261,7 @@ public class ItemPageController  {
 
     private void uiHandleItemBanned() {
         network.setListener(null);
-        updateAutoBidUI(false);
+        autoBidHandler.updateUi(false);
         bidPanel.applyBannedStateView(item);
     }
 
@@ -289,117 +300,16 @@ public class ItemPageController  {
 
     @FXML
     private void toggleAutoBidForm() {
-        boolean isFormVisible = autoBidForm.isVisible();
-        autoBidForm.setVisible(!isFormVisible);
-        autoBidForm.setManaged(!isFormVisible);
+        autoBidHandler.toggleForm();
     }
-
     @FXML
     private void startAutoBid() {
-        if (!statusUiService.isOngoing(item)) {
-            ToastUtil.showError(maxBidField.getScene(), "Auction is not active.");
-            return;
-        }
-        try {
-            double max = Double.parseDouble(maxBidField.getText().trim());
-            double step = Double.parseDouble(autoBidStepField.getText().trim());
-
-            ValidationResult result = autoBidManager.validate(item, max, step);
-            if (!result.ok()) {
-                ToastUtil.showError(maxBidField.getScene(), result.errorMessage());
-                return;
-            }
-
-            autoBidManager.activate(max, step);
-            network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
-            updateAutoBidUI(true);
-            ToastUtil.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
-
-            boolean isLeading = user.getId().equals(autoBidManager.getLastBidderId());
-            userCurrentBidLabel.setText(isLeading
-                    ? String.format("Your current bid: $ %.0f (Leading)", item.getCurrentPrice())
-                    : "Auto-bidding...");
-        } catch (NumberFormatException e) {
-            ToastUtil.showError(maxBidField.getScene(), "Please enter valid numbers.");
-        }
+        autoBidHandler.start();
     }
 
     @FXML
     private void stopAutoBid() {
-        autoBidManager.deactivate();
-        updateAutoBidUI(false);
-    }
-
-    private void handleAutoBidLogic(double serverCurrentPrice, String topBidderId) {
-        AutoBidDecision decision = autoBidManager.decideBid(
-                topBidderId, serverCurrentPrice, user.getId(), myLastBid, statusUiService.isOngoing(item));
-
-        switch (decision.type()) {
-            case AUCTION_ENDED -> stopAutoBid();
-            case INACTIVE -> {}
-            case LEADING -> userCurrentBidLabel.setText(decision.statusText());
-            case MAX_REACHED -> {
-                updateAutoBidUI(false);
-                ToastUtil.showInfo(userCurrentBidLabel.getScene(), decision.statusText());
-            }
-            case OUTBID_AND_REBID -> {
-                userCurrentBidLabel.setText(decision.statusText());
-                network.sendBid(item.getId(), user.getId(), decision.nextBidPrice(), "");
-            }
-        }
-    }
-
-    private void updateAutoBidUI(boolean active) {
-        autoBidForm.setVisible(false);
-        autoBidForm.setManaged(false);
-        autoBidActiveStatus.setVisible(active);
-        autoBidActiveStatus.setManaged(active);
-        btnAutoBidToggle.setVisible(!active);
-        btnAutoBidToggle.setManaged(!active);
-        submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
-    }
-
-    // ─── Bid History Render ───────────────────────────────────────────────────
-
-    private void loadBidHistory() {
-        bidHistoryService.getHistory(itemId)
-                .thenAccept(bids -> Platform.runLater(() -> renderBidHistory(bids)))
-                .exceptionally(ex -> {
-                    ex.printStackTrace();
-                    Platform.runLater(() -> ToastUtil.showError(historyBidContainer.getScene(), "Failed to load bid history"));
-                    return null;
-                });
-    }
-
-    private void renderBidHistory(List<BidHistoryItemDTO> bids) {
-        BidHistoryUiRenderer.renderChart(bids, bidPriceSeries);
-
-        if (bids == null || bids.isEmpty()) {
-            totalBidsLabel.setText("0 bids");
-            toggleHistoryScroll(false);
-            return;
-        }
-
-        toggleHistoryScroll(true);
-        totalBidsLabel.setText(bids.size() + " bids");
-
-        int total = bids.size();
-        for (int i = 0; i < total; i++) {
-            historyBidContainer.getChildren().add(
-                    BidHistoryUiRenderer.createRow(
-                            total - i,
-                            bids.get(i),
-                            user.getUsername()
-                    )
-            );
-        }
-    }
-
-    private void toggleHistoryScroll(boolean visible) {
-        if (historyScrollPane != null) {
-            historyScrollPane.setVisible(visible);
-            historyScrollPane.setManaged(visible);
-        }
+        autoBidHandler.stop();
     }
 
     // ─── Core Display & Timers ────────────────────────────────────────────────
@@ -410,7 +320,14 @@ public class ItemPageController  {
                 THUMB_WIDTH, THUMB_HEIGHT, IMAGE_WIDTH, IMAGE_HEIGHT
         );
 
-        setupWrappedDescriptionText();
+        itemDesLabel.setText(currentItem.getDescription());
+        itemDesLabel.setWrapText(true);
+        itemDesLabel.setMinHeight(100);
+        itemDesLabel.setMaxWidth(Double.MAX_VALUE);
+        itemDesLabel.prefWidthProperty().bind(
+                itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth()));
+        itemDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        itemDesLabel.setMinHeight(Region.USE_PREF_SIZE);
 
         itemNameLabel.setText(currentItem.getName());
         sellerLabel.setText(currentItem.getSellerId());
@@ -431,16 +348,6 @@ public class ItemPageController  {
                     () -> bidPanel.applyAuctionStatusView(item, user.getId()));
         }
         updateMinimumBidLabel();
-    }
-
-    private void setupWrappedDescriptionText() {
-        itemDesLabel.setMinHeight(100);
-        itemDesLabel.setText(item.getDescription());
-        itemDesLabel.setWrapText(true);
-        itemDesLabel.setMaxWidth(Double.MAX_VALUE);
-        itemDesLabel.prefWidthProperty().bind(itemDesLabel.getParent().layoutBoundsProperty().map(b -> b.getWidth()));
-        itemDesLabel.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        itemDesLabel.setMinHeight(Region.USE_PREF_SIZE);
     }
 
     private void updateMinimumBidLabel() {

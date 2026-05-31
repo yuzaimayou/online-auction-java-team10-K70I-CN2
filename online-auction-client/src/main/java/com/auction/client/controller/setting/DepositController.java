@@ -1,6 +1,7 @@
 package com.auction.client.controller.setting;
 
 import com.auction.client.service.DepositService;
+import com.auction.client.service.WalletService;
 import com.auction.client.util.UserSession;
 import com.auction.client.util.ToastUtil;
 import com.auction.shared.model.account.User;
@@ -78,12 +79,11 @@ public class DepositController {
 
         DepositService.getInstance().deposit(currentUser.getId(), amount, currentUser.getBalance())
                 .thenAccept(newBalance -> {
-                    Platform.runLater(() -> {
-                        currentUser.setBalance(newBalance);
-
-                        ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
-                        handleBackToWallet(null);
-                    });
+                    WalletService.getInstance().fetchAndSync()
+                            .thenAccept(balances -> Platform.runLater(() -> {
+                                ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
+                                handleBackToWallet(null); // navigate SAU khi fetchAndSync xong
+                            }));
                 })
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
