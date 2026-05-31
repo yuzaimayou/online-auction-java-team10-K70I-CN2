@@ -137,6 +137,32 @@ class WalletHandlerTest {
     }
 
     @Test
+    void depositHandler_should_delegate_valid_request_to_wallet_service() throws Exception {
+        HttpExchange mockExchange = mock(HttpExchange.class);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        WalletService walletService = mock(WalletService.class);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("userId", "user123");
+        request.addProperty("amount", 500.0);
+
+        when(mockExchange.getRequestMethod()).thenReturn("POST");
+        when(mockExchange.getRequestBody()).thenReturn(new ByteArrayInputStream(
+                request.toString().getBytes(StandardCharsets.UTF_8)));
+        when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
+        when(mockExchange.getResponseBody()).thenReturn(outputStream);
+        when(walletService.deposit("user123", 500.0)).thenReturn(true);
+
+        WalletHandler.DepositHandler handler = new WalletHandler.DepositHandler(walletService);
+
+        assertDoesNotThrow(() -> handler.handle(mockExchange));
+
+        verify(walletService).deposit("user123", 500.0);
+        verify(mockExchange).sendResponseHeaders(eq(200), anyLong());
+        assertTrue(outputStream.toString(StandardCharsets.UTF_8).contains("\"status\":\"SUCCESS\""));
+    }
+
+    @Test
     void depositHandler_should_accept_large_deposit_amounts() throws Exception {
         // Arrange
         HttpExchange mockExchange = mock(HttpExchange.class);
@@ -288,6 +314,35 @@ class WalletHandlerTest {
 
         // Act & Assert
         assertDoesNotThrow(() -> handler.handle(mockExchange));
+    }
+
+    @Test
+    void settleHandler_should_delegate_valid_request_to_settlement_service() throws Exception {
+        HttpExchange mockExchange = mock(HttpExchange.class);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        AuctionSettlementService settlementService = mock(AuctionSettlementService.class);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("itemId", "item123");
+
+        when(mockExchange.getRequestMethod()).thenReturn("POST");
+        when(mockExchange.getRequestBody()).thenReturn(new ByteArrayInputStream(
+                request.toString().getBytes(StandardCharsets.UTF_8)));
+        when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
+        when(mockExchange.getResponseBody()).thenReturn(outputStream);
+        when(settlementService.settleAuction("item123")).thenReturn(
+                AuctionSettlementService.SettlementResult.success("item123", "winner1", "seller1", 750.0));
+
+        WalletHandler.SettleHandler handler = new WalletHandler.SettleHandler(settlementService);
+
+        assertDoesNotThrow(() -> handler.handle(mockExchange));
+
+        verify(settlementService).settleAuction("item123");
+        verify(mockExchange).sendResponseHeaders(eq(200), anyLong());
+        String response = outputStream.toString(StandardCharsets.UTF_8);
+        assertTrue(response.contains("\"status\":\"SUCCESS\""));
+        assertTrue(response.contains("\"winnerId\":\"winner1\""));
+        assertTrue(response.contains("\"winningPrice\":750.0"));
     }
 
     @Test
