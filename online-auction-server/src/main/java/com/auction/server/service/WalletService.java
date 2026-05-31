@@ -5,12 +5,11 @@ import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.shared.constant.ItemStatusConstants;
 import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
 import java.time.LocalDateTime;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 // Service xử lý logic đóng băng tiền khi đặt giá và nạp tiền.
 //
@@ -30,9 +29,6 @@ public class WalletService {
     private final WalletTransactionRepository txLogRepo;
     private final ItemRepository              itemRepo;
     private final BidRepository               bidRepo;
-
-    // Khoá theo item_id để tuần tự hoá các thread cùng đặt một item
-    private final ConcurrentMap<String, Object> itemLocks = new ConcurrentHashMap<>();
 
     public WalletService() {
         this.walletRepo = new WalletRepository();
@@ -72,7 +68,7 @@ public class WalletService {
                 }
 
                 String status = item.getStatus();
-                if ("ENDED".equalsIgnoreCase(status) || "UPCOMING".equalsIgnoreCase(status)) {
+                if (!ItemStatusConstants.ONGOING.equalsIgnoreCase(status)) {
                     rollback(conn);
                     return BidResult.fail("Phiên đấu giá không đang hoạt động (status=" + status + ")");
                 }
@@ -191,7 +187,7 @@ public class WalletService {
 
     // Lấy khoá theo item để tuần tự hoá đặt giá
     private Object getItemLock(String itemId) {
-        return itemLocks.computeIfAbsent(itemId, ignored -> new Object());
+        return com.auction.server.util.AuctionLockManager.getItemLock(itemId);
     }
 
     private static void rollback(Connection conn) {

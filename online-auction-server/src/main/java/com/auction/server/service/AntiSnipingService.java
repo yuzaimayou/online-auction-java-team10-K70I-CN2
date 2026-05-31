@@ -10,6 +10,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * TODO: Production anti-sniping logic currently lives inline inside {@link BidService}.
+ * This class is reserved for a planned future extraction to separate anti-sniping 
+ * concerns from the main bidding flow.
+ *
+ * Currently, it contains an in-progress helper for the anti-sniping algorithm.
+ * 
  * Service gia hạn phien dau gia khi co bid phut cuoi
  * Requirement 3.2.3: Gia han phien dau gia (Anti-sniping Algorithm)
  */

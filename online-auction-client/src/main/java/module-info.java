@@ -1,5 +1,5 @@
 module online.auction.client {
-    requires online.auction.shared;
+    requires transitive online.auction.shared;
 
     requires java.desktop;
     requires com.google.gson;
@@ -15,8 +15,16 @@ module online.auction.client {
 
     opens com.auction.client to javafx.fxml;
     opens com.auction.client.controller to javafx.fxml;
+
     exports com.auction.client.controller.setting;
+
     opens com.auction.client.controller.setting to javafx.fxml;
-    exports com.auction.client.controller.user;
-    opens com.auction.client.controller.user to javafx.fxml;
+
+    exports com.auction.client.controller.auth;
+
+    opens com.auction.client.controller.auth to javafx.fxml;
+
+    exports com.auction.client.controller.common;
+
+    opens com.auction.client.controller.common to javafx.fxml;
 }

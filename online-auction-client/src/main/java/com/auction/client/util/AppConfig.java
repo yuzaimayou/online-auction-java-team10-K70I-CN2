@@ -24,4 +24,6 @@ public class AppConfig {
     public static String getAppName() {
         return appName;
     }
+
+    public static String getApiUrl() {return getHttpUrl();}
 }
