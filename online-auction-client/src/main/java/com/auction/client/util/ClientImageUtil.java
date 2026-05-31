@@ -251,6 +251,32 @@ public class ClientImageUtil {
         return card;
     }
 
+    private static StackPane buildThumbCard(ImageView iv, Runnable onRemove,
+                                            double w, double h) {
+        StackPane imageContainer = new StackPane();
+        imageContainer.getStyleClass().add("image-border-container");
+        imageContainer.setAlignment(javafx.geometry.Pos.CENTER);
+        imageContainer.setPrefSize(w, h);
+        imageContainer.setMinSize(w, h);
+        imageContainer.setMaxSize(w, h);
+
+        makeResponsiveCover(iv, imageContainer, 12);
+        imageContainer.getChildren().add(iv);
+
+        Button btnDel = new Button("✕");
+        btnDel.getStyleClass().add("delete-photo-btn");
+        StackPane.setAlignment(btnDel, javafx.geometry.Pos.TOP_RIGHT);
+        btnDel.setOnAction(e -> onRemove.run());
+
+        return new StackPane(imageContainer, btnDel);
+    }
+    public static StackPane createServerImageCard(String imgPath, Runnable onRemove) {
+        ImageView iv = new ImageView();
+        displayImage(imgPath, "images", iv, 80, 60);
+        iv.setPreserveRatio(false);
+        return buildThumbCard(iv, onRemove, 80, 60);
+    }
+
     public static void clearCache() {
         imageCache.clear();
     }

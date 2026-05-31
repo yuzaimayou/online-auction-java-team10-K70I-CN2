@@ -4,6 +4,7 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.util.ToastUtil;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
+import com.auction.client.util.UiUtil;
 import com.auction.client.validation.AuctionFormValidator;
 import com.auction.shared.model.item.Item;
 import javafx.animation.PauseTransition;
@@ -73,8 +74,8 @@ public class ItemEditController {
 
     @FXML
     public void initialize() {
-        setupTimeComboBoxes();
-        setupAutoGrowTextArea();
+        UiUtil.populateHalfHourSlots(cbStartTime, cbEndTime);
+        UiUtil.autoGrowTextArea(txtItemDesc, 120);
     }
 
     public void setItemId(String id) {
@@ -129,55 +130,26 @@ public class ItemEditController {
         if (!hasImages) return;
         imagesPreviewContainer.getChildren().clear();
         for (String imgPath : existingImagePaths) {
-            imagesPreviewContainer.getChildren().add(buildServerThumb(imgPath));
+            imagesPreviewContainer.getChildren().add(
+                    ClientImageUtil.createServerImageCard(imgPath, () -> {
+                        existingImagePaths.remove(imgPath);
+                        renderImageStrip();
+                    })
+            );
         }
         for (File file : newSelectedFiles) {
-            imagesPreviewContainer.getChildren().add(buildLocalThumb(file));
+            imagesPreviewContainer.getChildren().add(
+                    ClientImageUtil.createImageCard(file, () -> {
+                        newSelectedFiles.remove(file);
+                        renderImageStrip();
+                    })
+            );
         }
         if (total < MAX_IMAGES) {
             imagesPreviewContainer.getChildren().add(smallAddBtn);
         }
     }
 
-    private StackPane buildServerThumb(String imgPath) {
-        ImageView iv = new ImageView();
-        ClientImageUtil.displayImage(imgPath, "images", iv, 80, 60);
-        return createThumbCard(iv, () -> {
-            existingImagePaths.remove(imgPath);
-            renderImageStrip();
-        });
-    }
-
-    private StackPane buildLocalThumb(File file) {
-        ImageView iv = new ImageView(
-                new Image(file.toURI().toString(), 500, 500, true, true)
-        );
-        return createThumbCard(iv, () -> {newSelectedFiles.remove(file);renderImageStrip();
-        });
-    }
-
-    private StackPane createThumbCard(ImageView iv, Runnable onDelete) {
-        double fixedWidth = 80;
-        double fixedHeight = 60;
-
-        StackPane imageContainer = new StackPane();
-        imageContainer.getStyleClass().add("image-border-container");
-        imageContainer.setAlignment(Pos.CENTER);
-
-        imageContainer.setPrefSize(fixedWidth, fixedHeight);
-        imageContainer.setMinSize(fixedWidth, fixedHeight);
-        imageContainer.setMaxSize(fixedWidth, fixedHeight);
-
-        iv.setPreserveRatio(false);
-        ClientImageUtil.makeResponsiveCover(iv, imageContainer, 12);
-        imageContainer.getChildren().add(iv);
-
-        Button btnDel = new Button("✕");
-        btnDel.getStyleClass().add("delete-photo-btn");
-        StackPane.setAlignment(btnDel, Pos.TOP_RIGHT);
-        btnDel.setOnAction(e -> onDelete.run());
-        return new StackPane(imageContainer, btnDel);
-    }
 
     //  Event Handlers & API Call
     @FXML
@@ -302,25 +274,6 @@ public class ItemEditController {
     // ──────────────────────────────────────────────────────────────────────────
     //  Helpers
     // ──────────────────────────────────────────────────────────────────────────
-
-    private void setupTimeComboBoxes() {
-        for (int h = 0; h < 24; h++) {
-            for (int m = 0; m < 60; m += 30) {
-                cbStartTime.getItems().add(String.format("%02d:%02d", h, m));
-                cbEndTime.getItems().add(String.format("%02d:%02d", h, m));
-            }
-        }
-    }
-
-    private void setupAutoGrowTextArea() {
-        txtItemDesc.setWrapText(true);
-        txtItemDesc.textProperty().addListener((obs, oldVal, newVal) -> {
-            javafx.scene.text.Text helper = new javafx.scene.text.Text(newVal);
-            helper.setFont(txtItemDesc.getFont());
-            helper.setWrappingWidth(txtItemDesc.getWidth() - 40);
-            txtItemDesc.setPrefHeight(Math.max(120, helper.getLayoutBounds().getHeight() + 40));
-        });
-    }
 
     private void selectCategoryToggle(String categoryName) {
         if (categoryName == null || categoryGroup == null) return;

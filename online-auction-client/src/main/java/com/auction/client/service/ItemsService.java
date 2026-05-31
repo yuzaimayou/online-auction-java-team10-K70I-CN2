@@ -184,20 +184,6 @@ public class ItemsService {
             String initPriceStr, String bidStepStr,
             List<String> existingImagePaths, List<File> newFiles, String itemId) {
         try {
-            List<File> allImages = new ArrayList<>(newFiles);
-            AuctionFormValidator.Result result = AuctionFormValidator.validateUpdate(
-                            itemName, itemDesc, category,
-                            startDate, endDate,
-                            startTime, endTime,
-                            initPriceStr, bidStepStr, allImages);
-
-            if(!result.isValid()){
-                CompletableFuture<ResponseMessage> failed = new CompletableFuture<>();
-                failed.complete(new ResponseMessage("error", result.getError().message, null)
-                );
-                return failed;
-            }
-
             Double initPrice = AuctionFormValidator.parsePositive(initPriceStr);
             Double bidStep = AuctionFormValidator.parsePositive(bidStepStr);
             LocalDateTime startDateTime= LocalDateTime.of(startDate, LocalTime.parse(startTime));

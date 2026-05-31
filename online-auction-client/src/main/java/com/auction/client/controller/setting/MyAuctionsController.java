@@ -222,17 +222,17 @@ public class MyAuctionsController {
                     return null;
                 });
     }
-    private void openEditModal(ItemSummary item) {
-        if (item == null) return;
-        StackPane sceneRoot = (StackPane) auctionTable.getScene().getRoot();
-        NavigationUtil.showEditModal(
-                sceneRoot,
-                "/com.auction.client/fxml/ItemEdit.fxml",
-                loader -> {
-                    ItemEditController ctrl = loader.getController();
-                    ctrl.setItemId(item.getId());
-                },
-                this::loadData
-        );
-    }
+        private void openEditModal(ItemSummary item) {
+            if (item == null) return;
+            StackPane sceneRoot = (StackPane) auctionTable.getScene().getRoot();
+            ModalUtil.showEditModal(
+                    sceneRoot,
+                    "/com.auction.client/fxml/ItemEdit.fxml",
+                    loader -> {
+                        ItemEditController ctrl = loader.getController();
+                        ctrl.setItemId(item.getId());
+                    },
+                    this::loadData
+            );
+        }
 }
