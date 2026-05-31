@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -26,6 +27,8 @@ class LoginHandlerTest {
     @BeforeEach
     void setUp() {
         mockExchange = mock(HttpExchange.class);
+        when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
+        when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         gson = new Gson();
         loginHandler = new LoginHandler();
     }

@@ -1,25 +1,16 @@
 package com.auction.server.controller.api;
 
-import com.auction.server.service.ItemService;
-import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.Item;
-import com.auction.shared.model.payloads.ItemPayload;
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -30,14 +21,12 @@ class ItemDetailHandlerTest {
 
     private ItemDetailHandler itemDetailHandler;
     private HttpExchange mockExchange;
-    private ItemService mockItemService;
-    private Gson gson;
 
     @BeforeEach
     void setUp() {
         mockExchange = mock(HttpExchange.class);
-        mockItemService = mock(ItemService.class);
-        gson = new Gson();
+        when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
+        when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         itemDetailHandler = new ItemDetailHandler();
     }
 
@@ -117,11 +106,7 @@ class ItemDetailHandlerTest {
     @Test
     void handle_should_return_200_when_item_updated_successfully() throws Exception {
         // Arrange
-        ItemPayload itemPayload = new ItemPayload();
-        itemPayload.setName("Updated Laptop");
-        itemPayload.setDescription("Updated description");
-
-        String requestBody = gson.toJson(itemPayload);
+        String requestBody = "{\"itemName\":\"Updated Laptop\",\"itemDesc\":\"Updated description\"}";
         InputStream inputStream = new ByteArrayInputStream(requestBody.getBytes(StandardCharsets.UTF_8));
 
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
@@ -136,11 +121,7 @@ class ItemDetailHandlerTest {
     @Test
     void handle_should_return_500_when_item_update_fails() throws Exception {
         // Arrange
-        ItemPayload itemPayload = new ItemPayload();
-        itemPayload.setName("Item");
-        itemPayload.setDescription("Description");
-
-        String requestBody = gson.toJson(itemPayload);
+        String requestBody = "{\"itemName\":\"Item\",\"itemDesc\":\"Description\"}";
         InputStream inputStream = new ByteArrayInputStream(requestBody.getBytes(StandardCharsets.UTF_8));
 
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
@@ -155,10 +136,7 @@ class ItemDetailHandlerTest {
     @Test
     void handle_should_extract_item_id_from_put_request_path() throws Exception {
         // Arrange
-        ItemPayload itemPayload = new ItemPayload();
-        itemPayload.setName("Updated Item");
-
-        String requestBody = gson.toJson(itemPayload);
+        String requestBody = "{\"itemName\":\"Updated Item\"}";
         InputStream inputStream = new ByteArrayInputStream(requestBody.getBytes(StandardCharsets.UTF_8));
 
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
@@ -173,13 +151,7 @@ class ItemDetailHandlerTest {
     @Test
     void handle_should_accept_item_with_all_update_fields() throws Exception {
         // Arrange
-        ItemPayload itemPayload = new ItemPayload();
-        itemPayload.setName("Complete Update");
-        itemPayload.setDescription("Full description");
-        itemPayload.setCategory("Electronics");
-        itemPayload.setBidStep(50.0);
-
-        String requestBody = gson.toJson(itemPayload);
+        String requestBody = "{\"itemName\":\"Complete Update\",\"itemDesc\":\"Full description\",\"category\":\"Electronics\",\"bidStep\":50.0}";
         InputStream inputStream = new ByteArrayInputStream(requestBody.getBytes(StandardCharsets.UTF_8));
 
         when(mockExchange.getRequestMethod()).thenReturn("PUT");

@@ -31,6 +31,8 @@ class WalletHandlerTest {
         // Arrange
         HttpExchange mockExchange = mock(HttpExchange.class);
         when(mockExchange.getRequestMethod()).thenReturn("GET");
+        when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
+        when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
 
         WalletHandler.DepositHandler handler = new WalletHandler.DepositHandler();
 
@@ -209,6 +211,8 @@ class WalletHandlerTest {
         // Arrange
         HttpExchange mockExchange = mock(HttpExchange.class);
         when(mockExchange.getRequestMethod()).thenReturn("GET");
+        when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
+        when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
 
         WalletHandler.SettleHandler handler = new WalletHandler.SettleHandler();
 

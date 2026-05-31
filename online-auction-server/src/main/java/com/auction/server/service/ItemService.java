@@ -123,6 +123,9 @@ public class ItemService {
 
 
     public Item setItem(ItemPayload itemData) {
+        if (itemData == null) {
+            throw new IllegalArgumentException("Item payload is required");
+        }
         String itemName = itemData.getItemName();
         String category = itemData.getCategory();
         LocalDateTime startTime = itemData.getStartDateTime();
@@ -138,6 +141,9 @@ public class ItemService {
         System.out.println(userId);
         System.out.println(itemName);
         System.out.println("----");
+        if (imagesConverted == null) {
+            imagesConverted = List.of();
+        }
         for (String[] image : imagesConverted) {
             if (image[1] == null) {
                 imagesPath.add(image[0]);
@@ -162,10 +168,16 @@ public class ItemService {
     }
 
     public boolean addItem(ItemPayload itemData) {
-        com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
-        if (seller != null && "banned_user".equalsIgnoreCase(seller.getRole())) {
-            System.out.println("Item creation rejected: User is banned.");
+        if (itemData == null) {
             return false;
+        }
+        String userId = itemData.getUserId();
+        if (userId != null && !userId.isBlank()) {
+            com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(userId);
+            if (seller != null && "banned_user".equalsIgnoreCase(seller.getRole())) {
+                System.out.println("Item creation rejected: User is banned.");
+                return false;
+            }
         }
 
         Item item = setItem(itemData);

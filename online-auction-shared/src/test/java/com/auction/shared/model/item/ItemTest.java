@@ -188,7 +188,7 @@ class ItemTest {
         LocalDateTime endTime = LocalDateTime.now().plusMinutes(20);
 
         Item item = new Item(
-                "Name", "desc", 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
+                "Name", "desc", 100.0, 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
         assertEquals(ItemStatusConstants.ONGOING, item.getStatus());
@@ -200,7 +200,7 @@ class ItemTest {
         LocalDateTime endTime = LocalDateTime.now().minusMinutes(1);
 
         Item item = new Item(
-                "Name", "desc", 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
+                "Name", "desc", 100.0, 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
         assertEquals(ItemStatusConstants.ENDED, item.getStatus());
@@ -212,7 +212,7 @@ class ItemTest {
         LocalDateTime endTime = LocalDateTime.now().plusMinutes(10);
 
         Item item = new Item(
-                "Name", "desc", 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
+                "Name", "desc", 100.0, 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
         item.setStatus(ItemStatusConstants.BANNED);
