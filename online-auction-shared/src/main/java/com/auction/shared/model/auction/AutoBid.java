@@ -7,6 +7,17 @@ import java.util.UUID;
  * Model để lưu trữ thông tin auto-bid
  * Requirement 3.2.1: Auto-Bidding
  */
+/**
+ * Prototype/demo class only. Not part of the production bidding flow.
+ *
+ * <p>The production bid placement flow is BidService -> AutoBidResolver ->
+ * AuctionRoomManager in the server module. Production auto-bid config is stored
+ * in the database-backed auto_bids table and exchanged with AutoBidPayload.
+ * This model is kept for the historical in-memory prototype.</p>
+ *
+ * @deprecated Use the database-backed auto_bids table and AutoBidPayload.
+ */
+@Deprecated
 public class AutoBid {
     private String autoBidId;
     private String auctionId;

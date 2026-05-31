@@ -15,7 +15,8 @@ import java.time.Duration;
 public class GeminiIntegration {
     private static final Dotenv dotenv = Dotenv.load();
     private static final String API_KEY = dotenv.get("GEMINI_API_KEY");
-    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=" + API_KEY;
+    private final AiServiceClient aiServiceClient = AiServiceClient.getInstance();
 
     private final HttpClient httpClient;
     private final Gson gson = GsonUtil.getInstance();
