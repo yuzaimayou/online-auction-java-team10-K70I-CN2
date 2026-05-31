@@ -1,11 +1,9 @@
 package com.auction.server.service;
 
 import com.auction.server.database.DatabaseManager;
-import com.auction.server.repository.BidRepository;
-import com.auction.server.repository.ItemRepository;
-import com.auction.server.repository.WalletRepository;
-import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.server.repository.*;
 import com.auction.server.util.AuctionLockManager;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
@@ -164,6 +162,12 @@ public class WalletService {
     // Nạp tiền vào tài khoản (chạy trong transaction riêng).
     public boolean deposit(String userId, double amount) {
         if (userId == null || userId.isBlank() || amount <= 0) return false;
+        UserRepository userRepo = new UserRepository();
+       User user = userRepo.findById(userId);
+        if (user == null || "Suspended".equalsIgnoreCase(user.getStatus())) {
+            System.out.println("Deposit rejected: account suspended - " + userId);
+            return false;
+        }
 
         Connection conn = null;
         try {
