@@ -245,8 +245,8 @@ public class ItemPageController  {
 
         currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
         bidPanel.applyAuctionStatusView(item, user.getId());
-        updateMinimumBidLabel();
         autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
+        updateMinimumBidLabel();
         historyPanel.load(itemId);
 
         WalletService.getInstance().fetchAndSync();

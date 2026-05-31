@@ -111,11 +111,12 @@ public class AuctionFormController {
                 )
                 .thenAccept(response -> {
                     if (STATUS_SUCCESS.equals(response.getStatus())) {
-                        Platform.runLater(() ->
-                                ToastUtil.showSuccess(lblMessage.getScene(), response.getMessage()));
-                        PauseTransition pause = new PauseTransition(Duration.seconds(NAV_DELAY_SECONDS));
-                        pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
-                        pause.play();
+                        Platform.runLater(() -> {
+                            ToastUtil.showSuccess(lblMessage.getScene(), response.getMessage());
+                            PauseTransition pause = new PauseTransition(Duration.seconds(NAV_DELAY_SECONDS));
+                            pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
+                            pause.play();
+                        });
                     } else {
                         isSubmitting.set(false);
                         Platform.runLater(() -> {
