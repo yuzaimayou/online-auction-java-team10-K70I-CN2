@@ -713,12 +713,23 @@ class ProductionBiddingFlowTest {
 
         // 3. Test concurrent bid and settlement (race condition safety)
         String anotherBidder = user("another-bidder");
-        runConcurrent(List.of(
+        List<Boolean> raceResults = runConcurrent(List.of(
                 () -> bidService.placeBid(itemId, anotherBidder, 20.0),
                 () -> {
                     settlementService.settleAuction(itemId);
                     return true;
                 }
         ));
+
+        assertFalse(raceResults.get(0));
+        assertTrue(raceResults.get(1));
+        assertEquals(15.0, currentPrice(itemId), EPSILON);
+        assertEquals(bidder, currentBidder(itemId));
+        assertEquals(1, bidCount(itemId));
+        assertEquals(10000.0 - 15.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(10015.0, queryDouble("SELECT balance FROM users WHERE id = ?", seller), EPSILON);
+        assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", anotherBidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", anotherBidder), EPSILON);
     }
 }
