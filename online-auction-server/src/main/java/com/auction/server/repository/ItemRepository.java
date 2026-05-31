@@ -675,4 +675,68 @@ public class ItemRepository {
             return false;
         }
     }
-}
+        public List<com.auction.shared.model.item.MyBidSummary> findMyBids(String userId) {
+            String sql = """
+        SELECT
+            i.id,
+            i.name,
+            i.image_path,
+            i.current_price,
+            i.status,
+            i.start_time,
+            i.end_time,
+            MAX(b.bid_price)              AS my_highest_bid,
+            (i.current_bidder_id = ?)     AS is_winner
+        FROM bids b
+        JOIN items i ON b.item_id = i.id
+        WHERE b.user_id = ?
+        GROUP BY i.id
+        ORDER BY i.end_time DESC
+        """;
+
+            List<com.auction.shared.model.item.MyBidSummary> result = new ArrayList<>();
+            try (
+                    Connection conn = DatabaseManager.getConnection();
+                    PreparedStatement stmt = conn.prepareStatement(sql)
+            ) {
+                stmt.setString(1, userId);
+                stmt.setString(2, userId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String thumbnailUrl = null;
+                        String imagesData = rs.getString("image_path");
+                        if (imagesData != null && !imagesData.isBlank()) {
+                            List<String> paths = gson.fromJson(imagesData,
+                                    new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
+                            if (paths != null && !paths.isEmpty()) thumbnailUrl = paths.get(0);
+                        }
+
+                        AuctionStatus status = null;
+                        try {
+                            String dbStatus = rs.getString("status");
+                            if (dbStatus != null) status = AuctionStatus.valueOf(dbStatus.toUpperCase());
+                        } catch (Exception ignored) {}
+
+                        LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
+                        LocalDateTime endTime   = LocalDateTime.parse(rs.getString("end_time"));
+                        if (status == null || status != AuctionStatus.BANNED)
+                            status = AuctionStatus.compute(startTime, endTime);
+
+                        result.add(new com.auction.shared.model.item.MyBidSummary(
+                                rs.getString("id"),
+                                rs.getString("name"),
+                                thumbnailUrl,
+                                rs.getDouble("current_price"),
+                                rs.getDouble("my_highest_bid"),
+                                rs.getInt("is_winner") == 1,
+                                status,
+                                endTime
+                        ));
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.log(java.util.logging.Level.SEVERE, "findMyBids failed", e);
+            }
+            return result;
+        }
+    }

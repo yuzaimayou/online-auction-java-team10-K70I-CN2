@@ -183,6 +183,14 @@ public class AuctionTableCellFactory {
                         label.setText("⛔ Banned");
                         label.getStyleClass().add("status-banned");
                     }
+                    case "WON" -> {
+                        label.setText("🏆 Won");
+                        label.getStyleClass().add("status-won");
+                    }
+                    case "WINNING" -> {
+                        label.setText("🔥 Winning");
+                        label.getStyleClass().add("status-live"); // tái dụng class xanh đã có
+                    }
                     default -> {
                         label.setText("Ongoing");
                         label.getStyleClass().add("status-live");

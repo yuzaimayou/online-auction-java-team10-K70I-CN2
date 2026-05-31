@@ -46,6 +46,7 @@ public class MainServer {
             httpServer.createContext("/api/users", new GetUsersHandler());
             httpServer.createContext("/api/items/", new ItemDetailHandler());
             httpServer.createContext("/api/history/", new HistoryHandler());
+            httpServer.createContext("/api/mybids", new MyBidsHandler());
             // ngix da xu ly viec /images
             // httpServer.createContext("/images", new StaticFileServer.ImageHandler());
             // Wallet & settlement endpoints

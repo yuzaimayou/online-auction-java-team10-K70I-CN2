@@ -28,6 +28,7 @@ public class SettingController {
     private static final String PATH_LOGIN = "/com.auction.client/fxml/authenticator/Login.fxml";
     private static final String PATH_USERS_MANAGEMENT = "/com.auction.client/fxml/setting/UserManagementPage.fxml";
     private static final String PATH_AUCTIONS_MANAGEMENT = "/com.auction.client/fxml/setting/AuctionsManagementPage.fxml";
+    private static final String PATH_MY_BIDS = "/com.auction.client/fxml/setting/MyBids.fxml";
 
     // State
     public static String targetTab = "ProfileInfo";
@@ -133,7 +134,9 @@ public class SettingController {
         instance = null;
         NavigationUtil.switchToLogin(event);
     }
+    @FXML
     public void handleMyBids(ActionEvent actionEvent) {
+        loadPage(PATH_MY_BIDS);
     }
     @FXML
     public void handleUsersManagement(ActionEvent actionEvent) {
