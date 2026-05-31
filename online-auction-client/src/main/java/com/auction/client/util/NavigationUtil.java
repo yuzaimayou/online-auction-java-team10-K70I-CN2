@@ -26,11 +26,6 @@ public class NavigationUtil {
     // CACHE / STATE
     // ═════════════════════════════════════════════════════════════════════════
 
-    private static Parent homePageRoot;
-    private static HomePageController homePageController;
-    private static ItemPageController currentItemController;
-    private static final ChatBoxAiController chatAiWidget = new ChatBoxAiController();
-
     public static void switchScene(Event event, String fxmlPath, String title) {
         switchScene(event, fxmlPath, title, null);
     }
@@ -42,7 +37,7 @@ public class NavigationUtil {
             Consumer<FXMLLoader> initController
     ) {
         try {
-            disposeCurrentPage();
+            PageCache.disposeCurrentItem();
 
             FXMLLoader loader = new FXMLLoader(
                     NavigationUtil.class.getResource(fxmlPath)
@@ -54,7 +49,7 @@ public class NavigationUtil {
                 initController.accept(loader);
             }
 
-            Parent wrappedRoot = wrapWithChatBox(root);
+            Parent wrappedRoot = ChatBoxInjector.wrap(root);
 
             Stage stage = (Stage) ((Node) event.getSource())
                     .getScene()
@@ -65,7 +60,7 @@ public class NavigationUtil {
 
             Object controller = loader.getController();
             if (controller instanceof ItemPageController itemController) {
-                currentItemController = itemController;
+                PageCache.setCurrentItem(itemController);
             }
 
         } catch (IOException e) {
@@ -113,25 +108,23 @@ public class NavigationUtil {
 
     public static void handleSwitchToHomePage(Label label) {
         try {
-            disposeCurrentPage();
+            PageCache.disposeCurrentItem();
 
-            if (homePageRoot == null) {
+            if (PageCache.getHomeRoot() == null) {
                 FXMLLoader loader = new FXMLLoader(
                         NavigationUtil.class.getResource(
                                 "/com.auction.client/fxml/HomePage.fxml"
                         )
                 );
-
-                homePageRoot = loader.load();
-                homePageController = loader.getController();
-
+                Parent root = loader.load();
+                HomePageController ctrl = loader.getController();
+                PageCache.setHome(root, ctrl); // ← dùng biến local vừa load
             } else {
-                homePageController.refreshNavBarInfo();
-                homePageController.refreshItems();
+                PageCache.getHomeController().refreshNavBarInfo(); // ← lấy từ PageCache
+                PageCache.getHomeController().refreshItems();
             }
 
-            Parent wrappedRoot = wrapWithChatBox(homePageRoot);
-
+            Parent wrappedRoot = ChatBoxInjector.wrap(PageCache.getHomeRoot()); // ← lấy từ PageCache
             Stage stage = (Stage) label.getScene().getWindow();
             stage.getScene().setRoot(wrappedRoot);
             stage.setTitle(AppConfig.getAppName() + " - Home");
@@ -158,83 +151,5 @@ public class NavigationUtil {
                         case "historyBid" -> controller.handleHistoryBid(null);
                     }
                 });
-    }
-    public static void showEditModal(
-            StackPane sceneRoot,
-            String fxmlPath,
-            Consumer<FXMLLoader> initController,
-            Runnable onClose
-    ) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    NavigationUtil.class.getResource(fxmlPath)
-            );
-
-            Parent form = loader.load();
-
-            if (initController != null) {
-                initController.accept(loader);
-            }
-
-            StackPane overlay = new StackPane();
-            overlay.getStyleClass().add("popup-overlay");
-
-            overlay.setStyle("-fx-background-color: rgba(0,0,0,0.5);");
-            overlay.prefWidthProperty().bind(sceneRoot.widthProperty());
-            overlay.prefHeightProperty().bind(sceneRoot.heightProperty());
-
-            overlay.setOnMouseClicked(e -> {
-                sceneRoot.getChildren().remove(overlay);
-                if (onClose != null) onClose.run();
-            });
-
-            form.setOnMouseClicked(e -> e.consume());
-
-            overlay.getChildren().add(form);
-            sceneRoot.getChildren().add(overlay);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private static Parent wrapWithChatBox(Parent root) {
-        StackPane container;
-
-        if (root instanceof StackPane) {
-            container = (StackPane) root;
-        } else {
-            container = new StackPane(root);
-        }
-
-        Node bubble = chatAiWidget.getBubble();
-        Node chatBox = chatAiWidget.getChatBox();
-
-        if (bubble.getParent() != null) {
-            ((StackPane) bubble.getParent()).getChildren()
-                    .removeAll(chatBox, bubble);
-        }
-
-        container.getChildren().addAll(chatBox, bubble);
-
-        StackPane.setAlignment(bubble, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(bubble, new Insets(0, 30, 30, 0));
-
-        StackPane.setAlignment(chatBox, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(chatBox, new Insets(0, 30, 30, 30));
-
-        return container;
-    }
-
-    private static void disposeCurrentPage() {
-        if (currentItemController != null) {
-            currentItemController.dispose();
-            currentItemController = null;
-        }
-    }
-
-    public static void clearCache() {
-        disposeCurrentPage();
-        homePageRoot = null;
-        homePageController = null;
     }
 }

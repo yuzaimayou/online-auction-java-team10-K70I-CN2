@@ -6,6 +6,7 @@ import com.auction.client.service.*;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
 import com.auction.client.service.AutoBidService.ValidationResult;
 import com.auction.client.ui.BidHistoryUiRenderer;
+import com.auction.client.ui.BidPanelController;
 import com.auction.client.ui.ItemStatusService;
 import com.auction.client.util.*;
 import com.auction.client.validation.BidValidationService;
@@ -119,6 +120,7 @@ public class ItemPageController  {
     private CategoryAxis bidTimeAxis;
     @FXML
     private NumberAxis bidPriceAxis;
+    private BidPanelController bidPanel;
 
 
     private XYChart.Series<String, Number> bidPriceSeries;
@@ -152,10 +154,9 @@ public class ItemPageController  {
 
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
-        statusUiService.attachUiControls(
-                statusMessageLabel, bidControlsContainer,
-                statusOverlay, btnAutoBidToggle,
-                submitBid, countdownTimer, autoBidManager
+        bidPanel = new BidPanelController(
+                statusMessageLabel, bidControlsContainer, statusOverlay,
+                btnAutoBidToggle, submitBid, countdownTimer, autoBidManager
         );
 
         if (bidPriceChart != null) {
@@ -194,7 +195,7 @@ public class ItemPageController  {
 
         if (loadedItem.getStoredStatus() == AuctionStatus.BANNED) {
             displayDataItem(loadedItem);
-            statusUiService.applyBannedStateView(loadedItem); // hiện overlay "Auction Suspended"
+            bidPanel.applyBannedStateView(loadedItem); // hiện overlay "Auction Suspended"
             updateAutoBidUI(false);
             connectToRealTimeBidding();
             loadBidHistory(); // ← thêm dòng này
@@ -202,7 +203,7 @@ public class ItemPageController  {
         }
 
         displayDataItem(loadedItem);
-        statusUiService.applyAuctionStatusView(loadedItem, user.getId());
+        bidPanel.applyAuctionStatusView(loadedItem, user.getId());
         connectToRealTimeBidding();
         loadBidHistory();
     }
@@ -234,7 +235,7 @@ public class ItemPageController  {
         }
 
         currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
-        statusUiService.applyAuctionStatusView(item, user.getId());
+        bidPanel.applyAuctionStatusView(item, user.getId());
         updateMinimumBidLabel();
         handleAutoBidLogic(bidPayload.getBidPrice(), bidPayload.getUserId());
         loadBidHistory();
@@ -243,14 +244,14 @@ public class ItemPageController  {
     private void uiHandleAuctionExtended(LocalDateTime newEndTime) {
         item.setEndTime(newEndTime);
         endTimeLabel.setText(DateTimeUtil.format(newEndTime));
-        statusUiService.startCountdown(item,
-                () -> statusUiService.applyAuctionStatusView(item, user.getId()));
+        bidPanel.startCountdown(item,
+                () -> bidPanel.applyAuctionStatusView(item, user.getId()));
     }
 
     private void uiHandleItemBanned() {
         network.setListener(null);
         updateAutoBidUI(false);
-        statusUiService.applyBannedStateView(item);
+        bidPanel.applyBannedStateView(item);
     }
 
     // ─── Manual & Auto Bidding Interactions ───────────────────────────────────
@@ -426,8 +427,8 @@ public class ItemPageController  {
         // Kích hoạt Countdown đồng bộ thông qua Service ủy quyền
         AuctionStatus status = currentItem.getStoredStatus();
         if (status != AuctionStatus.BANNED) {
-            statusUiService.startCountdown(item,
-                    () -> statusUiService.applyAuctionStatusView(item, user.getId()));
+            bidPanel.startCountdown(item,
+                    () -> bidPanel.applyAuctionStatusView(item, user.getId()));
         }
         updateMinimumBidLabel();
     }

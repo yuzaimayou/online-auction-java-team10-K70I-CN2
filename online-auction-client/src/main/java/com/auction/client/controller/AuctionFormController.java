@@ -4,6 +4,7 @@ import com.auction.client.service.ItemsService;
 import com.auction.client.util.ClientImageUtil;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.ToastUtil;
+import com.auction.client.util.UiUtil;
 import com.auction.client.validation.AuctionFormValidator;
 import com.auction.client.validation.AuctionFormValidator.Result;
 import javafx.animation.PauseTransition;
@@ -70,10 +71,11 @@ public class AuctionFormController {
 
     @FXML
     public void initialize() {
-        populateTimePickers();
-        setupDescriptionAutoResize();
+        UiUtil.populateHalfHourSlots(cbStartTime, cbEndTime);
+        cbStartTime.setValue("00:00");
+        cbEndTime.setValue("00:00");
+        UiUtil.autoGrowTextArea(txtItemDesc, 80);
     }
-
     // ── Event handlers ────────────────────────────────────────────────────────
 
     @FXML
@@ -205,29 +207,6 @@ public class AuctionFormController {
     }
 
     // ── UI helpers ────────────────────────────────────────────────────────────
-
-    private void populateTimePickers() {
-        for (int h = 0; h < 24; h++) {
-            for (int m = 0; m < 60; m += 30) {
-                String time = String.format("%02d:%02d", h, m);
-                cbStartTime.getItems().add(time);
-                cbEndTime.getItems().add(time);
-            }
-        }
-        cbStartTime.setValue("00:00");
-        cbEndTime.setValue("00:00");
-    }
-
-    private void setupDescriptionAutoResize() {
-        txtItemDesc.setWrapText(true);
-        txtItemDesc.textProperty().addListener((obs, oldVal, newVal) -> {
-            javafx.scene.text.Text helper = new javafx.scene.text.Text(newVal);
-            helper.setFont(txtItemDesc.getFont());
-            helper.setWrappingWidth(txtItemDesc.getWidth() - 40);
-            txtItemDesc.setPrefHeight(Math.max(80, helper.getLayoutBounds().getHeight() + 40));
-        });
-    }
-
     private String getSelectedCategory() {
         Toggle toggle = categoryGroup.getSelectedToggle();
         return toggle != null ? toggle.getUserData().toString() : null;
