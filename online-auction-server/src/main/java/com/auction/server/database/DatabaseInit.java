@@ -15,6 +15,7 @@ public class DatabaseInit {
                     role TEXT NOT NULL,
                     isVerify BOOLEAN NOT NULL DEFAULT 0,
                     email TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'Active',
                     balance REAL NOT NULL DEFAULT 0,
                     frozen_balance REAL NOT NULL DEFAULT 0
                 );
@@ -115,6 +116,9 @@ public class DatabaseInit {
             stmt.execute("ALTER TABLE users ADD COLUMN isVerify INTEGER NOT NULL DEFAULT 0");
         } catch (Exception ignored) {
         }
+        try {
+            stmt.execute("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'Active'");
+        } catch (Exception ignored) {}
         // Wallet columns
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0");

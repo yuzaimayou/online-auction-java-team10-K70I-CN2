@@ -36,8 +36,8 @@ public class UserService {
         try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                boolean roleUpdated = userRepository.updateRole(targetUserId, "banned_user");
-                if (!roleUpdated) {
+                boolean statusUpdated = userRepository.updateStatus(conn, targetUserId, "Suspended");
+                if (!statusUpdated) {
                     conn.rollback();
                     return false;
                 }
