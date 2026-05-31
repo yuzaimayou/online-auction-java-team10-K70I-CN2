@@ -535,7 +535,7 @@ public class BidService {
                 throw InvalidBidException.of(ErrorCode.SELLER_CANNOT_BID,
                         "Người bán không được tự đặt giá - itemId=" + item.getId());
             }
-            if (user != null && "banned_user".equalsIgnoreCase(user.getRole())) {
+            if (user != null && "Suspended".equalsIgnoreCase(user.getStatus())) {
                 throw InvalidBidException.of(ErrorCode.INVALID_INPUT,
                         "User bị cấm không được đặt giá - userId=" + userId);
             }
