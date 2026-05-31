@@ -164,6 +164,14 @@ public class UserRepository {
             user.setRole(role);
         }
 
+        try {
+            String status = rs.getString("status");
+            user.setStatus(status != null ? status : "Active");
+        } catch (Exception ignored) {
+            user.setStatus("Active");
+        }
+
+
         return user;
     }
 

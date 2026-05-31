@@ -38,7 +38,7 @@ public class LoginHandler implements HttpHandler {
 
                 User loggedInUser = authService.login(username, password);
 
-                if (loggedInUser != null && "banned_user".equalsIgnoreCase(loggedInUser.getRole())) {
+                if (loggedInUser != null && "Suspended".equalsIgnoreCase(loggedInUser.getStatus())) {
                     ResponseMessage response = new ResponseMessage("error", "Your account is banned.", null);
                     HttpResponseUtil.sendMessage(exchange, 403, response);
                     return;

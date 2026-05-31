@@ -167,11 +167,10 @@ public class ItemService {
 
     public boolean addItem(ItemPayload itemData) {
         com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
-        if (seller != null && "banned_user".equalsIgnoreCase(seller.getRole())) {
+        if (seller != null && "Suspended".equalsIgnoreCase(seller.getStatus())) {
             System.out.println("Item creation rejected: User is banned.");
             return false;
         }
-
         Item item = setItem(itemData);
         boolean created = itemRepository.createItem(item);
 

@@ -29,10 +29,9 @@ public class UserService {
             return false;
         }
 
-        if ("banned_user".equalsIgnoreCase(targetUser.getRole())) {
-            return true; // no-op
+        if ("Suspended".equalsIgnoreCase(targetUser.getStatus())) {
+            return true;
         }
-
         try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {

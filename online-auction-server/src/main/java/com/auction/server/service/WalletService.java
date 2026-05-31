@@ -5,6 +5,7 @@ import com.auction.server.repository.BidRepository;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.server.util.AuctionLockManager;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
@@ -187,7 +188,7 @@ public class WalletService {
 
     // Lấy khoá theo item để tuần tự hoá đặt giá
     private Object getItemLock(String itemId) {
-        return com.auction.server.util.AuctionLockManager.getItemLock(itemId);
+        return AuctionLockManager.getItemLock(itemId);
     }
 
     private static void rollback(Connection conn) {
