@@ -1,20 +1,16 @@
 package com.auction.client.util;
 
-import com.auction.client.controller.HomePageController;
-import com.auction.client.controller.ItemPageController;
+import com.auction.client.controller.common.HomePageController;
+import com.auction.client.controller.auction.ItemPageController;
 import com.auction.client.controller.auth.VerifyController;
-import com.auction.client.controller.setting.SettingController;
-import com.auction.client.controller.common.ChatBoxAiController;
-import com.auction.client.util.AppConfig;
+import com.auction.client.controller.user.SettingController;
 
+import com.auction.client.ui.util.ChatBoxInjector;
 import javafx.event.Event;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;

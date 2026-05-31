@@ -70,7 +70,7 @@ public class AntiSnipingService {
     }
 
     /**
-     * Custom anti-sniping setting
+     * Custom anti-sniping user
      */
     public void setAntiSnipingParameters(int lastSecondsThreshold, int extensionSeconds) {
         if (lastSecondsThreshold <= 0 || extensionSeconds <= 0) {

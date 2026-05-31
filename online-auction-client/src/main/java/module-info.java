@@ -10,21 +10,27 @@ module online.auction.client {
     requires javafx.graphics;
     requires java.net.http;
 
+    // Giữ lại nếu thư mục client vẫn chứa file chạy App chính (như Main.java / App.java)
     exports com.auction.client;
-    exports com.auction.client.controller;
-
     opens com.auction.client to javafx.fxml;
-    opens com.auction.client.controller to javafx.fxml;
 
-    exports com.auction.client.controller.setting;
-
-    opens com.auction.client.controller.setting to javafx.fxml;
-
+    // ── PHÂN HỆ AUTH ──────────────────────────────────────────────────────
     exports com.auction.client.controller.auth;
-
     opens com.auction.client.controller.auth to javafx.fxml;
 
+    // ── PHÂN HỆ COMMON ────────────────────────────────────────────────────
     exports com.auction.client.controller.common;
-
     opens com.auction.client.controller.common to javafx.fxml;
+
+    // ── PHÂN HỆ USER ──────────────────────────────────────────────────────
+    exports com.auction.client.controller.user;
+    opens com.auction.client.controller.user to javafx.fxml;
+
+    // ── PHÂN HỆ ADMIN ─────────────────────────────────────────────────────
+    exports com.auction.client.controller.admin;
+    opens com.auction.client.controller.admin to javafx.fxml;
+
+    // ── PHÂN HỆ AUCTION ───────────────────────────────────────────────────
+    exports com.auction.client.controller.auction;
+    opens com.auction.client.controller.auction to javafx.fxml;
 }

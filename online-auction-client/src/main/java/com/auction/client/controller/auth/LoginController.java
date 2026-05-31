@@ -2,27 +2,18 @@ package com.auction.client.controller.auth;
 
 import com.auction.client.service.AuthService;
 import com.auction.client.util.NavigationUtil;
-import com.auction.client.util.UserSession;
-import com.auction.shared.model.account.Admin;
+import com.auction.client.service.UserSession;
 import com.auction.shared.model.account.User;
 import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class LoginController {
     private static final String FXML_REGISTER = "/com.auction.client/fxml/authenticator/Register.fxml";

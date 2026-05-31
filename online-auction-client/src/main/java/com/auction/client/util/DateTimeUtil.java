@@ -36,4 +36,5 @@ public class DateTimeUtil {
         if (dateTime == null) return "—";
         return dateTime.format(BID_HISTORY_FORMAT);
     }
+
 }
