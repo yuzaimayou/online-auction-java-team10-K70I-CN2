@@ -3,10 +3,12 @@ package com.auction.server.service;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
+import com.auction.server.repository.UserRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.server.util.AuctionLockManager;
 import com.auction.server.util.StringUtil;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
@@ -196,6 +198,11 @@ public class ItemService {
     }
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
+        User seller = new UserRepository().findById(itemData.getUserId());
+        if (seller != null && "Suspended".equalsIgnoreCase(seller.getStatus())) {
+            System.out.println("Update rejected: User is banned.");
+            return false;
+        }
         Item item = setItem(itemData);
         System.out.println("sellerid: " + item.getSellerId());
         System.out.println("image" + item.getImagesPath());
