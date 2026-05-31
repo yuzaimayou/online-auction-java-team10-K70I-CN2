@@ -4,69 +4,122 @@ import com.auction.server.repository.UserRepository;
 import com.auction.shared.model.account.User;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class AuthServiceTest {
 
     @Test
-    void login_success_when_password_match() {
+    void login_success_when_password_matches() {
         UserRepository repo = mock(UserRepository.class);
-        VerifyService verify = mock(VerifyService.class);
+        VerifyService verifyService = mock(VerifyService.class);
 
-        User user = new User("u1", "alice", "123");
-
+        User user = new User("u1", "alice", "pass");
         when(repo.findByUsername("alice")).thenReturn(user);
 
-        AuthService authService = new AuthService(repo, verify);
+        AuthService authService = createAuthService(repo, verifyService);
 
-        User result = authService.login("alice", "123");
+        User result = authService.login("alice", "pass");
+
         assertNotNull(result);
         assertEquals("alice", result.getUsername());
     }
 
     @Test
-    void login_fail_when_wrong_password() {
+    void login_returns_null_when_password_invalid() {
         UserRepository repo = mock(UserRepository.class);
-        VerifyService verify = mock(VerifyService.class);
+        VerifyService verifyService = mock(VerifyService.class);
 
-        User user = new User("u2", "alice", "123");
-
+        User user = new User("u2", "alice", "pass");
         when(repo.findByUsername("alice")).thenReturn(user);
 
-        AuthService authService = new AuthService(repo, verify);
+        AuthService authService = createAuthService(repo, verifyService);
 
         User result = authService.login("alice", "wrong");
+
         assertNull(result);
     }
 
     @Test
-    void register_fail_when_username_exists() {
+    void register_returns_username_exists_when_duplicate_username() {
         UserRepository repo = mock(UserRepository.class);
-        VerifyService verify = mock(VerifyService.class);
+        VerifyService verifyService = mock(VerifyService.class);
 
-        User existing = new User("u3", "bob", "pass");
-        when(repo.findByUsername("bob")).thenReturn(existing);
+        when(repo.findByUsername("alice")).thenReturn(new User("u3", "alice", "pass"));
 
-        AuthService authService = new AuthService(repo, verify);
+        AuthService authService = createAuthService(repo, verifyService);
 
-        boolean created = authService.register("bob", "pass", "bob@mail.com");
-        assertFalse(created);
-        verify(repo, never()).createUser(any(), any(), any(), any());
+        AuthService.RegisterResult result = authService.register("alice", "pass", "alice@example.com");
+
+        assertEquals(AuthService.RegisterResult.USERNAME_EXISTS, result);
+        verify(repo, never()).createUser(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
-    void register_success_when_username_not_exists() {
+    void register_returns_email_exists_when_duplicate_email() {
         UserRepository repo = mock(UserRepository.class);
-        VerifyService verify = mock(VerifyService.class);
+        VerifyService verifyService = mock(VerifyService.class);
 
-        when(repo.findByUsername("bob")).thenReturn(null);
-        when(repo.createUser("bob", "pass", "USER", "bob@mail.com")).thenReturn(true);
+        when(repo.findByUsername("alice")).thenReturn(null);
+        when(repo.findByEmail("alice@example.com")).thenReturn(new User("u4", "bob", "pass"));
 
-        AuthService authService = new AuthService(repo, verify);
+        AuthService authService = createAuthService(repo, verifyService);
 
-        boolean created = authService.register("bob", "pass", "bob@mail.com");
-        assertTrue(created);
-        verify(repo).createUser("bob", "pass", "USER", "bob@mail.com");
+        AuthService.RegisterResult result = authService.register("alice", "pass", "alice@example.com");
+
+        assertEquals(AuthService.RegisterResult.EMAIL_EXISTS, result);
+        verify(repo, never()).createUser(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void register_returns_failed_when_repository_create_fails() {
+        UserRepository repo = mock(UserRepository.class);
+        VerifyService verifyService = mock(VerifyService.class);
+
+        when(repo.findByUsername("alice")).thenReturn(null);
+        when(repo.findByEmail("alice@example.com")).thenReturn(null);
+        when(repo.createUser("alice", "pass", "USER", "alice@example.com")).thenReturn(false);
+
+        AuthService authService = createAuthService(repo, verifyService);
+
+        AuthService.RegisterResult result = authService.register("alice", "pass", "alice@example.com");
+
+        assertEquals(AuthService.RegisterResult.FAILED, result);
+    }
+
+    @Test
+    void register_returns_success_when_repository_create_succeeds() {
+        UserRepository repo = mock(UserRepository.class);
+        VerifyService verifyService = mock(VerifyService.class);
+
+        when(repo.findByUsername("alice")).thenReturn(null);
+        when(repo.findByEmail("alice@example.com")).thenReturn(null);
+        when(repo.createUser("alice", "pass", "USER", "alice@example.com")).thenReturn(true);
+
+        AuthService authService = createAuthService(repo, verifyService);
+
+        AuthService.RegisterResult result = authService.register("alice", "pass", "alice@example.com");
+
+        assertEquals(AuthService.RegisterResult.SUCCESS, result);
+    }
+
+    private AuthService createAuthService(UserRepository repo, VerifyService verifyService) {
+        AuthService authService = new AuthService();
+        overrideField(authService, "userRepository", repo);
+        overrideField(authService, "verifyService", verifyService);
+        return authService;
+    }
+
+    private void overrideField(Object target, String fieldName, Object value) {
+        try {
+            Field field = AuthService.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(target, value);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to override field: " + fieldName, e);
+        }
     }
 }
