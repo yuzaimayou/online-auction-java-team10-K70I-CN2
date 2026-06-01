@@ -1,6 +1,9 @@
 package com.auction.server.integration;
 
-import com.auction.server.service.ChatbotService;
+import com.auction.server.database.DatabaseInit;
+import com.auction.server.database.DatabaseManager;
+import com.auction.server.service.chatbot.ChatbotService;
+import com.auction.shared.message.AIResponseData;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class testAI {
@@ -8,6 +11,8 @@ public class testAI {
     private static final ChatbotService chatBot = ChatbotService.getInstance();
 
     public static void main(String[] agrs) {
+        DatabaseManager.init();
+        DatabaseInit.init();
         String checkKey = dotenv.get("GEMINI_API_KEY");
         if (checkKey == null || checkKey.isEmpty()) {
             System.err.println("LỖI: Chưa tìm thấy biến môi trường GEMINI_API_KEY.");
@@ -25,7 +30,7 @@ public class testAI {
         // Gọi API
         long startTime = System.currentTimeMillis();
         //String response = geminiClient.callGeminiApi(testPrompt);
-        String response = chatBot.processUserMessage(testPrompt);
+        AIResponseData response = chatBot.handlerMessage(testPrompt);
         long endTime = System.currentTimeMillis();
 
         // In kết quả

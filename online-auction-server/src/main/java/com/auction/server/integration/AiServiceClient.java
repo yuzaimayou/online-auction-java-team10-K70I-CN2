@@ -127,7 +127,7 @@ public class AiServiceClient {
 
 
     }
-    
+
 
     public String embeddingProduct(String itemId, String name, String description, List<Path> imagePaths) {
         String requestUrl = AI_SERVER_URL + "/products/index-product/" + itemId;
@@ -192,11 +192,12 @@ public class AiServiceClient {
         }
     }
 
-    public String getRecommendations(String prompt) {
+    public String getRecommendations(String prompt, int topk) {
+
         try {
             // 1. Mã hóa từ khóa (để xử lý dấu cách, tiếng Việt...)
             String encodedPrompt = URLEncoder.encode(prompt, StandardCharsets.UTF_8.toString());
-            String requestUrl = AI_SERVER_URL + "/recommend?prompt=" + encodedPrompt;
+            String requestUrl = AI_SERVER_URL + "/products/recommend?prompt=" + encodedPrompt + "&top_k=" + topk;
 
             // 2. Tạo Request (Giống như cấu hình GET trên Postman)
             HttpRequest request = HttpRequest.newBuilder()
@@ -222,9 +223,13 @@ public class AiServiceClient {
         }
     }
 
+    public String getRecommendations(String prompt) {
+        return getRecommendations(prompt, 5); // Mặc định trả về top 5 recommendations
+    }
+
     public static void main(String[] args) {
         AiServiceClient aiClient = new AiServiceClient();
-        String jsonResult = aiClient.getRecommendations("áo MU");
+        String jsonResult = aiClient.getRecommendations("barca", 1);
         System.out.println("Kết quả từ AI: \n" + jsonResult);
 
         // Sau bước này, bạn sẽ dùng thư viện như Gson hoặc Jackson

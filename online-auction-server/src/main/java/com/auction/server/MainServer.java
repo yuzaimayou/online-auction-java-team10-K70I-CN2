@@ -6,7 +6,6 @@ import com.auction.server.controller.api.*;
 import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.service.AuctionSchedulerService;
-import com.auction.server.service.ItemService;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -45,6 +44,7 @@ public class MainServer {
             httpServer.createContext("/api/users/ban", new BanUserHandler());
             httpServer.createContext("/api/items/", new ItemDetailHandler());
             httpServer.createContext("/api/history/", new HistoryHandler());
+            httpServer.createContext("/api/chatbot", new ChatBotHandler());
             // ngix da xu ly viec /images
             // httpServer.createContext("/images", new StaticFileServer.ImageHandler());
             // Wallet & settlement endpoints
