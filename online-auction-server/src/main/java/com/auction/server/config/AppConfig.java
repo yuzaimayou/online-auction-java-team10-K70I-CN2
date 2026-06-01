@@ -5,7 +5,7 @@ import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 public class AppConfig {
-    private static final String AI_SERVER_URL = "http://10.11.71.220:8000";
+    private static final String AI_SERVER_URL ="http://10.11.71.220:8000";
 
     public static final String DB_PATH = getDbPath();
     public static final String IMAGE_DIR = getImageDir();

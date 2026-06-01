@@ -2,15 +2,22 @@ package com.auction.client.controller.user;
 
 import com.auction.client.service.WalletService;
 import com.auction.client.service.UserSession;
+import com.auction.client.ui.util.ToastUtil;
 import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+
+import java.io.IOException;
 
 public class ProfilePageController {
-    // Auth info
     @FXML
     private TextField emailField;
     @FXML
@@ -21,11 +28,6 @@ public class ProfilePageController {
     // Sidebar
     @FXML
     private ToggleButton profileInfoBtn;
-    @FXML
-    private ToggleButton myAuctionsBtn;
-    @FXML
-    private ToggleButton historyBidBtn;
-
     // Wallet
     @FXML
     private Label availableBalanceLabel;
@@ -113,36 +115,30 @@ public class ProfilePageController {
     /** Hiển thị trạng thái loading khi chờ WalletService cập nhật. */
     private void displayWalletPlaceholder() {
         if (availableBalanceLabel != null) availableBalanceLabel.setText("Loading...");
-        if (frozenBalanceLabel    != null) frozenBalanceLabel.setText("Loading...");
-        if (totalBalanceLabel     != null) totalBalanceLabel.setText("Loading...");
+        if (frozenBalanceLabel != null) frozenBalanceLabel.setText("Loading...");
+        if (totalBalanceLabel != null) totalBalanceLabel.setText("Loading...");
     }
 
     // ── Actions ────────────────────────────────────────────────────────────────
 
     @FXML
-    private void handleProfileInfo(ActionEvent event) {
-        if (profileInfoBtn != null) {
-            profileInfoBtn.setSelected(true);
-        }
-    }
-
-    @FXML
-    private void handleMyAuctions(ActionEvent event) {
-        if (SettingController.getInstance() != null) {
-            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
-        }
-    }
-
-    @FXML
     private void handleDepositAction(ActionEvent event) {
-        if (SettingController.getInstance() != null) {
-            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/DepositPage.fxml");
-        }
-    }
-    public void dispose() {
-        if (sessionListener != null) {
-            UserSession.getInstance().removeListener(sessionListener);
-            sessionListener = null;
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/setting/DepositPage.fxml"));
+            Parent root = loader.load();
+
+            StackPane wrapperPane = new StackPane();
+            wrapperPane.getChildren().add(root);
+
+            Stage stage = new Stage();
+            stage.setTitle("Nạp tiền vào tài khoản");
+            stage.setScene(new javafx.scene.Scene(wrapperPane));
+
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            ToastUtil.showError(((Node) event.getSource()).getScene(), "Không thể mở trang nạp tiền!");
         }
     }
 }

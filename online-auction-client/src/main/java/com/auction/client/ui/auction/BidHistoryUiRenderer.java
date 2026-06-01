@@ -65,14 +65,4 @@ public class BidHistoryUiRenderer {
             );
         }
     }
-    public static void appendRow(
-            VBox container,
-            int index,
-            BidHistoryItemDTO bid,
-            String currentUsername
-    ) {
-        container.getChildren().add(
-                createRow(index, bid, currentUsername)
-        );
-    }
 }

@@ -22,7 +22,7 @@ public class FormUtil {
     public static void populateHalfHourSlots(ComboBox<String> start,
                                              ComboBox<String> end) {
         for (int h = 0; h < 24; h++) {
-            for (int m = 0; m < 60; m += 30) {
+            for (int m = 0; m < 60; m += 5) {
                 String slot = String.format("%02d:%02d", h, m);
                 start.getItems().add(slot);
                 end.getItems().add(slot);
