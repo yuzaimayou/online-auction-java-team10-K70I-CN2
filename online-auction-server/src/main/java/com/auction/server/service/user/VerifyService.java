@@ -15,9 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class VerifyService {
     private static VerifyService instance;
 
-    private static final Dotenv dotenv = Dotenv.load();
-    private final String username = dotenv.get("MAIL_USERNAME");
-    private final String password = dotenv.get("MAIL_PASSWORD");
+    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    private final String username = firstNonBlank(System.getenv("MAIL_USERNAME"), dotenv.get("MAIL_USERNAME"));
+    private final String password = firstNonBlank(System.getenv("MAIL_PASSWORD"), dotenv.get("MAIL_PASSWORD"));
     private final Session session;
     private UserRepository userRepository = new UserRepository();
 
@@ -66,6 +66,13 @@ public class VerifyService {
         System.out.println("Email session initialized successfully.");
     }
 
+    private static String firstNonBlank(String first, String second) {
+        if (first != null && !first.isBlank()) {
+            return first;
+        }
+        return second;
+    }
+
     public static VerifyService getInstance() {
         if (instance == null) {
             instance = new VerifyService();
@@ -81,13 +88,19 @@ public class VerifyService {
     public boolean verifyOtp(String email, String otp) {
         OtpInfo info = otpStorage.get(email);
 
-        if (info == null || info.isExpired() || !info.getOtp().equals(otp)) {
-
+        if (info == null) {
+            return false;
+        }
+        if (info.isExpired()) {
+            otpStorage.remove(email);
+            return false;
+        }
+        if (!info.getOtp().equals(otp)) {
             return false;
         }
 
         otpStorage.remove(email); // Remove OTP after successful verification
-        userRepository.enableUser(email); // Enable user account after successful verification
+        userRepository.enableUser(email); // Enable auth account after successful verification
         return true;
     }
 
@@ -97,6 +110,11 @@ public class VerifyService {
         OtpInfo info = generateOtp();
         otpStorage.put(email, info);
         System.out.println(otpStorage);
+
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            System.out.println("Mail credentials are not configured; OTP email was not sent to " + email);
+            return;
+        }
 
         try {
             Message message = new MimeMessage(this.session);

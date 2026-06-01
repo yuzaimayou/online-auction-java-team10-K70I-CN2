@@ -16,7 +16,7 @@
     <VBox styleClass="content-container">
         <Label fx:id="itemNameLabel" styleClass="item-name" wrapText="true" text="IPhone 17 Pro Max 2025"/>
 
-        <Label fx:id="statusLabel" styleClass="status-badge" text="LIVE"/>
+        <Label fx:id="statusLabel" styleClass="status-badge" text="ONGOING"/>
 
         <HBox styleClass="info-grid">
             <VBox styleClass="info-column" HBox.hgrow="ALWAYS">

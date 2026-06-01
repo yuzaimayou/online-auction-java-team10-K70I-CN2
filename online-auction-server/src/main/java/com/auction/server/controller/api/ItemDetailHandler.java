@@ -19,24 +19,34 @@ public class ItemDetailHandler implements HttpHandler {
 
     @Override
     public void handle(com.sun.net.httpserver.HttpExchange exchange) throws java.io.IOException {
-        // Implement the logic to handle item detail requests here
-        String method = exchange.getRequestMethod();
-        String path = exchange.getRequestURI().getPath();
-        String itemId = path.substring(path.lastIndexOf("/") + 1); // Extract item ID from URL
-        System.out.println("Received " + method + " request for item ID: " + itemId);
-        switch (method) {
-            case "GET" -> {
-                getItem(exchange, itemId, new ResponseMessage());
+        try {
+            // Implement the logic to handle item detail requests here
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
+            String itemId = path.substring(path.lastIndexOf("/") + 1); // Extract item ID from URL
+            System.out.println("Received " + method + " request for item ID: " + itemId);
+            switch (method) {
+                case "GET" -> {
+                    getItem(exchange, itemId, new ResponseMessage());
+                }
+                case "PUT" -> {
+                    InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
+                    ItemPayload itemData = gson.fromJson(isr, ItemPayload.class);
+                    if (itemData == null) {
+                        HttpResponseUtil.sendMessage(exchange, 400, new ResponseMessage("error", "Invalid item payload", null));
+                        return;
+                    }
+                    updateItem(exchange, itemData, itemId, new ResponseMessage());
+                }
+                case "DELETE" -> {
+                    deleteItem(exchange, itemId, new ResponseMessage());
+                }
+                default -> exchange.sendResponseHeaders(405, -1); // Method Not Allowed
             }
-            case "PUT" -> {
-                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
-                ItemPayload itemData = gson.fromJson(isr, ItemPayload.class);
-                updateItem(exchange, itemData, itemId, new ResponseMessage());
-            }
-            case "DELETE" -> {
-                deleteItem(exchange, itemId, new ResponseMessage());
-            }
-            default -> exchange.sendResponseHeaders(405, -1); // Method Not Allowed
+        } catch (com.google.gson.JsonSyntaxException | IllegalArgumentException e) {
+            HttpResponseUtil.sendMessage(exchange, 400, new ResponseMessage("error", "Invalid request: " + e.getMessage(), null));
+        } catch (Exception e) {
+            HttpResponseUtil.sendMessage(exchange, 500, new ResponseMessage("error", "Internal Server Error: " + e.getMessage(), null));
         }
     }
 
@@ -51,10 +61,9 @@ public class ItemDetailHandler implements HttpHandler {
                     item.setMyLastBid(lastBid); // Gán giá trị vào object Item trước khi parse ra JSON
                 }
             }
-            String jsonPayload = gson.toJson(item);
             responseMessage.setStatus("success");
             responseMessage.setMessage("Get item details successfully");
-            responseMessage.setData(jsonPayload);
+            responseMessage.setData(item);
             HttpResponseUtil.sendMessage(exchange, 200, responseMessage);
         } else {
             responseMessage.setStatus("error");
@@ -62,6 +71,7 @@ public class ItemDetailHandler implements HttpHandler {
             HttpResponseUtil.sendMessage(exchange, 404, responseMessage);
         }
     }
+
 
     // Hàm tiện ích hỗ trợ trích xuất userId từ query string
     private String extractUserIdFromQuery(String query) {

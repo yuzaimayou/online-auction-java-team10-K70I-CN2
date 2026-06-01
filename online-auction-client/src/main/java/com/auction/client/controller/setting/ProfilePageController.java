@@ -4,18 +4,12 @@ import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class ProfilePageController {
-    // user info
+    // Auth info
     @FXML
     private TextField emailField;
     @FXML
@@ -31,7 +25,7 @@ public class ProfilePageController {
     @FXML
     private ToggleButton historyBidBtn;
 
-    //w allet
+    // Wallet
     @FXML
     private Label availableBalanceLabel;
     @FXML
@@ -45,7 +39,7 @@ public class ProfilePageController {
             profileInfoBtn.setSelected(true);
         }
         displayUserData();
-        displayWalletData();
+        updateWalletBalances();
     }
 
     private void displayUserData() {
@@ -58,24 +52,16 @@ public class ProfilePageController {
             if (userNameField != null) {
                 userNameField.setText(currentUser.getUsername());
             }
+
+            // FIX: Thay vì check hardcode username "admin", ta dùng thuộc tính Role từ Object User
             if (roleUserField != null) {
-                if ("admin".equalsIgnoreCase(currentUser.getUsername())) {
-                    roleUserField.setText("Admin Account");
-                } else {
-                    roleUserField.setText("User Account");
-                }
+                boolean isAdmin = currentUser.getRole() != null
+                        && currentUser.getRole().equalsIgnoreCase("admin");
+                roleUserField.setText(isAdmin ? "Admin Account" : "User Account");
             }
+
             lockFields(emailField, userNameField, roleUserField);
         }
-    }
-
-    // hiển thị số dư ví
-    private void displayWalletData() {
-        // Giả lập dữ liệu ví
-        double available = 700.00;
-        availableBalanceLabel.setText(String.format("$%,.2f", available));
-        frozenBalanceLabel.setText("$300.00");
-        totalBalanceLabel.setText("$1,000.00");
     }
 
     private void lockFields(TextField... fields) {
@@ -87,22 +73,60 @@ public class ProfilePageController {
             }
         }
     }
+
+    // ── Wallet ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Cập nhật dữ liệu ví lên giao diện.
+     * Hàm này dùng chung cho cả việc load nội bộ lẫn nạp dữ liệu từ WalletService bên ngoài.
+     */
+    public void loadWalletData(double available, double frozen, double total) {
+        if (availableBalanceLabel != null)
+            availableBalanceLabel.setText(String.format("$%,.2f", available));
+        if (frozenBalanceLabel != null)
+            frozenBalanceLabel.setText(String.format("$%,.2f", frozen));
+        if (totalBalanceLabel != null)
+            totalBalanceLabel.setText(String.format("$%,.2f", total));
+    }
+
+    /** Đọc dữ liệu số dư trực tiếp từ User Session hiện tại */
+    private void updateWalletBalances() {
+        User currentUser = UserSession.getInstance().getLoggedInUser();
+        if (currentUser != null) {
+            double available = currentUser.getBalance();
+            double frozen = currentUser.getFrozenBalance();
+            double total = available + frozen;
+
+            // Gọi lại hàm loadWalletData để tránh lặp code (DRY Principle)
+            loadWalletData(available, frozen, total);
+        } else {
+            displayWalletPlaceholder();
+        }
+    }
+
+    /** Hiển thị trạng thái loading khi chờ WalletService cập nhật. */
+    private void displayWalletPlaceholder() {
+        if (availableBalanceLabel != null) availableBalanceLabel.setText("Loading...");
+        if (frozenBalanceLabel    != null) frozenBalanceLabel.setText("Loading...");
+        if (totalBalanceLabel     != null) totalBalanceLabel.setText("Loading...");
+    }
+
+    // ── Actions ────────────────────────────────────────────────────────────────
+
     @FXML
     private void handleProfileInfo(ActionEvent event) {
-        profileInfoBtn.setSelected(true);
+        if (profileInfoBtn != null) {
+            profileInfoBtn.setSelected(true);
+        }
     }
+
     @FXML
     private void handleMyAuctions(ActionEvent event) {
         if (SettingController.getInstance() != null) {
             SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/MyAuctionsPage.fxml");
         }
     }
-    @FXML
-    private void handleHistoryBid(ActionEvent event) {
-        if (SettingController.getInstance() != null) {
-            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/HistoryBidPage.fxml");
-        }
-    }
+
     @FXML
     private void handleDepositAction(ActionEvent event) {
         if (SettingController.getInstance() != null) {
