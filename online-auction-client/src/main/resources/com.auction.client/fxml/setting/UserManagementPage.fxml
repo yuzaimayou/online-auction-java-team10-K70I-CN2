@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card"
-      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.admin.UserManagementController"
-      stylesheets="@../../css/UserManagementPage.css">
+<VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card" stylesheets="@../../css/UserManagementPage.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.admin.UserManagementController">
 
     <padding>
-        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+        <Insets bottom="32.0" left="34.0" right="34.0" top="28.0" />
     </padding>
 
     <HBox alignment="CENTER_LEFT">
         <VBox spacing="4.0" HBox.hgrow="ALWAYS">
-            <Label text="Users Management" styleClass="content-title"/>
-            <Label text="Manage all registered users in the system." styleClass="content-subtitle"/>
+            <Label styleClass="content-title" text="Users Management" />
+            <Label styleClass="content-subtitle" text="Manage all registered users in the system." />
         </VBox>
-        <Button text="Filter" styleClass="filter-btn" />
     </HBox>
 
-    <TextField fx:id="searchField" promptText="Search users..." styleClass="search-field" maxWidth="400.0"/>
+    <TextField fx:id="searchField" maxWidth="400.0" promptText="Search users..." styleClass="search-field" />
 
-    <TableView fx:id="userTable" VBox.vgrow="ALWAYS" styleClass="user-table">
+    <TableView fx:id="userTable" styleClass="user-table" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="colUser" text="User" prefWidth="150.0" />
-            <TableColumn fx:id="colEmail" text="Email" prefWidth="250.0" />
-            <TableColumn fx:id="colStatus" text="Status" prefWidth="120.0" />
-            <TableColumn fx:id="colRole" text="Role" prefWidth="120.0" />
-            <TableColumn fx:id="colAction" text="Action" prefWidth="100.0" />
+            <TableColumn fx:id="colUser" prefWidth="150.0" text="User" />
+            <TableColumn fx:id="colEmail" prefWidth="250.0" text="Email" />
+            <TableColumn fx:id="colStatus" prefWidth="120.0" text="Status" />
+            <TableColumn fx:id="colRole" prefWidth="120.0" text="Role" />
+            <TableColumn fx:id="colAction" prefWidth="100.0" text="Action" />
         </columns>
         <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
