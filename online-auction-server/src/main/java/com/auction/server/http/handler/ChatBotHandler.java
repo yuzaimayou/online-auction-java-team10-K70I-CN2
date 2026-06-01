@@ -1,7 +1,7 @@
 package com.auction.server.http.handler;
 
-import com.auction.server.service.chatbot.ChatbotService;
 import com.auction.server.http.response.HttpResponseUtil;
+import com.auction.server.service.chatbot.ChatbotService;
 import com.auction.shared.message.AIResponseData;
 import com.auction.shared.message.ResponseMessage;
 import com.sun.net.httpserver.HttpExchange;
@@ -26,6 +26,7 @@ public class ChatBotHandler implements HttpHandler {
                 String userMessage = scanner.hasNext() ? scanner.next() : "";
                 System.out.println("Received message from client: " + userMessage);
                 AIResponseData data = chatbotService.handlerMessage(userMessage);
+                System.out.println("Generated chatbot response: " + data.getAiResponse());
                 responseMessage.setStatus("success");
                 responseMessage.setMessage("Chatbot response generated successfully");
                 responseMessage.setData(data);

@@ -1,7 +1,7 @@
 package com.auction.server.http.handler;
 
-import com.auction.server.service.user.VerifyService;
 import com.auction.server.http.response.HttpResponseUtil;
+import com.auction.server.service.user.OtpService;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.payloads.VerifyPayload;
 import com.google.gson.Gson;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class VerifyHandler implements HttpHandler {
-    private final VerifyService verifyService = VerifyService.getInstance();
+    private final OtpService otpService = OtpService.getInstance();
     private final Gson gson = new Gson();
 
     @Override
@@ -24,7 +24,7 @@ public class VerifyHandler implements HttpHandler {
             String email = verifyData.getEmail();
             String otp = verifyData.getOtp();
 
-            boolean checked = verifyService.verifyOtp(email, otp);
+            boolean checked = otpService.verifyOtp(email, otp);
             ResponseMessage response = new ResponseMessage();
             if (checked) {
                 response.setStatus("success");
