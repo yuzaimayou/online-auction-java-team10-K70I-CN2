@@ -202,7 +202,7 @@ public class ItemPageController  {
     private void initData(Item loadedItem) {
         this.item = loadedItem;
         this.myLastBid = loadedItem.getMyLastBid();
-        autoBidManager.setLastBidderId(loadedItem.getCurrentTopPLayerId());
+        autoBidManager.setLastBidderId(loadedItem.getCurrentBidderId());
 
         if (loadedItem.getStoredStatus() == AuctionStatus.BANNED) {
             displayDataItem(loadedItem);
@@ -235,7 +235,7 @@ public class ItemPageController  {
     // ─── UI Mutators ──────────────────────────────────────────────────────────
     private void uiHandleNewBid(BidPayload bidPayload) {
         autoBidManager.setLastBidderId(bidPayload.getUserId());
-        item.setCurrentTopPLayerId(bidPayload.getUserId());
+        item.setCurrentBidderId(bidPayload.getUserId());
         item.setCurrentPrice(bidPayload.getBidPrice());
 
         if (bidPayload.getUserId().equals(user.getId())) {

@@ -17,8 +17,7 @@ public class DatabaseManager {
         config.setConnectionInitSql(
                 "PRAGMA journal_mode=WAL; " +
                         "PRAGMA busy_timeout=5000; " +
-                        "PRAGMA synchronous=NORMAL;"
-        );
+                        "PRAGMA synchronous=NORMAL;");
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
 

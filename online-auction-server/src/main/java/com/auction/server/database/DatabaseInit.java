@@ -35,9 +35,7 @@ public class DatabaseInit {
                     bid_step REAL NOT NULL DEFAULT 1,
                     image_path TEXT NOT NULL DEFAULT '',
                     create_at TEXT,
-                    top_player_id TEXT,
                     search_name TEXT,
-                    FOREIGN KEY (top_player_id) REFERENCES users(id),
                     FOREIGN KEY (seller_id) REFERENCES users(id)
                 );
                 """;

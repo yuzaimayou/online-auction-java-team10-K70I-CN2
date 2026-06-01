@@ -19,7 +19,6 @@ public class ChatbotService {
 
 
     private ChatbotService() {
-
         this.geminiClient = new GeminiIntegration();
         this.aiServiceClient = AiServiceClient.getInstance();
         this.questionAnalyzer = QuestionAnalyzer.getInstance();
@@ -73,6 +72,4 @@ public class ChatbotService {
         }
 
     }
-
-
 }
