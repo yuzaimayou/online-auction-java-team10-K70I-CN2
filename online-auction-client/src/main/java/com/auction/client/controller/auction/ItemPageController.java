@@ -1,25 +1,34 @@
 package com.auction.client.controller.auction;
 
 import com.auction.client.network.AuctionRoomListener;
-import com.auction.client.network.BidHistoryApiClient;
 import com.auction.client.network.AuctionSocketClient;
-import com.auction.client.service.*;
+import com.auction.client.network.BidHistoryApiClient;
+import com.auction.client.service.AutoBidService;
+import com.auction.client.service.ItemsService;
+import com.auction.client.service.UserSession;
+import com.auction.client.service.WalletService;
 import com.auction.client.ui.auction.AutoBidUiHandler;
 import com.auction.client.ui.auction.BidHistoryPanel;
 import com.auction.client.ui.auction.BidPanelController;
 import com.auction.client.ui.image.ImageCardFactory;
 import com.auction.client.ui.item.ItemStatusRendered;
 import com.auction.client.ui.util.ToastUtil;
-import com.auction.client.util.*;
+import com.auction.client.util.ClientImageUtil;
+import com.auction.client.util.CountdownTimerUtil;
+import com.auction.client.util.DateTimeUtil;
 import com.auction.client.validation.AutoBidValidationService;
 import com.auction.client.validation.BidValidationService;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.chart.*;
+import javafx.scene.chart.AreaChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -32,12 +41,12 @@ import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 
-public class ItemPageController  {
+public class ItemPageController {
 
     // ─── Constants ────────────────────────────────────────────────────────────
     private static final double IMAGE_WIDTH = 1400.0;
     private static final double IMAGE_HEIGHT = 900.0;
-    private static final double THUMB_WIDTH  = 80.0;
+    private static final double THUMB_WIDTH = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
 
     // ─── FXML Bindings ────────────────────────────────────────────────────────
@@ -221,9 +230,28 @@ public class ItemPageController  {
 
     private void connectToRealTimeBidding() {
         network.setAuctionRoomListener(new AuctionRoomListener() {
-            public void onNewBid(BidPayload p) { Platform.runLater(() -> uiHandleNewBid(p)); }
-            public void onAuctionExtended(LocalDateTime t) { Platform.runLater(() -> uiHandleAuctionExtended(t)); }
-            public void onItemBanned(String id) { if (id.equals(itemId)) Platform.runLater(() -> uiHandleItemBanned()); }
+            public void onNewBid(BidPayload p) {
+                Platform.runLater(() -> uiHandleNewBid(p));
+            }
+
+            public void onAuctionExtended(LocalDateTime t) {
+                Platform.runLater(() -> uiHandleAuctionExtended(t));
+            }
+
+            public void onItemBanned(String id) {
+                if (id.equals(itemId)) Platform.runLater(() -> uiHandleItemBanned());
+            }
+
+            public void onAutoBidState(AutoBidPayload data) {
+                if (data.getIsActive() == true) {
+                    Platform.runLater(() -> {
+                        autoBidHandler.updateUi(true);
+                        autoBidHandler.updateUIAutoBid(data.getMaxBid(), data.getIncrement());
+                    });
+                } else {
+                    Platform.runLater(() -> autoBidHandler.updateUi(false));
+                }
+            }
         });
 
         boolean connected = network.connectToAuctionRoom(item.getId(), user.getId());
@@ -264,6 +292,10 @@ public class ItemPageController  {
         bidPanel.applyBannedStateView(item);
     }
 
+    private void uiAutoBidState() {
+
+    }
+
     // ─── Manual & Auto Bidding Interactions ───────────────────────────────────
     @FXML
     public void bidHandle() {
@@ -300,6 +332,7 @@ public class ItemPageController  {
     private void toggleAutoBidForm() {
         autoBidHandler.toggleForm();
     }
+
     @FXML
     private void startAutoBid() {
         autoBidHandler.start();

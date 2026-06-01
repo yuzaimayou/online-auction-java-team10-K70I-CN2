@@ -1,5 +1,6 @@
 package com.auction.client.network;
 
+import com.auction.client.util.AppConfig;
 import com.auction.shared.message.AIResponseData;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.util.GsonUtil;
@@ -13,8 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
 public class ChatBotApiClient {
-
-    private static final String CHATBOT_URL = "http://localhost:8080/api/chatbot";
+    private static final String CHATBOT_URL = String.format("%s/api/chatbot", AppConfig.getHttpUrl());
     private static final Gson gson = GsonUtil.getInstance();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(java.time.Duration.ofSeconds(10))
