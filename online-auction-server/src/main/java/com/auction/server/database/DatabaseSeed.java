@@ -170,8 +170,8 @@ public class DatabaseSeed {
                                    AuctionStatus status) throws Exception {
         String sql = """
                 INSERT INTO items(id, name, description, start_price, current_price, seller_id, start_time, end_time,
-                                  category, bid_step, image_path, create_at, top_player_id, search_name, status, current_bidder_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  category, bid_step, image_path, create_at, search_name, status, current_bidder_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1,  prefixId(labelId));
@@ -186,10 +186,9 @@ public class DatabaseSeed {
             stmt.setDouble(10, bidStep);
             stmt.setString(11, "[]");
             stmt.setString(12, LocalDateTime.now().toString());
-            stmt.setString(13, null);          // top_player_id starts as null
-            stmt.setString(14, name.toLowerCase());
-            stmt.setString(15, status.name()); // AuctionStatus enum → String cho DB
-            stmt.setString(16, null);          // current_bidder_id starts as null
+            stmt.setString(13, name.toLowerCase());
+            stmt.setString(14, status.name()); // AuctionStatus enum → String cho DB
+            stmt.setString(15, null);          // current_bidder_id starts as null
             stmt.executeUpdate();
         }
     }
