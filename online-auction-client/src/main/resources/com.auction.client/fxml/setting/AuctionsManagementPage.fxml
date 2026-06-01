@@ -8,7 +8,7 @@
 <VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card"
       VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.AuctionsManagementController"
+      fx:controller="com.auction.client.controller.admin.AuctionsManagementController"
       stylesheets="@../../css/AuctionsManagementPage.css">
 
     <padding>

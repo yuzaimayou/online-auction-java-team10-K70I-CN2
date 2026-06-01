@@ -2,7 +2,7 @@ package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.util.StringUtil;
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
 import com.auction.shared.util.GsonUtil;
@@ -50,7 +50,6 @@ public class ItemRepository {
     }
 
     private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
-
         String id = rs.getString("id");
         String name = rs.getString("name");
         String category = rs.getString("category");
@@ -69,16 +68,47 @@ public class ItemRepository {
         LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
         LocalDateTime endTime = LocalDateTime.parse(rs.getString("end_time"));
 
-        ItemSummary itemSummary = new ItemSummary(
+        // 🌟 Kiểm tra xem cột seller_username có tồn tại trong ResultSet của câu SQL này không
+        String sellerUsername = null;
+        try {
+            sellerUsername = rs.getString("seller_username");
+            LOGGER.fine("Seller: " + sellerUsername);
+        } catch (SQLException e) {
+            LOGGER.fine("seller_username column NOT FOUND");
+        }
+
+        // 🌟 [FIX] Đọc status từ DB trước (để giữ đúng BANNED), chỉ compute() khi cột status không có trong ResultSet.
+        // Nếu dùng AuctionStatus.compute() thẳng thì BANNED sẽ bị overwrite thành ONGOING/UPCOMING/ENDED.
+        com.auction.shared.model.enums.AuctionStatus auctionStatus = null;
+        try {
+            String dbStatus = rs.getString("status");
+            if (dbStatus != null && !dbStatus.isBlank()) {
+                try {
+                    auctionStatus = com.auction.shared.model.enums.AuctionStatus.valueOf(dbStatus.toUpperCase());
+                } catch (IllegalArgumentException ignored) {
+                    // status DB không map được sang enum → fallback compute
+                }
+            }
+        } catch (SQLException ignored) {
+            // Cột status không tồn tại trong ResultSet của câu SQL này → compute bình thường
+        }
+        if (auctionStatus == null) {
+            auctionStatus = com.auction.shared.model.enums.AuctionStatus.compute(startTime, endTime);
+        }
+
+        // 🌟 Gọi Constructor mới có trường sellerUsername
+        return new ItemSummary(
                 id,
                 name,
                 category,
                 currentPrice,
                 thumbnailUrl,
                 startTime,
-                endTime
+                endTime,
+                auctionStatus,
+                sellerUsername
         );
-        return itemSummary;
+
     }
 
     private List<ItemSummary> executeSummaryQuery(String sql, Object... params) {
@@ -144,7 +174,7 @@ public class ItemRepository {
             stmt.setString(9, item.getCategory());
             stmt.setDouble(10, item.getBidStep());
             stmt.setString(11, gson.toJson(item.getImagesPath()));
-            stmt.setString(12, item.getStatus());
+            stmt.setString(12, item.getStatus().name());
             stmt.setString(13, item.getCreate_at().toString());
             stmt.setString(14, search_name);
 
@@ -189,7 +219,7 @@ public class ItemRepository {
             stmt.setString(8, item.getCategory());
             stmt.setDouble(9, item.getBidStep());
             stmt.setString(10, gson.toJson(item.getImagesPath()));
-            stmt.setString(11, item.getStatus());
+            stmt.setString(11, item.getStatus().name());
             stmt.setString(12, StringUtil.removeAccents(item.getName()));
             stmt.setString(13, itemId);
 
@@ -319,7 +349,7 @@ public class ItemRepository {
 
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
-        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != 'BANNED' AND (");
+        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != '" + AuctionStatus.BANNED.name() + "' AND (");
         for (int i = 0; i < keywords.size(); i++) {
             sql.append("LOWER(search_name) LIKE ?");
             if (i < keywords.size() - 1) sql.append(" AND ");
@@ -379,20 +409,20 @@ public class ItemRepository {
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
         String sql = String.format("""
-                        SELECT id,
-                               name,
-                               category,
-                               current_price,
-                               image_path,
-                               start_time,
-                               end_time
-                        FROM items
-                        WHERE status != '%s'
-                        %s
-                        ORDER BY %s
-                        LIMIT 10 OFFSET ?
-                        """,
-                ItemStatusConstants.BANNED,
+                SELECT id,
+                       name,
+                       category,
+                       current_price,
+                       image_path,
+                       start_time,
+                       end_time
+                FROM items
+                WHERE status != '%s'
+                %s
+                ORDER BY %s
+                LIMIT 10 OFFSET ?
+                """,
+                AuctionStatus.BANNED.name(),
                 filterCategory ? "AND LOWER(category) = LOWER(?)" : "",
                 safeSort);
 
@@ -417,24 +447,27 @@ public class ItemRepository {
      */
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
-            case "start_time desc" -> "start_time DESC";
-            case "current_price asc" -> "current_price ASC";
-            case "current_price desc" -> "current_price DESC";
-            default -> "end_time ASC";
+            case "start_time desc"    -> "i.start_time DESC";
+            case "current_price asc"  -> "i.current_price ASC";
+            case "current_price desc" -> "i.current_price DESC";
+            default                   -> "i.end_time ASC";
         };
 
         String sql = String.format("""
-                SELECT id,
-                       name,
-                       category,
-                       current_price,
-                       image_path,
-                       start_time,
-                       end_time
-                FROM items
-                ORDER BY %s
-                LIMIT 10 OFFSET ?
-                """, safeSort);
+            SELECT i.id,
+                   i.name,
+                   i.category,
+                   i.current_price,
+                   i.image_path,
+                   i.start_time,
+                   i.end_time,
+                   i.status,
+                   u.username AS seller_username
+            FROM items i
+            LEFT JOIN users u ON i.seller_id = u.id
+            ORDER BY %s
+            LIMIT 10 OFFSET ?
+            """, safeSort);
 
         return executeSummaryQuery(sql, offset);
     }
@@ -456,12 +489,11 @@ public class ItemRepository {
                     String pathsData = rs.getString("image_path");
 
                     if (pathsData != null && !pathsData.isEmpty()) {
-                        imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>() {
-                        }.getType());
+                        imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
                     }
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(java.util.logging.Level.SEVERE, "Failed to read image paths for item " + itemId, e);
             }
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
@@ -498,17 +530,18 @@ public class ItemRepository {
                 imagePaths
         );
         item.setId(rs.getString("id"));
-        item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
+        item.setCurrentBidderId(rs.getString("current_bidder_id"));
         String dbStatus = rs.getString("status");
-        if (dbStatus != null) item.setStatus(dbStatus);
+        if (dbStatus != null) item.setStatus(AuctionStatus.fromString(dbStatus));
         return item;
     }
 
     // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
     public boolean markEnded(Connection conn, String itemId) {
-        String sql = "UPDATE items SET status = '" + ItemStatusConstants.ENDED + "' WHERE id = ?";
+        String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, itemId);
+            stmt.setString(1, AuctionStatus.ENDED.name());
+            stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current bidder", e);
@@ -580,29 +613,29 @@ public class ItemRepository {
         try (Connection conn = DatabaseManager.getConnection()) {
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
-                ps.setString(1, ItemStatusConstants.ONGOING);
+                ps.setString(1, AuctionStatus.ONGOING.name());
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) updatedId.add(rs.getString("id"));
                 }
             }
 
             try (PreparedStatement ps = conn.prepareStatement(updateEndedSql)) {
-                ps.setString(1, ItemStatusConstants.ENDED);
-                ps.setString(2, ItemStatusConstants.ONGOING);
+                ps.setString(1, AuctionStatus.ENDED.name());
+                ps.setString(2, AuctionStatus.ONGOING.name());
                 int rows = ps.executeUpdate();
                 logStatusUpdate("ONGOING->ENDED", rows);
             }
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
-                ps.setString(1, ItemStatusConstants.UPCOMING);
+                ps.setString(1, AuctionStatus.UPCOMING.name());
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) updatedId.add(rs.getString("id"));
                 }
             }
 
             try (PreparedStatement ps = conn.prepareStatement(updateOngoingSql)) {
-                ps.setString(1, ItemStatusConstants.ONGOING);
-                ps.setString(2, ItemStatusConstants.UPCOMING);
+                ps.setString(1, AuctionStatus.ONGOING.name());
+                ps.setString(2, AuctionStatus.UPCOMING.name());
                 int rows = ps.executeUpdate();
                 logStatusUpdate("UPCOMING->ONGOING", rows);
             }
@@ -643,13 +676,13 @@ public class ItemRepository {
         return 0.0;
     }
 
-    public boolean updateStatus(String itemId, String status) {
+    public boolean updateStatus(String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-            stmt.setString(1, status);
+            stmt.setString(1, status.name());
             stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
@@ -658,10 +691,10 @@ public class ItemRepository {
         }
     }
 
-    public boolean updateStatus(Connection conn, String itemId, String status) {
+    public boolean updateStatus(Connection conn, String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, status);
+            stmt.setString(1, status.name());
             stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
@@ -669,4 +702,68 @@ public class ItemRepository {
             return false;
         }
     }
-}
+        public List<com.auction.shared.model.item.MyBidSummary> findMyBids(String userId) {
+            String sql = """
+        SELECT
+            i.id,
+            i.name,
+            i.image_path,
+            i.current_price,
+            i.status,
+            i.start_time,
+            i.end_time,
+            MAX(b.bid_price)              AS my_highest_bid,
+            (i.current_bidder_id = ?)     AS is_winner
+        FROM bids b
+        JOIN items i ON b.item_id = i.id
+        WHERE b.user_id = ?
+        GROUP BY i.id
+        ORDER BY i.end_time DESC
+        """;
+
+            List<com.auction.shared.model.item.MyBidSummary> result = new ArrayList<>();
+            try (
+                    Connection conn = DatabaseManager.getConnection();
+                    PreparedStatement stmt = conn.prepareStatement(sql)
+            ) {
+                stmt.setString(1, userId);
+                stmt.setString(2, userId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String thumbnailUrl = null;
+                        String imagesData = rs.getString("image_path");
+                        if (imagesData != null && !imagesData.isBlank()) {
+                            List<String> paths = gson.fromJson(imagesData,
+                                    new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
+                            if (paths != null && !paths.isEmpty()) thumbnailUrl = paths.get(0);
+                        }
+
+                        AuctionStatus status = null;
+                        try {
+                            String dbStatus = rs.getString("status");
+                            if (dbStatus != null) status = AuctionStatus.valueOf(dbStatus.toUpperCase());
+                        } catch (Exception ignored) {}
+
+                        LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
+                        LocalDateTime endTime   = LocalDateTime.parse(rs.getString("end_time"));
+                        if (status == null || status != AuctionStatus.BANNED)
+                            status = AuctionStatus.compute(startTime, endTime);
+
+                        result.add(new com.auction.shared.model.item.MyBidSummary(
+                                rs.getString("id"),
+                                rs.getString("name"),
+                                thumbnailUrl,
+                                rs.getDouble("current_price"),
+                                rs.getDouble("my_highest_bid"),
+                                rs.getInt("is_winner") == 1,
+                                status,
+                                endTime
+                        ));
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.log(java.util.logging.Level.SEVERE, "findMyBids failed", e);
+            }
+            return result;
+        }
+    }

@@ -7,37 +7,39 @@ import com.auction.shared.model.account.User;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UserService {
+    private static final Logger LOGGER = Logger.getLogger(UserService.class.getName());
     private final UserRepository userRepository = new UserRepository();
     private final BidRepository bidRepository = new BidRepository();
 
     public boolean banUser(String adminId, String targetUserId) {
         if (adminId != null && adminId.equals(targetUserId)) {
-            System.out.println("Cannot ban yourself");
+            LOGGER.info("Cannot ban yourself");
             return false;
         }
 
         User targetUser = userRepository.findById(targetUserId);
         if (targetUser == null) {
-            System.out.println("Target user not found");
+            LOGGER.info("Target user not found");
             return false;
         }
 
         if ("Admin".equalsIgnoreCase(targetUser.getRole())) {
-            System.out.println("Cannot ban an admin");
+            LOGGER.info("Cannot ban an admin");
             return false;
         }
 
-        if ("banned_user".equalsIgnoreCase(targetUser.getRole())) {
-            return true; // no-op
+        if ("Suspended".equalsIgnoreCase(targetUser.getStatus())) {
+            return true;
         }
-
         try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                boolean roleUpdated = userRepository.updateRole(targetUserId, "banned_user");
-                if (!roleUpdated) {
+                boolean statusUpdated = userRepository.updateStatus(conn, targetUserId, "Suspended");
+                if (!statusUpdated) {
                     conn.rollback();
                     return false;
                 }
@@ -48,11 +50,11 @@ public class UserService {
                 return true;
             } catch (Exception e) {
                 conn.rollback();
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to ban user " + targetUserId, e);
                 return false;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to open connection while banning user " + targetUserId, e);
             return false;
         }
     }

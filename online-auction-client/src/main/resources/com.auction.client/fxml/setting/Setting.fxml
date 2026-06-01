@@ -8,7 +8,7 @@
 <VBox prefHeight="700.0" prefWidth="1100.0"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.SettingController"
+      fx:controller="com.auction.client.controller.user.SettingController"
       stylesheets="@../../css/Setting.css"
       styleClass="page-root">
 
@@ -20,7 +20,7 @@
     <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
                 style="-fx-background-color: transparent; -fx-background: #f3f4f7; -fx-border-color: transparent;">
         <content>
-            <HBox styleClass="page-background" alignment="TOP_CENTER">
+            <HBox styleClass="page-background" >
                 <padding>
                     <Insets left="40.0" right="40.0" bottom="20.0"/>
                 </padding>
@@ -83,7 +83,7 @@
                                               prefHeight="42.0" prefWidth="252.0"
                                               styleClass="menu-toggle-btn" text="My Bids"
                                               toggleGroup="$menuGroup" onAction="#handleMyBids"/>
-                                
+
                                 <VBox fx:id="adminSection" spacing="8.0">
                                     <Label text="ADMIN PANEL" styleClass="section-label">
                                         <VBox.margin>
@@ -99,10 +99,6 @@
                                                   styleClass="menu-toggle-btn" text="Auctions Management"
                                                   toggleGroup="$menuGroup" onAction="#handleAuctionsManagement"/>
 
-                                    <ToggleButton fx:id="historyBidsBtn" mnemonicParsing="false"
-                                                  prefHeight="42.0" prefWidth="252.0"
-                                                  styleClass="menu-toggle-btn" text="History Bids"
-                                                  toggleGroup="$menuGroup" onAction="#handleHistoryBid"/>
                                 </VBox>
                                 <Region VBox.vgrow="ALWAYS"/>
                                 <Separator styleClass="menu-separator"/>

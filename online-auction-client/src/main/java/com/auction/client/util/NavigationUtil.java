@@ -1,186 +1,150 @@
 package com.auction.client.util;
 
-import com.auction.client.controller.common.ChatBoxAiController;
-import com.auction.client.controller.HomePageController;
-import com.auction.client.controller.setting.SettingController;
+import com.auction.client.controller.common.HomePageController;
+import com.auction.client.controller.auction.ItemPageController;
 import com.auction.client.controller.auth.VerifyController;
-import javafx.event.ActionEvent;
+import com.auction.client.controller.user.SettingController;
+
+import com.auction.client.ui.chatBoxAi.ChatBoxInjector;
+import javafx.event.Event;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 public class NavigationUtil {
-    private static Parent homePageRoot;
-    private static HomePageController homePageController;
-    private static final ChatBoxAiController chatAiWidget = new ChatBoxAiController();
 
-    private static Parent wrapWithChatBox(Parent root) {
-        StackPane container;
-        if (root instanceof StackPane) {
-            container = (StackPane) root;
-        } else {
-            container = new StackPane(root);
-        }
+    // ═════════════════════════════════════════════════════════════════════════
+    // CACHE / STATE
+    // ═════════════════════════════════════════════════════════════════════════
 
-        Node bubble = chatAiWidget.getBubble();
-        Node chatBox = chatAiWidget.getChatBox();
-
-        if (bubble.getParent() != null) {
-            ((StackPane) bubble.getParent()).getChildren().removeAll(chatBox, bubble);
-        }
-
-        container.getChildren().addAll(chatBox, bubble);
-
-        StackPane.setAlignment(bubble, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(bubble, new javafx.geometry.Insets(0, 30, 30, 0));
-        StackPane.setAlignment(chatBox, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(chatBox, new javafx.geometry.Insets(0, 30, 30, 30));
-
-        return container;
+    public static void switchScene(Event event, String fxmlPath, String title) {
+        switchScene(event, fxmlPath, title, null);
     }
-    public static void switchToOtpScreen(ActionEvent event, String registeredEmail) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    NavigationUtil.class.getResource(
-                            "/com.auction.client/fxml/authenticator/Verify.fxml" )
-            );
-            Node verifyNode = loader.load();
-            VerifyController verifyController = loader.getController();
-            verifyController.setEmail(registeredEmail);
-            Node sourceNode = (Node) event.getSource();
-            StackPane dynamicContentArea =
-                    (StackPane) sourceNode.getScene().lookup("#dynamicContentArea");
 
-            if (dynamicContentArea != null) {
-                dynamicContentArea.getChildren().clear();
-                dynamicContentArea.getChildren().add(verifyNode);
-            } else {
-                System.err.println("Không tìm thấy StackPane dynamicContentArea");
+    public static void switchScene(
+            Event event,
+            String fxmlPath,
+            String title,
+            Consumer<FXMLLoader> initController
+    ) {
+        try {
+            PageCache.disposeCurrentItem();
+
+            FXMLLoader loader = new FXMLLoader(
+                    NavigationUtil.class.getResource(fxmlPath)
+            );
+
+            Parent root = loader.load();
+
+            if (initController != null) {
+                initController.accept(loader);
+            }
+
+            Parent wrappedRoot = ChatBoxInjector.wrap(root);
+
+            Stage stage = (Stage) ((Node) event.getSource())
+                    .getScene()
+                    .getWindow();
+
+            stage.getScene().setRoot(wrappedRoot);
+            stage.setTitle(title);
+
+            Object controller = loader.getController();
+            if (controller instanceof ItemPageController itemController) {
+                PageCache.setCurrentItem(itemController);
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void switchToLogin(Event event) {
+        switchScene(event,
+                "/com.auction.client/fxml/authenticator/Login.fxml",
+                "Login - Auction System");
+    }
+
+    public static void switchToRegister(Event event) {
+        switchScene(event,
+                "/com.auction.client/fxml/authenticator/Register.fxml",
+                "Register - Auction System");
+    }
+
+    public static void switchToOtpScreen(Event event, String email) {
+        switchScene(event,
+                "/com.auction.client/fxml/authenticator/Verify.fxml",
+                "Verify OTP",
+                loader -> {
+                    VerifyController controller = loader.getController();
+                    controller.setEmail(email);
+                });
+    }
+
+    public static void handleSwitchToAuctionFormPage(Event event) {
+        switchScene(event,
+                "/com.auction.client/fxml/AuctionFormPage.fxml",
+                AppConfig.getAppName() + " - Add Item");
+    }
+
+    public static void switchToItemPage(Event event, String itemId, String itemName) {
+        switchScene(event,
+                "/com.auction.client/fxml/ItemPage.fxml",
+                AppConfig.getAppName() + " - " + itemName,
+                loader -> {
+                    ItemPageController controller = loader.getController();
+                    controller.setItemId(itemId);
+                });
     }
 
     public static void handleSwitchToHomePage(Label label) {
         try {
-            if (homePageRoot == null || homePageController == null) {
+            PageCache.disposeCurrentItem();
+
+            if (PageCache.getHomeRoot() == null) {
                 FXMLLoader loader = new FXMLLoader(
                         NavigationUtil.class.getResource(
-                                "/com.auction.client/fxml/HomePage.fxml")
+                                "/com.auction.client/fxml/HomePage.fxml"
+                        )
                 );
-                homePageRoot = loader.load();
-                homePageController = loader.getController();
-
+                Parent root = loader.load();
+                HomePageController ctrl = loader.getController();
+                PageCache.setHome(root, ctrl); // ← dùng biến local vừa load
             } else {
-                // Các lần sau: Tái sử dụng UI cũ cho mượt
-                // NHƯNG PHẢI GỌI HÀM CẬP NHẬT TÊN NGƯỜI DÙNG
-                if (homePageController != null) {
-                    homePageController.refreshNavBarInfo(); // <-- Gọi hàm này để báo NavBar đổi tên
-                    homePageController.refreshItems();;   // Refresh sản phẩm như cũ
-                }
-
+                PageCache.getHomeController().refreshNavBarInfo(); // ← lấy từ PageCache
+                PageCache.getHomeController().refreshItems();
             }
-            // ============================================================
-            Parent wrappedRoot = wrapWithChatBox(homePageRoot);
-            Scene currentScene = label.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-            currentScene.setRoot(wrappedRoot);
-            stage.setTitle(String.format("%s - Home", AppConfig.getAppName()));
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Không tìm thấy file HomePage.fxml!");
-        }
-    }
+            Parent wrappedRoot = ChatBoxInjector.wrap(PageCache.getHomeRoot()); // ← lấy từ PageCache
+            Stage stage = (Stage) label.getScene().getWindow();
+            stage.getScene().setRoot(wrappedRoot);
+            stage.setTitle(AppConfig.getAppName() + " - Home");
 
-    public static void clearCache() {
-        homePageRoot = null;
-        homePageController = null;
-    }
-
-    public static void handleSwitchToSetting(Label label) {
-        handleSwitchToSetting(label, "");
-    }
-
-    public static void handleSwitchToSetting(Label label, String option) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    NavigationUtil.class.getResource(
-                            "/com.auction.client/fxml/setting/Setting.fxml"));
-            Parent root = loader.load();
-            Parent wrappedRoot = wrapWithChatBox(root);
-            SettingController settingController = loader.getController();
-
-            Scene currentScene = label.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-            currentScene.setRoot(wrappedRoot);
-            stage.setTitle(String.format( "%s - Profile Page", AppConfig.getAppName()));
-
-            if (option.equals("profile")) {
-                settingController.handleProfileInfo(new ActionEvent());
-            } else if (option.equals("myAuctions")) {
-                settingController.handleMyAuctions(new ActionEvent());
-            } else if (option.equals("historyBid")) {
-                settingController.handleHistoryBid(new ActionEvent());
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public static void handleSwitchToItemPage(Label contextLabel, String itemId, String itemName) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    NavigationUtil.class.getResource("/com.auction.client/fxml/ItemPage.fxml")
-            );
-            Parent root = loader.load();
-            com.auction.client.controller.ItemPageController controller = loader.getController();
-            controller.setItemId(itemId);
-            Parent wrappedRoot = wrapWithChatBox(root);
 
-            Scene currentScene = contextLabel.getScene();
-            Stage stage = (Stage) currentScene.getWindow();
-
-            currentScene.setRoot(wrappedRoot);
-            stage.setTitle(String.format("Online Auction System - %s", itemName));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load trang sản phẩm: " + e.getMessage());
-        }
+    public static void handleSwitchToSetting(Event event) {
+        handleSwitchToSetting(event, "");
     }
-    public static void switchToLogin(ActionEvent event) {
 
-        try {
+    public static void handleSwitchToSetting(Event event, String option) {
+        switchScene(event,
+                "/com.auction.client/fxml/setting/Setting.fxml",
+                AppConfig.getAppName() + " - Profile",
+                loader -> {
+                    SettingController controller = loader.getController();
 
-            Parent loginRoot = FXMLLoader.load(
-                    NavigationUtil.class.getResource(
-                            "/com.auction.client/fxml/authenticator/Login.fxml"
-                    )
-            );
-
-            Stage stage =
-                    (Stage) ((Node) event.getSource())
-                            .getScene()
-                            .getWindow();
-
-            stage.getScene().setRoot(loginRoot);
-
-            stage.setTitle("Login - Auction System");
-
-        } catch (IOException e) {
-
-            System.err.println("Không tìm thấy file Login.fxml!");
-
-            e.printStackTrace();
-        }
+                    switch (option) {
+                        case "profile" -> controller.handleProfileInfo(null);
+                        case "myAuctions" -> controller.handleMyAuctions(null);
+                    }
+                });
     }
 }

@@ -21,7 +21,7 @@
       styleClass="content-card"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.ProfilePageController"
+      fx:controller="com.auction.client.controller.user.ProfilePageController"
       stylesheets="@../../css/ProfilePage.css">
 
     <padding>

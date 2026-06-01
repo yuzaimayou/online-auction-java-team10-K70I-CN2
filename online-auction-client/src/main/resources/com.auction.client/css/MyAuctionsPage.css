@@ -365,6 +365,12 @@
     -fx-border-radius: 15px;
     -fx-background-radius: 15px;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 10, 0, 0, 5);
+    -fx-max-width: 400px;
+    -fx-pref-width: 360px;
+}
+
+.dialog-pane .content {
+    -fx-max-width: 400px;
 }
 
 .dialog-pane .header-panel {

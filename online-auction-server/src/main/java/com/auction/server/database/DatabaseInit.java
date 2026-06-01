@@ -2,8 +2,11 @@ package com.auction.server.database;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DatabaseInit {
+    private static final Logger LOGGER = Logger.getLogger(DatabaseInit.class.getName());
 
     public static void init() {
 
@@ -15,6 +18,7 @@ public class DatabaseInit {
                     role TEXT NOT NULL,
                     isVerify BOOLEAN NOT NULL DEFAULT 0,
                     email TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'Active',
                     balance REAL NOT NULL DEFAULT 0,
                     frozen_balance REAL NOT NULL DEFAULT 0
                 );
@@ -34,9 +38,7 @@ public class DatabaseInit {
                     bid_step REAL NOT NULL DEFAULT 1,
                     image_path TEXT NOT NULL DEFAULT '',
                     create_at TEXT,
-                    top_player_id TEXT,
                     search_name TEXT,
-                    FOREIGN KEY (top_player_id) REFERENCES users(id),
                     FOREIGN KEY (seller_id) REFERENCES users(id)
                 );
                 """;
@@ -100,7 +102,7 @@ public class DatabaseInit {
             migrateAutoBidsTable(stmt);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database initialization failed", e);
         }
     }
 
@@ -109,62 +111,79 @@ public class DatabaseInit {
     private static void migrateUsersTable(Statement stmt) {
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN email TEXT");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: users.email - " + e.getMessage());
         }
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN isVerify INTEGER NOT NULL DEFAULT 0");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: users.isVerify - " + e.getMessage());
+        }
+        try {
+            stmt.execute("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'Active'");
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: users.status - " + e.getMessage());
         }
         // Wallet columns
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN balance REAL NOT NULL DEFAULT 0");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: users.balance - " + e.getMessage());
         }
         try {
             stmt.execute("ALTER TABLE users ADD COLUMN frozen_balance REAL NOT NULL DEFAULT 0");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: users.frozen_balance - " + e.getMessage());
         }
     }
 
     private static void migrateItemsTable(Statement stmt) {
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN category TEXT NOT NULL DEFAULT 'other'");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: items.category - " + e.getMessage());
         }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN bid_step REAL NOT NULL DEFAULT 1");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: items.bid_step - " + e.getMessage());
         }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN image_path TEXT NOT NULL DEFAULT ''");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: items.image_path - " + e.getMessage());
         }
         // [FIX BUG #4] Trước đây default là 'PENDING' — không tồn tại trong AuctionStatus enum.
         // AuctionStatus.valueOf("PENDING") ném IllegalArgumentException.
         // Nay đổi thành 'UPCOMING' để khớp với AuctionStatus.UPCOMING.
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN status TEXT NOT NULL DEFAULT 'UPCOMING'");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: items.status - " + e.getMessage());
         }
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN create_at TEXT");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: items.create_at - " + e.getMessage());
         }
         // Current highest bidder — NULL means no bids yet
         try {
             stmt.execute("ALTER TABLE items ADD COLUMN current_bidder_id TEXT");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: items.current_bidder_id - " + e.getMessage());
         }
     }
 
     private static void migrateAutoBidsTable(Statement stmt) {
         try {
             stmt.execute("ALTER TABLE auto_bids ADD COLUMN registered_at TEXT NOT NULL DEFAULT ''");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: auto_bids.registered_at - " + e.getMessage());
         }
         try {
             stmt.execute("ALTER TABLE auto_bids ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.fine("Migration skipped: auto_bids.is_active - " + e.getMessage());
         }
     }
 }

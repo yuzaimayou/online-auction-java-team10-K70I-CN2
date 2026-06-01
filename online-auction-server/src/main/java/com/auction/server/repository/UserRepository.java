@@ -8,48 +8,46 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UserRepository {
+    private static final Logger LOGGER = Logger.getLogger(UserRepository.class.getName());
 
     // Tạo auth mới với số dư mặc định
     public boolean createUser(String username, String password, String role, String email) {
-
         String sql = """
-                INSERT INTO users(
-                    id,
-                    username,
-                    password,
-                    role,
-                    email,
-                    balance,
-                    frozen_balance
-                ) VALUES(?,?,?,?,?,?,?)
-                """;
-
+            INSERT INTO users(
+                id,
+                username,
+                password,
+                role,
+                email,
+                status,
+                balance,
+                frozen_balance
+            ) VALUES(?,?,?,?,?,?,?,?)
+            """;
         try (
                 Connection conn = DatabaseManager.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
-
             stmt.setString(1, UUID.randomUUID().toString());
             stmt.setString(2, username);
             stmt.setString(3, password);
             stmt.setString(4, role);
             stmt.setString(5, email);
-
-            // Số dư mặc định
-            stmt.setDouble(6, 10000);
-            // Chưa có tiền bị khóa
-            stmt.setDouble(7, 0);
-
+            stmt.setString(6, "Active");  // status mặc định
+            stmt.setDouble(7, 10000);
+            stmt.setDouble(8, 0);
             stmt.executeUpdate();
             return true;
-
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to create user " + username, e);
             return false;
         }
     }
+
 
     public boolean enableUser(String email) {
 
@@ -66,7 +64,7 @@ public class UserRepository {
             return rowsUpdated > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to enable user for email " + email, e);
             return false;
         }
     }
@@ -82,7 +80,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by id " + userId, e);
         }
         return null;
     }
@@ -100,7 +98,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by id " + id, e);
         }
         return null;
     }
@@ -118,7 +116,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by email " + email, e);
         }
         return null;
     }
@@ -136,7 +134,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by username " + username, e);
         }
         return null;
     }
@@ -169,6 +167,14 @@ public class UserRepository {
             user.setRole(role);
         }
 
+        try {
+            String status = rs.getString("status");
+            user.setStatus(status != null ? status : "Active");
+        } catch (Exception ignored) {
+            user.setStatus("Active");
+        }
+
+
         return user;
     }
 
@@ -182,8 +188,26 @@ public class UserRepository {
             stmt.setString(2, userId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to update role for user " + userId, e);
             return false;
+        }
+    }
+
+    // THÊM method này ngay bên dưới
+    public boolean updateRole(Connection conn, String userId, String newRole) throws Exception {
+        String sql = "UPDATE users SET role = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newRole);
+            stmt.setString(2, userId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+    public boolean updateStatus(Connection conn, String userId, String newStatus) throws Exception {
+        String sql = "UPDATE users SET status = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newStatus);
+            stmt.setString(2, userId);
+            return stmt.executeUpdate() > 0;
         }
     }
 }

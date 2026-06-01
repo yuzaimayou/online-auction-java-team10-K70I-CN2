@@ -19,24 +19,33 @@
         <Label text="✦" style="-fx-text-fill: white; -fx-font-size: 18;"/>
         <Label text="Auction AI" styleClass="header-text" style="-fx-padding: 0 0 0 10;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="—" styleClass="window-control-btn"/>
-        <Button text="✕" styleClass="window-control-btn"/>
+        <Button text="✕" styleClass="window-control-btn" onAction="#closeChatBox"/>
     </HBox>
 
-    <ScrollPane fx:id="chatScroll" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="chat-scroll">
-        <VBox fx:id="messageArea" spacing="15" style="-fx-padding: 15;">
+    <ScrollPane fx:id="chatScroll" fitToWidth="true" VBox.vgrow="ALWAYS"
+                styleClass="chat-scroll"
+                hbarPolicy="NEVER"
+                vbarPolicy="NEVER">
+        <VBox fx:id="messageArea" spacing="12" style="-fx-padding: 15 12 15 12; -fx-background-color: #f7f8fc;">
         </VBox>
     </ScrollPane>
 
     <VBox spacing="10" style="-fx-padding: 10;">
         <FlowPane hgap="5" vgap="5">
-            <Button text="Create an auction" styleClass="suggest-btn"/>
-            <Button text="How to bid?" styleClass="suggest-btn"/>
+            <Button text="Create an auction" styleClass="suggest-btn" onAction="#sendSuggest"/>
+            <Button text="How to bid?" styleClass="suggest-btn" onAction="#sendSuggest"/>
         </FlowPane>
-        <HBox spacing="5" alignment="CENTER">
-            <TextField fx:id="txtMessage" promptText="Type your message..." styleClass="chat-input"
-                       HBox.hgrow="ALWAYS"/>
-            <Button fx:id="btnSend" onAction="#sendMessage" defaultButton="true" styleClass="send-btn" text="➔"/>
+        <HBox spacing="8" alignment="BOTTOM_CENTER">
+            <TextArea fx:id="txtMessage"
+                      promptText="Type your message..."
+                      styleClass="chat-input"
+                      wrapText="true"
+                      prefRowCount="1"
+                      HBox.hgrow="ALWAYS"
+                      style="-fx-max-height: 80;"/>
+            <Button fx:id="btnSend" onAction="#sendMessage" defaultButton="true"
+                    styleClass="send-btn" text="➔"
+                    style="-fx-min-width: 38; -fx-min-height: 38; -fx-max-height: 38;"/>
         </HBox>
     </VBox>
 </VBox>

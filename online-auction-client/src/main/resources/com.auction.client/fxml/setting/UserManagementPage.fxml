@@ -6,7 +6,7 @@
 
 <VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.setting.UserManagementController"
+      fx:controller="com.auction.client.controller.admin.UserManagementController"
       stylesheets="@../../css/UserManagementPage.css">
 
     <padding>
@@ -29,7 +29,6 @@
             <TableColumn fx:id="colEmail" text="Email" prefWidth="250.0" />
             <TableColumn fx:id="colStatus" text="Status" prefWidth="120.0" />
             <TableColumn fx:id="colRole" text="Role" prefWidth="120.0" />
-            <TableColumn fx:id="colJoinDate" text="Join Date" prefWidth="120.0" />
             <TableColumn fx:id="colAction" text="Action" prefWidth="100.0" />
         </columns>
         <columnResizePolicy>

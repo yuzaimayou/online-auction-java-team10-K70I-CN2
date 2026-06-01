@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.auction.client.controller.user.MyBidsController">
+
+    <VBox prefWidth="1000.0" spacing="18.0" styleClass="content-card"
+          HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" minHeight="-Infinity" maxHeight="Infinity"
+          stylesheets="@../../css/MyBidsPage.css"
+    >
+
+        <padding>
+            <Insets bottom="24.0" left="28.0" right="28.0" top="24.0"/>
+        </padding>
+        <Label styleClass="content-title" text="My Bids"/>
+
+        <HBox spacing="15.0" alignment="CENTER_LEFT">
+            <TextField fx:id="searchField" promptText="Search by name..." prefHeight="45.0" prefWidth="280.0"
+                       styleClass="search-field"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <TableView fx:id="bidsTable" VBox.vgrow="ALWAYS" styleClass="auction-table">
+            <columns>
+                <TableColumn fx:id="itemCol" prefWidth="220.0" text="Item"/>
+                <TableColumn fx:id="currentBidCol" prefWidth="130.0" text="Current Bid"/>
+                <TableColumn fx:id="yourBidCol" prefWidth="130.0" text="Your Bid"/>
+                <TableColumn fx:id="statusCol" prefWidth="120.0" text="Status"/>
+                <TableColumn fx:id="endTimeCol" prefWidth="140.0" text="End Time" styleClass="end-time-column-style"/>
+                <TableColumn fx:id="actionCol" prefWidth="110.0" text="Action"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+        </TableView>
+
+    </VBox>
+</StackPane>

@@ -1,25 +1,22 @@
 package com.auction.client.controller.common;
 
 import com.auction.client.service.ChatBotService;
+import com.auction.client.ui.chatBoxAi.ChatMessageFactory;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 
 import java.io.IOException;
 
 public class ChatBoxAiController {
+
     private StackPane bubble;
     private VBox chatBox;
 
@@ -27,47 +24,109 @@ public class ChatBoxAiController {
     private static final double CHAT_HEIGHT = 450;
     private final ChatBotService chatBotService = ChatBotService.getInstance();
     private final BooleanProperty sendingMsg = new SimpleBooleanProperty(false);
-    @FXML
-    private TextField txtMessage;
-    @FXML
-    private Button btnSend;
 
-    public ChatBoxAiController() {
-        createBubble();
-        createChatBox();
-    }
+    @FXML private TextArea txtMessage;
+    @FXML private Button btnSend;
+    @FXML private VBox messageArea;
+    @FXML private ScrollPane chatScroll;
 
-    private void createBubble() {
-        Circle circle = new Circle(30, Color.web("#4485f4"));
-        circle.setStroke(Color.WHITE);
-        circle.setStrokeWidth(2);
+    public ChatBoxAiController() {}
 
-        Label icon = new Label("✦");
-        icon.setAlignment(Pos.CENTER);
-        icon.setStyle("-fx-text-fill: white; -fx-font-size: 30px; -fx-font-weight: bold;");
-
-        bubble = new StackPane(circle, icon);
-        bubble.setAlignment(Pos.CENTER);
-        bubble.setPrefSize(60, 60);
-        bubble.setMaxSize(60, 60);
-        bubble.setStyle("-fx-cursor: hand;");
-        bubble.setEffect(new javafx.scene.effect.DropShadow(10, Color.gray(0, 0.5)));
-
-        bubble.setOnMouseClicked(event -> toggleChatBox());
-    }
-
-    private void createChatBox() {
+    public static ChatBoxAiController create() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/ChatBoxAi.fxml"));
-            chatBox = loader.load();
-            chatBox.setVisible(false);
-            chatBox.setManaged(false);
+            FXMLLoader loader = new FXMLLoader(
+                    ChatBoxAiController.class.getResource("/com.auction.client/fxml/ChatBoxAi.fxml"));
 
-            chatBox.setMaxWidth(CHAT_WIDTH);
-            chatBox.setMaxHeight(CHAT_HEIGHT);
+            VBox root = loader.load();
+            ChatBoxAiController ctrl = loader.getController();
+
+            // Cấu hình giao diện ban đầu
+            ctrl.chatBox = root;
+            ctrl.chatBox.setVisible(false);
+            ctrl.chatBox.setManaged(false);
+            ctrl.chatBox.setMaxWidth(CHAT_WIDTH);
+            ctrl.chatBox.setMaxHeight(CHAT_HEIGHT);
+
+            // Yêu cầu Factory tạo Bubble UI, truyền method reference để xử lý click
+            ctrl.bubble = ChatMessageFactory.createChatBubble(ctrl::toggleChatBox);
+
+            return ctrl;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
+    }
+
+    @FXML
+    private void initialize() {
+        BooleanBinding isMessageEmpty = Bindings.createBooleanBinding(
+                () -> txtMessage.getText() == null || txtMessage.getText().trim().isEmpty(),
+                txtMessage.textProperty()
+        );
+        btnSend.disableProperty().bind(isMessageEmpty.or(sendingMsg));
+        txtMessage.setOnKeyPressed(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                if (!event.isShiftDown()) {
+                    event.consume();
+                    if (!btnSend.isDisabled()) sendMessage();
+                }
+            }
+        });
+    }
+
+    @FXML
+    public void sendMessage() {
+        String message = txtMessage.getText().trim();
+        if (message.isEmpty()) return;
+
+        appendNode(ChatMessageFactory.createUserMessage(message));
+        Node typingNode = ChatMessageFactory.createTypingIndicator();
+        appendNode(typingNode);
+
+        sendingMsg.set(true);
+        txtMessage.clear();
+
+        chatBotService.sendMsg(message)
+                .thenAcceptAsync(response -> {
+                    javafx.application.Platform.runLater(() -> {
+                        messageArea.getChildren().remove(typingNode);
+
+                        if (response == null) {
+                            appendNode(ChatMessageFactory.createBotMessage("Xin lỗi, có lỗi xảy ra. Vui lòng thử lại!"));
+                            return;
+                        }
+
+                        String aiText = response.getAiResponse();
+                        if (aiText != null && !aiText.isBlank()) {
+                            appendNode(ChatMessageFactory.createBotMessage(aiText));
+                        }
+
+                        if (response.getItemSummaries() != null && !response.getItemSummaries().isEmpty()) {
+                            appendNode(ChatMessageFactory.createItemCards(response.getItemSummaries()));
+                        }
+                    });
+                })
+                .exceptionally(e -> {
+                    javafx.application.Platform.runLater(() -> {
+                        messageArea.getChildren().remove(typingNode);
+                        appendNode(ChatMessageFactory.createBotMessage("Không thể kết nối đến server. Vui lòng thử lại!"));
+                    });
+                    return null;
+                })
+                .whenComplete((res, ex) -> javafx.application.Platform.runLater(() -> sendingMsg.set(false)));
+    }
+
+    @FXML
+    public void sendSuggest(javafx.event.ActionEvent event) {
+        Button btn = (Button) event.getSource();
+        txtMessage.setText(btn.getText());
+        sendMessage();
+    }
+
+    @FXML
+    public void closeChatBox() {
+        chatBox.setVisible(false);
+        chatBox.setManaged(false);
     }
 
     private void toggleChatBox() {
@@ -81,46 +140,15 @@ public class ChatBoxAiController {
         }
     }
 
-    @FXML
-    private void initialize() {
-        BooleanBinding isMessageEmpty = Bindings.createBooleanBinding(
-                () -> txtMessage.getText() == null || txtMessage.getText().trim().isEmpty(),
-                txtMessage.textProperty()
-        );
-
-        btnSend.disableProperty().bind(isMessageEmpty.or(sendingMsg));
+    private void appendNode(Node node) {
+        messageArea.getChildren().add(node);
+        chatScroll.applyCss();
+        chatScroll.layout();
+        chatScroll.setVvalue(1.0);
     }
 
-    @FXML
-    public void sendMessage() {
-        String message = txtMessage.getText().trim();
-        if (message.isEmpty()) {
-            return;
-        }
-        sendingMsg.set(true);
-
-        System.out.println("Message sent to AI: " + message);
-        txtMessage.clear();
-        chatBotService.sendMsg(message)
-                .thenAccept(response -> {
-                    System.out.println("Response from AI: " + response.getData());
-                })
-                .exceptionally(e -> {
-                    e.printStackTrace();
-                    return null;
-                })
-                .whenComplete((res, ex) -> sendingMsg.set(false));
-    }
-
-    public Node getBubble() {
-        return bubble;
-    }
-
-    public Node getChatBox() {
-        return chatBox;
-    }
-
-    public ChatBotService getChatBotService() {
-        return chatBotService;
-    }
+    // Getters
+    public Node getBubble() { return bubble; }
+    public Node getChatBox() { return chatBox; }
+    public ChatBotService getChatBotService() { return chatBotService; }
 }

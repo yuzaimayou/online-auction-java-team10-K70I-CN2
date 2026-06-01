@@ -11,8 +11,11 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GeminiIntegration {
+    private static final Logger LOGGER = Logger.getLogger(GeminiIntegration.class.getName());
     private static final Dotenv dotenv = Dotenv.load();
     private static final String API_KEY = dotenv.get("GEMINI_API_KEY");
     private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=" + API_KEY;
@@ -29,8 +32,6 @@ public class GeminiIntegration {
 
     public String callGeminiApi(String prompt) {
         try {
-            // 1. DÙNG GSON ĐỂ TẠO PAYLOAD AN TOÀN
-            // Cấu trúc yêu cầu: { "contents": [ { "parts": [ { "text": "prompt" } ] } ] }
             JsonObject textObject = new JsonObject();
             textObject.addProperty("text", prompt);
 
@@ -46,10 +47,8 @@ public class GeminiIntegration {
             JsonObject requestBody = new JsonObject();
             requestBody.add("contents", contentsArray);
 
-            // Chuyển Object thành chuỗi JSON
             String jsonPayload = gson.toJson(requestBody);
 
-            // 2. TẠO VÀ GỬI HTTP REQUEST
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL))
                     .header("Content-Type", "application/json")
@@ -57,29 +56,23 @@ public class GeminiIntegration {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // 3. XỬ LÝ KẾT QUẢ TRẢ VỀ
             if (response.statusCode() == 200) {
                 return extractTextFromResponse(response.body());
             } else {
-                System.err.println("Lỗi gọi Gemini API (Status Code: " + response.statusCode() + ")");
-                System.err.println("Chi tiết lỗi: " + response.body());
+                LOGGER.warning("Gemini API call failed with status code: " + response.statusCode());
+                LOGGER.warning("Gemini API error details: " + response.body());
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("Lỗi kết nối mạng hoặc lỗi hệ thống khi gọi LLM:");
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Network or system error while calling LLM", e);
             return null;
         }
     }
 
-    /**
-     * Hàm phụ trợ: Dùng Gson để bóc tách đúng phần văn bản từ khối JSON khổng lồ của Google
-     */
     private String extractTextFromResponse(String jsonResponse) {
         try {
             JsonObject responseObj = gson.fromJson(jsonResponse, JsonObject.class);
 
-            // Lần mò theo cấu trúc JSON của Gemini: candidates[0].content.parts[0].text
             return responseObj.getAsJsonArray("candidates")
                     .get(0).getAsJsonObject()
                     .getAsJsonObject("content")
@@ -88,8 +81,8 @@ public class GeminiIntegration {
                     .get("text").getAsString();
 
         } catch (Exception e) {
-            System.err.println("Lỗi parse JSON phản hồi từ Gemini.");
-            return jsonResponse; // Trả về chuỗi thô nếu parse lỗi để dễ debug
+            LOGGER.log(Level.WARNING, "Failed to parse Gemini JSON response", e);
+            return jsonResponse;
         }
     }
 }
