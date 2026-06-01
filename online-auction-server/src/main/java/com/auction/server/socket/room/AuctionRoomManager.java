@@ -3,6 +3,7 @@ package com.auction.server.socket.room;
 import com.auction.server.socket.handler.ClientHandler;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.message.ResponseMessage;
+import com.auction.shared.util.GsonUtil;
 import com.google.gson.Gson;
 
 import java.util.Map;
@@ -14,7 +15,7 @@ public class AuctionRoomManager {
     private static final Logger LOGGER = Logger.getLogger(AuctionRoomManager.class.getName());
     private static final AuctionRoomManager instance = new AuctionRoomManager();
 
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.getInstance();
     private final Map<String, CopyOnWriteArrayList<ClientHandler>> rooms = new ConcurrentHashMap<>();
 
     private AuctionRoomManager() {
@@ -37,6 +38,11 @@ public class AuctionRoomManager {
             response.setMessage(message);
             response.setData(dataPayload);
             LOGGER.fine("Broadcasting message to room " + itemId + ": " + message);
+            LOGGER.fine(dataPayload.toString());
+            System.out.println("Broadcasting message to room " + itemId + ": " + message);
+            if (message == SocketEventConstants.EVENT_UPDATE_TIME) {
+                System.out.println("Bid placed data: " + dataPayload);
+            }
 
             String jsonMessage = gson.toJson(response);
 

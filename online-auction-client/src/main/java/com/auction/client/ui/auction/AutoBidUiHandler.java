@@ -3,9 +3,9 @@ package com.auction.client.ui.auction;
 import com.auction.client.network.AuctionSocketClient;
 import com.auction.client.service.AutoBidService;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
-import com.auction.client.ui.util.ToastUtil;
 import com.auction.client.ui.item.ItemStatusRendered;
-import com.auction.client.validation.AutoBidValidationService; // Import validator mới
+import com.auction.client.ui.util.ToastUtil;
+import com.auction.client.validation.AutoBidValidationService;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.item.Item;
 import javafx.scene.control.Button;
@@ -50,20 +50,20 @@ public class AutoBidUiHandler {
             Supplier<Item> itemSupplier,
             Supplier<Double> myLastBidSupplier
     ) {
-        this.autoBidManager      = autoBidManager;
-        this.autoBidValidator    = autoBidValidator;
-        this.network             = network;
-        this.user                = user;
-        this.statusService       = statusService;
-        this.autoBidForm         = autoBidForm;
+        this.autoBidManager = autoBidManager;
+        this.autoBidValidator = autoBidValidator;
+        this.network = network;
+        this.user = user;
+        this.statusService = statusService;
+        this.autoBidForm = autoBidForm;
         this.autoBidActiveStatus = autoBidActiveStatus;
-        this.maxBidField         = maxBidField;
-        this.autoBidStepField    = autoBidStepField;
+        this.maxBidField = maxBidField;
+        this.autoBidStepField = autoBidStepField;
         this.userCurrentBidLabel = userCurrentBidLabel;
-        this.btnAutoBidToggle    = btnAutoBidToggle;
-        this.submitBid           = submitBid;
-        this.itemSupplier        = itemSupplier;
-        this.myLastBidSupplier   = myLastBidSupplier;
+        this.btnAutoBidToggle = btnAutoBidToggle;
+        this.submitBid = submitBid;
+        this.itemSupplier = itemSupplier;
+        this.myLastBidSupplier = myLastBidSupplier;
     }
 
     public void toggleForm() {
@@ -79,7 +79,7 @@ public class AutoBidUiHandler {
             return;
         }
         try {
-            double max  = Double.parseDouble(maxBidField.getText().trim());
+            double max = Double.parseDouble(maxBidField.getText().trim());
             double step = Double.parseDouble(autoBidStepField.getText().trim());
 
             // Thay đổi 1: Gọi hàm validate từ AutoBidValidationService
@@ -116,11 +116,12 @@ public class AutoBidUiHandler {
 
         switch (decision.type()) {
             case AUCTION_ENDED -> stop();
-            case INACTIVE      -> {}
-            case LEADING       -> {
+            case INACTIVE -> {
+            }
+            case LEADING -> {
                 userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f (Leading)", serverPrice));
             }
-            case MAX_REACHED   -> {
+            case MAX_REACHED -> {
                 updateUi(false);
                 ToastUtil.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!");
             }
@@ -144,5 +145,10 @@ public class AutoBidUiHandler {
         btnAutoBidToggle.setVisible(!active);
         btnAutoBidToggle.setManaged(!active);
         submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
+    }
+
+    public void updateUIAutoBid(double maxBid, double step) {
+        userCurrentBidLabel.setText(String.format(" Max Bid: $ %.2f\n Bid Amount: $ %.2f", maxBid, step));
+        System.out.println("AutoBidUiHandler updated UI with maxBid=" + maxBid + " and step=" + step);
     }
 }
