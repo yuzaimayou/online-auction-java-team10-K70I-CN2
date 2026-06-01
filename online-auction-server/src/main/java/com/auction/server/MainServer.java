@@ -1,12 +1,12 @@
 package com.auction.server;
 
 import com.auction.server.config.AppConfig;
-import com.auction.server.controller.ClientHandler;
-import com.auction.server.controller.api.*;
+import com.auction.server.socket.handler.ClientHandler;
+import com.auction.server.http.handler.*;
 import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
-import com.auction.server.service.AuctionSchedulerService;
-import com.auction.server.service.ItemService;
+import com.auction.server.service.auction.AuctionSchedulerService;
+import com.auction.server.service.item.ItemService;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -17,8 +17,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 
 public class MainServer {
-    private static final int PORT = 8000;
-
     public static final List<ClientHandler> activeClients = new CopyOnWriteArrayList<>();
 
     public static void main(String[] agrs) {
