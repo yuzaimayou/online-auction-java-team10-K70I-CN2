@@ -342,8 +342,8 @@ class ProductionBiddingFlowTest {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("""
                      INSERT INTO items(id, name, description, start_price, current_price, seller_id, start_time, end_time,
-                                       category, bid_step, image_path, create_at, top_player_id, search_name, status, current_bidder_id)
-                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                       category, bid_step, image_path, create_at, search_name, status, current_bidder_id)
+                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                      """)) {
             stmt.setString(1, itemId);
             stmt.setString(2, "JUnit item " + label);
@@ -357,10 +357,9 @@ class ProductionBiddingFlowTest {
             stmt.setDouble(10, bidStep);
             stmt.setString(11, "[]");
             stmt.setString(12, LocalDateTime.now().toString());
-            stmt.setString(13, null);
-            stmt.setString(14, "junit item " + label);
-            stmt.setString(15, status.name());
-            stmt.setString(16, currentBidderId);
+            stmt.setString(13, "junit item " + label);
+            stmt.setString(14, status.name());
+            stmt.setString(15, currentBidderId);
             stmt.executeUpdate();
         }
         return itemId;

@@ -48,9 +48,16 @@ public class WalletHandler {
 
                 boolean ok = walletService.deposit(userId, amount);
                 if (ok) {
+                    double[] balances = walletService.getBalance(userId);
                     JsonObject resp = new JsonObject();
                     resp.addProperty("status", "SUCCESS");
                     resp.addProperty("message", "Nạp " + amount + " vào tài khoản " + userId);
+                    if (balances != null) {
+                        JsonObject data = new JsonObject();
+                        data.addProperty("balance", balances[0]);
+                        data.addProperty("frozenBalance", balances[1]);
+                        resp.add("data", data);
+                    }
                     sendResponse(exchange, 200, resp.toString());
                 } else {
                     sendResponse(exchange, 400, error("Nạp tiền thất bại — không tìm thấy auth"));

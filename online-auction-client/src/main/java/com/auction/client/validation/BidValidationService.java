@@ -25,7 +25,7 @@ public class BidValidationService {
         }
 
         if (user.getId().equals(
-                item.getCurrentTopPLayerId())) {
+                item.getCurrentBidderId())) {
 
             return new ValidationResult(
                     false,

@@ -26,20 +26,22 @@ import java.util.logging.Logger;
  * BidService — xử lý toàn bộ nghiệp vụ đặt giá (manual bid và auto-bid).
  *
  * Nguyên tắc thiết kế:
- *  1. Mỗi thao tác ghi DB chạy trong một transaction duy nhất (conn.setAutoCommit(false)).
- *  2. Mọi nhánh thất bại đều rollback TRƯỚC khi return false.
- *  3. Validate nghiệp vụ (item, user, giá, thời gian) được tập trung vào
- *     BidValidator — BidService chỉ điều phối, không tự validate.
- *  4. UserRepository được inject (không new() inline) để tái sử dụng connection pool.
- *  5. Anti-sniping áp dụng nhất quán cho cả manual bid lẫn auto-bid.
- *  6. broadcastNewBid() luôn được gọi SAU khi commit, ngoài synchronized block.
+ * 1. Mỗi thao tác ghi DB chạy trong một transaction duy nhất
+ * (conn.setAutoCommit(false)).
+ * 2. Mọi nhánh thất bại đều rollback TRƯỚC khi return false.
+ * 3. Validate nghiệp vụ (item, user, giá, thời gian) được tập trung vào
+ * BidValidator — BidService chỉ điều phối, không tự validate.
+ * 4. UserRepository được inject (không new() inline) để tái sử dụng connection
+ * pool.
+ * 5. Anti-sniping áp dụng nhất quán cho cả manual bid lẫn auto-bid.
+ * 6. broadcastNewBid() luôn được gọi SAU khi commit, ngoài synchronized block.
  */
 public class BidService {
 
     private static final Logger LOGGER = Logger.getLogger(BidService.class.getName());
-    private static final double PRICE_EPSILON  = 0.000001d;
-    private static final int AUTO_BID_MAX_ROUNDS = 200;
-    private static final long ANTI_SNIPE_SECONDS  = 60L;
+    private static final double PRICE_EPSILON = 0.000001d;
+    // No hard round cap: the loop stops only when no valid challenger remains.
+    private static final long ANTI_SNIPE_SECONDS = 60L;
 
     // Dependencies — inject qua constructor, không new() inline
     private final BidRepository bidRepository;
@@ -65,12 +67,12 @@ public class BidService {
      * Đặt bid thủ công.
      *
      * Flow:
-     *  1. Validate đầu vào (item, user, status, thời gian, giá).
-     *  2. Xử lý ví (freeze mới / unfreeze cũ) trong transaction.
-     *  3. Ghi bid + cập nhật current bidder.
-     *  4. Anti-snipe nếu còn < 60s.
-     *  5. Chạy auto-bid rounds cho các user đã đăng ký.
-     *  6. Commit → broadcast.
+     * 1. Validate đầu vào (item, user, status, thời gian, giá).
+     * 2. Xử lý ví (freeze mới / unfreeze cũ) trong transaction.
+     * 3. Ghi bid + cập nhật current bidder.
+     * 4. Anti-snipe nếu còn < 60s.
+     * 5. Chạy auto-bid rounds cho các user đã đăng ký.
+     * 6. Commit → broadcast.
      */
     public boolean placeBid(String itemId, String userId, double bidPrice) {
         if (isBlank(itemId) || isBlank(userId)) {
@@ -78,8 +80,8 @@ public class BidService {
             return false;
         }
 
-        FinalBid finalBid     = null;
-        boolean isExtended   = false;
+        FinalBid finalBid = null;
+        boolean isExtended = false;
         LocalDateTime newEndTime = null;
 
         synchronized (AuctionLockManager.getItemLock(itemId)) {
@@ -114,12 +116,12 @@ public class BidService {
                 }
 
                 // FIX: Lấy currentTopPlayer từ DB (không từ item snapshot) để đảm bảo nhất quán
-                String currentTopPlayerId = itemRepository.getCurrentBidderId(conn, itemId);
+                String currentBidderId = itemRepository.getCurrentBidderId(conn, itemId);
                 double currentPrice = item.getHighestCurrentPrice();
 
-                handleWalletMovement(conn, itemId, userId, bidPrice, currentTopPlayerId, currentPrice);
+                handleWalletMovement(conn, itemId, userId, bidPrice, currentBidderId, currentPrice);
 
-                //  4. Ghi bid
+                // 4. Ghi bid
                 String bidTime = LocalDateTime.now().toString();
                 LOGGER.info(String.format(
                         "[MANUAL_BID] time=%s itemId=%s userId=%s currentPrice=%.2f bidPrice=%.2f",
@@ -128,7 +130,7 @@ public class BidService {
                 bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime);
                 itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId);
 
-                //  5. Anti-snipe
+                // 5. Anti-snipe
                 long secondsRemaining = ChronoUnit.SECONDS.between(LocalDateTime.now(), item.getEndTime());
                 if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
                     newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
@@ -137,7 +139,7 @@ public class BidService {
                     LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
                 }
 
-                //  6. Auto-bid rounds
+                // 6. Auto-bid rounds
                 finalBid = runAutoBiddingRounds(conn, itemId, userId, bidPrice, bidTime);
                 conn.commit();
 
@@ -159,12 +161,12 @@ public class BidService {
      * Đăng ký auto-bid VÀ đặt bid ngay nếu điều kiện cho phép.
      *
      * Flow:
-     *  1. Validate đầu vào.
-     *  2. Validate nghiệp vụ (item, user, status, thời gian, increment).
-     *  3. Upsert auto-bid config.
-     *  4. Quyết định: REGISTER_ONLY nếu đang dẫn đầu, PLACE_BID nếu chưa.
-     *  5. Nếu PLACE_BID: xử lý ví → ghi bid → anti-snipe → auto-bid rounds.
-     *  6. Commit → broadcast.
+     * 1. Validate đầu vào.
+     * 2. Validate nghiệp vụ (item, user, status, thời gian, increment).
+     * 3. Upsert auto-bid config.
+     * 4. Quyết định: REGISTER_ONLY nếu đang dẫn đầu, PLACE_BID nếu chưa.
+     * 5. Nếu PLACE_BID: xử lý ví → ghi bid → anti-snipe → auto-bid rounds.
+     * 6. Commit → broadcast.
      */
     public boolean registerAutoBidAndMaybeBid(String itemId, String userId, double maxBid, double increment) {
         if (isBlank(itemId) || isBlank(userId)) {
@@ -176,16 +178,16 @@ public class BidService {
             return false;
         }
 
-        FinalBid finalBid   = null;
+        FinalBid finalBid = null;
         boolean shouldBroadcast = false;
         boolean isExtended = false;
-        LocalDateTime newEndTime   = null;
+        LocalDateTime newEndTime = null;
 
         synchronized (AuctionLockManager.getItemLock(itemId)) {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
-                //  1. Load dữ liệu
+                // 1. Load dữ liệu
                 Item item = itemRepository.findById(conn, itemId);
                 if (item == null) {
                     conn.rollback();
@@ -195,7 +197,7 @@ public class BidService {
 
                 User user = userRepository.findById(conn, userId);
 
-                //  2. Validate nghiệp vụ
+                // 2. Validate nghiệp vụ
                 try {
                     bidValidator.validateForAutoBid(item, user, userId, maxBid, increment);
                 } catch (InvalidBidException | AuctionClosedException e) {
@@ -204,7 +206,7 @@ public class BidService {
                     return false;
                 }
 
-                //  3. Upsert config (TRƯỚC khi validate maxBid vs price) ---
+                // 3. Upsert config (TRƯỚC khi validate maxBid vs price) ---
                 // FIX: upsert trước rồi mới quyết định bid hay không là đúng,
                 // nhưng nếu REJECT thì phải rollback để xóa upsert vừa làm.
                 // Với ON CONFLICT UPDATE thì rollback sẽ khôi phục giá trị cũ.
@@ -212,7 +214,7 @@ public class BidService {
                         LocalDateTime.now().toString());
 
                 String currentBidderId = itemRepository.getCurrentBidderId(conn, itemId);
-                double currentPrice    = item.getHighestCurrentPrice();
+                double currentPrice = item.getHighestCurrentPrice();
                 double immediateBidPrice = computeImmediateAutoBidPrice(
                         currentPrice, item.getBidStep(), increment);
 
@@ -234,7 +236,7 @@ public class BidService {
                 // FIX: validate maxBid TRƯỚC khi thực hiện wallet / bid
                 if (immediateBidPrice + PRICE_EPSILON <= currentPrice
                         || immediateBidPrice > maxBid + PRICE_EPSILON) {
-                    conn.rollback();  // rollback upsert vì config không hợp lệ
+                    conn.rollback(); // rollback upsert vì config không hợp lệ
                     LOGGER.info(String.format(
                             "[AUTO_BID_REGISTER][DECISION=REJECT_MAX_TOO_LOW] itemId=%s userId=%s " +
                                     "immediateBid=%.2f maxBid=%.2f",
@@ -246,7 +248,7 @@ public class BidService {
                         "[AUTO_BID_REGISTER][DECISION=PLACE_IMMEDIATE_BID] itemId=%s userId=%s bidPrice=%.2f",
                         itemId, userId, immediateBidPrice));
 
-                //  5. Xử lý ví + ghi bid
+                // 5. Xử lý ví + ghi bid
                 handleWalletMovement(conn, itemId, userId, immediateBidPrice,
                         currentBidderId, currentPrice);
 
@@ -291,7 +293,8 @@ public class BidService {
      * Lấy trạng thái auto-bid hiện tại của user cho một item.
      */
     public AutoBidPayload getAutoBidStatus(String itemId, String userId) {
-        if (isBlank(itemId) || isBlank(userId)) return null;
+        if (isBlank(itemId) || isBlank(userId))
+            return null;
 
         AutoBidPayload config = bidRepository.findActiveAutoBid(itemId, userId);
         return config != null ? config : new AutoBidPayload(itemId, userId, null, null, false);
@@ -301,7 +304,8 @@ public class BidService {
      * Hủy auto-bid.
      */
     public boolean cancelAutoBid(String itemId, String userId) {
-        if (isBlank(itemId) || isBlank(userId)) return false;
+        if (isBlank(itemId) || isBlank(userId))
+            return false;
         return bidRepository.deactivateAutoBidIfPresent(itemId, userId);
     }
 
@@ -315,8 +319,8 @@ public class BidService {
      * Không tự rollback ở đây vì không giữ reference đến conn.
      */
     private void handleWalletMovement(Connection conn, String itemId,
-                                      String bidderId, double bidPrice,
-                                      String prevBidderId, double prevBidPrice) throws Exception {
+            String bidderId, double bidPrice,
+            String prevBidderId, double prevBidPrice) throws Exception {
 
         // 1. Kiểm tra số dư
         double[] balances = walletRepository.getBalances(conn, bidderId);
@@ -370,18 +374,20 @@ public class BidService {
     /**
      * Chạy vòng lặp đối kháng giữa các auto-bid config.
      * Mỗi vòng: chọn candidate → kiểm tra ví → xử lý ví → ghi bid.
-     * Dừng khi không còn candidate hợp lệ hoặc đạt MAX_ROUNDS.
+     * Dừng khi không còn candidate hợp lệ (selectNextBid trả về null).
      *
+     * Không có giới hạn số vòng cứng — vòng lặp kết thúc khi thị trường tự hội tụ.
      * Ném Exception ra ngoài để caller rollback toàn bộ transaction.
      */
     private FinalBid runAutoBiddingRounds(Connection conn, String itemId,
-                                          String leadingUserId, double currentPrice,
-                                          String currentBidTime) throws Exception {
+            String leadingUserId, double currentPrice,
+            String currentBidTime) throws Exception {
         String currentLeader = leadingUserId;
         double livePrice = currentPrice;
         String liveBidTime = currentBidTime;
+        int round = 0;
 
-        for (int round = 0; round < AUTO_BID_MAX_ROUNDS; round++) {
+        while (true) {
             LOGGER.info(String.format(
                     "[AUTO_BID_ROUND][START] time=%s itemId=%s round=%d leader=%s price=%.2f",
                     LocalDateTime.now(), itemId, round, currentLeader, livePrice));
@@ -394,12 +400,22 @@ public class BidService {
                 break;
             }
 
-            AutoBidResolver.ResolvedAutoBid candidate =
-                    autoBidResolver.selectNextBid(autoBids, currentLeader, livePrice);
+            AutoBidResolver.ResolvedAutoBid candidate = autoBidResolver.selectNextBid(autoBids, currentLeader,
+                    livePrice);
             if (candidate == null) {
                 LOGGER.info(String.format(
                         "[AUTO_BID_ROUND][STOP] reason=no_valid_candidate leader=%s price=%.2f",
                         currentLeader, livePrice));
+                break;
+            }
+
+            // Safety guard: the resolver must always return a price strictly above livePrice.
+            // If it does not, the market has converged and continuing would loop forever.
+            if (candidate.bidPrice() <= livePrice + PRICE_EPSILON) {
+                LOGGER.warning(String.format(
+                        "[AUTO_BID_ROUND][STOP] reason=candidate_price_not_above_live " +
+                        "candidate=%s candidateBid=%.2f livePrice=%.2f — market converged.",
+                        candidate.userId(), candidate.bidPrice(), livePrice));
                 break;
             }
 
@@ -413,6 +429,7 @@ public class BidService {
                         candidate.bidPrice(),
                         candidateBalances != null && candidateBalances.length > 0 ? candidateBalances[0] : 0d));
                 bidRepository.deactivateAutoBidIfPresent(conn, itemId, candidate.userId());
+                round++;
                 continue;
             }
 
@@ -430,9 +447,10 @@ public class BidService {
                     "[AUTO_BID_ROUND][ACCEPT] time=%s itemId=%s userId=%s bidPrice=%.2f",
                     bidTime, itemId, candidate.userId(), candidate.bidPrice()));
 
-            livePrice     = candidate.bidPrice();
+            livePrice = candidate.bidPrice();
             currentLeader = candidate.userId();
-            liveBidTime   = bidTime;
+            liveBidTime = bidTime;
+            round++;
         }
 
         return new FinalBid(currentLeader, livePrice, liveBidTime);
@@ -441,7 +459,7 @@ public class BidService {
     // Private — broadcast
 
     private void broadcastAfterBid(String itemId, FinalBid finalBid,
-                                   boolean isExtended, LocalDateTime newEndTime) {
+            boolean isExtended, LocalDateTime newEndTime) {
         try {
             if (finalBid != null) {
                 BidPayload payload = new BidPayload(
@@ -452,9 +470,8 @@ public class BidService {
             }
 
             if (isExtended && newEndTime != null) {
-                com.auction.shared.model.payloads.AuctionExtendedPayload extPayload =
-                        new com.auction.shared.model.payloads.AuctionExtendedPayload(
-                                itemId, newEndTime.toString());
+                com.auction.shared.model.payloads.AuctionExtendedPayload extPayload = new com.auction.shared.model.payloads.AuctionExtendedPayload(
+                        itemId, newEndTime.toString());
                 AuctionRoomManager.getInstance()
                         .broadcastToRoom(itemId, SocketEventConstants.EVENT_AUCTION_EXTENDED, extPayload);
                 LOGGER.fine("Broadcast AUCTION_EXTENDED cho item " + itemId);
@@ -479,10 +496,11 @@ public class BidService {
 
     // Private record
 
-    private record FinalBid(String userId, double bidPrice, String bidTime) {}
+    private record FinalBid(String userId, double bidPrice, String bidTime) {
+    }
 
     // Inner class — BidValidator
-    //Tách validate nghiệp vụ ra khỏi BidService.
+    // Tách validate nghiệp vụ ra khỏi BidService.
     // BidValidator nhận các object đã được load sẵn (Item, User),
     // KHÔNG tự query DB — giúp giảm số lần query và dễ unit test.
     // =========================================================================
@@ -493,9 +511,11 @@ public class BidService {
      */
     public static class BidValidator {
         private final double epsilon;
+
         public BidValidator(double epsilon) {
             this.epsilon = epsilon;
         }
+
         /** Validate cho manual bid. */
         public void validateForManualBid(Item item, User user, String userId, double bidPrice)
                 throws InvalidBidException, AuctionClosedException {
@@ -513,7 +533,7 @@ public class BidService {
 
         /** Validate cho auto-bid registration. */
         public void validateForAutoBid(Item item, User user, String userId,
-                                       double maxBid, double increment)
+                double maxBid, double increment)
                 throws InvalidBidException, AuctionClosedException {
 
             validateItemAndUser(item, user, userId);
@@ -526,7 +546,7 @@ public class BidService {
             }
         }
 
-        //  Helpers
+        // Helpers
 
         private void validateItemAndUser(Item item, User user, String userId)
                 throws InvalidBidException {
@@ -542,7 +562,7 @@ public class BidService {
         }
 
         private void validateStatus(Item item) throws InvalidBidException {
-            AuctionStatus stored   = item.getStoredStatus();       // AuctionStatus.BANNED...
+            AuctionStatus stored = item.getStoredStatus(); // AuctionStatus.BANNED...
             AuctionStatus computed = item.getStatus();
 
             if (stored == AuctionStatus.BANNED

@@ -19,7 +19,7 @@ public class Item extends Entity {
     private String category;
     private double bidStep;
     private List<String> imagesPath;
-    private String currentTopPLayerId;
+    private String currentBidderId;
     private AuctionStatus status;
     private LocalDateTime create_at;
     private double myLastBid = 0.0;
@@ -174,12 +174,12 @@ public class Item extends Entity {
         return sellerId != null && sellerId.equals(userId);
     }
 
-    public String getCurrentTopPLayerId() {
-        return currentTopPLayerId;
+    public String getCurrentBidderId() {
+        return currentBidderId;
     }
 
-    public void setCurrentTopPLayerId(String playerId) {
-        currentTopPLayerId = playerId;
+    public void setCurrentBidderId(String playerId) {
+        this.currentBidderId = playerId;
     }
 
     public void setStatus(AuctionStatus status) {

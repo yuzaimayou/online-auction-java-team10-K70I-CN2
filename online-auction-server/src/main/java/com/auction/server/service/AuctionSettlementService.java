@@ -55,7 +55,7 @@ public class AuctionSettlementService {
                     return SettlementResult.fail("Item bị BAN, không thể thanh toán");
                 }
 
-                String winnerId     = item.getCurrentTopPLayerId();
+                String winnerId     = item.getCurrentBidderId();
                 double winningPrice = item.getHighestCurrentPrice();
                 String sellerId     = item.getSellerId();
 

@@ -7,6 +7,7 @@ import com.auction.shared.model.account.User;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
@@ -74,8 +75,15 @@ public class DepositController {
             return;
         }
 
+        if (amount <= 0) {
+            ToastUtil.showError(amountField.getScene(), "Số tiền nạp phải lớn hơn 0!");
+            return;
+        }
+
         User currentUser = UserSession.getInstance().getLoggedInUser();
         if (currentUser == null) return;
+        Button confirmBtn = (Button) event.getSource();
+        confirmBtn.setDisable(true);
 
         // ĐÃ SỬA: Gọi WalletService thay vì DepositService.
         // Bỏ tham số currentUser.getBalance() ở cuối.
@@ -84,12 +92,14 @@ public class DepositController {
                     // ĐÃ SỬA: Không cần gọi thêm WalletService.getInstance().fetchAndSync() nữa.
                     // Vì hàm deposit() trong WalletService đã tự động setBalance vào UserSession rồi!
                     Platform.runLater(() -> {
+                        confirmBtn.setDisable(false);
                         ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
                         handleBackToWallet(null);
                     });
                 })
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
+                        confirmBtn.setDisable(false);
                         Throwable cause = ex.getCause();
                         String errorMsg = (cause != null) ? cause.getMessage() : ex.getMessage();
                         ToastUtil.showError(amountField.getScene(), errorMsg);
