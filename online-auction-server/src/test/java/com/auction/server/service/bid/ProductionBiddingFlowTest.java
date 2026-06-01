@@ -40,7 +40,7 @@ class ProductionBiddingFlowTest {
     @BeforeAll
     static void initializeDatabase() throws Exception {
         Files.createDirectories(Paths.get(System.getProperty("user.dir"), "dataBase"));
-        try (Connection ignored = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             // Already initialized by another test.
         } catch (Exception ignored) {
             DatabaseManager.init();

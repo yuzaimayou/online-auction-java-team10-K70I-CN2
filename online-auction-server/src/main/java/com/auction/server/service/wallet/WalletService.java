@@ -2,25 +2,23 @@ package com.auction.server.service.wallet;
 
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.*;
-import com.auction.server.service.auction.AuctionLockManager;
 import com.auction.shared.model.account.User;
 
 import java.sql.Connection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // Service xử lý nạp tiền và truy vấn số dư.
 // Bidding logic (freeze/unfreeze trong giao dịch đặt giá) được thực hiện bởi BidService.
 public class WalletService {
+    private static final Logger LOGGER = Logger.getLogger(WalletService.class.getName());
 
     private final WalletRepository walletRepo;
     private final WalletTransactionRepository txLogRepo;
-    private final ItemRepository itemRepo;
-    private final BidRepository bidRepo;
 
     public WalletService() {
         this.walletRepo = new WalletRepository();
         this.txLogRepo = new WalletTransactionRepository();
-        this.itemRepo = ItemRepository.getInstance();
-        this.bidRepo = new BidRepository();
     }
 
     // Nạp tiền vào tài khoản (chạy trong transaction riêng).
@@ -30,7 +28,7 @@ public class WalletService {
         UserRepository userRepo = new UserRepository();
         User user = userRepo.findById(userId);
         if (user == null || "Suspended".equalsIgnoreCase(user.getStatus())) {
-            System.out.println("Deposit rejected: account suspended - " + userId);
+            LOGGER.info("Deposit rejected: account suspended - " + userId);
             return false;
         }
 
@@ -51,7 +49,7 @@ public class WalletService {
             return true;
         } catch (Exception e) {
             rollback(conn);
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to deposit funds for user " + userId, e);
             return false;
         } finally {
             close(conn);
@@ -85,7 +83,7 @@ public class WalletService {
             conn = DatabaseManager.getConnection();
             return walletRepo.getBalances(conn, userId);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to get wallet balance for user " + userId, e);
             return null;
         } finally {
             close(conn);
