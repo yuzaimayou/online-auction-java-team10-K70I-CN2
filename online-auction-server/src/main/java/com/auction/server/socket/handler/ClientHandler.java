@@ -1,7 +1,7 @@
 package com.auction.server.socket.handler;
 
-import com.auction.server.socket.room.AuctionRoomManager;
 import com.auction.server.service.bid.BidService;
+import com.auction.server.socket.room.AuctionRoomManager;
 import com.auction.shared.constant.SocketEventConstants;
 import com.auction.shared.exception.AuctionException;
 import com.auction.shared.message.RequestMessage;
@@ -142,8 +142,12 @@ public class ClientHandler implements Runnable {
             }
             currentRoomId = roomPayload.getItemId();
             roomManager.joinRoom(currentRoomId, this);
+
+            AutoBidPayload autoBidPayload = (new BidService()).getAutoBidStatus(currentRoomId, username);
+
             responseMessage.setStatus(SocketEventConstants.STATUS_JOIN_ROOM_SUCCESS);
             responseMessage.setMessage("Joined room successfully");
+            responseMessage.setData(autoBidPayload);
             sendMessage(gson.toJson(responseMessage));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to join room", e);
