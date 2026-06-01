@@ -144,7 +144,6 @@ public class NavigationUtil {
                     switch (option) {
                         case "profile" -> controller.handleProfileInfo(null);
                         case "myAuctions" -> controller.handleMyAuctions(null);
-                        case "historyBid" -> controller.handleHistoryBid(null);
                     }
                 });
     }

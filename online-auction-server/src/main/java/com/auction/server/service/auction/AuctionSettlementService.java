@@ -8,11 +8,14 @@ import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
 import java.sql.Connection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // Service thanh toán khi phiên đấu giá kết thúc.
 // Toàn bộ luồng chạy trong 1 transaction: trừ tiền người thắng,
 // cộng tiền người bán, đánh dấu ENDED, ghi log.
 public class AuctionSettlementService {
+    private static final Logger LOGGER = Logger.getLogger(AuctionSettlementService.class.getName());
 
     private final ItemRepository              itemRepo;
     private final WalletRepository            walletRepo;
@@ -100,13 +103,13 @@ public class AuctionSettlementService {
                         sellerBalBefore, sellerBalBefore + winningPrice, itemId);
 
                 conn.commit();
-                System.out.printf("[Settlement] item=%s winner=%s seller=%s price=%.2f%n",
-                        itemId, winnerId, sellerId, winningPrice);
+                LOGGER.info(String.format("[Settlement] item=%s winner=%s seller=%s price=%.2f",
+                        itemId, winnerId, sellerId, winningPrice));
                 return SettlementResult.success(itemId, winnerId, sellerId, winningPrice);
 
             } catch (Exception e) {
                 rollback(conn);
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to settle auction item " + itemId, e);
                 return SettlementResult.fail("Lỗi hệ thống: " + e.getMessage());
             } finally {
                 close(conn);

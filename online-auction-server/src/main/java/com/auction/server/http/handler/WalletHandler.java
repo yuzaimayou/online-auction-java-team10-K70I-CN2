@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // HTTP handler cho các thao tác ví và thanh toán đấu giá.
 //
@@ -19,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 //   POST /api/auction/settle  — thanh toán khi phiên đấu giá kết thúc
 public class WalletHandler {
 
+    private static final Logger LOGGER = Logger.getLogger(WalletHandler.class.getName());
     private static final Gson GSON = new Gson();
 
     // POST /api/wallet/deposit
@@ -72,7 +75,7 @@ public class WalletHandler {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to handle wallet deposit", e);
                 sendResponse(exchange, 500, error("Lỗi server: " + e.getMessage()));
             }
         }
@@ -129,7 +132,7 @@ public class WalletHandler {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to handle auction settlement request", e);
                 sendResponse(exchange, 500, error("Lỗi server: " + e.getMessage()));
             }
         }
@@ -181,7 +184,7 @@ public class WalletHandler {
                 sendResponse(exchange, 200, resp.toString());
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to handle wallet balance request", e);
                 sendResponse(exchange, 500, error("Lỗi server: " + e.getMessage()));
             }
         }

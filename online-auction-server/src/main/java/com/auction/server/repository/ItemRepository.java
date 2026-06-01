@@ -72,9 +72,9 @@ public class ItemRepository {
         String sellerUsername = null;
         try {
             sellerUsername = rs.getString("seller_username");
-            System.out.println("Seller: " + sellerUsername);
+            LOGGER.fine("Seller: " + sellerUsername);
         } catch (SQLException e) {
-            System.out.println("seller_username column NOT FOUND");
+            LOGGER.fine("seller_username column NOT FOUND");
         }
 
         // 🌟 [FIX] Đọc status từ DB trước (để giữ đúng BANNED), chỉ compute() khi cột status không có trong ResultSet.
@@ -493,7 +493,7 @@ public class ItemRepository {
                     }
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(java.util.logging.Level.SEVERE, "Failed to read image paths for item " + itemId, e);
             }
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);

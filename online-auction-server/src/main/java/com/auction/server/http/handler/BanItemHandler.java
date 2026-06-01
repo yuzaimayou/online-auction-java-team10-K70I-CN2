@@ -8,8 +8,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BanItemHandler implements HttpHandler {
+    private static final Logger LOGGER = Logger.getLogger(BanItemHandler.class.getName());
 
     private final ItemService itemService = ItemService.getInstance();
 
@@ -33,7 +36,7 @@ public class BanItemHandler implements HttpHandler {
         boolean success = itemService.banItem(itemId);
 
         if (success) {
-            System.out.println("[BanItemHandler] Banned item: " + itemId);
+            LOGGER.info("[BanItemHandler] Banned item: " + itemId);
 
             // [REALTIME UPDATE] Broadcast tới tất cả Socket Client đang kết nối.
             // Payload dùng đúng format ResponseMessage để client parse được:
@@ -49,7 +52,7 @@ public class BanItemHandler implements HttpHandler {
                 try {
                     client.sendMessage(banPayload);
                 } catch (Exception e) {
-                    System.err.println("[BanItemHandler] Failed to broadcast ban to client: " + e.getMessage());
+                    LOGGER.log(Level.WARNING, "[BanItemHandler] Failed to broadcast ban to client: " + e.getMessage(), e);
                 }
             }
 

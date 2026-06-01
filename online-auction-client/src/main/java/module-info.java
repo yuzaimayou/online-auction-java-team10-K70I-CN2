@@ -6,8 +6,8 @@ module online.auction.client {
     requires javafx.controls;
     requires javafx.fxml;
 
-    requires javafx.base;
-    requires javafx.graphics;
+    requires transitive javafx.base;
+    requires transitive javafx.graphics;
     requires java.net.http;
 
     // Giữ lại nếu thư mục client vẫn chứa file chạy App chính (như Main.java / App.java)

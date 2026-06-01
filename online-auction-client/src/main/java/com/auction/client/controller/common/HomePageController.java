@@ -112,6 +112,7 @@ public class HomePageController {
                     case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
                     case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
                     case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
+                    case BANNED   -> { /* Banned items are filtered out, this should not happen */ }
                 }
             } catch (IOException e) {
                 System.err.println("Failed to load item card: " + item.getName());

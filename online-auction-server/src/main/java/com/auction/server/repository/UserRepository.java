@@ -8,8 +8,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UserRepository {
+    private static final Logger LOGGER = Logger.getLogger(UserRepository.class.getName());
 
     // Tạo auth mới với số dư mặc định
     public boolean createUser(String username, String password, String role, String email) {
@@ -40,7 +43,7 @@ public class UserRepository {
             stmt.executeUpdate();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to create user " + username, e);
             return false;
         }
     }
@@ -61,7 +64,7 @@ public class UserRepository {
             return rowsUpdated > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to enable user for email " + email, e);
             return false;
         }
     }
@@ -77,7 +80,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by id " + userId, e);
         }
         return null;
     }
@@ -95,7 +98,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by id " + id, e);
         }
         return null;
     }
@@ -113,7 +116,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by email " + email, e);
         }
         return null;
     }
@@ -131,7 +134,7 @@ public class UserRepository {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to find user by username " + username, e);
         }
         return null;
     }
@@ -185,7 +188,7 @@ public class UserRepository {
             stmt.setString(2, userId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to update role for user " + userId, e);
             return false;
         }
     }

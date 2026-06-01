@@ -8,8 +8,11 @@ import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SendOtp implements HttpHandler {
+    private static final Logger LOGGER = Logger.getLogger(SendOtp.class.getName());
     private final VerifyService verifyService = VerifyService.getInstance();
 
     @Override
@@ -20,21 +23,20 @@ public class SendOtp implements HttpHandler {
             String query = requestURI.getQuery();
             String email = extractEmail(query);
 
-            ResponseMessage responseMessage = new ResponseMessage();
+
             if (email != null && !email.isEmpty()) {
                 try {
                     verifyService.sendEmail(email);
-                    System.out.println("Sent OTP to email: " + email);
+                    LOGGER.info("Sent OTP to email: " + email);
                     String response = "OTP sent to email: " + email;
                     HttpResponseUtil.sendMessage(exchange, 200, new ResponseMessage("success", response, null));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "Failed to send OTP to email: " + email, e);
                     String response = "Failed to send OTP to email: " + email;
                     try {
                         HttpResponseUtil.sendMessage(exchange, 500, new ResponseMessage("error", response, null));
                     } catch (IOException ex) {
-                        ex.printStackTrace();
-                        System.err.println("Failed to send error response for email: " + email);
+                        LOGGER.log(Level.SEVERE, "Failed to send error response for email: " + email, ex);
                     }
                 }
             } else {
