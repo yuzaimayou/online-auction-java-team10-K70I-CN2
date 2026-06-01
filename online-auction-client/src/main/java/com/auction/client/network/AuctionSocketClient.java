@@ -33,16 +33,8 @@ public class AuctionSocketClient {
     private BufferedReader in;
     private Thread listenerThread;
 
-    public interface MessageListener {
-        void onMessageReceived(ResponseMessage responseMessage);
-    }
-
-    private volatile MessageListener currentListener;
     private volatile AuctionRoomListener auctionRoomListener;
 
-    public void setCurrentListener(MessageListener listener) {
-        this.currentListener = listener;
-    }
     public void setAuctionRoomListener(AuctionRoomListener listener) {
         this.auctionRoomListener = listener;
     }
@@ -61,9 +53,6 @@ public class AuctionSocketClient {
         return instance;
     }
 
-    public void setListener(MessageListener listener) {
-        this.currentListener = listener;
-    }
 
     public boolean connectToAuctionRoom(String roomId, String token) {
         try {
@@ -180,7 +169,6 @@ public class AuctionSocketClient {
             out = null;
             socket = null;
             listenerThread = null;
-            currentListener = null;
         }
     }
     private void dispatchToListener(ResponseMessage response, AuctionRoomListener listener) {

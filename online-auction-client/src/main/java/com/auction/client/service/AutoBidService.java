@@ -1,6 +1,5 @@
 package com.auction.client.service;
 
-import com.auction.shared.model.item.Item;
 
 /**
  * Trách nhiệm: Quản lý trạng thái vận hành và đưa ra quyết định nâng giá tự động.
@@ -13,7 +12,6 @@ public class AutoBidService {
     private double maxBidAmount  = 0;
     private double autoBidIncremental = 0;
     private String lastBidderId  = "";
-    private long lastAutoBidTime = 0;
 
     public enum DecisionType {
         LEADING,
@@ -66,7 +64,6 @@ public class AutoBidService {
 
         // Bị vượt mặt và vẫn trong giới hạn Max -> Tính toán giá bid tiếp theo
         double nextBid = serverPrice + autoBidIncremental;
-        this.lastAutoBidTime = System.currentTimeMillis();
         return new AutoBidDecision(DecisionType.OUTBID_AND_REBID, nextBid);
     }
 

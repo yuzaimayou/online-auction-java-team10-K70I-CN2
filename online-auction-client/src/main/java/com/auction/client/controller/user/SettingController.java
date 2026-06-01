@@ -21,7 +21,7 @@ public class SettingController {
     private static final String PATH_PROFILE = "/com.auction.client/fxml/setting/ProfilePage.fxml";
     private static final String PATH_MY_AUCTIONS = "/com.auction.client/fxml/setting/MyAuctionsPage.fxml";
     private static final String PATH_HISTORY = "/com.auction.client/fxml/HistoryBidPage.fxml";
-    private static final String PATH_LOGIN = "/com.auction.client/fxml/authenticator/Login.fxml";
+
     private static final String PATH_USERS_MANAGEMENT = "/com.auction.client/fxml/setting/UserManagementPage.fxml";
     private static final String PATH_AUCTIONS_MANAGEMENT = "/com.auction.client/fxml/setting/AuctionsManagementPage.fxml";
     private static final String PATH_MY_BIDS = "/com.auction.client/fxml/setting/MyBids.fxml";

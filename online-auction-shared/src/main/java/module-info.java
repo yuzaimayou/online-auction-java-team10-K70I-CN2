@@ -1,5 +1,5 @@
 module online.auction.shared {
-    requires com.google.gson;
+    requires transitive com.google.gson;
 
     // Export
     exports com.auction.shared.message;
