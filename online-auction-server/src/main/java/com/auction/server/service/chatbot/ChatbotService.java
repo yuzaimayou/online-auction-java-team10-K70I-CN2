@@ -15,6 +15,7 @@ public class ChatbotService {
     private final QuestionAnalyzer questionAnalyzer;
     private final AppSupport appSupport;
     private final ItemAdvise itemAdvise;
+    private final CustomerCare customerCare = CustomerCare.getInstance();
     private final Gson gson = GsonUtil.getInstance();
 
 
@@ -52,6 +53,8 @@ public class ChatbotService {
                     return appSupport.handle(question.normalizedQuestion, question.language);
                 case "ITEM_ADVICE":
                     return itemAdvise.handle(question.normalizedQuestion, question.language);
+                case "CUSTOMER_CARE":
+                    return customerCare.handle(question.normalizedQuestion, question.language);
                 case "OUT_OF_SCOPE":
                     data.setAiResponse("Xin lỗi, câu hỏi của bạn nằm ngoài phạm vi hỗ trợ của tôi. " +
                             "Tôi chuyên về các vấn đề liên quan đến ứng dụng đấu giá và tư vấn sản phẩm thôi nhé!");

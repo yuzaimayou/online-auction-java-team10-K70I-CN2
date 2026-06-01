@@ -49,12 +49,11 @@ public class QuestionAnalyzer {
                 - ask for items suitable for their needs
                 - find items by price, category, or condition
                 
-                3. OUT_OF_SCOPE
-                Use this when the question:
-                - is not related to the auction app
-                - asks for general knowledge outside the system
-                - is casual conversation
-                - requests a task that does not belong to the app
+                3. CUSTOMER_CARE
+                Use when the message is not directly about the app, but a customer service staff can still reply politely, such as greetings, thanks, goodbye, asking what the chatbot can do, or simple support conversation.
+                
+                4. OUT_OF_SCOPE
+                Use when the message is unrelated to the auction app and should not be answered, such as general knowledge, homework, coding, politics, medical, legal, entertainment, or unrelated tasks.
                 
                 Language rules:
                         - Detect the language used by the user.
@@ -62,6 +61,20 @@ public class QuestionAnalyzer {
                         - The only valid language values are:
                             Vietnamese, English, Chinese, Japanese, Korean, Spanish, French, German, Russian, Unknown.
                         - If the language is unclear, return Vietnamese.
+                
+                Normalized question rules:
+                - If intent is APP_SUPPORT:
+                  Rewrite the question clearly in English.
+                - If intent is ITEM_ADVICE:
+                  Return in this exact format:
+                  search query|topK
+                  The search query must be in English.
+                  topK is the number of products requested by the user.
+                  If the user does not mention a number, use 5.
+                - If intent is CUSTOMER_CARE:
+                  Return a short polite reply in the user's language.
+                - If intent is OUT_OF_SCOPE:
+                  Return a polite out-of-scope message in the user's language.
                 
                 Return only valid JSON. Do not add any explanation.
                 

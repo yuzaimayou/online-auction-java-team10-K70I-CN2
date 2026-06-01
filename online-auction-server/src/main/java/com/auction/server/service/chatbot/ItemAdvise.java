@@ -27,7 +27,9 @@ public class ItemAdvise {
     }
 
     public AIResponseData handle(String message, String language) {
-        String jsonResponse = aiServiceClient.getRecommendations(message);
+        String[] query = message.split("\\|");
+        System.out.println("query: " + query[0] + ", topk= " + query[1]);
+        String jsonResponse = aiServiceClient.getRecommendations(query[0], Integer.getInteger(query[1], 5));
         com.auction.server.model.AIResponse response = gson.fromJson(jsonResponse, com.auction.server.model.AIResponse.class);
         AIResponseItem[] aiResponseItems = response.recommendations;
         List<ItemSummary> items = new java.util.ArrayList<>();
@@ -36,7 +38,7 @@ public class ItemAdvise {
             items.add(item);
         }
         String prompt = buildAnswerPrompt(
-                message,
+                query[0],
                 language,
                 jsonResponse
         );
@@ -61,7 +63,6 @@ public class ItemAdvise {
                 - Do not invent product information that is not provided.
                 - Do not mention vector score, embedding, distance, JSON, database, or internal system.
                 - If the product list is weak or not clearly related, say that these are the closest products found.
-                - Answer in %s.
                 - Return only the final answer text.
                 
                 User question:
@@ -69,7 +70,10 @@ public class ItemAdvise {
                 
                 PRODUCT LIST:
                 %s
-                """.formatted(language, message, jsonResponse);
+                REQUIRED OUTPUT LANGUAGE:
+                %s
+                
+                """.formatted(message, jsonResponse, language);
     }
 
     private String cleanAnswer(String answer) {
