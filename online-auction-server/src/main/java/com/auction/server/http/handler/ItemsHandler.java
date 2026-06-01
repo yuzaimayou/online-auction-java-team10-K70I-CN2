@@ -16,8 +16,21 @@ import java.net.URI;
 import java.util.List;
 
 public class ItemsHandler implements HttpHandler {
-    private final Gson gson = GsonUtil.getInstance();
-    private final ItemService itemService = ItemService.getInstance();
+    private final Gson gson;
+    private final ItemService itemService;
+
+    public ItemsHandler() {
+        this(ItemService.getInstance(), GsonUtil.getInstance());
+    }
+
+    ItemsHandler(ItemService itemService) {
+        this(itemService, GsonUtil.getInstance());
+    }
+
+    ItemsHandler(ItemService itemService, Gson gson) {
+        this.itemService = itemService;
+        this.gson = gson;
+    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {

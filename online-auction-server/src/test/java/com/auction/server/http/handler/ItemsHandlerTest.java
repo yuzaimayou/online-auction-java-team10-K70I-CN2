@@ -1,6 +1,6 @@
-package com.auction.server.controller.api;
+package com.auction.server.http.handler;
 
-import com.auction.server.http.handler.ItemsHandler;
+import com.auction.server.service.item.ItemService;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,6 +25,7 @@ class ItemsHandlerTest {
     private ItemsHandler itemsHandler;
     private HttpExchange mockExchange;
     private Gson gson;
+    private ItemService itemService;
 
     @BeforeEach
     void setUp() {
@@ -31,7 +33,8 @@ class ItemsHandlerTest {
         when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
         when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         gson = new Gson();
-        itemsHandler = new ItemsHandler();
+        itemService = mock(ItemService.class);
+        itemsHandler = new ItemsHandler(itemService);
     }
 
     // ============ GET Tests ============
@@ -41,6 +44,7 @@ class ItemsHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(stringToURI("http://localhost:8000/items"));
+        when(itemService.getItems(null)).thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -52,6 +56,7 @@ class ItemsHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(stringToURI("http://localhost:8000/items"));
+        when(itemService.getItems(null)).thenReturn(null);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -63,6 +68,7 @@ class ItemsHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(stringToURI("http://localhost:8000/items?search=laptop"));
+        when(itemService.getItems("search=laptop")).thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -74,6 +80,7 @@ class ItemsHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(stringToURI("http://localhost:8000/items"));
+        when(itemService.getItems(null)).thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -85,6 +92,7 @@ class ItemsHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(stringToURI("http://localhost:8000/items?search=nonexistent"));
+        when(itemService.getItems("search=nonexistent")).thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -101,6 +109,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -115,6 +124,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(false);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -129,6 +139,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -143,6 +154,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -156,6 +168,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -169,6 +182,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -268,6 +282,7 @@ class ItemsHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.addItem(any())).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemsHandler.handle(mockExchange));
@@ -282,4 +297,5 @@ class ItemsHandlerTest {
         }
     }
 }
+
 

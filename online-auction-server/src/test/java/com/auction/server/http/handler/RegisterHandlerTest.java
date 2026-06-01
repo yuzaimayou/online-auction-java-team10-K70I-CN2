@@ -1,6 +1,6 @@
-package com.auction.server.controller.api;
+package com.auction.server.http.handler;
 
-import com.auction.server.http.handler.RegisterHandler;
+import com.auction.server.service.user.AuthService;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
@@ -24,6 +24,7 @@ class RegisterHandlerTest {
     private RegisterHandler registerHandler;
     private HttpExchange mockExchange;
     private Gson gson;
+    private AuthService authService;
 
     @BeforeEach
     void setUp() {
@@ -31,7 +32,8 @@ class RegisterHandlerTest {
         when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
         when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         gson = new Gson();
-        registerHandler = new RegisterHandler();
+        authService = mock(AuthService.class);
+        registerHandler = new RegisterHandler(authService);
     }
 
     @Test
@@ -131,6 +133,8 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("newuser", "securepass", "newuser@example.com"))
+                .thenReturn(AuthService.RegisterResult.SUCCESS);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
@@ -149,6 +153,8 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("alice", "password", "newemail@example.com"))
+                .thenReturn(AuthService.RegisterResult.USERNAME_EXISTS);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
@@ -167,6 +173,8 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("newuser", "password", "alice@example.com"))
+                .thenReturn(AuthService.RegisterResult.EMAIL_EXISTS);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
@@ -197,6 +205,8 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("alice", "password", "alice@example.com"))
+                .thenReturn(AuthService.RegisterResult.SUCCESS);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
@@ -228,6 +238,8 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("validuser", "password", "valid.email+tag@example.co.uk"))
+                .thenReturn(AuthService.RegisterResult.SUCCESS);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
@@ -246,6 +258,8 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("alice", "password", "alice@example.com"))
+                .thenReturn(AuthService.RegisterResult.FAILED);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
@@ -264,9 +278,12 @@ class RegisterHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.register("alice", "P@ssw0rd!#$%", "alice@example.com"))
+                .thenReturn(AuthService.RegisterResult.SUCCESS);
 
         // Act & Assert
         assertDoesNotThrow(() -> registerHandler.handle(mockExchange));
     }
 }
+
 

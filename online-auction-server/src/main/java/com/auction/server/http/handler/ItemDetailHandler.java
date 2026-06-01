@@ -16,8 +16,21 @@ import java.util.logging.Logger;
 
 public class ItemDetailHandler implements HttpHandler {
     private static final Logger LOGGER = Logger.getLogger(ItemDetailHandler.class.getName());
-    private ItemService itemService = ItemService.getInstance();
-    private final Gson gson = GsonUtil.getInstance();
+    private final ItemService itemService;
+    private final Gson gson;
+
+    public ItemDetailHandler() {
+        this(ItemService.getInstance(), GsonUtil.getInstance());
+    }
+
+    ItemDetailHandler(ItemService itemService) {
+        this(itemService, GsonUtil.getInstance());
+    }
+
+    ItemDetailHandler(ItemService itemService, Gson gson) {
+        this.itemService = itemService;
+        this.gson = gson;
+    }
 
     @Override
     public void handle(com.sun.net.httpserver.HttpExchange exchange) throws java.io.IOException {

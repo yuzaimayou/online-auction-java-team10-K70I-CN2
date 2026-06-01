@@ -1,11 +1,10 @@
-package com.auction.server.controller.api;
+package com.auction.server.http.handler;
 
-
-import com.auction.server.http.handler.WalletHandler;
 import com.auction.server.service.auction.AuctionSettlementService;
 import com.auction.server.service.wallet.WalletService;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -14,15 +13,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for WalletHandler API endpoints.
  * Tests deposit and settlement operations.
  */
-class WalletHandlerTest {
+class WalletHandlerApiTest {
 
     // ============ DepositHandler Tests ============
 
@@ -412,4 +412,5 @@ class WalletHandlerTest {
         assertDoesNotThrow(() -> handler.handle(mockExchange));
     }
 }
+
 

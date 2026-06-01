@@ -1,6 +1,6 @@
 package com.auction.shared.model.item;
 
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.shared.model.enums.AuctionStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -179,7 +179,7 @@ class ItemTest {
                 "Name", "desc", 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
-        assertEquals(ItemStatusConstants.UPCOMING, item.getStatus());
+        assertEquals(AuctionStatus.UPCOMING, item.getStatus());
     }
 
     @Test
@@ -191,7 +191,7 @@ class ItemTest {
                 "Name", "desc", 100.0, 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
-        assertEquals(ItemStatusConstants.ONGOING, item.getStatus());
+        assertEquals(AuctionStatus.ONGOING, item.getStatus());
     }
 
     @Test
@@ -203,7 +203,7 @@ class ItemTest {
                 "Name", "desc", 100.0, 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
-        assertEquals(ItemStatusConstants.ENDED, item.getStatus());
+        assertEquals(AuctionStatus.ENDED, item.getStatus());
     }
 
     @Test
@@ -215,9 +215,9 @@ class ItemTest {
                 "Name", "desc", 100.0, 100.0, startTime, endTime, "seller", "cat", 10.0, VALID_IMAGES
         );
 
-        item.setStatus(ItemStatusConstants.BANNED);
+        item.setStatus(AuctionStatus.BANNED);
 
-        assertEquals(ItemStatusConstants.BANNED, item.getStatus());
+        assertEquals(AuctionStatus.BANNED, item.getStatus());
     }
 
     @Test
@@ -323,10 +323,10 @@ class ItemTest {
                 "Name", "desc", 100.0, FUTURE_START, FUTURE_END, "seller", "cat", 10.0, VALID_IMAGES
         );
 
-        assertNull(item.getCurrentTopPLayerId());
+        assertNull(item.getCurrentBidderId());
 
-        item.setCurrentTopPLayerId("player1");
-        assertEquals("player1", item.getCurrentTopPLayerId());
+        item.setCurrentBidderId("player1");
+        assertEquals("player1", item.getCurrentBidderId());
     }
 
     @Test
@@ -347,8 +347,7 @@ class ItemTest {
                 "Name", "desc", 100.0, FUTURE_START, FUTURE_END, "seller", "cat", 10.0, VALID_IMAGES
         );
 
-        item.setStatus(ItemStatusConstants.BANNED);
-        assertEquals(ItemStatusConstants.BANNED, item.getStoredStatus());
+        item.setStatus(AuctionStatus.BANNED);
+        assertEquals(AuctionStatus.BANNED, item.getStoredStatus());
     }
 }
-

@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
-import com.auction.shared.constant.ItemStatusConstants;
+import com.auction.server.service.bid.BidService;
+import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.exception.AuctionClosedException;
 import com.auction.shared.exception.InvalidBidException;
 import com.auction.shared.model.account.User;
@@ -83,8 +84,8 @@ class BidServiceTest {
         when(item.getBidStep()).thenReturn(10.0);
         when(item.getStartTime()).thenReturn(startTime);
         when(item.getEndTime()).thenReturn(endTime);
-        when(item.getStoredStatus()).thenReturn(ItemStatusConstants.ONGOING);
-        when(item.getStatus()).thenReturn(ItemStatusConstants.ONGOING);
+        when(item.getStoredStatus()).thenReturn(AuctionStatus.ONGOING);
+        when(item.getStatus()).thenReturn(AuctionStatus.ONGOING);
         when(item.getId()).thenReturn("item-1");
         return item;
     }

@@ -13,8 +13,21 @@ import java.io.InputStreamReader;
 
 public class RegisterHandler implements HttpHandler {
 
-    private final AuthService authService = new AuthService();
-    private final Gson gson = new Gson();
+    private final AuthService authService;
+    private final Gson gson;
+
+    public RegisterHandler() {
+        this(new AuthService(), new Gson());
+    }
+
+    RegisterHandler(AuthService authService) {
+        this(authService, new Gson());
+    }
+
+    RegisterHandler(AuthService authService, Gson gson) {
+        this.authService = authService;
+        this.gson = gson;
+    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {

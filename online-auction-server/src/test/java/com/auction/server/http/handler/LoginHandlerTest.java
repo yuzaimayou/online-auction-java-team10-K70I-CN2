@@ -1,6 +1,7 @@
-package com.auction.server.controller.api;
+package com.auction.server.http.handler;
 
-import com.auction.server.http.handler.LoginHandler;
+import com.auction.server.service.user.AuthService;
+import com.auction.shared.model.account.User;
 import com.auction.shared.model.payloads.AuthPayload;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
@@ -24,6 +25,7 @@ class LoginHandlerTest {
     private LoginHandler loginHandler;
     private HttpExchange mockExchange;
     private Gson gson;
+    private AuthService authService;
 
     @BeforeEach
     void setUp() {
@@ -31,7 +33,8 @@ class LoginHandlerTest {
         when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
         when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         gson = new Gson();
-        loginHandler = new LoginHandler();
+        authService = mock(AuthService.class);
+        loginHandler = new LoginHandler(authService);
     }
 
     @Test
@@ -75,6 +78,7 @@ class LoginHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.login("alice", "wrongpass")).thenReturn(null);
 
         // Act & Assert
         assertDoesNotThrow(() -> loginHandler.handle(mockExchange));
@@ -92,6 +96,8 @@ class LoginHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        User mockUser = mock(User.class);
+        when(authService.login("alice", "password")).thenReturn(mockUser);
 
         // Act & Assert
         assertDoesNotThrow(() -> loginHandler.handle(mockExchange));
@@ -109,6 +115,9 @@ class LoginHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        User mockUser = mock(User.class);
+        when(mockUser.getStatus()).thenReturn("Suspended");
+        when(authService.login("banneduser", "password")).thenReturn(mockUser);
 
         // Act & Assert
         assertDoesNotThrow(() -> loginHandler.handle(mockExchange));
@@ -151,6 +160,7 @@ class LoginHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.login("alice", "password123")).thenReturn(null);
 
         // Act
         assertDoesNotThrow(() -> loginHandler.handle(mockExchange));
@@ -168,6 +178,7 @@ class LoginHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.login("testuser", "password")).thenReturn(null);
 
         // Act & Assert
         assertDoesNotThrow(() -> loginHandler.handle(mockExchange));
@@ -185,9 +196,11 @@ class LoginHandlerTest {
 
         when(mockExchange.getRequestMethod()).thenReturn("POST");
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(authService.login("alice", "wrongpassword")).thenReturn(null);
 
         // Act & Assert
         assertDoesNotThrow(() -> loginHandler.handle(mockExchange));
     }
 }
+
 

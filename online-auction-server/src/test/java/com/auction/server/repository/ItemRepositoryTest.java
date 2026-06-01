@@ -52,7 +52,7 @@ class ItemRepositoryTest extends RepositoryTestSupport {
             assertTrue(repo.updateCurrentBidder(conn, "item-1", 1200.0, "u1"));
             assertTrue(repo.updateCurrentPrice(conn, "item-1", 1250.0));
             assertTrue(repo.extendEndTime(conn, "item-1", LocalDateTime.now().plusHours(5)));
-            assertTrue(repo.updateStatus(conn, "item-1", AuctionStatus.BANNED.toString()));
+            assertTrue(repo.updateStatus(conn, "item-1", AuctionStatus.BANNED));
             assertTrue(repo.markEnded(conn, "item-1"));
 
             try (PreparedStatement stmt = conn.prepareStatement("SELECT current_price, current_bidder_id, status, end_time FROM items WHERE id = ?")) {
@@ -83,8 +83,8 @@ class ItemRepositoryTest extends RepositoryTestSupport {
                     () -> assertEquals(1200.0, item.getHighestCurrentPrice()),
                     () -> assertEquals("seller-1", item.getSellerId()),
                     () -> assertEquals("Electronics", item.getCategory()),
-                    () -> assertEquals("user-1", item.getCurrentTopPLayerId()),
-                    () -> assertEquals(AuctionStatus.ONGOING.toString(), item.getStoredStatus())
+                    () -> assertEquals("user-1", item.getCurrentBidderId()),
+                    () -> assertEquals(AuctionStatus.ONGOING, item.getStoredStatus())
             );
         }
 
@@ -98,4 +98,3 @@ class ItemRepositoryTest extends RepositoryTestSupport {
         assertEquals("Laptop", publicItems.get(0).getName());
     }
 }
-
