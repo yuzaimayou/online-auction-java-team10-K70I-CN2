@@ -133,7 +133,7 @@ public class AiServiceClient {
 
 
     public String embeddingProduct(String itemId, String name, String description, List<Path> imagePaths) {
-        String requestUrl = AI_SERVER_URL + "/index-product/" + itemId;
+        String requestUrl = AI_SERVER_URL + "/products/index-product/" + itemId;
         String boundary = "---Boundary" + UUID.randomUUID().toString();
         String crlf = "\r\n";
 
