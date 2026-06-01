@@ -259,7 +259,7 @@ public class ItemPageController  {
     }
 
     private void uiHandleItemBanned() {
-        network.setListener(null);
+        network.setAuctionRoomListener(null);
         autoBidHandler.updateUi(false);
         bidPanel.applyBannedStateView(item);
     }

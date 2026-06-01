@@ -13,8 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GetUsersHandler implements HttpHandler {
+    private static final Logger LOGGER = Logger.getLogger(GetUsersHandler.class.getName());
     private final Gson gson = new Gson();
 
     @Override
@@ -48,7 +51,7 @@ public class GetUsersHandler implements HttpHandler {
             exchange.getResponseBody().close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to load users", e);
             HttpResponseUtil.sendMessage(exchange, 500,
                     new ResponseMessage("error", "Internal Server Error", null));
         }

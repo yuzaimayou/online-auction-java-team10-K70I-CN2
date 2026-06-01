@@ -4,8 +4,6 @@ import com.auction.client.service.AuthService;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.service.UserSession;
 import com.auction.shared.model.account.User;
-import com.auction.shared.util.GsonUtil;
-import com.google.gson.Gson;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -16,8 +14,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 
 public class LoginController {
-    private static final String FXML_REGISTER = "/com.auction.client/fxml/authenticator/Register.fxml";
-    private static final String FXML_VERIFY = "/com.auction.client/fxml/authenticator/Verify.fxml";
 
     @FXML
     private TextField txtUsername;
@@ -27,7 +23,6 @@ public class LoginController {
     private Label lblMessage;
 
     private AuthService authService = AuthService.getInstance();
-    private Gson gson = GsonUtil.getInstance();
 
     @FXML
     public void initialize() {

@@ -40,10 +40,6 @@ public class ClientHandler implements Runnable {
     private AuctionRoomManager roomManager = AuctionRoomManager.getInstance();
     private BidService bidService = new BidService();
 
-
-    public ClientHandler() {
-    }
-
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         try {

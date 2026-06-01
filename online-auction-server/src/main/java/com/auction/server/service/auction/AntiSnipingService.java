@@ -1,5 +1,6 @@
 package com.auction.server.service.auction;
 
+import com.auction.server.service.bid.BidService;
 import com.auction.shared.model.auction.Auction;
 import com.auction.shared.model.auction.BidTransaction;
 
@@ -8,18 +9,20 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  * TODO: Production anti-sniping logic currently lives inline inside {@link BidService}.
- * This class is reserved for a planned future extraction to separate anti-sniping 
+ * This class is reserved for a planned future extraction to separate anti-sniping
  * concerns from the main bidding flow.
  *
  * Currently, it contains an in-progress helper for the anti-sniping algorithm.
- * 
+ *
  * Service gia hạn phien dau gia khi co bid phut cuoi
  * Requirement 3.2.3: Gia han phien dau gia (Anti-sniping Algorithm)
  */
 public class AntiSnipingService {
+    private static final Logger LOGGER = Logger.getLogger(AntiSnipingService.class.getName());
     private final Map<String, Auction> auctionMap;
     private final int LAST_SECONDS_THRESHOLD = 60;
     private final int EXTENSION_SECONDS = 60;
@@ -62,11 +65,11 @@ public class AntiSnipingService {
 
         extensionHistory.put(auctionId, LocalDateTime.now());
 
-        System.out.println("  ANTI-SNIPING TRIGGERED!");
-        System.out.println("  Original end time: " + currentEndTime);
-        System.out.println("  New end time: " + newEndTime);
-        System.out.println("  Extension: " + extensionSeconds + " seconds");
-        System.out.println("  Auction extended successfully");
+        LOGGER.info("  ANTI-SNIPING TRIGGERED!");
+        LOGGER.info("  Original end time: " + currentEndTime);
+        LOGGER.info("  New end time: " + newEndTime);
+        LOGGER.info("  Extension: " + extensionSeconds + " seconds");
+        LOGGER.info("  Auction extended successfully");
     }
 
     /**

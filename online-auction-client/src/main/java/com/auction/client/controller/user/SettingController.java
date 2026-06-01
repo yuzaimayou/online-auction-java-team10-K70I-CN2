@@ -21,7 +21,7 @@ public class SettingController {
     private static final String PATH_PROFILE = "/com.auction.client/fxml/setting/ProfilePage.fxml";
     private static final String PATH_MY_AUCTIONS = "/com.auction.client/fxml/setting/MyAuctionsPage.fxml";
     private static final String PATH_HISTORY = "/com.auction.client/fxml/HistoryBidPage.fxml";
-    private static final String PATH_LOGIN = "/com.auction.client/fxml/authenticator/Login.fxml";
+
     private static final String PATH_USERS_MANAGEMENT = "/com.auction.client/fxml/setting/UserManagementPage.fxml";
     private static final String PATH_AUCTIONS_MANAGEMENT = "/com.auction.client/fxml/setting/AuctionsManagementPage.fxml";
     private static final String PATH_MY_BIDS = "/com.auction.client/fxml/setting/MyBids.fxml";
@@ -40,9 +40,6 @@ public class SettingController {
     private ToggleGroup menuGroup;
     @FXML
     private ToggleButton myAuctionsBtn;
-    @FXML
-    private ToggleButton historyBidBtn;
-
     @FXML
     private VBox adminSection;
     @FXML
@@ -88,8 +85,6 @@ public class SettingController {
         switch (targetTab) {
             case "MyAuctions": myAuctionsBtn.setSelected(true);loadPage(PATH_MY_AUCTIONS);
                 break;
-            case "HistoryBid": historyBidBtn.setSelected(true);loadPage(PATH_HISTORY);
-                break;
             default: profileInfoBtn.setSelected(true);loadPage(PATH_PROFILE);
                 break;
         }
@@ -119,9 +114,6 @@ public class SettingController {
     @FXML
     public void handleMyAuctions(ActionEvent event) {
         loadPage(PATH_MY_AUCTIONS);
-    }
-    @FXML
-    public void handleHistoryBid(ActionEvent event) {
     }
 
     @FXML

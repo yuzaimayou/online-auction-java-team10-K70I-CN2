@@ -27,7 +27,7 @@ public class ItemStatusRendered {
     }
     // COMMON
     public String formatPrice(double price) {
-        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi","VN"));
+        NumberFormat formatter = NumberFormat.getInstance(Locale.of("vi","VN"));
         return "$ " + formatter.format(price) ;
     }
 
@@ -89,6 +89,13 @@ public class ItemStatusRendered {
                 priceLabel.setText(formatPrice(item.getCurrentPrice()));
                 endTimeLabel.setText("Auction Ended");
                 timeTitleLabel.setText("Ended: "+ DateTimeUtil.format(item.getEndTime()));
+            }
+            case BANNED -> {
+                statusLabel.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+                priceTitleLabel.setText("FINAL PRICE");
+                priceLabel.setText(formatPrice(item.getCurrentPrice()));
+                endTimeLabel.setText("Auction Banned");
+                timeTitleLabel.setText("Banned: "+ DateTimeUtil.format(item.getEndTime()));
             }
 
         }

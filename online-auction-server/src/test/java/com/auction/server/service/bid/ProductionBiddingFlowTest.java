@@ -14,8 +14,13 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -27,6 +32,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import com.auction.server.service.auction.AuctionSchedulerService;
+import com.auction.server.socket.handler.ClientHandler;
+import com.auction.server.socket.room.AuctionRoomManager;
+import com.auction.shared.constant.SocketEventConstants;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,7 +50,7 @@ class ProductionBiddingFlowTest {
     @BeforeAll
     static void initializeDatabase() throws Exception {
         Files.createDirectories(Paths.get(System.getProperty("user.dir"), "dataBase"));
-        try (Connection ignored = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             // Already initialized by another test.
         } catch (Exception ignored) {
             DatabaseManager.init();
@@ -56,6 +66,8 @@ class ProductionBiddingFlowTest {
     @AfterEach
     void tearDown() throws Exception {
         try (Connection conn = DatabaseManager.getConnection()) {
+            deleteLike(conn, "DELETE FROM wallet_transactions WHERE user_id LIKE ?", prefix + "%");
+            deleteLike(conn, "DELETE FROM wallet_transactions WHERE reference_id LIKE ?", prefix + "%");
             deleteLike(conn, "DELETE FROM bids WHERE item_id LIKE ?", prefix + "%");
             deleteLike(conn, "DELETE FROM auto_bids WHERE item_id LIKE ?", prefix + "%");
             deleteLike(conn, "DELETE FROM items WHERE id LIKE ?", prefix + "%");
@@ -74,6 +86,8 @@ class ProductionBiddingFlowTest {
         assertEquals(15.0, currentPrice(itemId), EPSILON);
         assertEquals(bidder, currentBidder(itemId));
         assertEquals(1, bidCount(itemId));
+        assertEquals(1, bidCountAtPrice(itemId, 15.0));
+        assertEquals(15.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
     }
 
     @Test
@@ -200,8 +214,129 @@ class ProductionBiddingFlowTest {
 
         LocalDateTime updatedEnd = endTime(itemId);
         assertTrue(updatedEnd.isAfter(originalEnd));
+        assertTrue(updatedEnd.isBefore(originalEnd.plusSeconds(60)));
         long secondsFromNow = ChronoUnit.SECONDS.between(LocalDateTime.now(), updatedEnd);
         assertTrue(secondsFromNow >= 50 && secondsFromNow <= 70);
+    }
+
+    @Test
+    void bannedUserCannotBidAndDoesNotMutateState() throws Exception {
+        String itemId = item("banned-user", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bannedBidder = user("banned-bidder", 10_000.0, "Suspended");
+
+        assertFalse(bidService.placeBid(itemId, bannedBidder, 15.0));
+
+        assertEquals(10.0, currentPrice(itemId), EPSILON);
+        assertNull(currentBidder(itemId));
+        assertEquals(10_000.0, queryDouble("SELECT balance FROM users WHERE id = ?", bannedBidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bannedBidder), EPSILON);
+        assertEquals(0, bidCount(itemId));
+    }
+
+    @Test
+    void sameCurrentLeaderRebidIsRejectedAndDoesNotAccumulateFrozenBalance() throws Exception {
+        String itemId = item("leader-rebid", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bidder = user("leader-rebidder");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+        assertFalse(bidService.placeBid(itemId, bidder, 20.0));
+
+        assertEquals(15.0, currentPrice(itemId), EPSILON);
+        assertEquals(bidder, currentBidder(itemId));
+        assertEquals(9_985.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(15.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(1, bidCount(itemId));
+    }
+
+    @Test
+    void longAutoBidDuelDoesNotStopAtArtificialRoundLimit() throws Exception {
+        String itemId = item("auto-long-duel", 10.0, 1.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String higherMax = user("auto-higher-max");
+        String lowerMax = user("auto-lower-max");
+
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, higherMax, 100.0, 1.0));
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, lowerMax, 80.0, 1.0));
+
+        assertEquals(higherMax, currentBidder(itemId));
+        assertEquals(81.0, currentPrice(itemId), EPSILON);
+        assertTrue(bidCount(itemId) > 50);
+        assertEquals(81.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", higherMax), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", lowerMax), EPSILON);
+    }
+
+    @Test
+    void settlementCreatesPaymentTransactionsOnlyOnce() throws Exception {
+        String itemId = item("settle-idempotent-count", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String seller = prefix + "-user-seller-settle-idempotent-count";
+        String bidder = user("settle-count-bidder");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+        forceEnded(itemId);
+
+        AuctionSettlementService settlementService = new AuctionSettlementService();
+        assertTrue(settlementService.settleAuction(itemId).success);
+        assertTrue(settlementService.settleAuction(itemId).success);
+
+        assertEquals(2, queryInt("SELECT COUNT(*) FROM wallet_transactions WHERE type = 'AUCTION_PAYMENT' AND reference_id = ?", itemId));
+        assertEquals(9_985.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(10_015.0, queryDouble("SELECT balance FROM users WHERE id = ?", seller), EPSILON);
+    }
+
+    @Test
+    void schedulerRetrySafetyIsIdempotentAfterSuccessfulSettlement() throws Exception {
+        String itemId = item("scheduler-retry", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(30), LocalDateTime.now().plusMinutes(30), null);
+        String bidder = user("scheduler-winner");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+        expireAsOngoing(itemId);
+
+        AuctionSchedulerService schedulerService = new AuctionSchedulerService();
+        schedulerService.checkAndUpdateStatuses();
+        schedulerService.checkAndUpdateStatuses();
+
+        assertEquals(2, queryInt("SELECT COUNT(*) FROM wallet_transactions WHERE type = 'AUCTION_PAYMENT' AND reference_id = ?", itemId));
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+    }
+
+    @Test
+    void socketRoomReceivesBidAndExtensionEventsAfterSuccessfulBid() throws Exception {
+        LocalDateTime originalEnd = LocalDateTime.now().plusSeconds(30);
+        String itemId = item("socket-broadcast", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), originalEnd, null);
+        String bidder = user("socket-bidder");
+
+        try (ServerSocket serverSocket = new ServerSocket(0);
+             Socket clientSocket = new Socket("127.0.0.1", serverSocket.getLocalPort());
+             Socket handlerSocket = serverSocket.accept();
+             BufferedReader clientReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8))) {
+
+            clientSocket.setSoTimeout(2_000);
+            ClientHandler handler = new ClientHandler(handlerSocket);
+            AuctionRoomManager.getInstance().joinRoom(itemId, handler);
+            try {
+                assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+
+                String bidMessage = clientReader.readLine();
+                String extensionMessage = clientReader.readLine();
+
+                assertNotNull(bidMessage);
+                assertNotNull(extensionMessage);
+                assertTrue(bidMessage.contains(SocketEventConstants.EVENT_NEW_BID));
+                assertTrue(extensionMessage.contains(SocketEventConstants.EVENT_AUCTION_EXTENDED));
+                assertEquals(15.0, currentPrice(itemId), EPSILON);
+                assertEquals(bidder, currentBidder(itemId));
+                assertTrue(endTime(itemId).isAfter(originalEnd));
+            } finally {
+                AuctionRoomManager.getInstance().removeClientFromAllRooms(handler);
+                handlerSocket.close();
+            }
+        }
     }
 
     @Test
@@ -285,6 +420,96 @@ class ProductionBiddingFlowTest {
         assertEquals(AuctionStatus.ONGOING.name(), storedStatus(remainsOngoing));
     }
 
+    @Test
+    void schedulerStartsUpcomingAuctionWhenStartTimeReached() throws Exception {
+        String itemId = item("scheduler-starts-upcoming", 10.0, 5.0, AuctionStatus.UPCOMING,
+                LocalDateTime.now().minusMinutes(1), LocalDateTime.now().plusMinutes(30), null);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.ONGOING.name(), storedStatus(itemId));
+    }
+
+    @Test
+    void schedulerEndsOngoingAuctionWhenEndTimeReached() throws Exception {
+        String itemId = item("scheduler-ends-ongoing", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(30), LocalDateTime.now().minusMinutes(1), null);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.ENDED.name(), storedStatus(itemId));
+    }
+
+    @Test
+    void schedulerIgnoresFutureUpcomingAuction() throws Exception {
+        String itemId = item("scheduler-future-upcoming", 10.0, 5.0, AuctionStatus.UPCOMING,
+                LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.UPCOMING.name(), storedStatus(itemId));
+    }
+
+    @Test
+    void schedulerIgnoresActiveOngoingAuction() throws Exception {
+        String itemId = item("scheduler-active-ongoing", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.ONGOING.name(), storedStatus(itemId));
+    }
+
+    @Test
+    void schedulerIgnoresBannedAuctionEvenWhenTimesMatchTransitions() throws Exception {
+        String itemId = item("scheduler-banned", 10.0, 5.0, AuctionStatus.BANNED,
+                LocalDateTime.now().minusMinutes(30), LocalDateTime.now().minusMinutes(1), null);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.BANNED.name(), storedStatus(itemId));
+    }
+
+    @Test
+    void schedulerEndedAuctionTriggersSettlement() throws Exception {
+        String itemId = item("scheduler-settlement", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(30), LocalDateTime.now().plusMinutes(30), null);
+        String seller = prefix + "-user-seller-scheduler-settlement";
+        String winner = user("scheduler-settlement-winner");
+
+        assertTrue(bidService.placeBid(itemId, winner, 15.0));
+        expireAsOngoing(itemId);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.ENDED.name(), storedStatus(itemId));
+        assertEquals(9_985.0, queryDouble("SELECT balance FROM users WHERE id = ?", winner), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", winner), EPSILON);
+        assertEquals(10_015.0, queryDouble("SELECT balance FROM users WHERE id = ?", seller), EPSILON);
+        assertEquals(2, queryInt("SELECT COUNT(*) FROM wallet_transactions WHERE type = 'AUCTION_PAYMENT' AND reference_id = ?", itemId));
+    }
+
+    @Test
+    void repeatedSchedulerRunDoesNotDoubleSettleEndedAuction() throws Exception {
+        String itemId = item("scheduler-idempotent", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(30), LocalDateTime.now().plusMinutes(30), null);
+        String seller = prefix + "-user-seller-scheduler-idempotent";
+        String winner = user("scheduler-idempotent-winner");
+
+        assertTrue(bidService.placeBid(itemId, winner, 15.0));
+        expireAsOngoing(itemId);
+
+        AuctionSchedulerService schedulerService = new AuctionSchedulerService();
+        schedulerService.checkAndUpdateStatuses();
+        schedulerService.checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.ENDED.name(), storedStatus(itemId));
+        assertEquals(9_985.0, queryDouble("SELECT balance FROM users WHERE id = ?", winner), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", winner), EPSILON);
+        assertEquals(10_015.0, queryDouble("SELECT balance FROM users WHERE id = ?", seller), EPSILON);
+        assertEquals(2, queryInt("SELECT COUNT(*) FROM wallet_transactions WHERE type = 'AUCTION_PAYMENT' AND reference_id = ?", itemId));
+    }
+
     private List<Boolean> runConcurrent(List<Callable<Boolean>> tasks) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
         CountDownLatch ready = new CountDownLatch(tasks.size());
@@ -312,11 +537,15 @@ class ProductionBiddingFlowTest {
     }
 
     private String user(String label) throws Exception {
+        return user(label, 10_000.0, "Active");
+    }
+
+    private String user(String label, double balance, String status) throws Exception {
         String userId = prefix + "-user-" + label;
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement("""
-                     INSERT INTO users(id, username, password, role, isVerify, email, balance, frozen_balance)
-                     VALUES(?,?,?,?,?,?,?,?)
+                     INSERT INTO users(id, username, password, role, isVerify, email, balance, frozen_balance, status)
+                     VALUES(?,?,?,?,?,?,?,?,?)
                      """)) {
             stmt.setString(1, userId);
             stmt.setString(2, userId);
@@ -324,8 +553,9 @@ class ProductionBiddingFlowTest {
             stmt.setString(4, "USER");
             stmt.setInt(5, 1);
             stmt.setString(6, userId + "@example.test");
-            stmt.setDouble(7, 10_000.0);
+            stmt.setDouble(7, balance);
             stmt.setDouble(8, 0.0);
+            stmt.setString(9, status);
             stmt.executeUpdate();
         }
         return userId;
@@ -376,6 +606,26 @@ class ProductionBiddingFlowTest {
             stmt.setString(2, userId);
             stmt.setDouble(3, amount);
             stmt.setString(4, LocalDateTime.now().toString());
+            stmt.executeUpdate();
+        }
+    }
+
+    private void forceEnded(String itemId) throws Exception {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("UPDATE items SET status = ?, end_time = ? WHERE id = ?")) {
+            stmt.setString(1, AuctionStatus.ENDED.name());
+            stmt.setString(2, LocalDateTime.now().minusMinutes(5).toString());
+            stmt.setString(3, itemId);
+            stmt.executeUpdate();
+        }
+    }
+
+    private void expireAsOngoing(String itemId) throws Exception {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("UPDATE items SET status = ?, end_time = ? WHERE id = ?")) {
+            stmt.setString(1, AuctionStatus.ONGOING.name());
+            stmt.setString(2, LocalDateTime.now().minusMinutes(5).toString());
+            stmt.setString(3, itemId);
             stmt.executeUpdate();
         }
     }

@@ -3,8 +3,6 @@ package com.auction.shared.model.account;
 import com.auction.shared.model.item.Item;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 public class User extends Person {
     protected double balance;

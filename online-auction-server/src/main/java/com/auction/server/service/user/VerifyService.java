@@ -2,7 +2,12 @@ package com.auction.server.service.user;
 
 import com.auction.server.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.mail.*;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
@@ -10,9 +15,11 @@ import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class VerifyService {
+    private static final Logger LOGGER = Logger.getLogger(VerifyService.class.getName());
     private static VerifyService instance;
 
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -27,7 +34,7 @@ public class VerifyService {
 
         public OtpInfo(String otp) {
             this.otp = otp;
-            this.expiryTime = LocalDateTime.now().plusMinutes(15); // OTP valid for 5 minutes
+            this.expiryTime = LocalDateTime.now().plusMinutes(15);
         }
 
         public String getOtp() {
@@ -39,21 +46,18 @@ public class VerifyService {
         }
     }
 
-
     private static final ConcurrentHashMap<String, OtpInfo> otpStorage = new ConcurrentHashMap<>();
 
     private VerifyService() {
-        System.out.println("==== KIỂM TRA ĐỌC FILE .ENV ====");
-        System.out.println("Mail User: " + (username == null ? "BỊ NULL RỒI!" : username));
-        System.out.println("Mail Pass: " + (password == null ? "BỊ NULL RỒI!" : "found password"));
-        System.out.println("================================");
-        //Config SMTP
+        LOGGER.info("==== KIEM TRA DOC FILE .ENV ====");
+        LOGGER.info("Mail User: " + (username == null ? "NULL" : username));
+        LOGGER.info("Mail Pass: " + (password == null ? "NULL" : "found password"));
+        LOGGER.info("================================");
+
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true"); // Bảo mật TLS
-
-        props.put("mail.debug", "true");
-
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.debug", "false");
         props.put("mail.smtp.host", "smtp-relay.brevo.com");
         props.put("mail.smtp.port", "2525");
 
@@ -63,7 +67,7 @@ public class VerifyService {
                 return new PasswordAuthentication(username, password);
             }
         });
-        System.out.println("Email session initialized successfully.");
+        LOGGER.info("Email session initialized successfully.");
     }
 
     private static String firstNonBlank(String first, String second) {
@@ -81,7 +85,7 @@ public class VerifyService {
     }
 
     private static OtpInfo generateOtp() {
-        String otp = String.valueOf((int) (Math.random() * 900000) + 100000); // Generate a random 6-digit OTP
+        String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
         return new OtpInfo(otp);
     }
 
@@ -99,17 +103,15 @@ public class VerifyService {
             return false;
         }
 
-        otpStorage.remove(email); // Remove OTP after successful verification
-        userRepository.enableUser(email); // Enable auth account after successful verification
+        otpStorage.remove(email);
+        userRepository.enableUser(email);
         return true;
     }
 
     public void sendEmail(String email) {
-
-        //Generate Otp
         OtpInfo info = generateOtp();
         otpStorage.put(email, info);
-        System.out.println(otpStorage);
+        LOGGER.fine("Generated OTP for email: " + email);
 
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             System.out.println("Mail credentials are not configured; OTP email was not sent to " + email);
@@ -147,24 +149,17 @@ public class VerifyService {
             message.setSubject("Your OTP Code");
             message.setContent(htmlContent, "text/html; charset=utf-8");
 
-            //Transport.send(message);
-            // Thêm đoạn này vào cuối khối try { ... }
-            Transport transport = this.session.getTransport("smtp");
-
-            // Ép đăng nhập trực tiếp bằng tay
+            Transport  transport = this.session.getTransport("smtp");
             transport.connect("smtp-relay.brevo.com", username, password);
-
-            // Gửi thư đi
             transport.sendMessage(message, message.getAllRecipients());
 
-            // Đóng kết nối
             transport.close();
 
-            System.out.println("OTP email sent successfully to " + email);
+            LOGGER.info("OTP email sent successfully to " + email);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to send OTP email to " + email, e);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to prepare OTP email sender for " + email, e);
         }
     }
 }

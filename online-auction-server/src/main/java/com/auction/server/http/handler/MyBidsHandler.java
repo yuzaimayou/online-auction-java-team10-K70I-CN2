@@ -4,14 +4,12 @@ import com.auction.server.repository.ItemRepository;
 import com.auction.server.http.response.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.util.GsonUtil;
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 
 public class MyBidsHandler implements HttpHandler {
     private final ItemRepository itemRepository = ItemRepository.getInstance();
-    private final Gson gson = GsonUtil.getInstance();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
