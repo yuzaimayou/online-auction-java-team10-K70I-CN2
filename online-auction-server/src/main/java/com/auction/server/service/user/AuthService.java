@@ -16,15 +16,15 @@ public class AuthService {
     }
 
     private final UserRepository userRepository;
-    private final VerifyService verifyService;
+    private final EmailService emailService;
 
     public AuthService() {
         this(new UserRepository(), null);
     }
 
-    AuthService(UserRepository userRepository, VerifyService verifyService) {
+    AuthService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
-        this.verifyService = verifyService;
+        this.emailService = emailService;
     }
 
     public RegisterResult register(String username, String password, String email) {
@@ -46,8 +46,8 @@ public class AuthService {
 
         // Gửi OTP async, không block register flow
         new Thread(() -> {
-            VerifyService emailService = verifyService != null ? verifyService : VerifyService.getInstance();
-            emailService.sendEmail(email);
+            OtpService otpService = OtpService.getInstance();
+            otpService.sendOtpEmail(email);
             LOGGER.info("Đã gửi email OTP tới: " + email);
         }).start();
 

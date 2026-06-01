@@ -1,7 +1,7 @@
 package com.auction.server.http.handler;
 
-import com.auction.server.service.user.VerifyService;
 import com.auction.server.http.response.HttpResponseUtil;
+import com.auction.server.service.user.OtpService;
 import com.auction.shared.message.ResponseMessage;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 public class SendOtp implements HttpHandler {
     private static final Logger LOGGER = Logger.getLogger(SendOtp.class.getName());
-    private final VerifyService verifyService = VerifyService.getInstance();
+    private final OtpService otpService = OtpService.getInstance();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -26,7 +26,7 @@ public class SendOtp implements HttpHandler {
 
             if (email != null && !email.isEmpty()) {
                 try {
-                    verifyService.sendEmail(email);
+                    otpService.sendOtpEmail(email);
                     LOGGER.info("Sent OTP to email: " + email);
                     String response = "OTP sent to email: " + email;
                     HttpResponseUtil.sendMessage(exchange, 200, new ResponseMessage("success", response, null));
