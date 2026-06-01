@@ -49,4 +49,3 @@ build/
 *.pyc
 __pycache__/
 *.pyc
-*.pyo

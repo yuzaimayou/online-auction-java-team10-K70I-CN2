@@ -5,7 +5,7 @@ import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 public class AppConfig {
-    private static final String AI_SERVER_URL = "http://127.0.0.1:8000";
+    private static final String AI_SERVER_URL = "http://10.11.71.220:8000";
 
     public static final String DB_PATH = getDbPath();
     public static final String IMAGE_DIR = getImageDir();
@@ -15,6 +15,7 @@ public class AppConfig {
                 ? System.getProperty("auth.dir")
                 : System.getProperty("user.dir");
     }
+
     private static final Logger LOGGER = Logger.getLogger(AppConfig.class.getName());
 
     public static String getDbPath() {
