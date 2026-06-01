@@ -27,9 +27,12 @@ async def index_product(
     db = get_db_connection()
     try:
         # Xóa các vector cũ của sản phẩm này (nếu đang update)
-        db.execute("DELETE FROM items_info WHERE item_id = ?", [item_id])
-        # Các vector tương ứng trong vec_items sẽ thành dữ liệu rác,
-        # nhưng không sao vì ta JOIN bằng items_info.id
+        db.execute("""
+                   INSERT OR
+                   REPLACE
+                   INTO items_info(item_id, name, description)
+                   VALUES (?, ?, ?)
+                   """, [item_id, name, description])
 
         # 1. Xử lý và lưu Vector Hình ảnh
         for i, file in enumerate(files):
@@ -37,33 +40,26 @@ async def index_product(
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-            # Lưu bảng Info lấy ID số nguyên
-            cursor = db.execute(
-                "INSERT INTO items_info(item_id, type) VALUES (?, ?)",
-                [item_id, f"image_{i}"]
-            )
-            auto_id = cursor.lastrowid
-
             # Nhúng và lưu bảng Vector
             img_emb = encode_product_image(temp_path)
-            db.execute("INSERT INTO vec_items(rowid, embedding) VALUES (?, ?)",
-                       [auto_id, serialize_f32(img_emb)])
+            db.execute("""INSERT INTO vec_items(item_id, field_type, image_index, embedding)
+                          VALUES (?, ?, ?, ?)""",
+                       [item_id, "image", i, serialize_f32(img_emb)])
 
             os.remove(temp_path)
 
         # 2. Xử lý và lưu Vector Văn bản
-        if name:
-            full_text = f"Sản phẩm: {name}. Chi tiết: {description}"
-            cursor = db.execute(
-                "INSERT INTO items_info(item_id, type) VALUES (?, ?)",
-                [item_id, "text"]
-            )
-            auto_id = cursor.lastrowid
+        name_emb = encode_product_text(name)
+        desc_emb = encode_product_text(description)
+        db.execute("""
+                   INSERT INTO vec_items(item_id, field_type, image_index, embedding, content)
+                   VALUES (?, ?, ?, ?, ?)
+                   """, [item_id, "name", -1, serialize_f32(name_emb), name])
 
-            text_emb = encode_product_text(full_text)
-            db.execute("INSERT INTO vec_items(rowid, embedding) VALUES (?, ?)",
-                       [auto_id, serialize_f32(text_emb)])
-
+        db.execute("""
+                   INSERT INTO vec_items(item_id, field_type, image_index, embedding, content)
+                   VALUES (?, ?, ?, ?, ?)
+                   """, [item_id, "description", -1, serialize_f32(desc_emb), description])
         db.commit()
         return {"status": "success", "message": f"Đã lưu sản phẩm {item_id}"}
     except Exception as e:
@@ -72,42 +68,92 @@ async def index_product(
         db.close()
 
 
+def get_field_weight(field_type: str) -> float:
+    weight = {
+        "name": 0.8,
+        "description": 1.0,
+        "image": 1.3
+    }
+    return weight.get(field_type, 1.0)
+
+
+def distance_to_score(distance: float) -> float:
+    return 1 / (1 + distance)
+
+
 @router.get("/recommend")
 async def recommend_products(prompt: str = Query(...), top_k: int = 5):
     # Dùng SigLIP để nhúng câu hỏi (Vector 768 chiều)
-    query_vector = encode_product_text(prompt)
-    query_bytes = serialize_f32(query_vector)
+    query_emb = encode_product_text(prompt)
+    query_bytes = serialize_f32(query_emb)
 
     db = get_db_connection()
     try:
         # INNER JOIN cấu trúc mới
         rows = db.execute("""
-                          SELECT i.item_id, vec_distance_cosine(v.embedding, ?) as distance
-                          FROM vec_items v
-                                   INNER JOIN items_info i ON v.rowid = i.id
-                          ORDER BY distance ASC LIMIT 50
-                          """, [query_bytes]).fetchall()
-
-        # Nhóm kết quả: Chỉ lấy điểm cao nhất của từng Sản phẩm
-        best_matches = {}
+                          SELECT rowid,
+                                 item_id,
+                                 field_type,
+                                 image_index,
+                                 content,
+                                 distance
+                          FROM vec_items
+                          WHERE embedding MATCH ?
+                            AND k = ?
+                          """, [query_bytes, 50]).fetchall()
+        best_item = {}
         for row in rows:
-            real_id = row[0]
-            similarity = 1.0 - row[1]
-            if real_id not in best_matches or similarity > best_matches[real_id]:
-                best_matches[real_id] = similarity
+            vector_score = distance_to_score(row["distance"])
+            weight = get_field_weight(row["field_type"])
+            final_score = vector_score * weight
 
-        # Sắp xếp và lọc Threshold
-        sorted_results = sorted(best_matches.items(), key=lambda x: x[1], reverse=True)
+            item_id = row["item_id"]
+            result = {
+                "item_id": item_id,
+                "field_type": row["field_type"],
+                "image_index": row["image_index"],
+                "content": row["content"],
+                "distance": row["distance"],
+                "vector_score": vector_score,
+                "field_weight": weight,
+                "final_score": final_score
+            }
+            if item_id not in best_item:
+                best_item[item_id] = result
+            else:
+                if final_score > best_item[item_id]["final_score"]:
+                    best_item[item_id] = result
+        ranked_results = sorted(best_item.values(), key=lambda x: x["final_score"], reverse=True)
+        ranked_results = ranked_results[:top_k]
 
-        final_results = []
-        if sorted_results:
-            top_score = sorted_results[0][1]
-            for item_id, sim in sorted_results:
-                if sim >= (top_score - 0.05):  # Dynamic Threshold
-                    final_results.append({"id": item_id, "similarity": sim})
-                if len(final_results) >= top_k:
-                    break
+        recommendations = []
+        for result in ranked_results:
+            item = db.execute("""
+                              SELECT item_id, name, description
+                              FROM items_info
+                              WHERE item_id = ?
+                              """, [result["item_id"]]).fetchone()
 
-        return {"recommendations": final_results}
+            recommendations.append({
+                "id": result["item_id"],
+                "name": item["name"] if item else None,
+                "description": item["description"] if item else None,
+                "image_index": result["image_index"],
+                "distance": result["distance"],
+                "vector_score": result["vector_score"],
+                "field_weight": result["field_weight"],
+                "final_score": result["final_score"]
+            })
+
+        return {
+            "query": prompt,
+            "recommendations": recommendations
+        }
+    except Exception as e:
+        print(e)
+        return {
+            "status": "error",
+            "message": str(e)
+        }
     finally:
         db.close()

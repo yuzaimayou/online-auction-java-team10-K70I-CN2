@@ -30,11 +30,11 @@ def init_db():
     # db.execute("DROP TABLE IF EXISTS items_info;")
 
     # Bảng Vector cho Tài liệu (384 chiều)
-    db.execute("""
-        CREATE VIRTUAL TABLE IF NOT EXISTS vec_docs USING vec0(
-            embedding float[384]
-        );
-    """)
+    # db.execute("""
+    #     CREATE VIRTUAL TABLE IF NOT EXISTS vec_docs USING vec0(
+    #         embedding float[384]
+    #     );
+    # """)
 
     # Bảng Text cho Tài liệu
     db.execute("""
@@ -49,23 +49,25 @@ def init_db():
                );
                """)
 
-    db.execute("CREATE VIRTUAL TABLE IF NOT EXISTS vec_items USING vec0(embedding float[768]);")
+    db.execute("""
+               CREATE VIRTUAL TABLE IF NOT EXISTS vec_items USING vec0
+               (
+                   item_id TEXT,
+                   field_type TEXT,
+                   image_index INTEGER,
+                   embedding float [768],
+                   +content TEXT
+               );
+               """)
 
     db.execute("""
                CREATE TABLE IF NOT EXISTS items_info
                (
-                   id
-                       INTEGER
-                       PRIMARY
-                           KEY
-                       AUTOINCREMENT,
-                   item_id
-                       TEXT,
-                   type
-                       TEXT
+                   item_id     TEXT PRIMARY KEY,
+                   name        TEXT,
+                   description TEXT
                );
                """)
 
-    # GHI CHÚ: Sau này bạn thêm bảng vec_items (Sản phẩm) vào đây nhé
     db.commit()
     db.close()
