@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import java.lang.*?>
+<?import javafx.geometry.Insets?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.common.ToastController"
+      alignment="CENTER_LEFT"
+      spacing="10"
+      fillHeight="false"
+      minWidth="300"
+      prefWidth="-1">
+    <padding>
+        <Insets left="25" right="25" top="12" bottom="12"/>
+    </padding>
+    <Label fx:id="messageLabel"
+           text="Toast message"/>
+</HBox>

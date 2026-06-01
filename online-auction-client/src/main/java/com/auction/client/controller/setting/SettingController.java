@@ -1,5 +1,6 @@
 package com.auction.client.controller.setting;
 
+import com.auction.client.util.NavigationUtil;
 import com.auction.client.util.UserSession;
 import com.auction.shared.model.account.Admin;
 import com.auction.shared.model.account.User;
@@ -30,7 +31,7 @@ public class SettingController {
 
     // State
     public static String targetTab = "ProfileInfo";
-    private static SettingController instance;
+    private static volatile SettingController instance;
 
     @FXML
     private VBox dynamicContent;
@@ -60,22 +61,24 @@ public class SettingController {
         initialNavigation();
     }
     private void setupUserContext() {
-        User currentUser = UserSession.getInstance().getLoggedInUser();
-        if (currentUser != null) {
-            if (lblUserName != null) {
-                lblUserName.setText(currentUser.getUsername());
-            }
-            boolean isAdmin = "admin".equalsIgnoreCase(currentUser.getUsername());
 
-            if (adminSignal != null) {
-                adminSignal.setVisible(isAdmin);
-                adminSignal.setManaged(isAdmin);
-            }
-            if (adminSection != null) {
-                adminSection.setVisible(isAdmin);
-                adminSection.setManaged(isAdmin);
-            }
+        User currentUser =
+                UserSession.getInstance().getLoggedInUser();
+
+        if (currentUser == null) {
+            return;
         }
+
+        lblUserName.setText(currentUser.getUsername());
+
+        // boolean isAdmin = UserSession.getInstance().isAdmin();
+        boolean isAdmin = "admin".equalsIgnoreCase(currentUser.getUsername());
+
+        adminSignal.setVisible(isAdmin);
+        adminSignal.setManaged(isAdmin);
+
+        adminSection.setVisible(isAdmin);
+        adminSection.setManaged(isAdmin);
     }
     private void setupToggleGroupBehavior() {
         menuGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
@@ -124,33 +127,24 @@ public class SettingController {
     public void handleHistoryBid(ActionEvent event) {
     }
 
-
     @FXML
     private void handleLogout(ActionEvent event) {
         UserSession.getInstance().cleanUserSession();
-        handleSwitchToLogin(event);
-    }
-    @FXML
-    protected void handleSwitchToLogin(ActionEvent event) {
-        try {
-            Parent loginRoot = FXMLLoader.load(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
-            javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
-            stage.getScene().setRoot(loginRoot);
-            stage.setTitle("Login - Auction System");
-        } catch (IOException e) {
-            System.err.println("Không tìm thấy file Login.fxml!");
-            e.printStackTrace();
-        }
+        instance = null;
+        NavigationUtil.switchToLogin(event);
     }
     public void handleMyBids(ActionEvent actionEvent) {
-    }
-    public void handleChangePassword(ActionEvent actionEvent) {
     }
     @FXML
     public void handleUsersManagement(ActionEvent actionEvent) {
         loadPage(PATH_USERS_MANAGEMENT);
     }
+    @FXML
     public void handleAuctionsManagement(ActionEvent actionEvent) {
         loadPage(PATH_AUCTIONS_MANAGEMENT);
+    }
+
+    public VBox getDynamicContent() {
+        return dynamicContent;
     }
 }

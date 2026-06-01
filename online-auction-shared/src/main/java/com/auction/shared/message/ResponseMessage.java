@@ -1,12 +1,13 @@
 package com.auction.shared.message;
 
 public class ResponseMessage {
-    private String status, message, data;
+    private String status, message;
+    private Object data;
 
     public ResponseMessage() {
     }
 
-    public ResponseMessage(String status, String message, String data) {
+    public ResponseMessage(String status, String message, Object data) {
         this.status = status;
         this.message = message;
         this.data = data;
@@ -28,11 +29,11 @@ public class ResponseMessage {
         this.message = message;
     }
 
-    public String getData() {
+    public Object getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(Object data) {
         this.data = data;
     }
 
