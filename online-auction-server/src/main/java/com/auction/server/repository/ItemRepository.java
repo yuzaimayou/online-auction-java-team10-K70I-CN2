@@ -503,7 +503,7 @@ public class ItemRepository {
                 imagePaths
         );
         item.setId(rs.getString("id"));
-        item.setCurrentTopPLayerId(rs.getString("current_bidder_id"));
+        item.setCurrentBidderId(rs.getString("current_bidder_id"));
         String dbStatus = rs.getString("status");
         if (dbStatus != null) item.setStatus(AuctionStatus.fromString(dbStatus));
         return item;

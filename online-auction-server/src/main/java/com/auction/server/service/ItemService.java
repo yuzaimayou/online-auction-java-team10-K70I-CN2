@@ -277,7 +277,7 @@ public class ItemService {
                     return false;
                 }
 
-                String currentBidderId = item.getCurrentTopPLayerId();
+                String currentBidderId = item.getCurrentBidderId();
                 double currentPrice = item.getHighestCurrentPrice();
 
                 if (currentBidderId != null && !currentBidderId.trim().isEmpty()) {

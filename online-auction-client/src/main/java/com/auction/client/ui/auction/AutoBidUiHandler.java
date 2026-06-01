@@ -111,6 +111,7 @@ public class AutoBidUiHandler {
     public void handleDecision(double serverPrice, String topBidderId) {
         Item item = itemSupplier.get();
 
+        // Thay đổi 2: Gọi hàm decideBid gọn nhẹ (không truyền myLastBid sang Service nữa)
         AutoBidDecision decision = autoBidManager.decideBid(
                 topBidderId, serverPrice, user.getId(), statusService.isOngoing(item));
 

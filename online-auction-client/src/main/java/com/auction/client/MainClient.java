@@ -33,7 +33,8 @@ public class MainClient extends Application {
         try {
             loadInterFonts();
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com.auction.client/fxml/authenticator/Login.fxml"));
             Parent root = loader.load();
 
             // 1. Lấy thông số màn hình của người dùng

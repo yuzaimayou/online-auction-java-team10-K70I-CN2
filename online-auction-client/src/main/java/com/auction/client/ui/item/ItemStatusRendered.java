@@ -35,7 +35,7 @@ public class ItemStatusRendered {
         if(item==null){
             return AuctionStatus.ENDED;
         }
-        if(item.getStatus() == AuctionStatus.BANNED){
+        if(item.getStoredStatus() == AuctionStatus.BANNED){
             return AuctionStatus.BANNED;
         }
         return AuctionStatus.compute(item.getStartTime(), item.getEndTime());

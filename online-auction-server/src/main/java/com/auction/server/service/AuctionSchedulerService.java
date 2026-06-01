@@ -2,7 +2,10 @@ package com.auction.server.service;
 
 import com.auction.server.MainServer;
 import com.auction.server.repository.ItemRepository;
+import com.auction.shared.model.enums.AuctionStatus;
+import com.auction.shared.model.item.Item;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 public class AuctionSchedulerService {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final ItemRepository itemRepository = ItemRepository.getInstance();
+    private final AuctionSettlementService settlementService = new AuctionSettlementService();
+
     public AuctionSchedulerService(MainServer server) {
     }
 
@@ -28,6 +33,20 @@ public class AuctionSchedulerService {
     }
 
     public void checkAndUpdateStatuses() {
-        itemRepository.updateStatus();
+        List<String> updatedIds = itemRepository.updateStatus();
+        if (updatedIds != null) {
+            for (String id : updatedIds) {
+                try {
+                    Item item = itemRepository.findById(id);
+                    if (item != null && item.getStatus() == AuctionStatus.ENDED) {
+                        System.out.println("[Scheduler] Settle auction item: " + id);
+                        settlementService.settleAuction(id);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[Scheduler] Error settling item " + id + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
