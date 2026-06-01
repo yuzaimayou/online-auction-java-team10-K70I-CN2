@@ -1,13 +1,22 @@
 package com.auction.client.controller.common;
 
+import com.auction.client.service.ChatBotService;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.layout.VBox;
+
 import java.io.IOException;
 
 public class ChatBoxAiController {
@@ -16,6 +25,12 @@ public class ChatBoxAiController {
 
     private static final double CHAT_WIDTH = 320;
     private static final double CHAT_HEIGHT = 450;
+    private final ChatBotService chatBotService = ChatBotService.getInstance();
+    private final BooleanProperty sendingMsg = new SimpleBooleanProperty(false);
+    @FXML
+    private TextField txtMessage;
+    @FXML
+    private Button btnSend;
 
     public ChatBoxAiController() {
         createBubble();
@@ -66,6 +81,46 @@ public class ChatBoxAiController {
         }
     }
 
-    public Node getBubble() { return bubble; }
-    public Node getChatBox() { return chatBox; }
+    @FXML
+    private void initialize() {
+        BooleanBinding isMessageEmpty = Bindings.createBooleanBinding(
+                () -> txtMessage.getText() == null || txtMessage.getText().trim().isEmpty(),
+                txtMessage.textProperty()
+        );
+
+        btnSend.disableProperty().bind(isMessageEmpty.or(sendingMsg));
+    }
+
+    @FXML
+    public void sendMessage() {
+        String message = txtMessage.getText().trim();
+        if (message.isEmpty()) {
+            return;
+        }
+        sendingMsg.set(true);
+
+        System.out.println("Message sent to AI: " + message);
+        txtMessage.clear();
+        chatBotService.sendMsg(message)
+                .thenAccept(response -> {
+                    System.out.println("Response from AI: " + response.getData());
+                })
+                .exceptionally(e -> {
+                    e.printStackTrace();
+                    return null;
+                })
+                .whenComplete((res, ex) -> sendingMsg.set(false));
+    }
+
+    public Node getBubble() {
+        return bubble;
+    }
+
+    public Node getChatBox() {
+        return chatBox;
+    }
+
+    public ChatBotService getChatBotService() {
+        return chatBotService;
+    }
 }

@@ -3,23 +3,22 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.Circle?>
-
 <VBox fx:id="chatWindowContainer"
       prefWidth="350.0" prefHeight="500.0"
       maxWidth="350.0" maxHeight="500.0"
       spacing="0"
       styleClass="chat-container"
       stylesheets="@../css/ChatBoxAi.css"
+      fx:controller="com.auction.client.controller.common.ChatBoxAiController"
       xmlns:fx="http://javafx.com/fxml">
 
     <HBox prefHeight="50.0" minHeight="50.0" styleClass="chat-header" alignment="CENTER_LEFT">
         <padding>
-            <Insets left="15.0" right="10.0" />
+            <Insets left="15.0" right="10.0"/>
         </padding>
         <Label text="✦" style="-fx-text-fill: white; -fx-font-size: 18;"/>
         <Label text="Auction AI" styleClass="header-text" style="-fx-padding: 0 0 0 10;"/>
-        <Region HBox.hgrow="ALWAYS" />
+        <Region HBox.hgrow="ALWAYS"/>
         <Button text="—" styleClass="window-control-btn"/>
         <Button text="✕" styleClass="window-control-btn"/>
     </HBox>
@@ -35,8 +34,9 @@
             <Button text="How to bid?" styleClass="suggest-btn"/>
         </FlowPane>
         <HBox spacing="5" alignment="CENTER">
-            <TextField promptText="Type your message..." styleClass="chat-input" HBox.hgrow="ALWAYS"/>
-            <Button styleClass="send-btn" text="➔"/>
+            <TextField fx:id="txtMessage" promptText="Type your message..." styleClass="chat-input"
+                       HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnSend" onAction="#sendMessage" defaultButton="true" styleClass="send-btn" text="➔"/>
         </HBox>
     </VBox>
 </VBox>

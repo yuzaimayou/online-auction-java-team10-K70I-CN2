@@ -1,9 +1,9 @@
 import struct
 
-from fastapi import APIRouter, UploadFile, File, Query
+from fastapi import APIRouter, UploadFile, File
 
 from app.core.database import get_db_connection
-from app.services.text_service import get_text_embedding
+# from app.services.text_service import get_text_embedding
 from app.utils.chunking import chunk_markdown_by_headings  # Chứa hàm cắt văn bản bạn đã viết
 
 router = APIRouter()
@@ -50,18 +50,18 @@ async def index_documents(file: UploadFile = File(...)):
                 """,
                 [chunk_id, doc_name, title, path, content]
             )
-            auto_id = cursor.lastrowid
-            # embedding
-            emb = get_text_embedding(embedding_text)
-            emb_bytes = serialize_f32(emb)
-            # save vector
-            db.execute(
-                """
-                INSERT INTO vec_docs(rowid, embedding)
-                VALUES (?, ?)
-                """,
-                [auto_id, emb_bytes]
-            )
+            # auto_id = cursor.lastrowid
+            # # embedding
+            # emb = get_text_embedding(embedding_text)
+            # emb_bytes = serialize_f32(emb)
+            # # save vector
+            # db.execute(
+            #     """
+            #     INSERT INTO vec_docs(rowid, embedding)
+            #     VALUES (?, ?)
+            #     """,
+            #     [auto_id, emb_bytes]
+            # )
             inserted_chunks += 1
 
         db.commit()
@@ -114,51 +114,50 @@ async def load_all_docs_context() -> dict:
     finally:
         db.close()
 
-
-@router.post("/search-docs")
-async def search_docs(query: str = Query(...), top_k: int = 3):
-    db = get_db_connection()
-    try:
-        query_vector = get_text_embedding(query)
-        query_bytes = serialize_f32(query_vector)
-
-        rows = db.execute("""
-                          SELECT d.id,
-                                 d.chunk_id,
-                                 d.doc_name,
-                                 d.title,
-                                 d.path,
-                                 d.content,
-                                 v.distance
-                          FROM vec_docs v
-                                   JOIN docs_info d ON v.rowid = d.id
-                          WHERE v.embedding MATCH ?
-                            AND k = ?
-                          ORDER BY v.distance
-                          """, [query_bytes, top_k]).fetchall()
-
-        results = []
-        for row in rows:
-            results.append({
-                "id": row["id"],
-                "chunk_id": row["chunk_id"],
-                "doc_name": row["doc_name"],
-                "title": row["title"],
-                "path": row["path"],
-                "content": row["content"],
-                "distance": row["distance"]
-            })
-
-        return {
-            "status": "success",
-            "query": query,
-            "results": results
-        }
-    except Exception as e:
-        print("SEARCH DOCS ERROR:", str(e))
-        return {
-            "status": "error",
-            "message": str(e)
-        }
-    finally:
-        db.close()
+# @router.post("/search-docs")
+# async def search_docs(query: str = Query(...), top_k: int = 3):
+#     db = get_db_connection()
+#     try:
+#         query_vector = get_text_embedding(query)
+#         query_bytes = serialize_f32(query_vector)
+#
+#         rows = db.execute("""
+#                           SELECT d.id,
+#                                  d.chunk_id,
+#                                  d.doc_name,
+#                                  d.title,
+#                                  d.path,
+#                                  d.content,
+#                                  v.distance
+#                           FROM vec_docs v
+#                                    JOIN docs_info d ON v.rowid = d.id
+#                           WHERE v.embedding MATCH ?
+#                             AND k = ?
+#                           ORDER BY v.distance
+#                           """, [query_bytes, top_k]).fetchall()
+#
+#         results = []
+#         for row in rows:
+#             results.append({
+#                 "id": row["id"],
+#                 "chunk_id": row["chunk_id"],
+#                 "doc_name": row["doc_name"],
+#                 "title": row["title"],
+#                 "path": row["path"],
+#                 "content": row["content"],
+#                 "distance": row["distance"]
+#             })
+#
+#         return {
+#             "status": "success",
+#             "query": query,
+#             "results": results
+#         }
+#     except Exception as e:
+#         print("SEARCH DOCS ERROR:", str(e))
+#         return {
+#             "status": "error",
+#             "message": str(e)
+#         }
+#     finally:
+#         db.close()
