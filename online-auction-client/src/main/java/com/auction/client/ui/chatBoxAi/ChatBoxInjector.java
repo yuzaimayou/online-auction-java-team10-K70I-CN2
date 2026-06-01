@@ -1,16 +1,17 @@
-package com.auction.client.ui.util;
+package com.auction.client.ui.chatBoxAi;
 
 import com.auction.client.controller.common.ChatBoxAiController;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 
+
 public class ChatBoxInjector {
 
-    private static final ChatBoxAiController chatAiWidget = new ChatBoxAiController();
-
+    private static final ChatBoxAiController chatAiWidget = ChatBoxAiController.create();
     private ChatBoxInjector() {}
 
     public static Parent wrap(Parent root) {
