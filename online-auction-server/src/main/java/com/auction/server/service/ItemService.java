@@ -176,6 +176,7 @@ public class ItemService {
             System.out.println("Item creation rejected: User is banned.");
             return false;
         }
+
         Item item = setItem(itemData);
         boolean created = itemRepository.createItem(item);
 
