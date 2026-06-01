@@ -5,7 +5,7 @@ import com.auction.client.controller.auction.ItemPageController;
 import com.auction.client.controller.auth.VerifyController;
 import com.auction.client.controller.user.SettingController;
 
-import com.auction.client.ui.util.ChatBoxInjector;
+import com.auction.client.ui.chatBoxAi.ChatBoxInjector;
 import javafx.event.Event;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
