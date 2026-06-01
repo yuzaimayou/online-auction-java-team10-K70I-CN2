@@ -45,4 +45,5 @@ build/
 /online-auction-server/dataBase/*
 !/online-auction-server/dataBase/.gitkeep
 ###env###
-.env
+.env__pycache__/
+*.pyc

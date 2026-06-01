@@ -57,9 +57,9 @@ public class ItemRepository {
         String thumbnailUrl = null;
         String imagesData = rs.getString("image_path");
 
-
         if (imagesData != null && !imagesData.isBlank()) {
-            List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
+            List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>() {
+            }.getType());
             if (imagePaths != null && !imagePaths.isEmpty()) {
                 thumbnailUrl = imagePaths.get(0);
             }
@@ -298,6 +298,36 @@ public class ItemRepository {
         return null;
     }
 
+    public ItemSummary findItemSummaryById(String itemId) {
+        String sql = """
+                SELECT id,
+                       name,
+                       category,
+                       current_price, 
+                       image_path,
+                       start_time,
+                       end_time
+                FROM items 
+                WHERE id = ?
+                """;
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToItemSummary(rs);
+                } else {
+                    throw new SQLException("Item not found with id: " + itemId);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public List<ItemSummary> findAllBySellerId(String sellerID) {
         String sql = """
                 SELECT id,
@@ -370,10 +400,10 @@ public class ItemRepository {
     public List<ItemSummary> findAllItems(String sortOrder, int offset, String category) {
         // Whitelist sort order để tránh SQL injection
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
-            case "start_time desc"    -> "start_time DESC";
-            case "current_price asc"  -> "current_price ASC";
+            case "start_time desc" -> "start_time DESC";
+            case "current_price asc" -> "current_price ASC";
             case "current_price desc" -> "current_price DESC";
-            default                   -> "end_time ASC";   // mặc định
+            default -> "end_time ASC";   // mặc định
         };
 
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
@@ -416,7 +446,6 @@ public class ItemRepository {
      * Được gọi từ ItemService.getItems() khi caller = "ADMIN".
      */
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
-        // Whitelist sort order để tránh SQL injection (thêm alias 'i.' vào trước trường sort)
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
             case "start_time desc"    -> "i.start_time DESC";
             case "current_price asc"  -> "i.current_price ASC";
@@ -424,9 +453,6 @@ public class ItemRepository {
             default                   -> "i.end_time ASC";
         };
 
-        // 🌟 Thay đổi: Dùng LEFT JOIN để lấy trường username từ bảng users đặt tên alias là seller_username
-        // [FIX] Bổ sung i.status vào SELECT để mapRowToItemSummary đọc đúng trạng thái BANNED từ DB
-        // thay vì tính lại bằng AuctionStatus.compute() (vốn không biết về BANNED).
         String sql = String.format("""
             SELECT i.id,
                    i.name,
@@ -481,7 +507,8 @@ public class ItemRepository {
         List<String> imagePaths = new ArrayList<>();
         if (pathsData != null && !pathsData.isEmpty()) {
             try {
-                imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
+                imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>() {
+                }.getType());
                 if (imagePaths == null) {
                     imagePaths = new ArrayList<>();
                 }
