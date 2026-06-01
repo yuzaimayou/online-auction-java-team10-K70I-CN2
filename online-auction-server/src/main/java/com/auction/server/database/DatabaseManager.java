@@ -6,8 +6,10 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 public class DatabaseManager {
+    private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
     private static HikariDataSource dataSource;
 
     public static void init() {
@@ -21,7 +23,7 @@ public class DatabaseManager {
         config.setMinimumIdle(2);
 
         dataSource = new HikariDataSource(config);
-        System.out.println("✅ Database connection pool initialized with SQLite at " + AppConfig.DB_PATH);
+        LOGGER.info("Database connection pool initialized with SQLite at " + AppConfig.DB_PATH);
 
     }
 
@@ -35,7 +37,7 @@ public class DatabaseManager {
     public static void shutdown() {
         if (dataSource != null) {
             dataSource.close();
-            System.out.println("✅ Database connection pool shut down.");
+            LOGGER.info("Database connection pool shut down.");
         }
     }
 }

@@ -10,8 +10,11 @@ import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BanUserHandler implements HttpHandler {
+    private static final Logger LOGGER = Logger.getLogger(BanUserHandler.class.getName());
     private final UserService userService = new UserService();
     private final Gson gson = new Gson();
 
@@ -35,7 +38,7 @@ public class BanUserHandler implements HttpHandler {
                     HttpResponseUtil.sendMessage(exchange, 400, new ResponseMessage("error", "Failed to ban user", null));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to ban user", e);
                 HttpResponseUtil.sendMessage(exchange, 500, new ResponseMessage("error", "Internal Server Error", null));
             }
         } else {

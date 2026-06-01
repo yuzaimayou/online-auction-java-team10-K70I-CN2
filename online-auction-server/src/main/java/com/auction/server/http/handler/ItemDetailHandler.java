@@ -12,8 +12,10 @@ import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.logging.Logger;
 
 public class ItemDetailHandler implements HttpHandler {
+    private static final Logger LOGGER = Logger.getLogger(ItemDetailHandler.class.getName());
     private ItemService itemService = ItemService.getInstance();
     private final Gson gson = GsonUtil.getInstance();
 
@@ -23,7 +25,7 @@ public class ItemDetailHandler implements HttpHandler {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
         String itemId = path.substring(path.lastIndexOf("/") + 1); // Extract item ID from URL
-        System.out.println("Received " + method + " request for item ID: " + itemId);
+        LOGGER.info("Received " + method + " request for item ID: " + itemId);
         switch (method) {
             case "GET" -> {
                 getItem(exchange, itemId, new ResponseMessage());
@@ -80,12 +82,12 @@ public class ItemDetailHandler implements HttpHandler {
     private void updateItem(HttpExchange exchange, ItemPayload itemData, String itemId, ResponseMessage response) throws IOException {
         boolean updated = itemService.updateItem(itemData, itemId);
         if (updated) {
-            System.out.println("Item updated successfully: " + itemData.getItemName());
+            LOGGER.info("Item updated successfully: " + itemData.getItemName());
             response.setStatus("success");
             response.setMessage("Item updated successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to update item: " + itemData.getItemName());
+            LOGGER.warning("Failed to update item: " + itemData.getItemName());
             response.setStatus("error");
             response.setMessage("Failed to update item!");
             HttpResponseUtil.sendMessage(exchange, 500, response);
@@ -95,12 +97,12 @@ public class ItemDetailHandler implements HttpHandler {
     private void deleteItem(HttpExchange exchange, String itemId, ResponseMessage response) throws IOException {
         boolean deleted = itemService.deleteItem(itemId);
         if (deleted) {
-            System.out.println("Item deleted successfully: " + itemId);
+            LOGGER.info("Item deleted successfully: " + itemId);
             response.setStatus("success");
             response.setMessage("Item deleted successfully!");
             HttpResponseUtil.sendMessage(exchange, 200, response);
         } else {
-            System.out.println("Failed to delete item: " + itemId);
+            LOGGER.warning("Failed to delete item: " + itemId);
             response.setStatus("error");
             response.setMessage("Failed to delete item!");
             HttpResponseUtil.sendMessage(exchange, 500, response);

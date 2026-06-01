@@ -482,9 +482,6 @@ public class BidService {
         }
     }
 
-    private void broadcastNewBid(String itemId, FinalBid finalBid) {
-        broadcastAfterBid(itemId, finalBid, false, null);
-    }
 
     // Private — validation helpers (delegate sang BidValidator)
     private double computeImmediateAutoBidPrice(double currentPrice, double bidStep, double increment) {

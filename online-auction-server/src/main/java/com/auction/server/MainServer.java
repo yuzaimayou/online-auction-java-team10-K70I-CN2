@@ -6,7 +6,6 @@ import com.auction.server.http.handler.*;
 import com.auction.server.database.DatabaseInit;
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.service.auction.AuctionSchedulerService;
-import com.auction.server.service.item.ItemService;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -14,61 +13,52 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MainServer {
+    private static final Logger LOGGER = Logger.getLogger(MainServer.class.getName());
     public static final List<ClientHandler> activeClients = new CopyOnWriteArrayList<>();
 
     public static void main(String[] agrs) {
         AppConfig.initFolders();
-        // tao database
         DatabaseManager.init();
         DatabaseInit.init();
 
-        // Start auction scheduler: polls every 5 s to transition
-        // UPCOMING -> ONGOING and ONGOING -> ENDED in the database.
-        new AuctionSchedulerService(null).start();
-        System.out.println("Auction scheduler started.");
+        AuctionSchedulerService auctionScheduler = new AuctionSchedulerService();
+        auctionScheduler.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            auctionScheduler.shutdown();
+            DatabaseManager.shutdown();
+        }));
+        LOGGER.info("Auction scheduler started.");
 
-        // start http server
         try {
-            System.out.println("Starting HTTP server...");
+            LOGGER.info("Starting HTTP server...");
             HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
-            httpServer.createContext("/api/login", new LoginHandler());
-            httpServer.createContext("/api/register", new RegisterHandler());
-            httpServer.createContext("/api/verify-account", new VerifyHandler());
-            httpServer.createContext("/api/send-otp", new SendOtp());
-            httpServer.createContext("/api/items", new ItemsHandler());
-            httpServer.createContext("/api/items/ban", new BanItemHandler());
-            httpServer.createContext("/api/users/ban", new BanUserHandler());
-            httpServer.createContext("/api/users", new GetUsersHandler());
-            httpServer.createContext("/api/items/", new ItemDetailHandler());
-            httpServer.createContext("/api/history/", new HistoryHandler());
-            httpServer.createContext("/api/mybids", new MyBidsHandler());
-            // ngix da xu ly viec /images
-            // httpServer.createContext("/images", new StaticFileServer.ImageHandler());
-            // Wallet & settlement endpoints
-            httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());
-            httpServer.createContext("/api/auction/settle", new WalletHandler.SettleHandler());
-            httpServer.createContext("/api/wallet/balance", new WalletHandler.BalanceHandler());
-
-            httpServer.setExecutor(Executors.newFixedThreadPool(50));
+            registerHttpRoutes(httpServer);
+            ExecutorService httpExecutor = Executors.newFixedThreadPool(50);
+            httpServer.setExecutor(httpExecutor);
             httpServer.start();
-            System.out.println("HTTP server started on port 8080");
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                httpServer.stop(0);
+                httpExecutor.shutdown();
+            }));
+            LOGGER.info("HTTP server started on port 8080");
         } catch (Exception e) {
-            System.err.println("Failed to start HTTP server: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to start HTTP server: " + e.getMessage(), e);
             return;
         }
 
-        // start socket server
         try (ServerSocket serverSocket = new ServerSocket(9090)) {
-            System.out.println("Starting Socket server...");
-            System.out.println("Socket server started on port 9090");
+            LOGGER.info("Starting Socket server...");
+            LOGGER.info("Socket server started on port 9090");
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.printf("Client has connected with IP: %s%n", clientSocket.getInetAddress().getHostAddress());
+                LOGGER.info(String.format("Client has connected with IP: %s", clientSocket.getInetAddress().getHostAddress()));
 
                 ClientHandler handler = new ClientHandler(clientSocket);
                 activeClients.add(handler);
@@ -77,9 +67,25 @@ public class MainServer {
                 clientThread.start();
             }
         } catch (Exception e) {
-            System.err.println("Failed to start Socket server: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to start Socket server: " + e.getMessage(), e);
         }
 
+    }
+
+    private static void registerHttpRoutes(HttpServer httpServer) {
+        httpServer.createContext("/api/login", new LoginHandler());
+        httpServer.createContext("/api/register", new RegisterHandler());
+        httpServer.createContext("/api/verify-account", new VerifyHandler());
+        httpServer.createContext("/api/send-otp", new SendOtp());
+        httpServer.createContext("/api/items", new ItemsHandler());
+        httpServer.createContext("/api/items/ban", new BanItemHandler());
+        httpServer.createContext("/api/users/ban", new BanUserHandler());
+        httpServer.createContext("/api/users", new GetUsersHandler());
+        httpServer.createContext("/api/items/", new ItemDetailHandler());
+        httpServer.createContext("/api/history/", new HistoryHandler());
+        httpServer.createContext("/api/mybids", new MyBidsHandler());
+        httpServer.createContext("/api/wallet/deposit", new WalletHandler.DepositHandler());
+        httpServer.createContext("/api/auction/settle", new WalletHandler.SettleHandler());
+        httpServer.createContext("/api/wallet/balance", new WalletHandler.BalanceHandler());
     }
 }

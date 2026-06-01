@@ -1,6 +1,6 @@
 package com.auction.server.service.item;
 
-import com.auction.server.config.AppConfig;
+
 import com.auction.server.database.DatabaseManager;
 import com.auction.server.integration.AiServiceClient;
 import com.auction.server.repository.ItemRepository;
@@ -17,8 +17,7 @@ import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpRequest;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,9 +28,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class ItemService {
+    private static final Logger LOGGER = Logger.getLogger(ItemService.class.getName());
     private static final ItemService instance = new ItemService();
 
     private final ItemRepository itemRepository = ItemRepository.getInstance();
@@ -114,7 +116,7 @@ public class ItemService {
                 }
                 return getItemsByKeyword(input, category, page);
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to search items", e);
             }
         }
 
@@ -126,7 +128,7 @@ public class ItemService {
 
         // Mặc định: trang chủ public, loại bỏ BANNED, filter theo category nếu có
         List<ItemSummary> items = itemRepository.findAllItems(sortOrder, page, category);
-        System.out.println("Fetched " + items.size() + " items" + (category != null ? " in category: " + category : ""));
+        LOGGER.info("Fetched " + items.size() + " items" + (category != null ? " in category: " + category : ""));
         return items;
     }
 
@@ -143,10 +145,10 @@ public class ItemService {
 
         String userId = itemData.getUserId();
         List<String> imagesPath = new ArrayList<>();
-        System.out.println("Setting item with data:");
-        System.out.println(userId);
-        System.out.println(itemName);
-        System.out.println("----");
+        LOGGER.fine("Setting item with data:");
+        LOGGER.fine(userId);
+        LOGGER.fine(itemName);
+        LOGGER.fine("----");
         for (String[] image : imagesConverted) {
             if (image[1] == null) {
                 imagesPath.add(image[0]);
@@ -173,14 +175,14 @@ public class ItemService {
     public boolean addItem(ItemPayload itemData) {
         com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
         if (seller != null && "Suspended".equalsIgnoreCase(seller.getStatus())) {
-            System.out.println("Item creation rejected: User is banned.");
+            LOGGER.info("Item creation rejected: User is banned.");
             return false;
         }
         Item item = setItem(itemData);
         boolean created = itemRepository.createItem(item);
 
         if (created) {
-            System.out.println(item.getSellerId() + " created item: " + item.getName() + " with ID: " + item.getId());
+            LOGGER.info(item.getSellerId() + " created item: " + item.getName() + " with ID: " + item.getId());
             CompletableFuture.runAsync(() -> {
                 try {
                     List<Path> imagePaths = item.getImagesPath().stream()
@@ -188,7 +190,7 @@ public class ItemService {
                             .collect(Collectors.toList());
                     aiServiceClient.embeddingProduct(item.getId(), item.getName(), item.getDescription(), imagePaths);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "Failed to index item with AI service: " + item.getId(), e);
                 }
             });
         }
@@ -203,12 +205,12 @@ public class ItemService {
     public boolean updateItem(ItemPayload itemData, String itemId) {
         User seller = new UserRepository().findById(itemData.getUserId());
         if (seller != null && "Suspended".equalsIgnoreCase(seller.getStatus())) {
-            System.out.println("Update rejected: User is banned.");
+            LOGGER.info("Update rejected: User is banned.");
             return false;
         }
         Item item = setItem(itemData);
-        System.out.println("sellerid: " + item.getSellerId());
-        System.out.println("image" + item.getImagesPath());
+        LOGGER.fine("sellerid: " + item.getSellerId());
+        LOGGER.fine("image" + item.getImagesPath());
         return itemRepository.updateItem(item, itemId);
     }
 
@@ -218,9 +220,9 @@ public class ItemService {
             Path filePath = Paths.get("dataBase", "images", fileName);
             try {
                 Files.delete(filePath);
-                System.out.println("Deleted image file: " + filePath);
+                LOGGER.info("Deleted image file: " + filePath);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to delete image file: " + filePath, e);
                 return false;
             }
         }
@@ -311,7 +313,7 @@ public class ItemService {
                     } catch (Exception ignored) {
                     }
                 }
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to ban item " + itemId, e);
                 return false;
             } finally {
                 if (conn != null) {
