@@ -41,7 +41,6 @@ public class BidService {
     private static final int AUTO_BID_MAX_ROUNDS = 200;
     private static final long ANTI_SNIPE_SECONDS  = 60L;
 
-    // Dependencies — inject qua constructor, không new() inline
     private final BidRepository bidRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -86,9 +85,8 @@ public class BidService {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
 
-                // 1. Load dữ liệu trong transaction (tránh stale read)
-                Item item = itemRepository.findById(conn, itemId);
-                if (item == null) {
+                Item item = itemRepository.findById(itemId);
+                if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
                     LOGGER.info("Bid rejected: Item không tồn tại - " + itemId);
                     return false;
