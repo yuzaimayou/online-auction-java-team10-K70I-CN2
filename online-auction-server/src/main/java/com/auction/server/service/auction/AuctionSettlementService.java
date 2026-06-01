@@ -4,6 +4,7 @@ import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.ItemRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
+import com.auction.server.service.user.CongratulationsService;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
@@ -17,14 +18,15 @@ import java.util.logging.Logger;
 public class AuctionSettlementService {
     private static final Logger LOGGER = Logger.getLogger(AuctionSettlementService.class.getName());
 
-    private final ItemRepository              itemRepo;
-    private final WalletRepository            walletRepo;
+    private final ItemRepository itemRepo;
+    private final WalletRepository walletRepo;
     private final WalletTransactionRepository txLogRepo;
+    CongratulationsService congratulationsService = CongratulationsService.getInstance();
 
     public AuctionSettlementService() {
         this.itemRepo = ItemRepository.getInstance();
         this.walletRepo = new WalletRepository();
-        this.txLogRepo  = new WalletTransactionRepository();
+        this.txLogRepo = new WalletTransactionRepository();
     }
 
     // Thanh toán cho phiên đấu giá đã hết giờ.
@@ -58,9 +60,9 @@ public class AuctionSettlementService {
                     return SettlementResult.fail("Item bị BAN, không thể thanh toán");
                 }
 
-                String winnerId     = item.getCurrentBidderId();
+                String winnerId = item.getCurrentBidderId();
                 double winningPrice = item.getHighestCurrentPrice();
-                String sellerId     = item.getSellerId();
+                String sellerId = item.getSellerId();
 
                 // Idempotency check: if auction payment already occurred, do not double-charge/double-settle
                 if (txLogRepo.existsAuctionPayment(conn, itemId)) {
@@ -103,9 +105,19 @@ public class AuctionSettlementService {
                         sellerBalBefore, sellerBalBefore + winningPrice, itemId);
 
                 conn.commit();
+                SettlementResult result = SettlementResult.success(itemId, winnerId, sellerId, winningPrice);
+                if (result != null) {
+                    try {
+                        congratulationsService.sendCongratulationsEmail(winnerId, itemId);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Failed to send congratulations email for item " + itemId, e);
+                    }
+
+                }
+
                 LOGGER.info(String.format("[Settlement] item=%s winner=%s seller=%s price=%.2f",
                         itemId, winnerId, sellerId, winningPrice));
-                return SettlementResult.success(itemId, winnerId, sellerId, winningPrice);
+                return result;
 
             } catch (Exception e) {
                 rollback(conn);
@@ -119,32 +131,38 @@ public class AuctionSettlementService {
 
     private static void rollback(Connection conn) {
         if (conn == null) return;
-        try { conn.rollback(); } catch (Exception ignored) {}
+        try {
+            conn.rollback();
+        } catch (Exception ignored) {
+        }
     }
 
     private static void close(Connection conn) {
         if (conn == null) return;
-        try { conn.close(); } catch (Exception ignored) {}
+        try {
+            conn.close();
+        } catch (Exception ignored) {
+        }
     }
 
     // Kết quả thanh toán
     public static final class SettlementResult {
         public final boolean success;
         public final boolean hadBids;
-        public final String  itemId;
-        public final String  winnerId;
-        public final String  sellerId;
-        public final double  winningPrice;
-        public final String  errorMessage;
+        public final String itemId;
+        public final String winnerId;
+        public final String sellerId;
+        public final double winningPrice;
+        public final String errorMessage;
 
         private SettlementResult(boolean success, boolean hadBids, String itemId,
                                  String winnerId, String sellerId,
                                  double winningPrice, String errorMessage) {
-            this.success      = success;
-            this.hadBids      = hadBids;
-            this.itemId       = itemId;
-            this.winnerId     = winnerId;
-            this.sellerId     = sellerId;
+            this.success = success;
+            this.hadBids = hadBids;
+            this.itemId = itemId;
+            this.winnerId = winnerId;
+            this.sellerId = sellerId;
             this.winningPrice = winningPrice;
             this.errorMessage = errorMessage;
         }
