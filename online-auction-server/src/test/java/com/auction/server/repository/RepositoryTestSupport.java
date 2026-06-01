@@ -68,6 +68,7 @@ abstract class RepositoryTestSupport {
                         balance REAL DEFAULT 0,
                         frozen_balance REAL DEFAULT 0,
                         isVerify INTEGER DEFAULT 0,
+                        status TEXT DEFAULT 'Active',
                         rating REAL DEFAULT 5
                     )
                     """);

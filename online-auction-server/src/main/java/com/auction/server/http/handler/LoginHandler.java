@@ -14,8 +14,21 @@ import java.io.InputStreamReader;
 
 public class LoginHandler implements HttpHandler {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(LoginHandler.class.getName());
-    private final AuthService authService = new AuthService();
-    private final Gson gson = new Gson();
+    private final AuthService authService;
+    private final Gson gson;
+
+    public LoginHandler() {
+        this(new AuthService(), new Gson());
+    }
+
+    LoginHandler(AuthService authService) {
+        this(authService, new Gson());
+    }
+
+    LoginHandler(AuthService authService, Gson gson) {
+        this.authService = authService;
+        this.gson = gson;
+    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {

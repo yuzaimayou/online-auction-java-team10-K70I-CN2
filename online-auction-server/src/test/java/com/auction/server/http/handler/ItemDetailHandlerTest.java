@@ -1,7 +1,6 @@
-package com.auction.server.controller.api;
+package com.auction.server.http.handler;
 
-
-import com.auction.server.http.handler.ItemDetailHandler;
+import com.auction.server.service.item.ItemService;
 import com.auction.shared.model.item.Item;
 import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,8 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -24,13 +22,15 @@ class ItemDetailHandlerTest {
 
     private ItemDetailHandler itemDetailHandler;
     private HttpExchange mockExchange;
+    private ItemService itemService;
 
     @BeforeEach
     void setUp() {
         mockExchange = mock(HttpExchange.class);
         when(mockExchange.getResponseHeaders()).thenReturn(new com.sun.net.httpserver.Headers());
         when(mockExchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
-        itemDetailHandler = new ItemDetailHandler();
+        itemService = mock(ItemService.class);
+        itemDetailHandler = new ItemDetailHandler(itemService);
     }
 
     // ============ GET Tests ============
@@ -39,9 +39,7 @@ class ItemDetailHandlerTest {
     void handle_should_return_200_with_item_on_get_request() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
-        when(mockItem.getName()).thenReturn("Laptop");
-        when(mockItem.getHighestCurrentPrice()).thenReturn(1000.0);
+        when(itemService.getItem("item1")).thenReturn(mockItem);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1"));
@@ -56,6 +54,7 @@ class ItemDetailHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/nonexistent"));
+        when(itemService.getItem("nonexistent")).thenReturn(null);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -66,7 +65,7 @@ class ItemDetailHandlerTest {
     void handle_should_extract_item_id_from_url() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item123");
+        when(itemService.getItem("item123")).thenReturn(mockItem);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/api/items/item123"));
@@ -80,7 +79,8 @@ class ItemDetailHandlerTest {
     void handle_should_attach_user_last_bid_when_userId_provided() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
+        when(itemService.getItem("item1")).thenReturn(mockItem);
+        when(itemService.getUserLastBid("item1", "user123")).thenReturn(250.0);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1?userId=user123"));
@@ -94,7 +94,7 @@ class ItemDetailHandlerTest {
     void handle_should_handle_get_without_userId_parameter() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
+        when(itemService.getItem("item1")).thenReturn(mockItem);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1"));
@@ -115,6 +115,7 @@ class ItemDetailHandlerTest {
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1"));
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.updateItem(any(), eq("item1"))).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -130,6 +131,7 @@ class ItemDetailHandlerTest {
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1"));
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.updateItem(any(), eq("item1"))).thenReturn(false);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -145,6 +147,7 @@ class ItemDetailHandlerTest {
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item456"));
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.updateItem(any(), eq("item456"))).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -160,6 +163,7 @@ class ItemDetailHandlerTest {
         when(mockExchange.getRequestMethod()).thenReturn("PUT");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1"));
         when(mockExchange.getRequestBody()).thenReturn(inputStream);
+        when(itemService.updateItem(any(), eq("item1"))).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -187,6 +191,7 @@ class ItemDetailHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("DELETE");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1"));
+        when(itemService.deleteItem("item1")).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -198,6 +203,7 @@ class ItemDetailHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("DELETE");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/nonexistent"));
+        when(itemService.deleteItem("nonexistent")).thenReturn(false);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -209,6 +215,7 @@ class ItemDetailHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("DELETE");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item789"));
+        when(itemService.deleteItem("item789")).thenReturn(true);
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -221,7 +228,8 @@ class ItemDetailHandlerTest {
     void handle_should_extract_user_id_from_query_string() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
+        when(itemService.getItem("item1")).thenReturn(mockItem);
+        when(itemService.getUserLastBid("item1", "user456")).thenReturn(42.0);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1?userId=user456&other=value"));
@@ -235,7 +243,7 @@ class ItemDetailHandlerTest {
     void handle_should_ignore_userId_when_not_present_in_query() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
+        when(itemService.getItem("item1")).thenReturn(mockItem);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1?other=value&another=param"));
@@ -249,7 +257,8 @@ class ItemDetailHandlerTest {
     void handle_should_handle_complex_query_strings() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
+        when(itemService.getItem("item1")).thenReturn(mockItem);
+        when(itemService.getUserLastBid("item1", "user123")).thenReturn(100.0);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(
@@ -277,6 +286,7 @@ class ItemDetailHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/api/v1/items/item-abc-123"));
+        when(itemService.getItem("item-abc-123")).thenReturn(mock(Item.class));
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -288,6 +298,7 @@ class ItemDetailHandlerTest {
         // Arrange
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item-xyz-123-abc"));
+        when(itemService.getItem("item-xyz-123-abc")).thenReturn(mock(Item.class));
 
         // Act & Assert
         assertDoesNotThrow(() -> itemDetailHandler.handle(mockExchange));
@@ -298,7 +309,7 @@ class ItemDetailHandlerTest {
     void handle_should_handle_empty_query_string() throws Exception {
         // Arrange
         Item mockItem = mock(Item.class);
-        when(mockItem.getId()).thenReturn("item1");
+        when(itemService.getItem("item1")).thenReturn(mockItem);
 
         when(mockExchange.getRequestMethod()).thenReturn("GET");
         when(mockExchange.getRequestURI()).thenReturn(new URI("http://localhost:8000/items/item1?"));
@@ -308,4 +319,5 @@ class ItemDetailHandlerTest {
         verify(mockExchange).getRequestMethod();
     }
 }
+
 

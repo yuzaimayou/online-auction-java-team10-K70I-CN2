@@ -34,7 +34,7 @@ public class WalletHandler {
             this(new WalletService());
         }
 
-        DepositHandler(WalletService walletService) {
+        public DepositHandler(WalletService walletService) {
             this.walletService = walletService;
         }
 
@@ -91,7 +91,7 @@ public class WalletHandler {
             this(new AuctionSettlementService());
         }
 
-        SettleHandler(AuctionSettlementService settlementService) {
+        public SettleHandler(AuctionSettlementService settlementService) {
             this.settlementService = settlementService;
         }
 
