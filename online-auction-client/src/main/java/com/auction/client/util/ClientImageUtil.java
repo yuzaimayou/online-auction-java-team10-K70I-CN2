@@ -1,15 +1,11 @@
 package com.auction.client.util;
 
-import javafx.application.Platform;
+import com.auction.client.ui.image.ImageUtil;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,199 +13,106 @@ public class ClientImageUtil {
 
     private static final Map<String, Image> imageCache = new ConcurrentHashMap<>();
 
+    private ClientImageUtil() {}
+
     /**
-     * Tải và hiển thị hình ảnh từ server tĩnh kèm cache dữ liệu
+     * Load ảnh từ server (có cache), gán vào ImageView.
+     * Rendering cover dùng ImageUtil.makeResponsiveCover() riêng nếu cần.
      */
-    public static void displayImage(String imageName,
-                                    String source,
-                                    ImageView imageView,
-                                    double reqWidth,
-                                    double reqHeight) {
-        String imageUrl = String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
-
-        String cacheKey = imageUrl + "_" + reqWidth + "x" + reqHeight;
-
-        Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
+    public static void displayImage(String imageName, String source, ImageView imageView) {
+        String imageUrl = buildUrl(source, imageName);
+        Image fxImage = imageCache.computeIfAbsent(imageUrl, key -> {
             try {
-                System.out.println("Loading image: " + imageUrl);
-                return new Image(imageUrl, reqWidth, reqHeight, true, true);
+                return new Image(key, true); // async load
             } catch (Exception e) {
-                System.err.println("Failed to load image: " + imageUrl);
                 e.printStackTrace();
                 return null;
             }
         });
-
+        imageView.setSmooth(true);
         imageView.setImage(fxImage);
     }
 
     /**
-     * Cấu hình ảnh hiển thị dạng Cover co giãn linh hoạt theo Container chính và bo góc tròn
+     * Load ảnh + apply responsive cover layout cùng lúc.
+     */
+    public static void displayImageCover(String imageName, String source,
+                                         ImageView imageView, Region container,
+                                         double arcRadius) {
+        displayImage(imageName, source, imageView);
+        ImageUtil.makeResponsiveCover(imageView, container, arcRadius);
+    }
+
+    /**
+     * Load ảnh có hint kích thước (requestedWidth/Height) để JavaFX
+     * decode đúng resolution, tránh load ảnh quá lớn vào bộ nhớ.
+     * Cache key vẫn là URL, nên cùng URL sẽ dùng lại ảnh đã load.
+     */
+    public static void displayImage(String imageName, String source,
+                                    ImageView imageView,
+                                    double requestedWidth, double requestedHeight) {
+        String imageUrl = buildUrl(source, imageName);
+        // Cache với key bao gồm kích thước để tránh dùng chung ảnh decode khác size
+        String cacheKey = imageUrl + "@" + (int) requestedWidth + "x" + (int) requestedHeight;
+        Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
+            try {
+                return new Image(imageUrl, requestedWidth, requestedHeight, true, true, true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        });
+        imageView.setSmooth(true);
+        imageView.setImage(fxImage);
+    }
+
+    /**
+     * Áp dụng object-fit: cover cho ImageView — crop phần thừa,
+     * giữ tỉ lệ, không stretch. Cần gọi lại mỗi khi Image thay đổi.
+     *
+     * @param imageView  view cần crop
+     * @param image      ảnh đã load (không null)
+     * @param viewWidth  chiều rộng hiển thị mục tiêu (px)
+     * @param viewHeight chiều cao hiển thị mục tiêu (px)
+     */
+    public static void applyObjectFitCoverToImageView(ImageView imageView, Image image,
+                                                      double viewWidth, double viewHeight) {
+        if (image == null || image.getWidth() == 0 || image.getHeight() == 0) return;
+
+        double imgW = image.getWidth();
+        double imgH = image.getHeight();
+
+        double scaleX = viewWidth  / imgW;
+        double scaleY = viewHeight / imgH;
+        double scale  = Math.max(scaleX, scaleY); // cover: lấy scale lớn hơn
+
+        double visibleW = viewWidth  / scale;
+        double visibleH = viewHeight / scale;
+        double offsetX  = (imgW - visibleW) / 2.0;
+        double offsetY  = (imgH - visibleH) / 2.0;
+
+        imageView.setViewport(new Rectangle2D(offsetX, offsetY, visibleW, visibleH));
+        imageView.setFitWidth(viewWidth);
+        imageView.setFitHeight(viewHeight);
+        imageView.setPreserveRatio(false);
+    }
+
+    /**
+     * Thiết lập responsive cover: ImageView co giãn theo container,
+     * crop kiểu cover, bo góc bằng clip.
+     * Delegate sang ImageUtil để tái sử dụng logic clip/arc.
      */
     public static void makeResponsiveCover(ImageView imageView, Region container, double arcRadius) {
-        imageView.setManaged(false);
-        imageView.setLayoutX(0);
-        imageView.setLayoutY(0);
-
-        Rectangle clip = new Rectangle();
-        clip.setArcWidth(arcRadius);
-        clip.setArcHeight(arcRadius);
-        clip.widthProperty().bind(container.widthProperty());
-        clip.heightProperty().bind(container.heightProperty());
-        container.setClip(clip);
-
-        imageView.fitWidthProperty().bind(container.widthProperty());
-        imageView.fitHeightProperty().bind(container.heightProperty());
-
-        Runnable updateViewport = () -> {
-            Image img = imageView.getImage();
-            if (img == null) return;
-            double imgW = img.getWidth();
-            double imgH = img.getHeight();
-            double containerW = container.getWidth();
-            double containerH = container.getHeight();
-            if (imgW == 0 || imgH == 0 || containerW == 0 || containerH == 0) return;
-
-            double targetRatio = containerW / containerH;
-            double sourceRatio = imgW / imgH;
-            double viewW, viewH, viewX, viewY;
-
-            if (sourceRatio > targetRatio) {
-                viewH = imgH;
-                viewW = imgH * targetRatio;
-                viewX = (imgW - viewW) / 2;
-                viewY = 0;
-            } else {
-                viewW = imgW;
-                viewH = imgW / targetRatio;
-                viewX = 0;
-                viewY = (imgH - viewH) / 2;
-            }
-            imageView.setViewport(new Rectangle2D(viewX, viewY, viewW, viewH));
-        };
-
-        container.widthProperty().addListener((obs, old, val) -> updateViewport.run());
-        container.heightProperty().addListener((obs, old, val) -> updateViewport.run());
-        imageView.imageProperty().addListener((obs, old, val) -> {
-            if (val != null) {
-                if (val.getProgress() < 1.0) {
-                    val.progressProperty().addListener((o, ov, nv) -> {
-                        if (nv.doubleValue() >= 1.0) Platform.runLater(updateViewport);
-                    });
-                } else {
-                    Platform.runLater(updateViewport);
-                }
-            }
-        });
-    }
-
-    /**
-     * Áp dụng chế độ Object-Fit: Cover căn đều khung nhìn ImageView cho ảnh Thumbnail
-     */
-    public static void applyObjectFitCoverToImageView(ImageView imageView,
-                                                      Image img,
-                                                      double targetW,
-                                                      double targetH) {
-        if (img == null || imageView == null) return;
-
-        if (img.getProgress() < 1.0) {
-            img.progressProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal.doubleValue() >= 1.0) {
-                    Platform.runLater(() ->
-                            applyObjectFitCoverToImageView(imageView, img, targetW, targetH));
-                }
-            });
-            return;
-        }
-
-        Platform.runLater(() -> {
-            double imgW = img.getWidth();
-            double imgH = img.getHeight();
-            if (imgW == 0 || imgH == 0) return;
-
-            double targetRatio = targetW / targetH;
-            double sourceRatio = imgW / imgH;
-            double viewW, viewH, viewX, viewY;
-
-            if (sourceRatio > targetRatio) {
-                viewH = imgH;
-                viewW = imgH * targetRatio;
-                viewX = (imgW - viewW) / 2;
-                viewY = 0;
-            } else {
-                viewW = imgW;
-                viewH = imgW / targetRatio;
-                viewX = 0;
-                viewY = (imgH - viewH) / 2;
-            }
-
-            imageView.setViewport(new Rectangle2D(viewX, viewY, viewW, viewH));
-        });
-    }
-
-    /**
-     * Hàm dựng bộ sưu tập ảnh Thu nhỏ (Thumbnail Gallery) cho trang chi tiết sản phẩm
-     */
-    public static void setupThumbnailGallery(HBox thumbnailContainer,
-                                             ImageView itemImage,
-                                             List<String> images,
-                                             double thumbWidth,
-                                             double thumbHeight,
-                                             double imageWidth,
-                                             double imageHeight) {
-        thumbnailContainer.getChildren().clear();
-        if (images == null || images.isEmpty()) return;
-
-        // Đặt mặc định hiển thị ảnh đầu tiên lên khung lớn
-        displayImage(images.get(0), "images", itemImage, imageWidth * 2, imageHeight * 2);
-
-        boolean isFirst = true;
-        for (String imgPath : images) {
-            if (imgPath == null || imgPath.isBlank()) continue;
-
-            StackPane thumbPane = new StackPane();
-            thumbPane.getStyleClass().add("thumbnail-container");
-            thumbPane.setMinWidth(thumbWidth);
-            thumbPane.setMaxWidth(thumbWidth);
-            thumbPane.setMinHeight(thumbHeight);
-            thumbPane.setMaxHeight(thumbHeight);
-
-            if (isFirst) {
-                thumbPane.getStyleClass().add("active-thumb");
-                isFirst = false;
-            }
-
-            ImageView thumbView = new ImageView();
-            thumbView.setFitWidth(thumbWidth);
-            thumbView.setFitHeight(thumbHeight);
-            thumbView.setPreserveRatio(false);
-
-            thumbView.imageProperty().addListener((obs, oldImg, newImg) -> {
-                if (newImg != null) {
-                    applyObjectFitCoverToImageView(thumbView, newImg, thumbWidth, thumbHeight);
-                }
-            });
-
-            displayImage(imgPath, "images", thumbView, imageWidth, imageHeight);
-            thumbPane.getChildren().add(thumbView);
-
-            // Sự kiện click để đổi ảnh lớn chính
-            thumbPane.setOnMouseClicked(e -> {
-                Image clicked = thumbView.getImage();
-                if (clicked != null) {
-                    itemImage.setImage(clicked);
-                } else {
-                    displayImage(imgPath, "images", itemImage, thumbWidth, thumbHeight);
-                }
-                thumbnailContainer.getChildren().forEach(n -> n.getStyleClass().remove("active-thumb"));
-                thumbPane.getStyleClass().add("active-thumb");
-            });
-
-            thumbnailContainer.getChildren().add(thumbPane);
-        }
+        ImageUtil.makeResponsiveCover(imageView, container, arcRadius);
     }
 
     public static void clearCache() {
         imageCache.clear();
+    }
+
+    // ── private ──────────────────────────────────────────────────────────────
+
+    private static String buildUrl(String source, String imageName) {
+        return String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);
     }
 }

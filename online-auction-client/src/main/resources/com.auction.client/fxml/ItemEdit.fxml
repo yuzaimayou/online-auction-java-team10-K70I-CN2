@@ -7,7 +7,7 @@
 
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.auction.client.controller.ItemEditController"
+           fx:controller="com.auction.client.controller.auction.ItemEditController"
            alignment="CENTER"
            stylesheets="@../css/AuctionFormPage.css">
 

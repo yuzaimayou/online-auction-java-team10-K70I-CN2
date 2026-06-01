@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.Pane?>
 <StackPane xmlns="http://javafx.com/javafx/25"
            xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.auction.client.controller.HomePageController">
+           fx:controller="com.auction.client.controller.common.HomePageController">
     <VBox>
         <fx:include fx:id="navBar" source="NavBar.fxml"/>
 

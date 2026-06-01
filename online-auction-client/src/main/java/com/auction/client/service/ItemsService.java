@@ -1,176 +1,141 @@
 package com.auction.client.service;
 
-import com.auction.shared.model.item.ItemSummary;
-import com.auction.client.util.AppConfig;
+import com.auction.client.network.ItemApiClient;
+import com.auction.client.validation.AuctionFormValidator;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.model.auction.BidTransaction;
 import com.auction.shared.model.item.Item;
-import com.auction.shared.util.GsonUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
+import com.auction.shared.model.item.ItemSummary;
+import com.auction.shared.model.item.MyBidSummary;
+import com.auction.shared.model.payloads.ItemPayload;
+import com.auction.shared.util.ImageUtil;
 
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class ItemsService {
+
     private static volatile ItemsService instance;
-    private final HttpClient httpClient;
-    private final Gson gson;
-
-    private ItemsService() {
-        this.httpClient = HttpClient.newHttpClient();
-        this.gson = GsonUtil.getInstance();
-    }
-
     public static ItemsService getInstance() {
         if (instance == null) {
             synchronized (ItemsService.class) {
-                if (instance == null) {
-                    instance = new ItemsService();
-                }
+                if (instance == null) instance = new ItemsService();
             }
         }
         return instance;
     }
 
-    // GET ITEM BY ID
+    // Phụ thuộc duy nhất vào client mạng vừa tách
+    private final ItemApiClient apiDb = ItemApiClient.getInstance();
+
+    private ItemsService() {}
+
+    // ─── ĐIỀU HƯỚNG THẲNG XUỐNG TẦNG MẠNG (KHÔNG CHỨA LOGIC HTTP) ───
     public CompletableFuture<Item> getItemById(String itemId, String userId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s?userId=%s",
-                        AppConfig.getHttpUrl(), itemId, userId)))
-                .GET()
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(body -> {
-                    ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
-                    if (!"success".equals(response.getStatus()) || response.getData() == null) {
-                        throw new RuntimeException(response.getMessage());
-                    }
-                    JsonElement jsonElement = gson.toJsonTree(response.getData());
-                    return gson.fromJson(jsonElement, Item.class);
-                });
+        return apiDb.getItemById(itemId, userId);
     }
 
-    // GET ALL ITEMS FROM SELLER
-    public CompletableFuture<ResponseMessage> getAllFromSeller(String sellerId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items?sellerId=%s",
-                        AppConfig.getHttpUrl(), sellerId)))
-                .GET()
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    public CompletableFuture<List<ItemSummary>> getAllFromSeller(String sellerId) {
+        return apiDb.getAllFromSeller(sellerId);
     }
 
-    // CREATE ITEM
-    public CompletableFuture<ResponseMessage> createItem(String jsonPayload) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items", AppConfig.getHttpUrl())))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
-    }
-
-    // UPDATE ITEM
-    public CompletableFuture<ResponseMessage> updateItem(String jsonPayload, String itemId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId)))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
-    }
-
-    // DELETE ITEM
-    public CompletableFuture<ResponseMessage> deleteItem(String itemId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/%s", AppConfig.getHttpUrl(), itemId)))
-                .DELETE()
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+    public CompletableFuture<List<ItemSummary>> getItemsForAdmin() {
+        return apiDb.getItemsForAdmin();
     }
 
     public CompletableFuture<ResponseMessage> banItem(String itemId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/items/ban/%s", AppConfig.getHttpUrl(), itemId)))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.noBody())
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(response -> gson.fromJson(response.body(), ResponseMessage.class));
+        return apiDb.banItem(itemId);
     }
 
-    // GET BID HISTORY
-    public CompletableFuture<List<BidTransaction>> getBidHistory(String itemId) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(String.format("%s/api/bids/history/%s", AppConfig.getHttpUrl(), itemId)))
-                .GET()
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(body -> {
-                    ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
-                    if (!"success".equals(response.getStatus()) || response.getData() == null) {
-                        throw new RuntimeException(response.getMessage());
-                    }
-                    Type listType = new TypeToken<List<BidTransaction>>() {}.getType();
-                    JsonElement jsonElement = gson.toJsonTree(response.getData());
-                    return gson.fromJson(jsonElement, listType);
-                });
+    public CompletableFuture<ResponseMessage> deleteItem(String itemId) {
+        return apiDb.deleteItem(itemId);
     }
 
-    // GET ITEMS (search / filter)
     public CompletableFuture<List<ItemSummary>> getItems(String search, String category) {
-        StringBuilder url = new StringBuilder(
-                String.format("%s/api/items", AppConfig.getHttpUrl())
-        );
+        return apiDb.getItems(search, category);
+    }
 
-        boolean hasParam = false;
+    public CompletableFuture<List<MyBidSummary>> getMyBids() {
+        String userId = UserSession.getInstance().getLoggedInUser().getId();
+        return apiDb.getMyBids(userId);
+    }
 
+    // ─── TẬP TRUNG XỬ LÝ LOGIC NGHIỆP VỤ (BUSINESS LOGIC) TẠI ĐÂY ───
+    public CompletableFuture<ResponseMessage> createItem(
+            String itemName, String itemDesc, String category,
+            LocalDate startDate, LocalDate endDate,
+            String startTime, String endTime,
+            String initPriceStr, String bidStepStr,
+            List<File> selectedFiles) {
         try {
-            if (search != null && !search.isBlank()) {
-                url.append("?search=").append(URLEncoder.encode(search.trim(), StandardCharsets.UTF_8));
-                hasParam = true;
+            // 1. Nghiệp vụ Validate & Đổi kiểu dữ liệu UI
+            Double initPrice = AuctionFormValidator.parsePositive(initPriceStr);
+            Double bidStep = AuctionFormValidator.parsePositive(bidStepStr);
+            LocalDateTime startDateTime = LocalDateTime.of(startDate, LocalTime.parse(startTime));
+            LocalDateTime endDateTime = LocalDateTime.of(endDate, LocalTime.parse(endTime));
+
+            // 2. Nghiệp vụ chuyển đổi tài nguyên vật lý sang Base64 mã hóa
+            List<String[]> imagesConverted = new ArrayList<>();
+            for (File file : selectedFiles) {
+                String[] base64 = ImageUtil.convertImgToBase64(file);
+                if (base64 != null) imagesConverted.add(base64);
             }
 
-            if (category != null && !category.equalsIgnoreCase("ALL")) {
-                url.append(hasParam ? "&" : "?").append("category=")
-                        .append(URLEncoder.encode(category.trim(), StandardCharsets.UTF_8));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            // 3. Nghiệp vụ lấy context phiên đăng nhập hiện tại
+            String userId = UserSession.getInstance().getLoggedInUser().getId();
+
+            // Đóng gói payload sạch sẽ và đẩy qua cho Tợ mạng bắn API
+            ItemPayload payload = new ItemPayload(
+                    itemName, category, itemDesc, imagesConverted,
+                    startDateTime, endDateTime, initPrice, bidStep, userId);
+
+            return apiDb.createItem(payload);
+
+        } catch (IOException e) {
+            CompletableFuture<ResponseMessage> failed = new CompletableFuture<>();
+            failed.completeExceptionally(e);
+            return failed;
         }
+    }
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url.toString()))
-                .GET()
-                .build();
+    public CompletableFuture<ResponseMessage> updateItem(
+            String itemName, String itemDesc, String category,
+            LocalDate startDate, LocalDate endDate,
+            String startTime, String endTime,
+            String initPriceStr, String bidStepStr,
+            List<String> existingImagePaths, List<File> newFiles, String itemId) {
+        try {
+            Double initPrice = AuctionFormValidator.parsePositive(initPriceStr);
+            Double bidStep = AuctionFormValidator.parsePositive(bidStepStr);
+            LocalDateTime startDateTime = LocalDateTime.of(startDate, LocalTime.parse(startTime));
+            LocalDateTime endDateTime = LocalDateTime.of(endDate, LocalTime.parse(endTime));
 
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(body -> {
-                    ResponseMessage response = gson.fromJson(body, ResponseMessage.class);
-                    if (!"success".equals(response.getStatus())) {
-                        throw new RuntimeException(response.getMessage());
-                    }
-                    Type listType = new TypeToken<List<ItemSummary>>() {}.getType();
-                    JsonElement jsonElement = gson.toJsonTree(response.getData());
-                    return gson.fromJson(jsonElement, listType);
-                });
+            List<String[]> images = new ArrayList<>();
+            for (String oldPath : existingImagePaths) {
+                images.add(new String[]{oldPath, null});
+            }
+            for (File file : newFiles) {
+                String[] base64 = ImageUtil.convertImgToBase64(file);
+                if (base64 != null) images.add(base64);
+            }
+
+            ItemPayload payload = new ItemPayload(
+                    itemName, category, itemDesc, images,
+                    startDateTime, endDateTime, initPrice, bidStep,
+                    UserSession.getInstance().getCurrentUserId()
+            );
+
+            return apiDb.updateItem(itemId, payload);
+
+        } catch (Exception e) {
+            CompletableFuture<ResponseMessage> failed = new CompletableFuture<>();
+            failed.completeExceptionally(e);
+            return failed;
+        }
     }
 }

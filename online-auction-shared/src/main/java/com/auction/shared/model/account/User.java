@@ -3,8 +3,6 @@ package com.auction.shared.model.account;
 import com.auction.shared.model.item.Item;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 public class User extends Person {
     protected double balance;
@@ -12,6 +10,7 @@ public class User extends Person {
     protected double rating; // Seller reputation score (from 1.0 to 5.0)
     protected String email;
     protected boolean isVerify;
+    protected String status;
 
     public User(String id, String username, String password) {
         super(id, username, password);
@@ -69,6 +68,8 @@ public class User extends Person {
     public double getRating() {
         return rating;
     }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public void setRating(double rating) {
         // [ERROR HANDLING] Validate rating range
