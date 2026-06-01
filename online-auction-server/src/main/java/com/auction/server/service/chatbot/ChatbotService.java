@@ -16,6 +16,7 @@ public class ChatbotService {
     private final AppSupport appSupport;
     private final ItemAdvise itemAdvise;
     private final CustomerCare customerCare = CustomerCare.getInstance();
+    private final OutOfScope outOfScope = OutOfScope.getInstance();
     private final Gson gson = GsonUtil.getInstance();
 
 
@@ -25,6 +26,7 @@ public class ChatbotService {
         this.questionAnalyzer = QuestionAnalyzer.getInstance();
         this.appSupport = AppSupport.getInstance();
         this.itemAdvise = ItemAdvise.getInstance();
+
     }
 
     public static synchronized ChatbotService getInstance() {
@@ -55,22 +57,20 @@ public class ChatbotService {
                 case "CUSTOMER_CARE":
                     return customerCare.handle(question.normalizedQuestion, question.language);
                 case "OUT_OF_SCOPE":
-                    data.setAiResponse("Xin lỗi, câu hỏi của bạn nằm ngoài phạm vi hỗ trợ của tôi. " +
-                            "Tôi chuyên về các vấn đề liên quan đến ứng dụng đấu giá và tư vấn sản phẩm thôi nhé!");
-                    break;
+                    return outOfScope.handle(question.normalizedQuestion, question.language);
 
                 case "AI_ERROR":
-                    data.setAiResponse("Rất tiếc, hiện tại tôi đang gặp sự cố kết nối với hệ thống AI. Vui lòng thử lại sau ít phút nhé!");
+                    data.setAiResponse("Sorry, I am currently having trouble connecting to the AI system. Please try again in a few minutes!");
                     break;
                 default:
-                    data.setAiResponse("Xin lỗi, tôi chưa hiểu rõ câu hỏi của bạn. Bạn có thể diễn đạt lại hoặc hỏi về cách sử dụng ứng dụng, tìm kiếm sản phẩm không?");
+                    data.setAiResponse("Sorry, I don't quite understand your question. Could you please rephrase it or ask about how to use the application?");
                     break;
 
             }
             return data;
         } catch (Exception e) {
             e.printStackTrace();
-            data.setAiResponse("Xin lỗi, hiện tại hệ thống AI đang bận. Vui lòng thử lại sau nhé!");
+            data.setAiResponse("Sorry, the AI system is currently busy. Please try again later!");
             return data;
         }
 
