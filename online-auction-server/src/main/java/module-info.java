@@ -10,4 +10,6 @@ module online.auction.server {
     requires com.zaxxer.hikari;
     requires java.net.http;
     requires java.xml.crypto;
+
+    opens com.auction.server.model to com.google.gson;
 }
