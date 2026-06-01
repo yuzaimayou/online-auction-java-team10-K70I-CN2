@@ -11,8 +11,9 @@ public class DatabaseManager {
     private static HikariDataSource dataSource;
 
     public static void init() {
+        String dbPath = AppConfig.getDbPath();
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:sqlite:" + AppConfig.DB_PATH);
+        config.setJdbcUrl("jdbc:sqlite:" + dbPath);
         config.setConnectionInitSql(
                 "PRAGMA journal_mode=WAL; " +
                         "PRAGMA busy_timeout=5000; " +
@@ -22,7 +23,7 @@ public class DatabaseManager {
         config.setMinimumIdle(2);
 
         dataSource = new HikariDataSource(config);
-        System.out.println("✅ Database connection pool initialized with SQLite at " + AppConfig.DB_PATH);
+        System.out.println("✅ Database connection pool initialized with SQLite at " + dbPath);
 
     }
 
