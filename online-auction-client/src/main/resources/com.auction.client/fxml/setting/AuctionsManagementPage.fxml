@@ -1,38 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card"
-      VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.auction.client.controller.admin.AuctionsManagementController"
-      stylesheets="@../../css/AuctionsManagementPage.css">
+<VBox prefWidth="1000.0" spacing="20.0" styleClass="content-card" stylesheets="@../../css/AuctionsManagementPage.css" VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.admin.AuctionsManagementController">
 
     <padding>
-        <Insets top="28.0" right="34.0" bottom="32.0" left="34.0"/>
+        <Insets bottom="32.0" left="34.0" right="34.0" top="28.0" />
     </padding>
 
     <HBox alignment="CENTER_LEFT">
         <VBox spacing="4.0" HBox.hgrow="ALWAYS">
-            <Label text="Auctions Management" styleClass="content-title"/>
-            <Label text="Review and manage all auction listings." styleClass="content-subtitle"/>
+            <Label styleClass="content-title" text="Auctions Management" />
+            <Label styleClass="content-subtitle" text="Review and manage all auction listings." />
         </VBox>
-        <HBox spacing="10.0">
-            <Button text="Filter" styleClass="secondary-btn"/>
-            <Button text="Export" styleClass="secondary-btn"/>
-        </HBox>
+        <HBox spacing="10.0" />
     </HBox>
 
-    <TableView fx:id="auctionTable" VBox.vgrow="ALWAYS" styleClass="auction-table">
+    <TableView fx:id="auctionTable" styleClass="auction-table" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="colItem" text="Item" prefWidth="300.0" />
-            <TableColumn fx:id="colSeller" text="Seller" prefWidth="150.0" />
-            <TableColumn fx:id="colCreatedAt" text="Created At" prefWidth="180.0" />
-            <TableColumn fx:id="colView" text="View" prefWidth="100.0" />
-            <TableColumn fx:id="colAction" text="Action" prefWidth="220.0" />
+            <TableColumn fx:id="colItem" prefWidth="300.0" text="Item" />
+            <TableColumn fx:id="colSeller" prefWidth="150.0" text="Seller" />
+            <TableColumn fx:id="colCreatedAt" prefWidth="180.0" text="Created At" />
+            <TableColumn fx:id="colView" prefWidth="100.0" text="View" />
+            <TableColumn fx:id="colAction" prefWidth="220.0" text="Action" />
         </columns>
         <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

@@ -7,10 +7,12 @@ import com.auction.shared.model.account.User;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.stage.Stage;
 
 public class DepositController {
     @FXML
@@ -50,8 +52,9 @@ public class DepositController {
 
     @FXML
     private void handleBackToWallet(ActionEvent event) {
-        if (SettingController.getInstance() != null) {
-            SettingController.getInstance().setDynamicContent("/com.auction.client/fxml/setting/ProfilePage.fxml");
+        if (event != null && event.getSource() instanceof Node) {
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.close();
         }
     }
 
@@ -85,16 +88,14 @@ public class DepositController {
         Button confirmBtn = (Button) event.getSource();
         confirmBtn.setDisable(true);
 
-        // ĐÃ SỬA: Gọi WalletService thay vì DepositService.
-        // Bỏ tham số currentUser.getBalance() ở cuối.
         WalletService.getInstance().deposit(currentUser.getId(), amount)
                 .thenAccept(newBalance -> {
-                    // ĐÃ SỬA: Không cần gọi thêm WalletService.getInstance().fetchAndSync() nữa.
-                    // Vì hàm deposit() trong WalletService đã tự động setBalance vào UserSession rồi!
                     Platform.runLater(() -> {
                         confirmBtn.setDisable(false);
                         ToastUtil.showSuccess(amountField.getScene(), "Nạp tiền thành công!");
-                        handleBackToWallet(null);
+
+                        Stage stage = (Stage) confirmBtn.getScene().getWindow();
+                        stage.close();
                     });
                 })
                 .exceptionally(ex -> {

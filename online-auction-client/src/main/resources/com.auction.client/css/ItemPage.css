@@ -492,3 +492,26 @@
     -fx-cursor: hand;
     -fx-background-insets: 0, 1;
 }
+
+/* Bổ sung vào phần 9. HISTORY SECTION trong file CSS */
+
+/* Định nghĩa hiển thị cho số thứ tự */
+.history-index {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #888888;
+    -fx-min-width: 30px; /* Đảm bảo có khoảng trống hiển thị */
+    -fx-alignment: center;
+}
+
+/* Đảm bảo VBox chứa tên và thời gian hiển thị đúng */
+.history-row {
+    -fx-border-width: 0;
+    -fx-padding: 5px;
+    -fx-border-color: transparent;
+}
+
+
+.history-row .label {
+    -fx-text-fill: #333333;
+}

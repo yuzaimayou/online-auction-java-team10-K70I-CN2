@@ -111,11 +111,9 @@ public class AutoBidUiHandler {
     public void handleDecision(double serverPrice, String topBidderId) {
         Item item = itemSupplier.get();
 
-        // Thay đổi 2: Gọi hàm decideBid gọn nhẹ (không truyền myLastBid sang Service nữa)
         AutoBidDecision decision = autoBidManager.decideBid(
                 topBidderId, serverPrice, user.getId(), statusService.isOngoing(item));
 
-        // Thay đổi 3: Đưa toàn bộ việc render chuỗi text về đúng UI Handler tại đây
         switch (decision.type()) {
             case AUCTION_ENDED -> stop();
             case INACTIVE      -> {}
