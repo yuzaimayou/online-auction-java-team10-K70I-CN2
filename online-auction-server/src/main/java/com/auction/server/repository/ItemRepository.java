@@ -387,61 +387,8 @@ public class ItemRepository {
         return executeSummaryQuery(sql, sellerID);
     }
 
-    public List<ItemSummary> searchItems(List<String> keywords, String category, int offset) throws SQLException {
-        List<ItemSummary> items = new ArrayList<>();
 
-        boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
-
-        StringBuilder sql = new StringBuilder(
-                "SELECT * FROM items WHERE status != '" + AuctionStatus.BANNED.name() + "' AND (");
-        for (int i = 0; i < keywords.size(); i++) {
-            sql.append("LOWER(search_name) LIKE ?");
-            if (i < keywords.size() - 1)
-                sql.append(" AND ");
-        }
-        sql.append(")");
-        if (filterCategory) {
-            sql.append(" AND LOWER(category) = LOWER(?)");
-        }
-        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
-
-        LOGGER.fine(sql.toString());
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            int paramIndex = 1;
-            for (String keyword : keywords) {
-                stmt.setString(paramIndex++, "%" + keyword + "%");
-            }
-            if (filterCategory) {
-                stmt.setString(paramIndex++, category);
-            }
-            stmt.setInt(paramIndex, offset);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    items.add(mapRowToItemSummary(rs));
-                }
-            }
-        }
-        return items;
-    }
-
-    /**
-     * @deprecated Dùng {@link #searchItems(List, String, int)} thay thế.
-     */
-    @Deprecated
-    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
-        return searchItems(keywords, null, offset);
-    }
-
-    /**
-     * Dành cho trang chủ / public: loại bỏ sản phẩm BANNED.
-     * [FIX] Áp dụng đúng sortOrder, offset, và category filter.
-     *
-     * @param category null hoặc "ALL" = không filter, chuỗi khác = filter theo
-     *                 category
-     */
+    //Tra item cho homepage(khong co san pham bi ban)
     public List<ItemSummary> findAllItems(String sortOrder, int offset, String category) {
         // Whitelist sort order để tránh SQL injection
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
@@ -477,19 +424,14 @@ public class ItemRepository {
         return executeSummaryQuery(sql, offset);
     }
 
-    /**
-     * @deprecated Dùng {@link #findAllItems(String, int, String)} thay thế.
-     */
+    // @deprecated Dùng {@link #findAllItems(String, int, String)} thay thế.
+
     @Deprecated
     public List<ItemSummary> findAllItems(String sortOrder, int offset) {
         return findAllItems(sortOrder, offset, null);
     }
 
-    /**
-     * [NEW] Dành cho Admin panel: trả về TẤT CẢ sản phẩm kể cả BANNED
-     * để admin có thể xem và quản lý.
-     * Được gọi từ ItemService.getItems() khi caller = "ADMIN".
-     */
+    // Tra item cho admin (co ca san pham bi ban)
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
             case "start_time desc" -> "i.start_time DESC";
@@ -676,7 +618,6 @@ public class ItemRepository {
                 ps.setString(1, AuctionStatus.ONGOING.name());
                 ps.setString(2, AuctionStatus.UPCOMING.name());
                 int rows = ps.executeUpdate();
-                logStatusUpdate("UPCOMING->ONGOING", rows);
             }
 
         } catch (SQLException e) {
@@ -685,15 +626,6 @@ public class ItemRepository {
             LOGGER.log(java.util.logging.Level.SEVERE, "Unexpected error while updating item statuses", e);
         }
         return updatedId;
-    }
-
-    private void logStatusUpdate(String transition, int rows) {
-        String message = String.format("[updateStatus] %s: %d row(s) updated", transition, rows);
-        if (rows > 0) {
-            LOGGER.info(message);
-        } else {
-            LOGGER.fine(message);
-        }
     }
 
     public double getUserLastBid(String itemId, String userId) {
@@ -714,7 +646,6 @@ public class ItemRepository {
         return 0.0;
     }
 
-
     public boolean updateStatus(Connection conn, String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try {
@@ -724,5 +655,4 @@ public class ItemRepository {
             return false;
         }
     }
-
 }
