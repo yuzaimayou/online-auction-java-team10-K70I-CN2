@@ -1,15 +1,14 @@
 package com.auction.server.http.handler;
 
-import com.auction.server.repository.ItemRepository;
+import com.auction.server.repository.BidRepository;
 import com.auction.server.http.response.HttpResponseUtil;
 import com.auction.shared.message.ResponseMessage;
-import com.auction.shared.util.GsonUtil;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 
 public class MyBidsHandler implements HttpHandler {
-    private final ItemRepository itemRepository = ItemRepository.getInstance();
+    private final BidRepository bidRepository = new BidRepository();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -25,7 +24,7 @@ public class MyBidsHandler implements HttpHandler {
             return;
         }
         HttpResponseUtil.sendMessage(exchange, 200,
-                new ResponseMessage("success", "OK", itemRepository.findMyBids(userId)));
+                new ResponseMessage("success", "OK", bidRepository.findMyBids(userId)));
     }
 
     private String extractParam(String query, String key) {
