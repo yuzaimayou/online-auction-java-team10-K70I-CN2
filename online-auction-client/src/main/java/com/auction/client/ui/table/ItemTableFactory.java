@@ -76,7 +76,7 @@ public class ItemTableFactory {
         };
     }
 
-    public static Callback<TableColumn<ItemSummary, String>, TableCell<ItemSummary, String>> statusBadgeCell() {
+    public static Callback<TableColumn<ItemSummary, ItemSummary>, TableCell<ItemSummary, ItemSummary>> statusBadgeCell() {
         return col -> new TableCell<>() {
             private final Label label = new Label();
             {
@@ -84,13 +84,16 @@ public class ItemTableFactory {
                 setAlignment(Pos.CENTER);
             }
             @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-                if (empty || status == null) { setGraphic(null); return; }
+            protected void updateItem(ItemSummary item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setGraphic(null); return; }
 
                 label.getStyleClass().removeAll("status-upcoming", "status-ended", "status-banned", "status-live");
 
-                switch (status) {
+                AuctionStatus status = item.getStatus();
+                String statusStr = status != null ? status.name() : "ONGOING";
+
+                switch (statusStr) {
                     case "UPCOMING" -> { label.setText("Upcoming"); label.getStyleClass().add("status-upcoming"); }
                     case "ENDED" -> { label.setText("Ended"); label.getStyleClass().add("status-ended"); }
                     case "BANNED" -> { label.setText("⛔ Banned"); label.getStyleClass().add("status-banned"); }
