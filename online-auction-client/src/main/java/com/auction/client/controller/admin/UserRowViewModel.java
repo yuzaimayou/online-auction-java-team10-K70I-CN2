@@ -4,7 +4,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 public class UserRowViewModel {
-    private final StringProperty id; // Bổ sung trường ID
+    private final StringProperty id;
     private final StringProperty userName;
     private final StringProperty email;
     private final StringProperty status;
@@ -22,20 +22,41 @@ public class UserRowViewModel {
     public String getId() { return id.get(); }
     public void setId(String id) { this.id.set(id); }
 
-    public StringProperty userNameProperty() { return userName; }
-    public String getUserName() { return userName.get(); }
-    public void setUserName(String userName) { this.userName.set(userName); }
+    public StringProperty userNameProperty() {
+        return userName;
+    }
+    public String getUserName() {
+        return userName.get();
+    }
 
-    public StringProperty emailProperty() { return email; }
-    public String getEmail() { return email.get(); }
-    public void setEmail(String email) { this.email.set(email); }
+    public StringProperty emailProperty() {
+        return email;
+    }
+    public String getEmail() {
+        return email.get();
+    }
+    public void setEmail(String email) {
+        this.email.set(email);
+    }
 
-    public StringProperty statusProperty() { return status; }
-    public String getStatus() { return status.get(); }
-    public void setStatus(String status) { this.status.set(status); }
+    public StringProperty statusProperty() {
+        return status;
+    }
+    public String getStatus() {
+        return status.get();
+    }
+    public void setStatus(String status) {
+        this.status.set(status);
+    }
 
-    public StringProperty roleProperty() { return role; }
-    public String getRole() { return role.get(); }
-    public void setRole(String role) { this.role.set(role); }
+    public StringProperty roleProperty() {
+        return role;
+    }
+    public String getRole() {
+        return role.get();
+    }
+    public void setRole(String role) {
+        this.role.set(role);
+    }
 
 }

@@ -11,12 +11,18 @@ import javafx.scene.control.*;
 
 public class UserManagementController {
 
-    @FXML private TableView<UserRowViewModel> userTable;
-    @FXML private TableColumn<UserRowViewModel, String> colUser;
-    @FXML private TableColumn<UserRowViewModel, String> colEmail;
-    @FXML private TableColumn<UserRowViewModel, String> colStatus;
-    @FXML private TableColumn<UserRowViewModel, String> colRole;
-    @FXML private TableColumn<UserRowViewModel, Void> colAction;
+    @FXML
+    private TableView<UserRowViewModel> userTable;
+    @FXML
+    private TableColumn<UserRowViewModel, String> colUser;
+    @FXML
+    private TableColumn<UserRowViewModel, String> colEmail;
+    @FXML
+    private TableColumn<UserRowViewModel, String> colStatus;
+    @FXML
+    private TableColumn<UserRowViewModel, String> colRole;
+    @FXML
+    private TableColumn<UserRowViewModel, Void> colAction;
 
     private final UserService userService = UserService.getInstance();
 
@@ -32,7 +38,6 @@ public class UserManagementController {
         colRole.setCellValueFactory(data -> data.getValue().roleProperty());
         colStatus.setCellValueFactory(data -> data.getValue().statusProperty());
 
-        // Sử dụng toàn bộ giải pháp từ Factory tập trung
         colUser.setCellFactory(UserTableFactory.leftAlignCell());
         colEmail.setCellFactory(UserTableFactory.leftAlignCell());
         colRole.setCellFactory(UserTableFactory.roleCell());
@@ -65,7 +70,6 @@ public class UserManagementController {
                         user.setStatus("Suspended");
                         user.setRole("banned_user");
 
-                        // Trick nhỏ kích hoạt ép TableView vẽ lại dòng trạng thái mới mà không mất dữ liệu
                         userTable.refresh();
                         AlertUtil.showInfo("Thành công", "Tài khoản đã được khóa.");
                     } else {
