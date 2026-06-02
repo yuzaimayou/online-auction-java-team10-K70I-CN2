@@ -217,6 +217,7 @@ public class ItemPageController {
 
             @Override
             public void onAuctionExtended(LocalDateTime t) {
+                System.out.println("[Auction Extended] New end time: " + t);
                 Platform.runLater(() -> uiHandleAuctionExtended(t));
             }
 
