@@ -35,6 +35,7 @@ async def index_product(
                    """, [item_id, name, description])
 
         # 1. Xử lý và lưu Vector Hình ảnh
+        os.makedirs('temp', exist_ok=True)
         for i, file in enumerate(files):
             temp_path = f"temp/temp_{file.filename}"
             with open(temp_path, "wb") as buffer:

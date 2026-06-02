@@ -1,6 +1,7 @@
 package com.auction.client.controller.user;
 
 import com.auction.client.controller.auction.ItemEditController;
+import com.auction.client.network.AuctionSocketClient;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.UserSession;
 import com.auction.client.ui.util.ModalUtil;
@@ -9,6 +10,8 @@ import com.auction.client.util.*;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.ItemSummary;
+import com.auction.shared.model.payloads.AutoBidPayload;
+import com.auction.shared.model.payloads.BidPayload;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -29,7 +32,7 @@ public class MyAuctionsController {
     @FXML
     private TableColumn<ItemSummary, String> categoryCol;
     @FXML
-    private TableColumn<ItemSummary, String> statusCol;
+    private TableColumn<ItemSummary, ItemSummary> statusCol;
     @FXML
     private TableColumn<ItemSummary, Double> priceCol;
     @FXML
@@ -45,6 +48,7 @@ public class MyAuctionsController {
     private final User loggedInUser = UserSession.getInstance().getLoggedInUser();
     private final ObservableList<ItemSummary> masterData = FXCollections.observableArrayList();
     private FilteredList<ItemSummary> filteredData;
+    private final AuctionSocketClient network = AuctionSocketClient.getInstance();
 
     @FXML
     public void initialize() {
@@ -59,6 +63,7 @@ public class MyAuctionsController {
         });
 
         loadData();
+        setupSocketListener();
     }
 
     private void setupStatusFilter() {
@@ -76,9 +81,8 @@ public class MyAuctionsController {
         categoryCol.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getCategory()));
         categoryCol.setCellFactory(ItemTableFactory.categoryBadgeCell());
 
-        statusCol.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().getStatus().name()));
+        statusCol.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue()));
         statusCol.setCellFactory(ItemTableFactory.statusBadgeCell());
-
         // Đọc giá trị Double thuần túy từ Model, việc vẽ chuỗi tiền tệ đẩy sang Factory xử lý
         priceCol.setCellValueFactory(d -> new javafx.beans.property.SimpleObjectProperty<>(d.getValue().getCurrentPrice()));
         priceCol.setCellFactory(ItemTableFactory.priceFormattedCell());
@@ -153,10 +157,36 @@ public class MyAuctionsController {
                 });
     }
 
+    private void setupSocketListener() {
+        network.setAuctionRoomListener(new com.auction.client.network.AuctionRoomListener() {
+            @Override
+            public void onItemBanned(String itemId) {
+                Platform.runLater(() -> {
+                    boolean isUpdated = false;
+                    for (ItemSummary item : masterData) {
+                        if (item.getId().equals(itemId)) {
+                            item.setStatus(AuctionStatus.BANNED);
+                            isUpdated = true;
+                            break;
+                        }
+                    }
+
+                    if (isUpdated) {
+                        auctionTable.refresh();
+                    }
+                });
+            }
+            @Override public void onNewBid(BidPayload p) {}
+            @Override public void onAuctionExtended(LocalDateTime t) {}
+            @Override public void onAutoBidState(AutoBidPayload data) {}
+        });
+    }
+
     private void handleViewItem(ItemSummary item) {
         if (item == null) return;
         NavigationUtil.switchToItemPage(new javafx.event.ActionEvent(auctionTable, null), item.getId(), item.getName());
     }
+
 
     private void handleDeleteItem(ItemSummary item) {
         if (item == null) return;

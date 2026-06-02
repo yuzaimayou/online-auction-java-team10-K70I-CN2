@@ -18,7 +18,7 @@ public class QuestionAnalyzer {
         return instance;
     }
 
-    public QuestionAnalysis analyzeUserQuestion(String userMessage) {
+    public QuestionAnalysis handle(String userMessage) {
         // 1. Tạo Prompt (System Instruction) ép AI đóng vai trò tư vấn viên
         String systemPrompt = """
                 You are a question classifier for a chatbot in an online auction application.
@@ -80,7 +80,7 @@ public class QuestionAnalyzer {
                 
                 Required format:
                 {
-                  "intent": "APP_SUPPORT | ITEM_ADVICE | OUT_OF_SCOPE",
+                  "intent": "APP_SUPPORT | ITEM_ADVICE | CUSTOMER_CARE | OUT_OF_SCOPE",
                   "language": "detected user language code"
                   "normalizedQuestion": "rewrite the user's question more clearly in English(if "intent": OUT_OF_SCOPE, just return the original question without rewriting)"
                 }

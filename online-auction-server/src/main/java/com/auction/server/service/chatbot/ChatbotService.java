@@ -45,7 +45,7 @@ public class ChatbotService {
             if (userMessage == null || userMessage.isBlank()) {
                 data.setAiResponse("Xin lỗi, tôi chưa nhận được câu hỏi của bạn. Vui lòng nhập lại nhé!");
             }
-            QuestionAnalysis question = questionAnalyzer.analyzeUserQuestion(userMessage);
+            QuestionAnalysis question = questionAnalyzer.handle(userMessage);
             System.out.println("Phân tích câu hỏi: Intent = " + question.intent + ", Language = " + question.language);
             System.out.println("Normalized question: " + question.normalizedQuestion);
 

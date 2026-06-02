@@ -11,7 +11,7 @@ import javafx.scene.layout.VBox;
  * Chịu trách nhiệm duy nhất là quản lý, thay đổi trạng thái hiển thị
  * và thu thập dữ liệu thô từ các thành phần giao diện JavaFX đồ họa.
  */
-public class AutoBidView {
+public class AutoBidPaneWrapper {
 
     private final VBox autoBidForm;
     private final VBox autoBidActiveStatus;
@@ -21,9 +21,9 @@ public class AutoBidView {
     private final Button btnAutoBidToggle;
     private final Button submitBid;
 
-    public AutoBidView(VBox autoBidForm, VBox autoBidActiveStatus, TextField maxBidField,
-                       TextField autoBidStepField, Label userCurrentBidLabel,
-                       Button btnAutoBidToggle, Button submitBid) {
+    public AutoBidPaneWrapper(VBox autoBidForm, VBox autoBidActiveStatus, TextField maxBidField,
+                              TextField autoBidStepField, Label userCurrentBidLabel,
+                              Button btnAutoBidToggle, Button submitBid) {
         this.autoBidForm = autoBidForm;
         this.autoBidActiveStatus = autoBidActiveStatus;
         this.maxBidField = maxBidField;
