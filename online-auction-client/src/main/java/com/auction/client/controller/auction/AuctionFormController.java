@@ -17,23 +17,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Trách nhiệm:
- * 1. Thu thập data từ UI
- * 2. Validate format qua AuctionFormValidator
- * 3. Giao ItemsService xử lý
- * 4. Hiển thị kết quả
- */
+
 public class AuctionFormController {
-
-    // ── Constants ─────────────────────────────────────────────────────────────
     private static final double NAV_DELAY_SECONDS = 0.5;
-    private static final String STATUS_SUCCESS    = "success";
+    private static final String STATUS_SUCCESS = "success";
 
-    // ── FXML fields ───────────────────────────────────────────────────────────
     @FXML
     private Label lblMessage;
     @FXML
@@ -64,15 +57,13 @@ public class AuctionFormController {
     private Button  btnSubmit;
 
     private final AtomicBoolean isSubmitting  = new AtomicBoolean(false);
-
-    // ── Dependencies ──────────────────────────────────────────────────────────
     private final ItemsService itemsService;
     private NewItemImageManager newItemImageManager;
+
     public AuctionFormController() {
         this.itemsService = ItemsService.getInstance();
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         FormUtil.populateHalfHourSlots(cbStartTime, cbEndTime);
@@ -87,12 +78,14 @@ public class AuctionFormController {
         });
     }
 
-    // ── Event handlers ────────────────────────────────────────────────────────
+
     @FXML
     public void handleAddItem(ActionEvent event) {
         if (isSubmitting.get()) return;
 
         FormData data = collectFormData();
+
+        // Kiểm tra tính hợp lệ của toàn bộ dữ liệu
         Result result = AuctionFormValidator.validateCreate(
                 data.itemName, data.itemDesc, data.category,
                 data.startDate, data.endDate,
@@ -100,20 +93,13 @@ public class AuctionFormController {
                 data.initPriceStr, data.bidStepStr,
                 newItemImageManager.getSelectedFiles()
         );
-
         if (!result.isValid()) {
             showValidationError(result);
             return;
         }
-
         setLoadingState(true);
-        itemsService.createItem(
-                        data.itemName, data.itemDesc, data.category,
-                        data.startDate, data.endDate,
-                        data.startTime, data.endTime,
-                        data.initPriceStr, data.bidStepStr,
-                        newItemImageManager.getSelectedFiles()
-                )
+
+        itemsService.createItem(data, newItemImageManager.getSelectedFiles())
                 .thenAccept(this::processSubmitResponse)
                 .exceptionally(this::processSubmitException);
     }
@@ -128,8 +114,10 @@ public class AuctionFormController {
         NavigationUtil.handleSwitchToHomePage(lblMessage);
     }
 
-    // Xử lý luồng Callback
 
+    /**
+     * Tiếp nhận thông báo thành công và hiển thị
+     */
     private void processSubmitResponse(ResponseMessage response) {
         Platform.runLater(() -> {
             if (STATUS_SUCCESS.equals(response.getStatus())) {
@@ -145,6 +133,9 @@ public class AuctionFormController {
         });
     }
 
+    /**
+     * Tiếp nhận thông báo lỗi và hiển thị
+     */
     private Void processSubmitException(Throwable error) {
         error.printStackTrace();
         Platform.runLater(() -> {
@@ -154,7 +145,9 @@ public class AuctionFormController {
         return null;
     }
 
-    // ── Data helpers ──────────────────────────────────────────────────────────
+    /**
+     * Chuyển giao dữ liệu đóng gói
+     */
     private FormData collectFormData() {
         return new FormData(
                 txtItemName.getText().trim(),
@@ -169,16 +162,16 @@ public class AuctionFormController {
         );
     }
 
-    private static final class FormData {
-        final String itemName;
-        final String itemDesc;
-        final String  category;
-        final LocalDate startDate;
-        final LocalDate endDate;
-        final String startTime;
-        final String endTime;
-        final String initPriceStr;
-        final String bidStepStr;
+    public static final class FormData {
+        public final String itemName;
+        public final String itemDesc;
+        public final String category;
+        public final LocalDate startDate;
+        public final LocalDate endDate;
+        public final String startTime;
+        public final String endTime;
+        public final String initPriceStr;
+        public final String bidStepStr;
 
         FormData(String itemName, String itemDesc, String category,
                  LocalDate startDate, LocalDate endDate,
@@ -196,7 +189,6 @@ public class AuctionFormController {
         }
     }
 
-    // ── UI helpers ────────────────────────────────────────────────────────────
     private String getSelectedCategory() {
         Toggle toggle = categoryGroup.getSelectedToggle();
         return toggle != null ? toggle.getUserData().toString() : null;
@@ -212,6 +204,9 @@ public class AuctionFormController {
         }
     }
 
+    /**
+     * Cập nhật trạng thái khóa/mở các nút chức năng giao diện trong suốt tiến trình tạo sản
+     */
     private void setLoadingState(boolean isLoading) {
         isSubmitting.set(isLoading);
 
