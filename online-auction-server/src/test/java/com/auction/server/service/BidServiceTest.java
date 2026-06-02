@@ -1,6 +1,7 @@
 package com.auction.server.service;
 
 import com.auction.server.service.bid.BidService;
+import com.auction.server.service.bid.BidValidator;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.exception.AuctionClosedException;
 import com.auction.shared.exception.InvalidBidException;
@@ -19,7 +20,7 @@ class BidServiceTest {
 
     @Test
     void validateForManualBid_rejects_seller_bidding() {
-        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        BidValidator validator = new BidValidator(EPSILON);
         Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
         when(item.getSellerId()).thenReturn("seller1");
 
@@ -31,7 +32,7 @@ class BidServiceTest {
 
     @Test
     void validateForManualBid_rejects_bid_below_minimum() {
-        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        BidValidator validator = new BidValidator(EPSILON);
         Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
         when(item.getHighestCurrentPrice()).thenReturn(1000.0);
         when(item.getBidStep()).thenReturn(50.0);
@@ -44,7 +45,7 @@ class BidServiceTest {
 
     @Test
     void validateForManualBid_rejects_when_auction_not_started() {
-        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        BidValidator validator = new BidValidator(EPSILON);
         Item item = baseItem(LocalDateTime.now().plusMinutes(5), LocalDateTime.now().plusMinutes(10));
 
         User user = new User("u1", "alice", "pass");
@@ -55,7 +56,7 @@ class BidServiceTest {
 
     @Test
     void validateForManualBid_accepts_valid_bid() {
-        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        BidValidator validator = new BidValidator(EPSILON);
         Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
         when(item.getHighestCurrentPrice()).thenReturn(100.0);
         when(item.getBidStep()).thenReturn(10.0);
@@ -67,7 +68,7 @@ class BidServiceTest {
 
     @Test
     void validateForAutoBid_rejects_increment_below_bid_step() {
-        BidService.BidValidator validator = new BidService.BidValidator(EPSILON);
+        BidValidator validator = new BidValidator(EPSILON);
         Item item = baseItem(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
         when(item.getBidStep()).thenReturn(50.0);
 

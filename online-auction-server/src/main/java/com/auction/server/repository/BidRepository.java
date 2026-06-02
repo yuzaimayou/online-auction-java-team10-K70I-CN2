@@ -1,13 +1,16 @@
 package com.auction.server.repository;
 
 import com.auction.server.database.DatabaseManager;
+import com.auction.shared.model.enums.AuctionStatus;
+import com.auction.shared.model.item.MyBidSummary;
 import com.auction.shared.model.payloads.AutoBidPayload;
+import com.auction.shared.util.GsonUtil;
+import com.google.gson.Gson;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,14 @@ import java.util.logging.Logger;
 public class BidRepository {
 
     private static final Logger LOGGER = Logger.getLogger(BidRepository.class.getName());
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_NAME = "name";
+    private static final String COLUMN_STATUS = "status";
+    private static final String COLUMN_IMAGE_PATH = "image_path";
+    private static final String COLUMN_START_TIME = "start_time";
+    private static final String COLUMN_END_TIME = "end_time";
+    private static final String COLUMN_CURRENT_PRICE = "current_price";
+    private final Gson gson = GsonUtil.getInstance();
 
     // Inner class
 
@@ -302,7 +313,84 @@ public class BidRepository {
         return null;
     }
 
+    public List<MyBidSummary> findMyBids(String userId) {
+        String sql = """
+        SELECT
+            i.id,
+            i.name,
+            i.image_path,
+            i.current_price,
+            i.status,
+            i.start_time,
+            i.end_time,
+            MAX(b.bid_price)              AS my_highest_bid,
+            (i.current_bidder_id = ?)     AS is_winner
+        FROM bids b
+        JOIN items i ON b.item_id = i.id
+        WHERE b.user_id = ?
+        GROUP BY i.id
+        ORDER BY i.end_time DESC
+        """;
+
+        List<MyBidSummary> result = new ArrayList<>();
+        try (
+                Connection conn = DatabaseManager.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
+            stmt.setString(1, userId);
+            stmt.setString(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String thumbnailUrl = extractThumbnail(rs.getString(COLUMN_IMAGE_PATH));
+
+                    AuctionStatus status = null;
+                    try {
+                        String dbStatus = rs.getString(COLUMN_STATUS);
+                        if (dbStatus != null) status = AuctionStatus.valueOf(dbStatus.toUpperCase());
+                    } catch (Exception ignored) {}
+
+                    LocalDateTime startTime = LocalDateTime.parse(rs.getString(COLUMN_START_TIME));
+                    LocalDateTime endTime   = LocalDateTime.parse(rs.getString(COLUMN_END_TIME));
+                    if (status == null) {
+                        status = AuctionStatus.compute(startTime, endTime);
+                    }
+
+                    result.add(new MyBidSummary(
+                            rs.getString(COLUMN_ID),
+                            rs.getString(COLUMN_NAME),
+                            thumbnailUrl,
+                            rs.getDouble(COLUMN_CURRENT_PRICE),
+                            rs.getDouble("my_highest_bid"),
+                            rs.getInt("is_winner") == 1,
+                            status,
+                            endTime
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "findMyBids failed", e);
+        }
+        return result;
+    }
+
     // Helper
+
+    private String extractThumbnail(String imagesData) {
+        if (imagesData == null || imagesData.isBlank()) {
+            return null;
+        }
+
+        try {
+            List<String> imagePaths = gson.fromJson(imagesData, new com.google.gson.reflect.TypeToken<List<String>>() {
+            }.getType());
+            if (imagePaths != null && !imagePaths.isEmpty()) {
+                return imagePaths.get(0);
+            }
+            return null;
+        } catch (Exception e) {
+            return imagesData;
+        }
+    }
 
     /**
      * Parse datetime string từ DB.
