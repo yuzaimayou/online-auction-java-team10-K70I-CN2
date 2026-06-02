@@ -86,7 +86,9 @@ public class AuctionSocketClient {
                     AutoBidPayload autoBidPayload = gson.fromJson(jsonObject.get("data"), AutoBidPayload.class);
                     if (SocketEventConstants.STATUS_JOIN_ROOM_SUCCESS.equals(response.getStatus())) {
                         System.out.println("Successfully joined the auction room");
-                        auctionRoomListener.onAutoBidState(autoBidPayload);
+                        if (auctionRoomListener != null) {
+                            auctionRoomListener.onAutoBidState(autoBidPayload);
+                        }
                         continue;
                     } else if (SocketEventConstants.STATUS_JOIN_ROOM_FAIL.equals(response.getStatus())) {
                         throw new IOException("Failed to join the auction room: " + response.getMessage());
