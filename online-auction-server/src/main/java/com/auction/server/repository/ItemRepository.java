@@ -18,7 +18,8 @@ import java.util.List;
 
 public class ItemRepository {
     private static final ItemRepository instance = new ItemRepository();
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(ItemRepository.class.getName());
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger
+            .getLogger(ItemRepository.class.getName());
     private static final String COLUMN_ID = "id";
     private static final String COLUMN_NAME = "name";
     private static final String COLUMN_STATUS = "status";
@@ -28,6 +29,7 @@ public class ItemRepository {
     private static final String COLUMN_CURRENT_PRICE = "current_price";
     private static final String COLUMN_SELLER_USERNAME = "seller_username";
 
+    // singleton
     private ItemRepository() {
     }
 
@@ -37,9 +39,9 @@ public class ItemRepository {
 
     private Gson gson = GsonUtil.getInstance();
 
-
+    // cập nhật giá hiện tại và người trả giá hiện tại
     public boolean updateCurrentBidder(Connection conn, String itemId,
-                                       double newPrice, String newBidderId) {
+            double newPrice, String newBidderId) {
         String sql = """
                 UPDATE items
                 SET current_price     = ?,
@@ -57,6 +59,7 @@ public class ItemRepository {
         }
     }
 
+    // ánh xạ dữ liệu từ ResultSet sang ItemSummary
     private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
         String id = rs.getString(COLUMN_ID);
         String name = rs.getString(COLUMN_NAME);
@@ -84,8 +87,7 @@ public class ItemRepository {
                 startTime,
                 endTime,
                 auctionStatus,
-                sellerUsername
-        );
+                sellerUsername);
 
     }
 
@@ -162,8 +164,7 @@ public class ItemRepository {
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
                 stmt.setObject(i + 1, params[i]);
             }
@@ -204,8 +205,7 @@ public class ItemRepository {
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             String name = item.getName();
             String search_name = StringUtil.removeAccents(name);
 
@@ -235,16 +235,16 @@ public class ItemRepository {
 
     public boolean updateItem(Item item, String itemId) {
         String sql = """
-                UPDATE items SET 
-                    name = ?, 
-                    description = ?, 
-                    start_price = ?, 
-                    current_price = ?, 
-                    seller_id = ?, 
-                    start_time = ?, 
-                    end_time = ?, 
-                    category = ?, 
-                    bid_step = ?, 
+                UPDATE items SET
+                    name = ?,
+                    description = ?,
+                    start_price = ?,
+                    current_price = ?,
+                    seller_id = ?,
+                    start_time = ?,
+                    end_time = ?,
+                    category = ?,
+                    bid_step = ?,
                     image_path = ?,
                     status = ?,
                     search_name = ?
@@ -253,8 +253,7 @@ public class ItemRepository {
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, item.getName());
             stmt.setString(2, item.getDescription());
             stmt.setDouble(3, item.getStartingPrice());
@@ -286,8 +285,7 @@ public class ItemRepository {
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
@@ -302,8 +300,7 @@ public class ItemRepository {
         String sql = "SELECT * FROM items WHERE id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, itemId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -349,11 +346,11 @@ public class ItemRepository {
                 SELECT id,
                        name,
                        category,
-                       current_price, 
+                       current_price,
                        image_path,
                        start_time,
                        end_time
-                FROM items 
+                FROM items
                 WHERE id = ?
                 """;
         try (
@@ -379,11 +376,11 @@ public class ItemRepository {
                 SELECT id,
                        name,
                        category,
-                       current_price, 
+                       current_price,
                        image_path,
                        start_time,
                        end_time
-                FROM items 
+                FROM items
                 WHERE seller_id = ?
                 """;
 
@@ -395,10 +392,12 @@ public class ItemRepository {
 
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
-        StringBuilder sql = new StringBuilder("SELECT * FROM items WHERE status != '" + AuctionStatus.BANNED.name() + "' AND (");
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM items WHERE status != '" + AuctionStatus.BANNED.name() + "' AND (");
         for (int i = 0; i < keywords.size(); i++) {
             sql.append("LOWER(search_name) LIKE ?");
-            if (i < keywords.size() - 1) sql.append(" AND ");
+            if (i < keywords.size() - 1)
+                sql.append(" AND ");
         }
         sql.append(")");
         if (filterCategory) {
@@ -409,8 +408,7 @@ public class ItemRepository {
         LOGGER.fine(sql.toString());
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql.toString())
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             int paramIndex = 1;
             for (String keyword : keywords) {
                 stmt.setString(paramIndex++, "%" + keyword + "%");
@@ -441,7 +439,8 @@ public class ItemRepository {
      * Dành cho trang chủ / public: loại bỏ sản phẩm BANNED.
      * [FIX] Áp dụng đúng sortOrder, offset, và category filter.
      *
-     * @param category null hoặc "ALL" = không filter, chuỗi khác = filter theo category
+     * @param category null hoặc "ALL" = không filter, chuỗi khác = filter theo
+     *                 category
      */
     public List<ItemSummary> findAllItems(String sortOrder, int offset, String category) {
         // Whitelist sort order để tránh SQL injection
@@ -449,7 +448,7 @@ public class ItemRepository {
             case "start_time desc" -> "start_time DESC";
             case "current_price asc" -> "current_price ASC";
             case "current_price desc" -> "current_price DESC";
-            default -> "end_time ASC";   // mặc định
+            default -> "end_time ASC"; // mặc định
         };
 
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
@@ -493,27 +492,27 @@ public class ItemRepository {
      */
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
-            case "start_time desc"    -> "i.start_time DESC";
-            case "current_price asc"  -> "i.current_price ASC";
+            case "start_time desc" -> "i.start_time DESC";
+            case "current_price asc" -> "i.current_price ASC";
             case "current_price desc" -> "i.current_price DESC";
-            default                   -> "i.end_time ASC";
+            default -> "i.end_time ASC";
         };
 
         String sql = String.format("""
-            SELECT i.id,
-                   i.name,
-                   i.category,
-                   i.current_price,
-                   i.image_path,
-                   i.start_time,
-                   i.end_time,
-                   i.status,
-                   u.username AS seller_username
-            FROM items i
-            LEFT JOIN users u ON i.seller_id = u.id
-            ORDER BY %s
-            LIMIT 10 OFFSET ?
-            """, safeSort);
+                SELECT i.id,
+                       i.name,
+                       i.category,
+                       i.current_price,
+                       i.image_path,
+                       i.start_time,
+                       i.end_time,
+                       i.status,
+                       u.username AS seller_username
+                FROM items i
+                LEFT JOIN users u ON i.seller_id = u.id
+                ORDER BY %s
+                LIMIT 10 OFFSET ?
+                """, safeSort);
 
         return executeSummaryQuery(sql, offset);
     }
@@ -527,14 +526,19 @@ public class ItemRepository {
         List<String> imagePaths = new ArrayList<>();
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql);) {
             stmt.setString(1, itemId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String pathsData = rs.getString(COLUMN_IMAGE_PATH);
 
-                    imagePaths = parseImagePaths(pathsData);
+                    try {
+                        imagePaths = parseImagePaths(pathsData);
+                    } catch (Exception e) {
+                        if (pathsData != null && !pathsData.isBlank()) {
+                            imagePaths.add(pathsData);
+                        }
+                    }
                 }
             } catch (SQLException e) {
                 LOGGER.log(java.util.logging.Level.SEVERE, "Failed to read image paths for item " + itemId, e);
@@ -544,7 +548,6 @@ public class ItemRepository {
         }
         return imagePaths;
     }
-
 
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString(COLUMN_IMAGE_PATH);
@@ -567,12 +570,12 @@ public class ItemRepository {
                 rs.getString("seller_id"),
                 rs.getString("category"),
                 rs.getDouble("bid_step"),
-                imagePaths
-        );
+                imagePaths);
         item.setId(rs.getString(COLUMN_ID));
         item.setCurrentBidderId(rs.getString("current_bidder_id"));
         String dbStatus = rs.getString(COLUMN_STATUS);
-        if (dbStatus != null) item.setStatus(AuctionStatus.fromString(dbStatus));
+        if (dbStatus != null)
+            item.setStatus(AuctionStatus.fromString(dbStatus));
         return item;
     }
 
@@ -587,15 +590,13 @@ public class ItemRepository {
         }
     }
 
-
     public void updateCurrentPrice(String itemId, double newPrice) {
 
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, newPrice);
             stmt.setString(2, itemId);
@@ -632,21 +633,18 @@ public class ItemRepository {
     public List<String> updateStatus() {
         List<String> updatedId = new ArrayList<>();
 
-        String selectAboutToEndSql =
-                "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
-        String selectAboutToLiveSql =
-                "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
-        String updateEndedSql =
-                "UPDATE items SET status = ? WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
-        String updateOngoingSql =
-                "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
+        String selectAboutToEndSql = "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
+        String selectAboutToLiveSql = "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
+        String updateEndedSql = "UPDATE items SET status = ? WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
+        String updateOngoingSql = "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
 
         try (Connection conn = DatabaseManager.getConnection()) {
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
                 ps.setString(1, AuctionStatus.ONGOING.name());
                 try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) updatedId.add(rs.getString("id"));
+                    while (rs.next())
+                        updatedId.add(rs.getString("id"));
                 }
             }
 
@@ -660,7 +658,8 @@ public class ItemRepository {
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
                 ps.setString(1, AuctionStatus.UPCOMING.name());
                 try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) updatedId.add(rs.getString("id"));
+                    while (rs.next())
+                        updatedId.add(rs.getString("id"));
                 }
             }
 
@@ -692,8 +691,7 @@ public class ItemRepository {
         String sql = "SELECT MAX(bid_price) AS highest_bid FROM bids WHERE item_id = ? AND user_id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, itemId);
             stmt.setString(2, userId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -711,8 +709,7 @@ public class ItemRepository {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, status.name());
             stmt.setString(2, itemId);
             return stmt.executeUpdate() > 0;
