@@ -44,7 +44,7 @@ public class ItemService {
     }
 
     public List<ItemSummary> getAllItemsBySeller(String sellerId) {
-        if (sellerId == null || sellerId.trim().isEmpty()) {
+        if (isBlank(sellerId)) {
             return null;
         }
         return itemRepository.findAllBySellerId(sellerId);
@@ -59,18 +59,11 @@ public class ItemService {
      * - Nếu không có caller → gọi findAllItems() như cũ, đã loại BANNED ra khỏi kết quả.
      */
     public List<ItemSummary> getItems(String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (isBlank(query)) {
             return itemRepository.findAllItems("end_time ASC", 0, null);
         }
 
-        int page = 0;
-        if (query.contains("page=")) {
-            try {
-                page = Integer.parseInt(extractParam(query, "page"));
-            } catch (NumberFormatException e) {
-                page = 0;
-            }
-        }
+        int page = parsePage(query);
 
         String sortOrder = "end_time ASC";
         if (query.contains("sort=")) {
@@ -108,11 +101,7 @@ public class ItemService {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
 
                 if (query.contains("page=")) {
-                    try {
-                        page = Integer.parseInt(extractParam(query, "page"));
-                    } catch (NumberFormatException e) {
-                        page = 0;
-                    }
+                    page = parsePage(query);
                 }
                 return getItemsByKeyword(input, category, page);
             } catch (SQLException e) {
@@ -174,8 +163,8 @@ public class ItemService {
 
     public boolean addItem(ItemPayload itemData) {
         com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
-        if (seller != null && "Suspended".equalsIgnoreCase(seller.getStatus())) {
-            LOGGER.info("Item creation rejected: User is banned.");
+        if (isSuspended(seller)) {
+            LOGGER.info("Item creation rejected: seller is suspended.");
             return false;
         }
 
@@ -199,14 +188,13 @@ public class ItemService {
     }
 
     public Item getItem(String id) {
-        Item item = itemRepository.findById(id);
-        return item;
+        return itemRepository.findById(id);
     }
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
         User seller = new UserRepository().findById(itemData.getUserId());
-        if (seller != null && "Suspended".equalsIgnoreCase(seller.getStatus())) {
-            LOGGER.info("Update rejected: User is banned.");
+        if (isSuspended(seller)) {
+            LOGGER.info("Item update rejected: seller is suspended.");
             return false;
         }
         Item item = setItem(itemData);
@@ -231,7 +219,7 @@ public class ItemService {
     }
 
     private List<ItemSummary> getItemsByKeyword(String input, String category, int page) throws SQLException {
-        if (input == null || input.trim().isEmpty()) {
+        if (isBlank(input)) {
             return null;
         }
         List<String> keywords = Arrays.stream(input.trim().toLowerCase().split("\\s+"))
@@ -253,12 +241,31 @@ public class ItemService {
         return null;
     }
 
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private int parsePage(String query) {
+        if (query.contains("page=")) {
+            try {
+                return Integer.parseInt(extractParam(query, "page"));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    private boolean isSuspended(User user) {
+        return user != null && "Suspended".equalsIgnoreCase(user.getStatus());
+    }
+
     public double getUserLastBid(String itemId, String userId) {
         return itemRepository.getUserLastBid(itemId, userId);
     }
 
     public boolean banItem(String itemId) {
-        if (itemId == null || itemId.trim().isEmpty()) {
+        if (isBlank(itemId)) {
             return false;
         }
 
@@ -283,7 +290,7 @@ public class ItemService {
                 String currentBidderId = item.getCurrentBidderId();
                 double currentPrice = item.getHighestCurrentPrice();
 
-                if (currentBidderId != null && !currentBidderId.trim().isEmpty()) {
+                if (!isBlank(currentBidderId)) {
                     WalletRepository walletRepo = new WalletRepository();
                     // Unfreeze amount
                     if (!walletRepo.unfreezeAmount(conn, currentBidderId, currentPrice)) {
