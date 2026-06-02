@@ -7,9 +7,9 @@ import com.auction.client.service.AutoBidService;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.UserSession;
 import com.auction.client.service.WalletService;
-import com.auction.client.ui.auction.AutoBidView;
+import com.auction.client.ui.auction.AutoBidPaneWrapper;
 import com.auction.client.ui.auction.BidHistoryPanel;
-import com.auction.client.ui.auction.BidPanelController;
+import com.auction.client.ui.auction.BidPanelView;
 import com.auction.client.ui.image.ImageCardFactory;
 import com.auction.client.ui.item.ItemStatusRendered;
 import com.auction.client.ui.util.ToastUtil;
@@ -19,7 +19,6 @@ import com.auction.client.util.DateTimeUtil;
 import com.auction.client.validation.AutoBidValidationService;
 import com.auction.client.validation.BidValidationService;
 import com.auction.shared.model.account.User;
-import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
@@ -113,9 +112,10 @@ public class ItemPageController {
     @FXML
     private Button btnAutoBidToggle;
 
+    // Các Sub-Controller và thành phần giao diện đã được phân rã cấu trúc MVC
     private BidPanelController bidPanel;
     private AutoBidController autoBidHandler;
-    private BidHistoryPanel historyPanel;
+    private BidHistoryController historyController;
     private XYChart.Series<String, Number> bidPriceSeries;
 
     private String itemId;
@@ -142,10 +142,11 @@ public class ItemPageController {
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
 
-        bidPanel = new BidPanelController(
-                statusMessageLabel, bidControlsContainer, statusOverlay,
-                btnAutoBidToggle, submitBid, countdownTimer, autoBidManager
+        // 🎯 KHỐI 1: Khởi tạo cụm PANEL ĐẤU GIÁ (Đồng hồ & Trạng thái đóng/mở phòng)
+        BidPanelView bidPanelView = new BidPanelView(
+                statusMessageLabel, bidControlsContainer, statusOverlay, btnAutoBidToggle, submitBid
         );
+        bidPanel = new BidPanelController(countdownTimer, autoBidManager, bidPanelView);
 
         if (bidPriceChart != null) {
             bidPriceSeries = new XYChart.Series<>();
@@ -153,24 +154,23 @@ public class ItemPageController {
             bidPriceChart.setAnimated(false);
         }
 
-        AutoBidView autoBidView = new AutoBidView(
+        // 🎯 KHỐI 2: Khởi tạo cụm TỰ ĐỘNG ĐẤU GIÁ (Auto-Bid Component)
+        AutoBidPaneWrapper autoBidPaneWrapper = new AutoBidPaneWrapper(
                 autoBidForm, autoBidActiveStatus, maxBidField, autoBidStepField,
                 userCurrentBidLabel, btnAutoBidToggle, submitBid
         );
-
         autoBidHandler = new AutoBidController(
                 autoBidManager, autoBidValidationService, network, user, statusUiService,
-                autoBidView,
-                () -> item,
-                () -> myLastBid
+                autoBidPaneWrapper, () -> item, () -> myLastBid
         );
 
-        historyPanel = new BidHistoryPanel(
-                bidHistoryApiClient, user,
-                historyBidContainer, historyScrollPane,
-                totalBidsLabel, bidPriceSeries
+        // 🎯 KHỐI 3: Khởi tạo cụm LỊCH SỬ ĐẤU GIÁ (History Component)
+        BidHistoryPanel bidHistoryPanel = new BidHistoryPanel(
+                historyBidContainer, historyScrollPane, totalBidsLabel, bidPriceSeries
         );
+        historyController = new BidHistoryController(bidHistoryApiClient, user, bidHistoryPanel);
     }
+
     public void dispose() {
         if (countdownTimer != null) {
             countdownTimer.stop();
@@ -198,21 +198,15 @@ public class ItemPageController {
         this.myLastBid = loadedItem.getMyLastBid();
         autoBidManager.setLastBidderId(loadedItem.getCurrentBidderId());
 
-        if (loadedItem.getStoredStatus() == AuctionStatus.BANNED) {
-            displayDataItem(loadedItem);
-            bidPanel.applyBannedStateView(loadedItem);
-            autoBidHandler.updateUi(false);
-            connectToRealTimeBidding();
-            historyPanel.load(itemId);
-            return;
-        }
-
+        // Đổ dữ liệu tĩnh lên màn hình trước
         displayDataItem(loadedItem);
-        bidPanel.applyAuctionStatusView(loadedItem, user.getId());
         connectToRealTimeBidding();
-        historyPanel.load(itemId);
-    }
+        historyController.load(itemId);
 
+        // 🎯 CHỈ CẦN 1 DÒNG NÀY: Ủy quyền toàn bộ việc kiểm tra trạng thái (kể cả BANNED)
+        // và tự kích hoạt luồng đếm ngược khép kín cho BidPanelController tự xử lý.
+        bidPanel.refreshAndSync(loadedItem, user.getId());
+    }
 
     private void connectToRealTimeBidding() {
         network.setAuctionRoomListener(new AuctionRoomListener() {
@@ -320,11 +314,13 @@ public class ItemPageController {
         }
 
         currentPriceLabel.setText(statusUiService.formatPrice(item.getCurrentPrice()));
-        bidPanel.applyAuctionStatusView(item, user.getId());
+
+        // 🎯 ĐỒNG BỘ: Gọi refreshAndSync để làm mới giao diện đấu giá và tính toán lại luồng đếm
+        bidPanel.refreshAndSync(item, user.getId());
 
         autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
         updateMinimumBidLabel();
-        historyPanel.load(itemId);
+        historyController.load(itemId);
 
         WalletService.getInstance().fetchAndSync();
     }
@@ -332,12 +328,16 @@ public class ItemPageController {
     private void uiHandleAuctionExtended(LocalDateTime newEndTime) {
         item.setEndTime(newEndTime);
         endTimeLabel.setText(DateTimeUtil.format(newEndTime));
-        bidPanel.startCountdown(item, () -> bidPanel.applyAuctionStatusView(item, user.getId()));
+
+        // 🎯 ĐỒNG BỘ: Gọi refreshAndSync khi có sự mở rộng gia hạn thời gian
+        bidPanel.refreshAndSync(item, user.getId());
     }
 
     private void uiHandleItemBanned() {
         network.setAuctionRoomListener(null);
         autoBidHandler.updateUi(false);
+
+        // 🎯 ĐỒNG BỘ: Đẩy thẳng lệnh khóa phiên đấu giá sang cho Sub-Controller xử lý dứt điểm
         bidPanel.applyBannedStateView(item);
     }
 
@@ -372,10 +372,9 @@ public class ItemPageController {
             btnSuggestStep2.setText(String.format("$ %.0f", currentItem.getBidStep() * 2));
         }
 
-        AuctionStatus status = currentItem.getStoredStatus();
-        if (status != AuctionStatus.BANNED) {
-            bidPanel.startCountdown(item, () -> bidPanel.applyAuctionStatusView(item, user.getId()));
-        }
+        // ❌ ĐÃ XÓA đoạn code kiểm tra `AuctionStatus.BANNED` thủ công và lệnh `startCountdown` cũ ở đây
+        // Tránh xung đột trùng lặp gây ra lỗi Dead Code phương thức không được dùng.
+
         updateMinimumBidLabel();
     }
 
