@@ -12,12 +12,18 @@ import javafx.scene.control.*;
 
 public class AuctionsManagementController {
 
-    @FXML private TableView<ItemSummary> auctionTable;
-    @FXML private TableColumn<ItemSummary, ItemSummary> colItem;
-    @FXML private TableColumn<ItemSummary, String> colSeller;
-    @FXML private TableColumn<ItemSummary, String> colCreatedAt;
-    @FXML private TableColumn<ItemSummary, Void> colView;
-    @FXML private TableColumn<ItemSummary, Void> colAction;
+    @FXML
+    private TableView<ItemSummary> auctionTable;
+    @FXML
+    private TableColumn<ItemSummary, ItemSummary> colItem;
+    @FXML
+    private TableColumn<ItemSummary, String> colSeller;
+    @FXML
+    private TableColumn<ItemSummary, String> colCreatedAt;
+    @FXML
+    private TableColumn<ItemSummary, Void> colView;
+    @FXML
+    private TableColumn<ItemSummary, Void> colAction;
 
     private final ItemsService itemsService = ItemsService.getInstance();
 
@@ -33,8 +39,6 @@ public class AuctionsManagementController {
         colItem.setCellFactory(ItemTableFactory.itemCell(50, 50));
         colSeller.setCellFactory(ItemTableFactory.sellerCell());
         colCreatedAt.setCellFactory(ItemTableFactory.createdAtCell());
-
-        // Sạch sẽ tuyệt đối nhờ hàm mới tinh trong Factory
         colView.setCellFactory(ItemTableFactory.viewLinkCell(this::handleViewItem));
         colAction.setCellFactory(ItemTableFactory.adminActionCell(this::handleBanItem));
 

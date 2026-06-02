@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class BidHistoryUiRenderer {
+public class BidHistoryRowFactory {
 
     public static HBox createRow(int index, BidHistoryItemDTO bid, String currentUsername) {
         HBox row = new HBox(15);
