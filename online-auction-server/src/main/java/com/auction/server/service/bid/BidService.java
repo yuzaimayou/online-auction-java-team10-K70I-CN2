@@ -90,8 +90,9 @@ public class BidService {
         synchronized (AuctionLockManager.getItemLock(itemId)) {
             try (Connection conn = DatabaseManager.getConnection()) {
                 conn.setAutoCommit(false);
+                try {
 
-                Item item = itemRepository.findById(itemId);
+                Item item = itemRepository.findById(conn, itemId);
                 if (item == null || item.getSellerId().equals(userId)) {
                     conn.rollback();
                     LOGGER.info("Bid rejected: Item không tồn tại - " + itemId);
@@ -129,8 +130,12 @@ public class BidService {
                         "[MANUAL_BID] time=%s itemId=%s userId=%s currentPrice=%.2f bidPrice=%.2f",
                         bidTime, itemId, userId, currentPrice, bidPrice));
 
-                bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime);
-                itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId);
+                if (!bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime)) {
+                    throw new SQLException("Failed to create bid for item: " + itemId);
+                }
+                if (!itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId)) {
+                    throw new SQLException("Failed to update current bidder for item: " + itemId);
+                }
 
                 // 5. Anti-snipe
                 newEndTime = antiSnipe(item.getEndTime(), conn, itemId);
@@ -141,12 +146,17 @@ public class BidService {
                 bidEvents.addAll(runAutoBiddingRounds(conn, itemId, userId, bidPrice, bidTime));
                 conn.commit();
 
-
+                } catch (SQLException e) {
+                    rollbackQuietly(conn);
+                    LOGGER.log(Level.SEVERE, "DB error trong placeBid - " + e.getMessage(), e);
+                    return false;
+                } catch (Exception e) {
+                    rollbackQuietly(conn);
+                    LOGGER.log(Level.SEVERE, "Unexpected error trong placeBid - " + e.getMessage(), e);
+                    return false;
+                }
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "DB error trong placeBid - " + e.getMessage(), e);
-                return false;
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Unexpected error trong placeBid - " + e.getMessage(), e);
+                LOGGER.log(Level.SEVERE, "Failed to open DB connection trong placeBid - " + e.getMessage(), e);
                 return false;
             }
         }
@@ -187,6 +197,7 @@ public class BidService {
                 conn.setAutoCommit(false);
 
                 // 1. Load dữ liệu
+                try {
                 Item item = itemRepository.findById(conn, itemId);
                 if (item == null) {
                     conn.rollback();
@@ -252,8 +263,12 @@ public class BidService {
                         currentBidderId, currentPrice);
 
                 String bidTime = LocalDateTime.now().toString();
-                bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime);
-                itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId);
+                if (!bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime)) {
+                    throw new SQLException("Failed to create immediate auto-bid for item: " + itemId);
+                }
+                if (!itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId)) {
+                    throw new SQLException("Failed to update current bidder for item: " + itemId);
+                }
 
                 LOGGER.info(String.format(
                         "[AUTO_BID_REGISTER][IMMEDIATE_BID] time=%s itemId=%s userId=%s bidPrice=%.2f",
@@ -269,11 +284,17 @@ public class BidService {
                 conn.commit();
                 shouldBroadcast = true;
 
+                } catch (SQLException e) {
+                    rollbackQuietly(conn);
+                    LOGGER.log(Level.SEVERE, "DB error trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
+                    return false;
+                } catch (Exception e) {
+                    rollbackQuietly(conn);
+                    LOGGER.log(Level.SEVERE, "Unexpected error trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
+                    return false;
+                }
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "DB error trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
-                return false;
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Unexpected error trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
+                LOGGER.log(Level.SEVERE, "Failed to open DB connection trong registerAutoBidAndMaybeBid - " + e.getMessage(), e);
                 return false;
             }
         }
@@ -302,7 +323,24 @@ public class BidService {
     public boolean cancelAutoBid(String itemId, String userId) {
         if (isBlank(itemId) || isBlank(userId))
             return false;
-        return bidRepository.deactivateAutoBidIfPresent(itemId, userId);
+
+        synchronized (AuctionLockManager.getItemLock(itemId)) {
+            try (Connection conn = DatabaseManager.getConnection()) {
+                conn.setAutoCommit(false);
+                try {
+                    boolean deactivated = bidRepository.deactivateAutoBidIfPresent(conn, itemId, userId);
+                    conn.commit();
+                    return deactivated;
+                } catch (Exception e) {
+                    rollbackQuietly(conn);
+                    LOGGER.log(Level.SEVERE, "DB error trong cancelAutoBid - " + e.getMessage(), e);
+                    return false;
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Failed to open DB connection trong cancelAutoBid - " + e.getMessage(), e);
+                return false;
+            }
+        }
     }
 
     // Private — wallet
@@ -437,8 +475,12 @@ public class BidService {
 
             // Ghi bid
             String bidTime = LocalDateTime.now().toString();
-            bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime);
-            itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId());
+            if (!bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime)) {
+                throw new SQLException("Failed to create auto-bid round bid for item: " + itemId);
+            }
+            if (!itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId())) {
+                throw new SQLException("Failed to update current bidder for item: " + itemId);
+            }
 
             LOGGER.info(String.format(
                     "[AUTO_BID_ROUND][ACCEPT] time=%s itemId=%s userId=%s bidPrice=%.2f",
@@ -490,6 +532,17 @@ public class BidService {
         return s == null || s.isBlank();
     }
 
+    private void rollbackQuietly(Connection conn) {
+        if (conn == null) {
+            return;
+        }
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Rollback failed", e);
+        }
+    }
+
     // Private record
 
     private record FinalBid(String userId, double bidPrice, String bidTime) {
@@ -498,12 +551,14 @@ public class BidService {
     private record BidEvent(String userId, double bidPrice, String bidTime) {}
 
     //Anti-snipe
-    private LocalDateTime antiSnipe(LocalDateTime currentEndTime, Connection conn, String itemId) {
+    private LocalDateTime antiSnipe(LocalDateTime currentEndTime, Connection conn, String itemId) throws SQLException {
         long secondsRemaining = ChronoUnit.SECONDS.between(LocalDateTime.now(), currentEndTime);
 
         if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
             LocalDateTime newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
-            itemRepository.extendEndTime(conn, itemId, newEndTime);
+            if (!itemRepository.extendEndTime(conn, itemId, newEndTime)) {
+                throw new SQLException("Failed to extend end time for item: " + itemId);
+            }
             LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
             return newEndTime;
         }
