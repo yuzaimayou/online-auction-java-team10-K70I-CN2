@@ -1,6 +1,7 @@
 package com.auction.client.controller.auth;
 
 import com.auction.client.service.AuthService;
+import com.auction.client.validation.AuthValidation;
 import com.auction.client.util.NavigationUtil;
 import com.auction.client.service.UserSession;
 import com.auction.shared.model.account.User;
@@ -21,8 +22,7 @@ public class LoginController {
     private PasswordField txtPassword;
     @FXML
     private Label lblMessage;
-
-    private AuthService authService = AuthService.getInstance();
+    private final AuthService authService = AuthService.getInstance();
 
     @FXML
     public void initialize() {
@@ -30,43 +30,47 @@ public class LoginController {
 
     @FXML
     protected void handleLogin(ActionEvent event) {
-        String username = txtUsername.getText().trim();
+        String username = txtUsername.getText();
         String password = txtPassword.getText();
 
-        if (username.isEmpty() || password.isEmpty()) {
+        // 1. Kiểm tra validation qua class AuthValidation
+        String validationError = AuthValidation.validateLogin(username, password);
+        if (validationError != null) {
             lblMessage.setTextFill(Color.RED);
-            lblMessage.setText("Username and password are required!");
+            lblMessage.setText(validationError);
             return;
         }
-        authService.login(username, password)
+
+        // 2. Gọi Service xử lý đăng nhập bất đồng bộ
+        authService.login(username.trim(), password)
                 .thenAccept(responseMessage -> {
                     if ("success".equals(responseMessage.getStatus())) {
+                        // Phân tích dữ liệu User từ phản hồi của Server
                         User loggedInUser = authService.parseUser(responseMessage.getData());
 
                         UserSession.getInstance().cleanUserSession();
                         UserSession.getInstance().setLoggedInUser(loggedInUser);
+
                         PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(2));
 
+                        // Trường hợp: Tài khoản chưa kích hoạt OTP
                         if (!loggedInUser.isVerify()) {
                             Platform.runLater(() -> {
                                 lblMessage.setTextFill(Color.RED);
                                 lblMessage.setText("Account unverified. Redirecting to Verify...");
                             });
-                            pause.setOnFinished(
-                                    e -> NavigationUtil.switchToOtpScreen(
-                                            event,
-                                            loggedInUser.getEmail()
-                                    )
+                            pause.setOnFinished(e ->
+                                    NavigationUtil.switchToOtpScreen(event, loggedInUser.getEmail())
                             );
                             pause.play();
                             return;
                         }
 
+                        // Trường hợp: Đăng nhập thành công hoàn toàn
                         Platform.runLater(() -> {
                             lblMessage.setTextFill(Color.GREEN);
                             lblMessage.setText("Login successful! Welcome " + loggedInUser.getUsername());
                         });
-
                         pause.setOnFinished(e -> NavigationUtil.handleSwitchToHomePage(lblMessage));
                         pause.play();
 

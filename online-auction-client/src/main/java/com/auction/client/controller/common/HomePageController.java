@@ -10,7 +10,6 @@ import com.auction.shared.model.item.ItemSummary;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
@@ -18,17 +17,16 @@ import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Trách nhiệm:
- * 1. Lắng nghe thay đổi (Search, Category, Resize).
- * 2. Gọi ItemsService để lấy dữ liệu.
- * 3. Yêu cầu ItemCardFactory tạo giao diện và gắn vào vùng chứa.
- */
 public class HomePageController {
 
+    /** Kết nối mạng duy nhất thông qua cơ chế Socket Client. */
     private final AuctionSocketClient network = AuctionSocketClient.getInstance();
+
+    /** Quản lý thông tin sản phẩm đấu giá  */
     private final ItemsService itemsService = ItemsService.getInstance();
+
     private String currentCategory  = "ALL";
 
     @FXML
@@ -48,7 +46,10 @@ public class HomePageController {
     @FXML
     private NavBarController navBarController;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    public HomePageController() {}
+
+
     @FXML
     public void initialize() {
         network.leaveRoom();
@@ -57,7 +58,7 @@ public class HomePageController {
                 (obs, oldVal, newVal) -> fetchItemsFromServer()
         );
 
-        // Bind chiều rộng linh hoạt cho các vùng chứa
+        // Đăng ký Listener tính toán độ rộng thích ứng động cho các FlowPane khi người dùng kéo giãn cửa sổ
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
             double containerWidth = newVal.doubleValue() - 40;
             ongoingAuctionsContainer.setPrefWidth(containerWidth);
@@ -65,19 +66,26 @@ public class HomePageController {
             endedAuctionsContainer.setPrefWidth(containerWidth);
         });
 
+        // Lấy danh sách dữ liệu từ mạng
         fetchItemsFromServer();
     }
 
-    // ── Data Fetching ─────────────────────────────────────────────────────────
+    /**
+     * Gọi nghiệp vụ từ Service xử lý dữ liệu ngầm để lấy Map sản phẩm đã phân nhóm
+     */
     private void fetchItemsFromServer() {
         String search = SearchStoreController.getSearchQuery();
-        itemsService.getItems(search, currentCategory)
+        itemsService.getFilteredAndGroupedItems(search, currentCategory)
                 .thenAccept(this::processFetchResponse)
                 .exceptionally(this::processFetchException);
     }
 
-    private void processFetchResponse(List<ItemSummary> items) {
-        Platform.runLater(() -> loadItemsToUI(items));
+    /**
+     * Tiếp nhận kết quả Map dữ liệu và điều phối về Luồng giao diện.
+     * @param groupedItems Bản đồ lưu trữ danh sách sản phẩm đã được phân nhóm theo trạng thái
+     */
+    private void processFetchResponse(Map<AuctionStatus, List<ItemSummary>> groupedItems) {
+        Platform.runLater(() -> loadItemsToUI(groupedItems));
     }
 
     private Void processFetchException(Throwable e) {
@@ -90,40 +98,51 @@ public class HomePageController {
         return null;
     }
 
-    // ── UI Rendering ──────────────────────────────────────────────────────────
-    public void loadItemsToUI(List<ItemSummary> itemsFromServer) {
+    public void loadItemsToUI(Map<AuctionStatus, List<ItemSummary>> groupedItems) {
         clearAllContainers();
 
-        if (itemsFromServer == null || itemsFromServer.isEmpty()) {
+        if (groupedItems == null || groupedItems.isEmpty()) {
             updateSectionVisibility(0, 0, 0);
             return;
         }
 
-        int ongoingCount = 0, upcomingCount = 0, endedCount = 0;
+        List<ItemSummary> ongoingList = groupedItems.get(AuctionStatus.ONGOING);
+        List<ItemSummary> upcomingList = groupedItems.get(AuctionStatus.UPCOMING);
+        List<ItemSummary> endedList = groupedItems.get(AuctionStatus.ENDED);
 
-        for (ItemSummary item : itemsFromServer) {
-            if (item.getStatus() == AuctionStatus.BANNED) continue;
-
-            try {
-                VBox cardBox = ItemCardFactory.createCard(item);
-                AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
-
-                switch (status) {
-                    case ONGOING  -> { ongoingAuctionsContainer.getChildren().add(cardBox);  ongoingCount++;  }
-                    case UPCOMING -> { upcomingAuctionsContainer.getChildren().add(cardBox); upcomingCount++; }
-                    case ENDED    -> { endedAuctionsContainer.getChildren().add(cardBox);    endedCount++;    }
-                    case BANNED   -> { /* Banned items are filtered out, this should not happen */ }
-                }
-            } catch (IOException e) {
-                System.err.println("Failed to load item card: " + item.getName());
-                e.printStackTrace();
-            }
+        // Dữ liệu sản phẩm Ongoing
+        if (ongoingList != null) {
+            ongoingList.forEach(item -> {
+                try { ongoingAuctionsContainer.getChildren().add(ItemCardFactory.createCard(item)); }
+                catch (IOException e) { System.err.println("Failed to load ongoing card: " + item.getName()); }
+            });
         }
 
+        // Dữ liệu sản phẩm Upcoming
+        if (upcomingList != null) {
+            upcomingList.forEach(item -> {
+                try { upcomingAuctionsContainer.getChildren().add(ItemCardFactory.createCard(item)); }
+                catch (IOException e) { System.err.println("Failed to load upcoming card: " + item.getName()); }
+            });
+        }
+
+        // Dữ liệu sản phẩm Ended
+        if (endedList != null) {
+            endedList.forEach(item -> {
+                try { endedAuctionsContainer.getChildren().add(ItemCardFactory.createCard(item)); }
+                catch (IOException e) { System.err.println("Failed to load ended card: " + item.getName()); }
+            });
+        }
+
+        int ongoingCount = ongoingList != null ? ongoingList.size() : 0;
+        int upcomingCount = upcomingList != null ? upcomingList.size() : 0;
+        int endedCount = endedList != null ? endedList.size() : 0;
         updateSectionVisibility(ongoingCount, upcomingCount, endedCount);
     }
 
-    // ── Event Handlers ────────────────────────────────────────────────────────
+    /**
+     * Tiếp nhận và xử lý sự kiện click chuột chọn danh mục sản phẩm từ người dùng.
+     */
     @FXML
     private void handleCategoryClick(MouseEvent event) {
         VBox clickedBox = (VBox) event.getSource();
@@ -131,29 +150,39 @@ public class HomePageController {
         if (rawId == null || rawId.isBlank()) return;
 
         String targetCategory = rawId.substring(0, 1).toUpperCase() + rawId.substring(1).toLowerCase();
-
         currentCategory = targetCategory.equalsIgnoreCase(currentCategory) ? "ALL" : targetCategory;
 
-        updateCategoryUIStyle(clickedBox);
+        ItemCardFactory.updateCategoryUIStyle(clickedBox, currentCategory);
         fetchItemsFromServer();
     }
 
+    /**
+     * Tiếp nhận sự kiện yêu cầu chuyển hướng người dùng sang giao diện Tạo sản phẩm đấu giá mới.
+     */
     @FXML
     public void handleSwitchToAuctionFormPage(ActionEvent event) {
         NavigationUtil.handleSwitchToAuctionFormPage(event);
     }
 
+    /**
+     * Làm mới lại danh sách sản phẩm bằng cách tải lại từ mạng.
+     */
     public void refreshItems() {
         fetchItemsFromServer();
     }
 
+    /**
+     * Ra lệnh cho khối NavBarController con nạp lại thông tin số dư / tài khoản người dùng hiện tại.
+     */
     public void refreshNavBarInfo() {
         if (navBarController != null) {
             navBarController.refreshUserInfo();
         }
     }
 
-    // ── UI Helpers ────────────────────────────────────────────────────────────
+    /**
+     * Dọn sạch tất cả các Node đồ họa cũ ra khỏi 3 ngăn chứa màn hình chính.
+     */
     private void clearAllContainers() {
         ongoingAuctionsContainer.getChildren().clear();
         upcomingAuctionsContainer.getChildren().clear();
@@ -169,16 +198,5 @@ public class HomePageController {
     private void setSectionVisible(VBox section, boolean visible) {
         section.setVisible(visible);
         section.setManaged(visible);
-    }
-
-    private void updateCategoryUIStyle(VBox clickedBox) {
-        for (Node node : clickedBox.getParent().getChildrenUnmodifiable()) {
-            if (node instanceof VBox) {
-                node.getStyleClass().remove("active-category");
-            }
-        }
-        if (!"ALL".equals(currentCategory)) {
-            clickedBox.getStyleClass().add("active-category");
-        }
     }
 }

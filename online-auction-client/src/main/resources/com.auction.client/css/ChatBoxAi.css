@@ -1,21 +1,26 @@
+/* ===== Khung Container Hộp Chat Tổng ===== */
 .chat-container {
+    -fx-pref-width: 320px;
+    -fx-pref-height: 450px;
+    -fx-max-width: 320px;
+    -fx-max-height: 450px;
     -fx-background-color: white;
-    -fx-background-radius: 25;
-    -fx-border-radius: 25;
-    -fx-border-color: #f0f0f0;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, 0, 5);
-    -fx-overflow: hidden;
+    /* Định vị dịch chuyển tương đối so với vị trí nút bấm cũ */
+    -fx-translate-x: -10px;
+    -fx-translate-y: -70px;
 }
 
+/* ===== Khung Header ===== */
 .chat-header {
+    -fx-min-height: 50px;
+    -fx-pref-height: 50px;
     -fx-background-color: #1a2a47;
-    /* Màu xanh đen như ảnh */
-    -fx-background-radius: 25 25 0 0;
-}
-
-.header-icon {
-    -fx-text-fill: white;
-    -fx-font-size: 16px;
+    -fx-background-radius: 20 20 0 0;
 }
 
 .header-text {
@@ -31,38 +36,104 @@
     -fx-cursor: hand;
 }
 
+/* ===== Vùng Hiển Thị Nội Dung Cuộn ===== */
 .chat-scroll {
     -fx-background-color: transparent;
     -fx-background: transparent;
 }
 
+.chat-scroll > .viewport {
+    -fx-background-color: #f7f8fc;
+}
+
+.chat-scroll .scroll-bar:vertical,
+.chat-scroll .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+}
+
+.chat-scroll .corner {
+    -fx-opacity: 0;
+}
+
+.message-area {
+    -fx-spacing: 12px;
+    -fx-padding: 15px 12px 15px 12px;
+    -fx-background-color: #f7f8fc;
+}
+
+/* ===== Vùng Footer Nhập Liệu ===== */
+.chat-footer {
+    -fx-background-color: white;
+    -fx-border-color: #ebebeb;
+    -fx-border-width: 1px 0px 0px 0px;
+    -fx-padding: 10px 12px;
+}
+
+/* Các nút gợi ý câu hỏi nhanh */
 .suggest-btn {
     -fx-background-color: white;
-    -fx-border-color: #4485f4;
-    -fx-border-radius: 15;
-    -fx-background-radius: 15;
+    -fx-border-color: #d0e4ff;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
     -fx-text-fill: #4485f4;
     -fx-font-size: 11px;
-    -fx-padding: 5 12;
+    -fx-padding: 5px 12px;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(68,133,244,0.10), 4, 0, 0, 1);
 }
 
 .suggest-btn:hover {
-    -fx-background-color: #f0f7ff;
+    -fx-background-color: #eaf2ff;
+    -fx-border-color: #4485f4;
 }
 
+/* Ô nhập liệu tin nhắn dạng văn bản */
 .chat-input {
-    -fx-background-color: #f4f4f4;
-    -fx-background-radius: 20;
-    -fx-padding: 8 15;
+    -fx-background-color: #f0f2f5;
+    -fx-background-radius: 16;
+    -fx-border-color: transparent;
+    -fx-border-radius: 16;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1a1a1a;
+    -fx-prompt-text-fill: #aaa;
+    -fx-pref-row-count: 1;
+    -fx-min-height: 36px;
+    -fx-pref-height: 36px;
+    -fx-max-height: 80px;
+    -fx-scroll-bar-policy: never;
 }
 
+.chat-input .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.chat-input .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.chat-input .scroll-pane .content {
+    -fx-background-color: transparent;
+    -fx-padding: 8px 12px; /* Chuyển padding vào đây */
+}
+
+.chat-input .scroll-pane .scroll-bar {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+}
+
+/* Nút bấm Gửi hành động */
 .send-btn {
     -fx-background-color: #4485f4;
     -fx-text-fill: white;
     -fx-background-radius: 50;
-    -fx-min-width: 35;
-    -fx-min-height: 35;
+    -fx-min-width: 38px;
+    -fx-max-width: 38px;
+    -fx-min-height: 38px;
+    -fx-max-height: 38px;
+    -fx-cursor: hand;
 }
 
 .send-btn:disabled {
@@ -71,102 +142,3 @@
     -fx-opacity: 1;
     -fx-cursor: default;
 }
-
-.chat-container {
-    -fx-background-color: white;
-    -fx-background-radius: 20;
-    -fx-border-radius: 20;
-    -fx-border-color: #e0e0e0;
-    -fx-border-width: 1;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 15, 0, 0, 5);
-}
-
-.chat-header {
-    -fx-background-color: #1a2a47;
-    -fx-background-radius: 20 20 0 0;
-}
-
-.chat-input {
-    -fx-background-radius: 20;
-    -fx-background-color: #f4f4f4;
-    -fx-padding: 8 12;
-}
-.chat-input {
-    -fx-pref-row-count: 1;       /* bắt đầu 1 dòng */
-    -fx-max-height: 84;          /* tối đa ~3 dòng */
-    -fx-min-height: 36;          /* tối thiểu 1 dòng */
-    -fx-pref-height: 36;         /* mặc định 1 dòng */
-}
-
-/* ===== TextArea thay thế TextField ===== */
-.chat-input {
-    -fx-background-color: #f0f2f5;
-    -fx-background-radius: 16;
-    -fx-border-color: transparent;
-    -fx-border-radius: 16;
-    -fx-padding: 8 12;
-    -fx-font-size: 13px;
-    -fx-text-fill: #1a1a1a;
-    -fx-prompt-text-fill: #aaa;
-    /* Ẩn scrollbar bên trong TextArea */
-    -fx-scroll-bar-policy: never;
-}
-
-/* Ẩn ScrollBar bên trong TextArea */
-.chat-input .scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-}
-.chat-input .scroll-pane .scroll-bar {
-    -fx-opacity: 0;
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
-}
-.chat-input .scroll-pane .viewport {
-    -fx-background-color: transparent;
-}
-.chat-input .content {
-    -fx-background-color: transparent;
-}
-
-/* ===== Vùng chat background đẹp hơn ===== */
-.chat-scroll > .viewport {
-    -fx-background-color: #f7f8fc;
-}
-
-/* Ẩn hoàn toàn scrollbar của chat scroll pane */
-.chat-scroll .scroll-bar:vertical,
-.chat-scroll .scroll-bar:horizontal {
-    -fx-opacity: 0;
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
-}
-.chat-scroll .corner {
-    -fx-opacity: 0;
-}
-
-/* ===== Vùng input footer đẹp hơn ===== */
-.chat-footer {
-    -fx-background-color: white;
-    -fx-border-color: #ebebeb;
-    -fx-border-width: 1 0 0 0;
-    -fx-padding: 10 12;
-}
-
-/* ===== Suggest buttons cải thiện ===== */
-.suggest-btn {
-    -fx-background-color: white;
-    -fx-border-color: #d0e4ff;
-    -fx-border-radius: 14;
-    -fx-background-radius: 14;
-    -fx-text-fill: #4485f4;
-    -fx-font-size: 11px;
-    -fx-padding: 5 12;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(68,133,244,0.10), 4, 0, 0, 1);
-}
-.suggest-btn:hover {
-    -fx-background-color: #eaf2ff;
-    -fx-border-color: #4485f4;
-}
-

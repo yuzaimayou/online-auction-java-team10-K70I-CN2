@@ -1,6 +1,7 @@
 package com.auction.client.controller.auth;
 
 import com.auction.client.service.AuthService;
+import com.auction.client.validation.AuthValidation;
 import com.auction.client.util.NavigationUtil;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -12,8 +13,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
+
 public class RegisterController {
-    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
     @FXML
     private TextField txtUsername;
@@ -28,37 +29,33 @@ public class RegisterController {
 
     private AuthService authService = AuthService.getInstance();
 
+
     @FXML
     public void handleRegister(ActionEvent event) {
-        String username = txtUsername.getText().trim();
+        String username = txtUsername.getText();
+        String email = txtEmail.getText();
         String password = txtPassword.getText();
         String confirm = txtConfirmPassword.getText();
-        String email = txtEmail.getText().trim();
 
-        if (username.isEmpty() || password.isEmpty() || confirm.isEmpty() || email.isEmpty()) {
-            showError("Please fill in all fields.");
-            return;
-        }
-        if (!email.matches(EMAIL_REGEX)) {
-            showError("Invalid email address.");
-            return;
-        }
-        if (!password.equals(confirm)) {
-            showError("Passwords do not match.");
+        // 1. Kiểm tra validation
+        String validationError = AuthValidation.validateRegister(username, email, password, confirm);
+        if (validationError != null) {
+            showError(validationError);
             return;
         }
 
-        authService.register(username, password, email)
+        // 2. Gọi Service xử lý đăng ký tài khoản
+        authService.register(username.trim(), password, email.trim())
                 .thenAccept(res -> {
                     if ("success".equalsIgnoreCase(res.getStatus())) {
                         Platform.runLater(() -> {
                             showSuccess(res.getMessage());
                             PauseTransition pause = new PauseTransition(Duration.seconds(2));
-                            pause.setOnFinished(e -> NavigationUtil.switchToOtpScreen(event, email)
-                            );
+                            pause.setOnFinished(e -> NavigationUtil.switchToOtpScreen(event, email.trim()));
                             pause.play();
                         });
                     } else {
+                        // Trường hợp server báo lỗi (Trùng tài khoản, trùng email...)
                         Platform.runLater(() -> showError(res.getMessage()));
                     }
                 })
@@ -72,12 +69,14 @@ public class RegisterController {
     protected void handleSwitchToLogin(ActionEvent event) {
         NavigationUtil.switchToLogin(event);
     }
-        private void showError(String message) {
-            lblMessage.setTextFill(Color.RED);
-            lblMessage.setText(message);
-        }
-        private void showSuccess(String message) {
-            lblMessage.setTextFill(Color.GREEN);
-            lblMessage.setText(message);
-        }
+
+    private void showError(String message) {
+        lblMessage.setTextFill(Color.RED);
+        lblMessage.setText(message);
     }
+
+    private void showSuccess(String message) {
+        lblMessage.setTextFill(Color.GREEN);
+        lblMessage.setText(message);
+    }
+}

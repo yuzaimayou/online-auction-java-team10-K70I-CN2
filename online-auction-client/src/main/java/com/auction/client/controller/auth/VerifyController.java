@@ -12,7 +12,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 
 public class VerifyController {
+
     private String email;
+
     private AuthService authService = AuthService.getInstance();
 
     @FXML
@@ -30,7 +32,6 @@ public class VerifyController {
     @FXML
     private TextField txtCode6;
 
-
     @FXML
     public void initialize() {
         addAutoJump(txtCode1, txtCode2, null);
@@ -38,13 +39,19 @@ public class VerifyController {
         addAutoJump(txtCode3, txtCode4, txtCode2);
         addAutoJump(txtCode4, txtCode5, txtCode3);
         addAutoJump(txtCode5, txtCode6, txtCode4);
-        addAutoJump(txtCode6, null, txtCode5);
+        addAutoJump(txtCode6, null, txtCode4);
     }
+
 
     public void setEmail(String email) {
         this.email = email;
     }
 
+    /**
+     * Hàm hỗ trợ ràng buộc hành vi tự động chuyển đổi con trỏ focus giữa các ô nhập mã OTP.
+     * Chỉ cho phép nhập số, giới hạn độ dài 1 ký tự, tự động sang ô tiếp theo khi nhập đủ
+     * hoặc quay về ô trước đó khi nhấn Backspace trên ô trống.
+     */
     private void addAutoJump(TextField current, TextField next, TextField previous) {
         current.textProperty().addListener((obs, oldVal, newVal) -> {
             if (!newVal.matches("\\d*")) {
@@ -67,6 +74,11 @@ public class VerifyController {
         });
     }
 
+    /**
+     * Xử lý sự kiện khi người dùng nhấn nút kích hoạt xác thực "Verify".
+     * Ghép chuỗi từ 6 ô nhập thành chuỗi OTP hoàn chỉnh, gửi lên server kiểm tra bất đồng bộ.
+     * Nếu thành công, điều hướng về Trang chủ (nếu đã đăng nhập) hoặc trang Đăng nhập.
+     */
     @FXML
     public void handleVerify(ActionEvent event) {
         String otp = txtCode1.getText() + txtCode2.getText() + txtCode3.getText() + txtCode4.getText() + txtCode5.getText() + txtCode6.getText();
@@ -82,7 +94,6 @@ public class VerifyController {
                         pause.play();
                     } else {
                         javafx.application.Platform.runLater(() -> {
-                            // Hiển thị lỗi nếu có
                             lblMessage.setTextFill(Color.RED);
                             lblMessage.setText(responseMessage.getMessage());
                         });
@@ -97,6 +108,10 @@ public class VerifyController {
                     return null;
                 });
     }
+
+    /**
+     * Xử lý sự kiện khi người dùng nhấn nút yêu cầu gửi lại mã "Resend OTP".
+     */
     @FXML
     public void handleResend(ActionEvent event) {
         authService.sendOtp(email)
@@ -128,8 +143,7 @@ public class VerifyController {
     }
 
     @FXML
-    public void handleSwitchToLogin(
-            ActionEvent event
-    ) {NavigationUtil.switchToLogin(event);
+    public void handleSwitchToLogin(ActionEvent event) {
+        NavigationUtil.switchToLogin(event);
     }
 }

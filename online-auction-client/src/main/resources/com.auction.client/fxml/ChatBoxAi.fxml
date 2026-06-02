@@ -3,16 +3,15 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+
 <VBox fx:id="chatWindowContainer"
-      prefWidth="350.0" prefHeight="500.0"
-      maxWidth="350.0" maxHeight="500.0"
       spacing="0"
       styleClass="chat-container"
       stylesheets="@../css/ChatBoxAi.css"
       fx:controller="com.auction.client.controller.common.ChatBoxAiController"
       xmlns:fx="http://javafx.com/fxml">
 
-    <HBox prefHeight="50.0" minHeight="50.0" styleClass="chat-header" alignment="CENTER_LEFT">
+    <HBox styleClass="chat-header" alignment="CENTER_LEFT">
         <padding>
             <Insets left="15.0" right="10.0"/>
         </padding>
@@ -26,11 +25,11 @@
                 styleClass="chat-scroll"
                 hbarPolicy="NEVER"
                 vbarPolicy="NEVER">
-        <VBox fx:id="messageArea" spacing="12" style="-fx-padding: 15 12 15 12; -fx-background-color: #f7f8fc;">
+        <VBox fx:id="messageArea" styleClass="message-area">
         </VBox>
     </ScrollPane>
 
-    <VBox spacing="10" style="-fx-padding: 10;">
+    <VBox styleClass="chat-footer" spacing="10">
         <FlowPane hgap="5" vgap="5">
             <Button text="Create an auction" styleClass="suggest-btn" onAction="#sendSuggest"/>
             <Button text="How to bid?" styleClass="suggest-btn" onAction="#sendSuggest"/>
@@ -40,12 +39,9 @@
                       promptText="Type your message..."
                       styleClass="chat-input"
                       wrapText="true"
-                      prefRowCount="1"
-                      HBox.hgrow="ALWAYS"
-                      style="-fx-max-height: 80;"/>
+                      HBox.hgrow="ALWAYS"/>
             <Button fx:id="btnSend" onAction="#sendMessage" defaultButton="true"
-                    styleClass="send-btn" text="➔"
-                    style="-fx-min-width: 38; -fx-min-height: 38; -fx-max-height: 38;"/>
+                    styleClass="send-btn" text="➔"/>
         </HBox>
     </VBox>
 </VBox>
