@@ -54,7 +54,6 @@ public class AlertUtil {
         }
         alert.setResizable(false);
 
-        // 4. size hợp lý
         alert.getDialogPane().setPrefWidth(360);
         alert.getDialogPane().setMaxWidth(420);
         alert.getDialogPane().setPrefHeight(180);

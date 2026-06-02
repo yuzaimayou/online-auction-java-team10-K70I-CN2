@@ -3,7 +3,7 @@ package com.auction.client.controller.auction;
 import com.auction.client.network.AuctionSocketClient;
 import com.auction.client.service.AutoBidService;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
-import com.auction.client.ui.auction.AutoBidView;
+import com.auction.client.ui.auction.AutoBidPaneWrapper;
 import com.auction.client.ui.item.ItemStatusRendered;
 import com.auction.client.validation.AutoBidValidationService;
 import com.auction.shared.model.account.User;
@@ -30,7 +30,7 @@ public class AutoBidController {
     private final Supplier<Double> myLastBidSupplier;
 
     // Liên kết tới tầng View nguyên bản (Đã bóc tách)
-    private final AutoBidView view;
+    private final AutoBidPaneWrapper view;
 
     public AutoBidController(
             AutoBidService autoBidManager,
@@ -38,7 +38,7 @@ public class AutoBidController {
             AuctionSocketClient network,
             User user,
             ItemStatusRendered statusService,
-            AutoBidView view, // Nhận đối tượng View đã gom nhóm
+            AutoBidPaneWrapper view, // Nhận đối tượng View đã gom nhóm
             Supplier<Item> itemSupplier,
             Supplier<Double> myLastBidSupplier
     ) {
