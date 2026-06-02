@@ -9,7 +9,6 @@ import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.server.service.auction.AuctionLockManager;
 import com.auction.server.util.StringUtil;
-import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
@@ -100,9 +99,6 @@ public class ItemService {
             try {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
 
-                if (query.contains("page=")) {
-                    page = parsePage(query);
-                }
                 return getItemsByKeyword(input, category, page);
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Failed to search items", e);
@@ -162,8 +158,7 @@ public class ItemService {
     }
 
     public boolean addItem(ItemPayload itemData) {
-        com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
-        if (isSuspended(seller)) {
+        if (isSellerSuspended(itemData.getUserId())) {
             LOGGER.info("Item creation rejected: seller is suspended.");
             return false;
         }
@@ -192,8 +187,7 @@ public class ItemService {
     }
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
-        User seller = new UserRepository().findById(itemData.getUserId());
-        if (isSuspended(seller)) {
+        if (isSellerSuspended(itemData.getUserId())) {
             LOGGER.info("Item update rejected: seller is suspended.");
             return false;
         }
@@ -256,7 +250,8 @@ public class ItemService {
         return 0;
     }
 
-    private boolean isSuspended(User user) {
+    private boolean isSellerSuspended(String userId) {
+        com.auction.shared.model.account.User user = new UserRepository().findById(userId);
         return user != null && "Suspended".equalsIgnoreCase(user.getStatus());
     }
 
