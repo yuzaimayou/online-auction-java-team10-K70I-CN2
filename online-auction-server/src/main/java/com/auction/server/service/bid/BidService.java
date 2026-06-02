@@ -53,7 +53,6 @@ public class BidService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository txLogRepository;
     private final BidValidator bidValidator;
-    private final AuctionRoomManager auctionRoomManager = AuctionRoomManager.getInstance();
 
     public BidService() {
         this.bidRepository = new BidRepository();
@@ -134,7 +133,8 @@ public class BidService {
                 itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId);
 
                 // 5. Anti-snipe
-                antiSnipe(item.getEndTime(), newEndTime, conn, itemId, isExtended);
+                newEndTime = antiSnipe(item.getEndTime(), conn, itemId);
+                isExtended = newEndTime != null;
 
                 // 6. Auto-bid rounds
                 bidEvents.add(new BidEvent(userId, bidPrice, bidTime));
@@ -260,7 +260,8 @@ public class BidService {
                         bidTime, itemId, userId, immediateBidPrice));
 
                 // 6. Anti-snipe (FIX: áp dụng nhất quán cho cả auto-bid)
-                antiSnipe(item.getEndTime(), newEndTime, conn, itemId, isExtended);
+                newEndTime = antiSnipe(item.getEndTime(), conn, itemId);
+                isExtended = newEndTime != null;
 
                 // 7. Auto-bid rounds
                 bidEvents.add(new BidEvent(userId, immediateBidPrice, bidTime));
@@ -497,16 +498,16 @@ public class BidService {
     private record BidEvent(String userId, double bidPrice, String bidTime) {}
 
     //Anti-snipe
-    private void antiSnipe(LocalDateTime currentEndTime, LocalDateTime newEndTime, Connection conn, String itemId, boolean isExtended) {
+    private LocalDateTime antiSnipe(LocalDateTime currentEndTime, Connection conn, String itemId) {
         long secondsRemaining = ChronoUnit.SECONDS.between(LocalDateTime.now(), currentEndTime);
 
         if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
-            newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
+            LocalDateTime newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
             itemRepository.extendEndTime(conn, itemId, newEndTime);
-            isExtended = true;
             LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
-            auctionRoomManager.broadcastToRoom(itemId, SocketEventConstants.EVENT_UPDATE_TIME, newEndTime);
+            return newEndTime;
         }
+        return null;
     }
 
     // Inner class — BidValidator
