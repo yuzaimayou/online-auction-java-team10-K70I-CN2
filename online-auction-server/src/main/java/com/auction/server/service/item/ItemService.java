@@ -17,7 +17,6 @@ import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 
 import java.io.IOException;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -200,7 +199,21 @@ public class ItemService {
         Item item = setItem(itemData);
         LOGGER.fine("sellerid: " + item.getSellerId());
         LOGGER.fine("image" + item.getImagesPath());
-        return itemRepository.updateItem(item, itemId);
+        boolean updated = itemRepository.updateItem(item, itemId);
+
+        if (updated) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    List<Path> imagePaths = item.getImagesPath().stream()
+                            .map(name -> Paths.get("dataBase", "images", name))
+                            .collect(Collectors.toList());
+                    aiServiceClient.embeddingProduct(item.getId(), item.getName(), item.getDescription(), imagePaths);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Failed to index item with AI service: " + item.getId(), e);
+                }
+            });
+        }
+        return updated;
     }
 
     public boolean deleteItem(String itemId) {
