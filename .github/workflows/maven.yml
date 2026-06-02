@@ -11,10 +11,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      MAVEN_OPTS: -Dfile.encoding=UTF-8
 
     steps:
       - name: Checkout code
@@ -27,11 +35,29 @@ jobs:
           java-version: "25"
           cache: maven
 
+      - name: Show tool versions
+        run: |
+          java -version
+          mvn -version
+
       - name: Install headless UI dependencies
-        run: sudo apt-get update && sudo apt-get install -y xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
 
       - name: Run tests and package
-        run: xvfb-run -a mvn -B -ntp clean verify
+        run: xvfb-run -a mvn -B -ntp -V clean verify
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: |
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
