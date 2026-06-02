@@ -1,10 +1,7 @@
 package com.auction.client.ui.auction;
 
-import com.auction.client.network.BidHistoryApiClient;
 import com.auction.client.ui.util.ToastUtil;
-import com.auction.shared.model.account.User;
 import com.auction.shared.model.dto.BidHistoryItemDTO;
-import javafx.application.Platform;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -12,46 +9,35 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
+/**
+ * 🖼️ VIEW COMPONENT
+ * Quản lý trực tiếp các đối tượng giao diện JavaFX và thực hiện các hành vi render đồ họa.
+ */
 public class BidHistoryPanel {
 
-    private final BidHistoryApiClient bidHistoryApiClient;
-    private final User user;
     private final VBox historyBidContainer;
     private final ScrollPane historyScrollPane;
     private final Label totalBidsLabel;
     private final XYChart.Series<String, Number> bidPriceSeries;
 
     public BidHistoryPanel(
-            BidHistoryApiClient bidHistoryApiClient,
-            User user,
             VBox historyBidContainer,
             ScrollPane historyScrollPane,
             Label totalBidsLabel,
             XYChart.Series<String, Number> bidPriceSeries
     ) {
-        this.bidHistoryApiClient = bidHistoryApiClient;
-        this.user               = user;
         this.historyBidContainer = historyBidContainer;
         this.historyScrollPane  = historyScrollPane;
         this.totalBidsLabel     = totalBidsLabel;
         this.bidPriceSeries     = bidPriceSeries;
     }
 
-    public void load(String itemId) {
-        bidHistoryApiClient.getHistory(itemId)
-                .thenAccept(bids -> Platform.runLater(() -> render(bids)))
-                .exceptionally(ex -> {
-                    ex.printStackTrace();
-                    Platform.runLater(() ->
-                            ToastUtil.showError(historyBidContainer.getScene(),
-                                    "Failed to load bid history"));
-                    return null;
-                });
-    }
+    public void render(List<BidHistoryItemDTO> bids, String currentUsername) {
+        // Vẽ đồ thị biểu đồ giá thông qua Renderer Helper
+        BidHistoryRowFactory.renderChart(bids, bidPriceSeries);
 
-    private void render(List<BidHistoryItemDTO> bids) {
-        BidHistoryUiRenderer.renderChart(bids, bidPriceSeries);
-        historyBidContainer.getChildren().clear(); // ← fix memory leak
+        // Làm sạch container cũ để tránh Memory Leak (Rò rỉ bộ nhớ)
+        historyBidContainer.getChildren().clear();
 
         if (bids == null || bids.isEmpty()) {
             totalBidsLabel.setText("0 bids");
@@ -65,7 +51,7 @@ public class BidHistoryPanel {
         int total = bids.size();
         for (int i = 0; i < total; i++) {
             historyBidContainer.getChildren().add(
-                    BidHistoryUiRenderer.createRow(total - i, bids.get(i), user.getUsername())
+                    BidHistoryRowFactory.createRow(total - i, bids.get(i), currentUsername)
             );
         }
     }
@@ -74,6 +60,12 @@ public class BidHistoryPanel {
         if (historyScrollPane != null) {
             historyScrollPane.setVisible(visible);
             historyScrollPane.setManaged(visible);
+        }
+    }
+
+    public void showLoadErrorMessage(String message) {
+        if (historyBidContainer.getScene() != null) {
+            ToastUtil.showError(historyBidContainer.getScene(), message);
         }
     }
 }

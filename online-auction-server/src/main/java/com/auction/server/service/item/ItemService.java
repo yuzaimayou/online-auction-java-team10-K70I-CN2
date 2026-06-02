@@ -9,7 +9,6 @@ import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.server.service.auction.AuctionLockManager;
 import com.auction.server.util.StringUtil;
-import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
@@ -17,7 +16,6 @@ import com.auction.shared.model.payloads.ItemPayload;
 import com.auction.shared.util.ImageUtil;
 
 import java.io.IOException;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,9 +98,6 @@ public class ItemService {
             try {
                 String input = StringUtil.removeAccents(extractParam(query, "search"));
 
-                if (query.contains("page=")) {
-                    page = parsePage(query);
-                }
                 return getItemsByKeyword(input, category, page);
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Failed to search items", e);
@@ -162,8 +157,7 @@ public class ItemService {
     }
 
     public boolean addItem(ItemPayload itemData) {
-        com.auction.shared.model.account.User seller = new com.auction.server.repository.UserRepository().findById(itemData.getUserId());
-        if (isSuspended(seller)) {
+        if (isSellerSuspended(itemData.getUserId())) {
             LOGGER.info("Item creation rejected: seller is suspended.");
             return false;
         }
@@ -192,15 +186,28 @@ public class ItemService {
     }
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
-        User seller = new UserRepository().findById(itemData.getUserId());
-        if (isSuspended(seller)) {
+        if (isSellerSuspended(itemData.getUserId())) {
             LOGGER.info("Item update rejected: seller is suspended.");
             return false;
         }
         Item item = setItem(itemData);
         LOGGER.fine("sellerid: " + item.getSellerId());
         LOGGER.fine("image" + item.getImagesPath());
-        return itemRepository.updateItem(item, itemId);
+        boolean updated = itemRepository.updateItem(item, itemId);
+
+        if (updated) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    List<Path> imagePaths = item.getImagesPath().stream()
+                            .map(name -> Paths.get("dataBase", "images", name))
+                            .collect(Collectors.toList());
+                    aiServiceClient.embeddingProduct(item.getId(), item.getName(), item.getDescription(), imagePaths);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Failed to index item with AI service: " + item.getId(), e);
+                }
+            });
+        }
+        return updated;
     }
 
     public boolean deleteItem(String itemId) {
@@ -256,7 +263,8 @@ public class ItemService {
         return 0;
     }
 
-    private boolean isSuspended(User user) {
+    private boolean isSellerSuspended(String userId) {
+        com.auction.shared.model.account.User user = new UserRepository().findById(userId);
         return user != null && "Suspended".equalsIgnoreCase(user.getStatus());
     }
 
