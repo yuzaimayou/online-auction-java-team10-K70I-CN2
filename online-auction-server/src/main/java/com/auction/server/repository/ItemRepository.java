@@ -41,7 +41,7 @@ public class ItemRepository {
 
     // cập nhật giá hiện tại và người trả giá hiện tại
     public boolean updateCurrentBidder(Connection conn, String itemId,
-            double newPrice, String newBidderId) {
+                                       double newPrice, String newBidderId) {
         String sql = """
                 UPDATE items
                 SET current_price     = ?,
@@ -454,19 +454,19 @@ public class ItemRepository {
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
         String sql = String.format("""
-                SELECT id,
-                       name,
-                       category,
-                       current_price,
-                       image_path,
-                       start_time,
-                       end_time
-                FROM items
-                WHERE status != '%s'
-                %s
-                ORDER BY %s
-                LIMIT 10 OFFSET ?
-                """,
+                        SELECT id,
+                               name,
+                               category,
+                               current_price,
+                               image_path,
+                               start_time,
+                               end_time
+                        FROM items
+                        WHERE status != '%s'
+                        %s
+                        ORDER BY %s
+                        LIMIT 10 OFFSET ?
+                        """,
                 AuctionStatus.BANNED.name(),
                 filterCategory ? "AND LOWER(category) = LOWER(?)" : "",
                 safeSort);
@@ -519,10 +519,10 @@ public class ItemRepository {
 
     public List<String> getImgName(String itemId) {
         String sql = """
-            SELECT image_path
-            FROM items
-            WHERE id = ?
-            """;
+                SELECT image_path
+                FROM items
+                WHERE id = ?
+                """;
         List<String> imagePaths = new ArrayList<>();
         try (
                 Connection conn = DatabaseManager.getConnection();
@@ -590,23 +590,6 @@ public class ItemRepository {
         }
     }
 
-    public void updateCurrentPrice(String itemId, double newPrice) {
-
-        String sql = "UPDATE items SET current_price = ? WHERE id = ?";
-
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setDouble(1, newPrice);
-            stmt.setString(2, itemId);
-
-            stmt.executeUpdate();
-
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current price", e);
-        }
-    }
 
     public boolean updateCurrentPrice(Connection conn, String itemId, double newPrice) {
 
@@ -731,19 +714,6 @@ public class ItemRepository {
         return 0.0;
     }
 
-    public boolean updateStatus(String itemId, AuctionStatus status) {
-        String sql = "UPDATE items SET status = ? WHERE id = ?";
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, status.name());
-            stmt.setString(2, itemId);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update item status", e);
-            return false;
-        }
-    }
 
     public boolean updateStatus(Connection conn, String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
