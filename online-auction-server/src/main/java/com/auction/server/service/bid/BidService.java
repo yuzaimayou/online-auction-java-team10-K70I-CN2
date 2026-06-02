@@ -91,7 +91,6 @@ public class BidService {
             try {
                 conn = DatabaseManager.getConnection();
                 conn.setAutoCommit(false);
-
                 Item item = itemRepository.findById(conn, itemId);
                 if (item == null) {
                     conn.rollback();
@@ -132,9 +131,11 @@ public class BidService {
                         "[MANUAL_BID] time=%s itemId=%s userId=%s currentPrice=%.2f bidPrice=%.2f",
                         bidTime, itemId, userId, currentPrice, bidPrice));
 
-                bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime);
+                if (!bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime)) {
+                    throw new SQLException("Failed to create bid for item: " + itemId);
+                }
                 if (!itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId)) {
-                    throw new IllegalStateException("Failed to update current bidder for item " + itemId);
+                    throw new SQLException("Failed to update current bidder for item: " + itemId);
                 }
 
                 newEndTime = antiSnipe(item.getEndTime(), conn, itemId);
@@ -195,6 +196,7 @@ public class BidService {
                 conn = DatabaseManager.getConnection();
                 conn.setAutoCommit(false);
 
+                // 1. Load dữ liệu
                 Item item = itemRepository.findById(conn, itemId);
                 if (item == null) {
                     conn.rollback();
@@ -252,9 +254,11 @@ public class BidService {
                         currentBidderId, currentPrice);
 
                 String bidTime = LocalDateTime.now().toString();
-                bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime);
+                if (!bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime)) {
+                    throw new SQLException("Failed to create immediate auto-bid for item: " + itemId);
+                }
                 if (!itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId)) {
-                    throw new IllegalStateException("Failed to update current bidder for item " + itemId);
+                    throw new SQLException("Failed to update current bidder for item: " + itemId);
                 }
 
                 LOGGER.info(String.format(
@@ -310,7 +314,24 @@ public class BidService {
         }
 
         synchronized (AuctionLockManager.getItemLock(itemId)) {
-            return bidRepository.deactivateAutoBidIfPresent(itemId, userId);
+            Connection conn = null;
+            try {
+                conn = DatabaseManager.getConnection();
+                conn.setAutoCommit(false);
+                boolean deactivated = bidRepository.deactivateAutoBidIfPresent(conn, itemId, userId);
+                conn.commit();
+                return deactivated;
+            } catch (SQLException e) {
+                rollbackQuietly(conn);
+                LOGGER.log(Level.SEVERE, "DB error trong cancelAutoBid - " + e.getMessage(), e);
+                return false;
+            } catch (Exception e) {
+                rollbackQuietly(conn);
+                LOGGER.log(Level.SEVERE, "Unexpected error trong cancelAutoBid - " + e.getMessage(), e);
+                return false;
+            } finally {
+                closeQuietly(conn);
+            }
         }
     }
 
@@ -434,9 +455,11 @@ public class BidService {
                     currentLeader, livePrice);
 
             String bidTime = LocalDateTime.now().toString();
-            bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime);
+            if (!bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime)) {
+                throw new SQLException("Failed to create auto-bid round bid for item: " + itemId);
+            }
             if (!itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId())) {
-                throw new IllegalStateException("Failed to update current bidder for item " + itemId);
+                throw new SQLException("Failed to update current bidder for item: " + itemId);
             }
 
             LOGGER.info(String.format(
@@ -492,7 +515,6 @@ public class BidService {
         if (conn == null) {
             return;
         }
-
         try {
             conn.rollback();
         } catch (SQLException rollbackError) {
@@ -512,14 +534,14 @@ public class BidService {
         }
     }
 
-    private LocalDateTime antiSnipe(LocalDateTime currentEndTime, Connection conn, String itemId) {
+    private LocalDateTime antiSnipe(LocalDateTime currentEndTime, Connection conn, String itemId) throws SQLException {
         LocalDateTime now = LocalDateTime.now();
         long secondsRemaining = ChronoUnit.SECONDS.between(now, currentEndTime);
 
         if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
             LocalDateTime newEndTime = now.plusSeconds(ANTI_SNIPE_SECONDS);
             if (!itemRepository.extendEndTime(conn, itemId, newEndTime)) {
-                throw new IllegalStateException("Failed to extend end time for item " + itemId);
+                throw new SQLException("Failed to extend end time for item: " + itemId);
             }
             LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
             return newEndTime;
