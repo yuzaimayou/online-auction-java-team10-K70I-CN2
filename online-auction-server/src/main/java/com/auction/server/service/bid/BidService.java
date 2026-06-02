@@ -12,6 +12,7 @@ import com.auction.shared.exception.InvalidBidException;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
+import com.auction.shared.model.payloads.AuctionExtendedPayload;
 import com.auction.shared.model.payloads.AutoBidPayload;
 import com.auction.shared.model.payloads.BidPayload;
 
@@ -19,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -82,7 +84,7 @@ public class BidService {
             return false;
         }
 
-        FinalBid finalBid = null;
+        List<BidEvent> bidEvents = new ArrayList<>();
         boolean isExtended = false;
         LocalDateTime newEndTime = null;
 
@@ -135,7 +137,8 @@ public class BidService {
                 antiSnipe(item.getEndTime(), newEndTime, conn, itemId, isExtended);
 
                 // 6. Auto-bid rounds
-                finalBid = runAutoBiddingRounds(conn, itemId, userId, bidPrice, bidTime);
+                bidEvents.add(new BidEvent(userId, bidPrice, bidTime));
+                bidEvents.addAll(runAutoBiddingRounds(conn, itemId, userId, bidPrice, bidTime));
                 conn.commit();
 
 
@@ -149,7 +152,7 @@ public class BidService {
         }
 
         // Broadcast ngoài synchronized block (tránh giữ lock khi I/O)
-        broadcastAfterBid(itemId, finalBid, isExtended, newEndTime);
+        broadcastAllBidEvents(itemId, bidEvents, isExtended, newEndTime);
         return true;
     }
 
@@ -174,7 +177,7 @@ public class BidService {
             return false;
         }
 
-        FinalBid finalBid = null;
+        List<BidEvent> bidEvents = new ArrayList<>();
         boolean shouldBroadcast = false;
         boolean isExtended = false;
         LocalDateTime newEndTime = null;
@@ -260,7 +263,8 @@ public class BidService {
                 antiSnipe(item.getEndTime(), newEndTime, conn, itemId, isExtended);
 
                 // 7. Auto-bid rounds
-                finalBid = runAutoBiddingRounds(conn, itemId, userId, immediateBidPrice, bidTime);
+                bidEvents.add(new BidEvent(userId, immediateBidPrice, bidTime));
+                bidEvents.addAll(runAutoBiddingRounds(conn, itemId, userId, immediateBidPrice, bidTime));
                 conn.commit();
                 shouldBroadcast = true;
 
@@ -274,7 +278,7 @@ public class BidService {
         }
 
         if (shouldBroadcast) {
-            broadcastAfterBid(itemId, finalBid, isExtended, newEndTime);
+            broadcastAllBidEvents(itemId, bidEvents, isExtended, newEndTime);
         }
         return true;
     }
@@ -370,13 +374,14 @@ public class BidService {
      * Không có giới hạn số vòng cứng — vòng lặp kết thúc khi thị trường tự hội tụ.
      * Ném Exception ra ngoài để caller rollback toàn bộ transaction.
      */
-    private FinalBid runAutoBiddingRounds(Connection conn, String itemId,
-                                          String leadingUserId, double currentPrice,
-                                          String currentBidTime) throws Exception {
+    private List<BidEvent> runAutoBiddingRounds(Connection conn, String itemId,
+                                                String leadingUserId, double currentPrice,
+                                                String currentBidTime) throws Exception {
         String currentLeader = leadingUserId;
         double livePrice = currentPrice;
         String liveBidTime = currentBidTime;
         int round = 0;
+        List<BidEvent> events = new ArrayList<>();
 
         while (true) {
             LOGGER.info(String.format(
@@ -441,28 +446,30 @@ public class BidService {
             livePrice = candidate.bidPrice();
             currentLeader = candidate.userId();
             liveBidTime = bidTime;
+            events.add(new BidEvent(currentLeader, livePrice, liveBidTime)); // ← THÊM
             round++;
         }
 
-        return new FinalBid(currentLeader, livePrice, liveBidTime);
+        return events;
     }
 
     // Private — broadcast
 
-    private void broadcastAfterBid(String itemId, FinalBid finalBid,
-                                   boolean isExtended, LocalDateTime newEndTime) {
+    private void broadcastAllBidEvents(String itemId, List<BidEvent> events,
+                                       boolean isExtended, LocalDateTime newEndTime) {
         try {
-            if (finalBid != null) {
+            for (BidEvent event : events) {
                 BidPayload payload = new BidPayload(
-                        itemId, finalBid.userId(), finalBid.bidPrice(), finalBid.bidTime());
+                        itemId, event.userId(), event.bidPrice(), event.bidTime());
                 AuctionRoomManager.getInstance()
                         .broadcastToRoom(itemId, SocketEventConstants.EVENT_NEW_BID, payload);
-                LOGGER.fine("Broadcast NEW_BID cho item " + itemId);
+                LOGGER.fine(String.format("Broadcast NEW_BID: itemId=%s userId=%s price=%.2f",
+                        itemId, event.userId(), event.bidPrice()));
             }
 
             if (isExtended && newEndTime != null) {
-                com.auction.shared.model.payloads.AuctionExtendedPayload extPayload = new com.auction.shared.model.payloads.AuctionExtendedPayload(
-                        itemId, newEndTime.toString());
+                AuctionExtendedPayload extPayload = new AuctionExtendedPayload(
+                                itemId, newEndTime.toString());
                 AuctionRoomManager.getInstance()
                         .broadcastToRoom(itemId, SocketEventConstants.EVENT_AUCTION_EXTENDED, extPayload);
                 LOGGER.fine("Broadcast AUCTION_EXTENDED cho item " + itemId);
@@ -486,6 +493,8 @@ public class BidService {
 
     private record FinalBid(String userId, double bidPrice, String bidTime) {
     }
+
+    private record BidEvent(String userId, double bidPrice, String bidTime) {}
 
     //Anti-snipe
     private void antiSnipe(LocalDateTime currentEndTime, LocalDateTime newEndTime, Connection conn, String itemId, boolean isExtended) {

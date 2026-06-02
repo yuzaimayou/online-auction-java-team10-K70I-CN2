@@ -25,12 +25,11 @@ public class ItemStatusRendered {
 
         return String.format("%02dd %02dh %02dm %02ds", days, hours, minutes, seconds);
     }
-    // COMMON
     public String formatPrice(double price) {
-        NumberFormat formatter = NumberFormat.getInstance(Locale.of("vi","VN"));
-        return "$ " + formatter.format(price) ;
+        NumberFormat formatter = NumberFormat.getInstance(Locale.of("en", "US"));
+        formatter.setMaximumFractionDigits(0);
+        return "$ " + formatter.format(price);
     }
-
     public AuctionStatus resolveStatus(Item item){
         if(item==null){
             return AuctionStatus.ENDED;

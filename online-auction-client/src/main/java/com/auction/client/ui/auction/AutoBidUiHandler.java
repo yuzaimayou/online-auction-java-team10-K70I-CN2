@@ -105,9 +105,12 @@ public class AutoBidUiHandler {
 
     public void stop() {
         autoBidManager.deactivate();
+        Item item = itemSupplier.get();
+        if (item != null) {
+            network.sendCancelAutoBid(item.getId(), user.getId());
+        }
         updateUi(false);
     }
-
     public void handleDecision(double serverPrice, String topBidderId) {
         Item item = itemSupplier.get();
 
@@ -119,18 +122,20 @@ public class AutoBidUiHandler {
             case INACTIVE -> {
             }
             case LEADING -> {
-                userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f (Leading)", serverPrice));
+                if (autoBidManager.isActive()) {
+                    userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f", serverPrice));
+                }
             }
             case MAX_REACHED -> {
+                network.sendCancelAutoBid(item.getId(), user.getId());
                 updateUi(false);
                 ToastUtil.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!");
             }
             case OUTBID_AND_REBID -> {
                 double myLastBid = myLastBidSupplier.get();
-                String statusText = myLastBid > 0
-                        ? String.format("Your current bid: $ %.0f (Outbid — auto-bidding...)", myLastBid)
-                        : "Auto-bidding...";
-                userCurrentBidLabel.setText(statusText);
+                userCurrentBidLabel.setText(myLastBid > 0
+                        ? String.format("Your current bid: $ %.0f", myLastBid)
+                        : "Your current bid: $ 0");
                 network.sendBid(item.getId(), user.getId(), decision.nextBidPrice(), "");
             }
         }
@@ -148,7 +153,8 @@ public class AutoBidUiHandler {
     }
 
     public void updateUIAutoBid(double maxBid, double step) {
-        userCurrentBidLabel.setText(String.format(" Max Bid: $ %.2f\n Bid Amount: $ %.2f", maxBid, step));
-        System.out.println("AutoBidUiHandler updated UI with maxBid=" + maxBid + " and step=" + step);
+        Item item = itemSupplier.get();
+        double currentPrice = item != null ? item.getCurrentPrice() : 0;
+        userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f", currentPrice));
     }
 }
