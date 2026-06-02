@@ -7,7 +7,7 @@ import com.auction.client.service.AutoBidService;
 import com.auction.client.service.ItemsService;
 import com.auction.client.service.UserSession;
 import com.auction.client.service.WalletService;
-import com.auction.client.ui.auction.AutoBidUiHandler;
+import com.auction.client.ui.auction.AutoBidView;
 import com.auction.client.ui.auction.BidHistoryPanel;
 import com.auction.client.ui.auction.BidPanelController;
 import com.auction.client.ui.image.ImageCardFactory;
@@ -26,8 +26,6 @@ import com.auction.shared.model.payloads.BidPayload;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.chart.AreaChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -43,13 +41,11 @@ import java.time.LocalDateTime;
 
 public class ItemPageController {
 
-    // ─── Constants ────────────────────────────────────────────────────────────
     private static final double IMAGE_WIDTH = 1400.0;
     private static final double IMAGE_HEIGHT = 900.0;
     private static final double THUMB_WIDTH = 80.0;
     private static final double THUMB_HEIGHT = 60.0;
 
-    // ─── FXML Bindings ────────────────────────────────────────────────────────
     @FXML
     private Label itemNameLabel;
     @FXML
@@ -72,7 +68,6 @@ public class ItemPageController {
     private HBox thumbnailContainer;
     @FXML
     private StackPane mainImageContainer;
-
     @FXML
     private TextField bidAmountField;
     @FXML
@@ -83,14 +78,28 @@ public class ItemPageController {
     private Button btnSuggestStep1;
     @FXML
     private Button btnSuggestStep2;
-
+    @FXML
+    private Label daysLabel;
+    @FXML
+    private Label hoursLabel;
+    @FXML
+    private Label minsLabel;
+    @FXML
+    private Label secsLabel;
+    @FXML
+    private VBox bidControlsContainer;
+    @FXML
+    private StackPane statusOverlay;
+    @FXML
+    private Label statusMessageLabel;
     @FXML
     private ScrollPane historyScrollPane;
     @FXML
     private VBox historyBidContainer;
     @FXML
     private Label totalBidsLabel;
-
+    @FXML
+    private AreaChart<String, Number> bidPriceChart;
     @FXML
     private VBox autoBidForm;
     @FXML
@@ -104,64 +113,35 @@ public class ItemPageController {
     @FXML
     private Button btnAutoBidToggle;
 
-    @FXML
-    private Label daysLabel;
-    @FXML
-    private Label hoursLabel;
-    @FXML
-    private Label minsLabel;
-    @FXML
-    private Label secsLabel;
-
-    @FXML
-    private VBox bidControlsContainer;
-    @FXML
-    private StackPane statusOverlay;
-    @FXML
-    private Label statusMessageLabel;
-
-    // ─── Bid Price Chart ─────────────────────────────────────
-    @FXML
-    private AreaChart<String, Number> bidPriceChart;
-    @FXML
-    private CategoryAxis bidTimeAxis;
-    @FXML
-    private NumberAxis bidPriceAxis;
-
     private BidPanelController bidPanel;
-    private AutoBidUiHandler autoBidHandler;
+    private AutoBidController autoBidHandler;
     private BidHistoryPanel historyPanel;
-
     private XYChart.Series<String, Number> bidPriceSeries;
 
-    // ─── Core State ───────────────────────────────────────────────────────────
     private String itemId;
     private Item item;
     private double myLastBid = 0.0;
 
-    // ─── Infrastructure Dependencies ──────────────────────────────────────────
     private final User user = UserSession.getInstance().getLoggedInUser();
     private final AuctionSocketClient network = AuctionSocketClient.getInstance();
     private final ItemsService itemsService = ItemsService.getInstance();
     private final BidHistoryApiClient bidHistoryApiClient = BidHistoryApiClient.getInstance();
+
     private final AutoBidService autoBidManager = new AutoBidService();
     private final BidValidationService bidValidationService = new BidValidationService();
     private final AutoBidValidationService autoBidValidationService = new AutoBidValidationService();
-
     private final ItemStatusRendered statusUiService = new ItemStatusRendered();
     private CountdownTimerUtil countdownTimer;
 
-    // ─── Lifecycle & Cleanup ──────────────────────────────────────────────────
     @FXML
     public void initialize() {
         itemImage.setPreserveRatio(false);
         itemImage.setSmooth(true);
         itemImage.setCache(false);
 
-        // Hàm makeResponsiveCover xử lý thuần túy thuộc tính hiển thị (Viewport Binding) nên vẫn ở Util
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
-
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
+
         bidPanel = new BidPanelController(
                 statusMessageLabel, bidControlsContainer, statusOverlay,
                 btnAutoBidToggle, submitBid, countdownTimer, autoBidManager
@@ -172,29 +152,34 @@ public class ItemPageController {
             bidPriceChart.getData().add(bidPriceSeries);
             bidPriceChart.setAnimated(false);
         }
-        autoBidHandler = new AutoBidUiHandler(
+
+        AutoBidView autoBidView = new AutoBidView(
+                autoBidForm, autoBidActiveStatus, maxBidField, autoBidStepField,
+                userCurrentBidLabel, btnAutoBidToggle, submitBid
+        );
+
+        autoBidHandler = new AutoBidController(
                 autoBidManager, autoBidValidationService, network, user, statusUiService,
-                autoBidForm, autoBidActiveStatus,
-                maxBidField, autoBidStepField, userCurrentBidLabel,
-                btnAutoBidToggle, submitBid,
+                autoBidView,
                 () -> item,
                 () -> myLastBid
         );
+
         historyPanel = new BidHistoryPanel(
                 bidHistoryApiClient, user,
                 historyBidContainer, historyScrollPane,
                 totalBidsLabel, bidPriceSeries
         );
     }
-
     public void dispose() {
-        if (countdownTimer != null) countdownTimer.stop();
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
         autoBidManager.deactivate();
         network.leaveRoom();
         System.out.println("[ItemPageController] Safe disposed.");
     }
 
-    // ─── Data Initialization ──────────────────────────────────────────────────
     public void setItemId(String id) {
         this.itemId = id;
         itemsService.getItemById(id, user.getId())
@@ -228,22 +213,28 @@ public class ItemPageController {
         historyPanel.load(itemId);
     }
 
+
     private void connectToRealTimeBidding() {
         network.setAuctionRoomListener(new AuctionRoomListener() {
+            @Override
             public void onNewBid(BidPayload p) {
                 Platform.runLater(() -> uiHandleNewBid(p));
             }
 
+            @Override
             public void onAuctionExtended(LocalDateTime t) {
                 Platform.runLater(() -> uiHandleAuctionExtended(t));
             }
 
+            @Override
             public void onItemBanned(String id) {
-                if (id.equals(itemId)) Platform.runLater(() -> uiHandleItemBanned());
+                if (id.equals(itemId)) {
+                    Platform.runLater(() -> uiHandleItemBanned());
+                }
             }
 
+            @Override
             public void onAutoBidState(AutoBidPayload data) {
-                // THÊM: guard null và isActive null
                 boolean isActive = data != null && Boolean.TRUE.equals(data.getIsActive());
 
                 if (isActive) {
@@ -267,43 +258,6 @@ public class ItemPageController {
         }
     }
 
-    // ─── UI Mutators ──────────────────────────────────────────────────────────
-    private void uiHandleNewBid(BidPayload bidPayload) {
-        autoBidManager.setLastBidderId(bidPayload.getUserId());
-        item.setCurrentBidderId(bidPayload.getUserId());
-        item.setCurrentPrice(bidPayload.getBidPrice());
-
-        if (bidPayload.getUserId().equals(user.getId())) {
-            this.myLastBid = bidPayload.getBidPrice();
-        }
-
-        currentPriceLabel.setText(statusUiService.formatPrice(item.getCurrentPrice()));
-        bidPanel.applyAuctionStatusView(item, user.getId());
-        autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
-        updateMinimumBidLabel();
-        historyPanel.load(itemId);
-
-        WalletService.getInstance().fetchAndSync();
-    }
-
-    private void uiHandleAuctionExtended(LocalDateTime newEndTime) {
-        item.setEndTime(newEndTime);
-        endTimeLabel.setText(DateTimeUtil.format(newEndTime));
-        bidPanel.startCountdown(item,
-                () -> bidPanel.applyAuctionStatusView(item, user.getId()));
-    }
-
-    private void uiHandleItemBanned() {
-        network.setAuctionRoomListener(null);
-        autoBidHandler.updateUi(false);
-        bidPanel.applyBannedStateView(item);
-    }
-
-    private void uiAutoBidState() {
-
-    }
-
-    // ─── Manual & Auto Bidding Interactions ───────────────────────────────────
     @FXML
     public void bidHandle() {
         String input = bidAmountField.getText().trim();
@@ -313,7 +267,9 @@ public class ItemPageController {
         }
         try {
             double amount = Double.parseDouble(input);
-            BidValidationService.ValidationResult result = bidValidationService.validate(item, user, amount, statusUiService.isOngoing(item));
+            BidValidationService.ValidationResult result = bidValidationService.validate(
+                    item, user, amount, statusUiService.isOngoing(item));
+
             if (!result.ok()) {
                 ToastUtil.showError(bidAmountField.getScene(), result.errorMessage());
                 return;
@@ -327,12 +283,16 @@ public class ItemPageController {
 
     @FXML
     private void handleSuggestStep1() {
-        if (item != null) bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep()));
+        if (item != null) {
+            bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep()));
+        }
     }
 
     @FXML
     private void handleSuggestStep2() {
-        if (item != null) bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep() * 2));
+        if (item != null) {
+            bidAmountField.setText(String.format("%.0f", item.getCurrentPrice() + item.getBidStep() * 2));
+        }
     }
 
     @FXML
@@ -350,7 +310,37 @@ public class ItemPageController {
         autoBidHandler.stop();
     }
 
-    // ─── Core Display & Timers ────────────────────────────────────────────────
+    private void uiHandleNewBid(BidPayload bidPayload) {
+        autoBidManager.setLastBidderId(bidPayload.getUserId());
+        item.setCurrentBidderId(bidPayload.getUserId());
+        item.setCurrentPrice(bidPayload.getBidPrice());
+
+        if (bidPayload.getUserId().equals(user.getId())) {
+            this.myLastBid = bidPayload.getBidPrice();
+        }
+
+        currentPriceLabel.setText(statusUiService.formatPrice(item.getCurrentPrice()));
+        bidPanel.applyAuctionStatusView(item, user.getId());
+
+        autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
+        updateMinimumBidLabel();
+        historyPanel.load(itemId);
+
+        WalletService.getInstance().fetchAndSync();
+    }
+
+    private void uiHandleAuctionExtended(LocalDateTime newEndTime) {
+        item.setEndTime(newEndTime);
+        endTimeLabel.setText(DateTimeUtil.format(newEndTime));
+        bidPanel.startCountdown(item, () -> bidPanel.applyAuctionStatusView(item, user.getId()));
+    }
+
+    private void uiHandleItemBanned() {
+        network.setAuctionRoomListener(null);
+        autoBidHandler.updateUi(false);
+        bidPanel.applyBannedStateView(item);
+    }
+
     private void displayDataItem(Item currentItem) {
         ImageCardFactory.setupThumbnailGallery(
                 thumbnailContainer, itemImage, currentItem.getImagesPath(),
@@ -375,19 +365,24 @@ public class ItemPageController {
         startTimeLabel.setText(DateTimeUtil.format(currentItem.getStartTime()));
         endTimeLabel.setText(DateTimeUtil.format(currentItem.getEndTime()));
 
-        if (btnSuggestStep1 != null) btnSuggestStep1.setText(String.format("$ %.0f", currentItem.getBidStep()));
-        if (btnSuggestStep2 != null) btnSuggestStep2.setText(String.format("$ %.0f", currentItem.getBidStep() * 2));
+        if (btnSuggestStep1 != null) {
+            btnSuggestStep1.setText(String.format("$ %.0f", currentItem.getBidStep()));
+        }
+        if (btnSuggestStep2 != null) {
+            btnSuggestStep2.setText(String.format("$ %.0f", currentItem.getBidStep() * 2));
+        }
 
         AuctionStatus status = currentItem.getStoredStatus();
         if (status != AuctionStatus.BANNED) {
-            bidPanel.startCountdown(item,
-                    () -> bidPanel.applyAuctionStatusView(item, user.getId()));
+            bidPanel.startCountdown(item, () -> bidPanel.applyAuctionStatusView(item, user.getId()));
         }
         updateMinimumBidLabel();
     }
 
     private void updateMinimumBidLabel() {
-        if (item == null || minimumBidLabel == null) return;
+        if (item == null || minimumBidLabel == null) {
+            return;
+        }
         minimumBidLabel.setText(String.format(
                 "Your last bid: $ %.0f  (Min next: $ %.0f)",
                 myLastBid, item.getCurrentPrice() + item.getBidStep()

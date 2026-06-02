@@ -130,7 +130,9 @@ public class BidService {
                         bidTime, itemId, userId, currentPrice, bidPrice));
 
                 bidRepository.createBid(conn, itemId, userId, bidPrice, bidTime);
-                itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId);
+                if (!itemRepository.updateCurrentBidder(conn, itemId, bidPrice, userId)) {
+                    throw new IllegalStateException("Failed to update current bidder for item " + itemId);
+                }
 
                 // 5. Anti-snipe
                 newEndTime = antiSnipe(item.getEndTime(), conn, itemId);
@@ -253,7 +255,9 @@ public class BidService {
 
                 String bidTime = LocalDateTime.now().toString();
                 bidRepository.createBid(conn, itemId, userId, immediateBidPrice, bidTime);
-                itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId);
+                if (!itemRepository.updateCurrentBidder(conn, itemId, immediateBidPrice, userId)) {
+                    throw new IllegalStateException("Failed to update current bidder for item " + itemId);
+                }
 
                 LOGGER.info(String.format(
                         "[AUTO_BID_REGISTER][IMMEDIATE_BID] time=%s itemId=%s userId=%s bidPrice=%.2f",
@@ -438,7 +442,9 @@ public class BidService {
             // Ghi bid
             String bidTime = LocalDateTime.now().toString();
             bidRepository.createBid(conn, itemId, candidate.userId(), candidate.bidPrice(), bidTime);
-            itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId());
+            if (!itemRepository.updateCurrentBidder(conn, itemId, candidate.bidPrice(), candidate.userId())) {
+                throw new IllegalStateException("Failed to update current bidder for item " + itemId);
+            }
 
             LOGGER.info(String.format(
                     "[AUTO_BID_ROUND][ACCEPT] time=%s itemId=%s userId=%s bidPrice=%.2f",
@@ -503,7 +509,9 @@ public class BidService {
 
         if (secondsRemaining >= 0 && secondsRemaining < ANTI_SNIPE_SECONDS) {
             LocalDateTime newEndTime = LocalDateTime.now().plusSeconds(ANTI_SNIPE_SECONDS);
-            itemRepository.extendEndTime(conn, itemId, newEndTime);
+            if (!itemRepository.extendEndTime(conn, itemId, newEndTime)) {
+                throw new IllegalStateException("Failed to extend end time for item " + itemId);
+            }
             LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
             return newEndTime;
         }

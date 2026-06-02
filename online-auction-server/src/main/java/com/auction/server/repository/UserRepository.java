@@ -14,30 +14,29 @@ import java.util.logging.Logger;
 public class UserRepository {
     private static final Logger LOGGER = Logger.getLogger(UserRepository.class.getName());
 
-    // Tạo auth mới với số dư mặc định
+    // tạo tài khoản
     public boolean createUser(String username, String password, String role, String email) {
         String sql = """
-            INSERT INTO users(
-                id,
-                username,
-                password,
-                role,
-                email,
-                status,
-                balance,
-                frozen_balance
-            ) VALUES(?,?,?,?,?,?,?,?)
-            """;
+                INSERT INTO users(
+                    id,
+                    username,
+                    password,
+                    role,
+                    email,
+                    status,
+                    balance,
+                    frozen_balance
+                ) VALUES(?,?,?,?,?,?,?,?)
+                """;
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, UUID.randomUUID().toString());
             stmt.setString(2, username);
             stmt.setString(3, password);
             stmt.setString(4, role);
             stmt.setString(5, email);
-            stmt.setString(6, "Active");  // status mặc định
+            stmt.setString(6, "Active");
             stmt.setDouble(7, 10000);
             stmt.setDouble(8, 0);
             stmt.executeUpdate();
@@ -48,15 +47,14 @@ public class UserRepository {
         }
     }
 
-
+    //
     public boolean enableUser(String email) {
 
         String sql = "UPDATE users SET isVerify = true WHERE email = ?";
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, email);
 
             int rowsUpdated = stmt.executeUpdate();
@@ -89,8 +87,7 @@ public class UserRepository {
         String sql = "SELECT * FROM users WHERE id=?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -107,8 +104,7 @@ public class UserRepository {
         String sql = "SELECT * FROM users WHERE email = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, email);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -125,8 +121,7 @@ public class UserRepository {
         String sql = "SELECT * FROM users WHERE username = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -174,7 +169,6 @@ public class UserRepository {
             user.setStatus("Active");
         }
 
-
         return user;
     }
 
@@ -182,8 +176,7 @@ public class UserRepository {
         String sql = "UPDATE users SET role = ? WHERE id = ?";
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, newRole);
             stmt.setString(2, userId);
             return stmt.executeUpdate() > 0;
@@ -202,6 +195,7 @@ public class UserRepository {
             return stmt.executeUpdate() > 0;
         }
     }
+
     public boolean updateStatus(Connection conn, String userId, String newStatus) throws Exception {
         String sql = "UPDATE users SET status = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
