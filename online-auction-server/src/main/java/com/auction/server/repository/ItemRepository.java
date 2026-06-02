@@ -474,29 +474,38 @@ public class ItemRepository {
 
     public List<String> getImgName(String itemId) {
         String sql = """
-                SELECT image_path
-                FROM items
-                WHERE id = ?
-                """;
+            SELECT image_path
+            FROM items
+            WHERE id = ?
+            """;
         List<String> imagePaths = new ArrayList<>();
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
+                PreparedStatement stmt = conn.prepareStatement(sql)
         ) {
             stmt.setString(1, itemId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     String pathsData = rs.getString("image_path");
 
-                    if (pathsData != null && !pathsData.isEmpty()) {
-                        imagePaths = gson.fromJson(pathsData, new com.google.gson.reflect.TypeToken<List<String>>(){}.getType());
+                    if (pathsData != null && !pathsData.isBlank()) {
+                        try {
+                            List<String> parsed = gson.fromJson(
+                                    pathsData,
+                                    new com.google.gson.reflect.TypeToken<List<String>>() {}.getType()
+                            );
+                            if (parsed != null) {
+                                imagePaths = parsed;
+                            }
+                        } catch (Exception ignored) {
+                            imagePaths.add(pathsData);
+                        }
                     }
                 }
-            } catch (SQLException e) {
-                LOGGER.log(java.util.logging.Level.SEVERE, "Failed to read image paths for item " + itemId, e);
             }
         } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to execute summary query", e);
+            LOGGER.log(java.util.logging.Level.SEVERE,
+                    "Failed to read image paths for item " + itemId, e);
         }
         return imagePaths;
     }
@@ -598,33 +607,56 @@ public class ItemRepository {
         }
     }
 
-    public List<String> updateStatus() {
+    public List<String> findOngoingExpiredItemIds() {
         List<String> updatedId = new ArrayList<>();
 
         String selectAboutToEndSql =
-                "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
+                "SELECT id FROM items WHERE status = ? AND datetime(end_time) <= datetime(?)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
+            ps.setString(1, AuctionStatus.ONGOING.name());
+            ps.setString(2, LocalDateTime.now().toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) updatedId.add(rs.getString("id"));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to find expired item statuses", e);
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unexpected error while finding expired item statuses", e);
+        }
+        return updatedId;
+    }
+
+    public boolean markEndedIfStillExpired(Connection conn, String itemId, LocalDateTime now) {
+        String sql = """
+                UPDATE items
+                SET status = ?
+                WHERE id = ?
+                  AND status = ?
+                  AND datetime(end_time) <= datetime(?)
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, AuctionStatus.ENDED.name());
+            stmt.setString(2, itemId);
+            stmt.setString(3, AuctionStatus.ONGOING.name());
+            stmt.setString(4, now.toString());
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to mark ended if expired", e);
+            return false;
+        }
+    }
+
+    public List<String> updateStatus() {
+        List<String> updatedId = new ArrayList<>();
+
         String selectAboutToLiveSql =
                 "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
-        String updateEndedSql =
-                "UPDATE items SET status = ? WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
         String updateOngoingSql =
                 "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
 
         try (Connection conn = DatabaseManager.getConnection()) {
-
-            try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
-                ps.setString(1, AuctionStatus.ONGOING.name());
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) updatedId.add(rs.getString("id"));
-                }
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(updateEndedSql)) {
-                ps.setString(1, AuctionStatus.ENDED.name());
-                ps.setString(2, AuctionStatus.ONGOING.name());
-                int rows = ps.executeUpdate();
-                logStatusUpdate("ONGOING->ENDED", rows);
-            }
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
                 ps.setString(1, AuctionStatus.UPCOMING.name());

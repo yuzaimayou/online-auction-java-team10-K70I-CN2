@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -39,6 +40,10 @@ import com.auction.server.socket.room.AuctionRoomManager;
 import com.auction.shared.constant.SocketEventConstants;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 class ProductionBiddingFlowTest {
     private static final double EPSILON = 0.000001d;
@@ -88,6 +93,27 @@ class ProductionBiddingFlowTest {
         assertEquals(1, bidCount(itemId));
         assertEquals(1, bidCountAtPrice(itemId, 15.0));
         assertEquals(15.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
+    }
+
+    @Test
+    void placeBidRollsBackWhenCurrentBidderUpdateFails() throws Exception {
+        String itemId = item("current-bidder-update-fail", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String bidder = user("rollback-bidder");
+
+        BidService service = new BidService();
+        ItemRepository repositorySpy = spy(ItemRepository.getInstance());
+        doReturn(false).when(repositorySpy)
+                .updateCurrentBidder(any(Connection.class), eq(itemId), eq(15.0), eq(bidder));
+        replaceItemRepository(service, repositorySpy);
+
+        assertFalse(service.placeBid(itemId, bidder, 15.0));
+
+        assertEquals(10.0, currentPrice(itemId), EPSILON);
+        assertNull(currentBidder(itemId));
+        assertEquals(0, bidCount(itemId));
+        assertEquals(10000.0, queryDouble("SELECT balance FROM users WHERE id = ?", bidder), EPSILON);
+        assertEquals(0.0, queryDouble("SELECT frozen_balance FROM users WHERE id = ?", bidder), EPSILON);
     }
 
     @Test
@@ -367,6 +393,24 @@ class ProductionBiddingFlowTest {
     }
 
     @Test
+    void cancelledAutoBidDoesNotRunInLaterAutoRound() throws Exception {
+        String itemId = item("auto-cancel-no-round", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
+        String autoBidder = user("auto-cancelled");
+        String manualBidder = user("manual-after-cancel");
+
+        assertTrue(bidService.registerAutoBidAndMaybeBid(itemId, autoBidder, 100.0, 5.0));
+        assertTrue(bidService.cancelAutoBid(itemId, autoBidder));
+        assertEquals(0, activeAutoBidCount(itemId));
+
+        assertTrue(bidService.placeBid(itemId, manualBidder, 20.0));
+
+        assertEquals(manualBidder, currentBidder(itemId));
+        assertEquals(20.0, currentPrice(itemId), EPSILON);
+        assertEquals(2, bidCount(itemId));
+    }
+
+    @Test
     void twoAutoBidsCompeteAndHigherMaxWinsWithoutExceedingMax() throws Exception {
         String itemId = item("auto-compete", 10.0, 5.0, AuctionStatus.ONGOING,
                 LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(30), null);
@@ -413,11 +457,12 @@ class ProductionBiddingFlowTest {
         List<String> updatedIds = itemRepository.updateStatus();
 
         assertTrue(updatedIds.contains(upcomingToOngoing));
-        assertTrue(updatedIds.contains(ongoingToEnded));
+        assertFalse(updatedIds.contains(ongoingToEnded));
         assertFalse(updatedIds.contains(remainsOngoing));
         assertEquals(AuctionStatus.ONGOING.name(), storedStatus(upcomingToOngoing));
-        assertEquals(AuctionStatus.ENDED.name(), storedStatus(ongoingToEnded));
+        assertEquals(AuctionStatus.ONGOING.name(), storedStatus(ongoingToEnded));
         assertEquals(AuctionStatus.ONGOING.name(), storedStatus(remainsOngoing));
+        assertTrue(itemRepository.findOngoingExpiredItemIds().contains(ongoingToEnded));
     }
 
     @Test
@@ -458,6 +503,23 @@ class ProductionBiddingFlowTest {
         new AuctionSchedulerService().checkAndUpdateStatuses();
 
         assertEquals(AuctionStatus.ONGOING.name(), storedStatus(itemId));
+    }
+
+    @Test
+    void schedulerDoesNotEndAuctionAfterAntiSnipeExtendedEndTime() throws Exception {
+        LocalDateTime originalEnd = LocalDateTime.now().plusSeconds(30);
+        String itemId = item("scheduler-after-anti-snipe", 10.0, 5.0, AuctionStatus.ONGOING,
+                LocalDateTime.now().minusMinutes(5), originalEnd, null);
+        String bidder = user("scheduler-anti-snipe-bidder");
+
+        assertTrue(bidService.placeBid(itemId, bidder, 15.0));
+        LocalDateTime extendedEnd = endTime(itemId);
+
+        new AuctionSchedulerService().checkAndUpdateStatuses();
+
+        assertEquals(AuctionStatus.ONGOING.name(), storedStatus(itemId));
+        assertEquals(extendedEnd, endTime(itemId));
+        assertEquals(0, queryInt("SELECT COUNT(*) FROM wallet_transactions WHERE type = 'AUCTION_PAYMENT' AND reference_id = ?", itemId));
     }
 
     @Test
@@ -534,6 +596,12 @@ class ProductionBiddingFlowTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    private void replaceItemRepository(BidService service, ItemRepository replacement) throws Exception {
+        Field field = BidService.class.getDeclaredField("itemRepository");
+        field.setAccessible(true);
+        field.set(service, replacement);
     }
 
     private String user(String label) throws Exception {
