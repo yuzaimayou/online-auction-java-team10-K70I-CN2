@@ -174,11 +174,12 @@ public class AiServiceClient {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() == 200) {
+            if (response.statusCode() == 200 && !response.body().contains("\"status\":\"error\"")) {
                 return response.body();
             } else {
                 LOGGER.warning("AI server index request failed: " + response.statusCode());
                 LOGGER.warning("AI server response: " + response.body());
+                System.out.println("AI server index request failed: " + response.statusCode());
                 return null;
             }
         } catch (Exception e) {
