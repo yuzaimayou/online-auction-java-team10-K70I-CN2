@@ -51,6 +51,7 @@ public class BidService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository txLogRepository;
     private final BidValidator bidValidator;
+    private final AuctionRoomManager auctionRoomManager;
 
     public BidService() {
         this.bidRepository = new BidRepository();
@@ -60,6 +61,7 @@ public class BidService {
         this.walletRepository = new WalletRepository();
         this.txLogRepository = new WalletTransactionRepository();
         this.bidValidator = new BidValidator(PRICE_EPSILON);
+        this.auctionRoomManager = AuctionRoomManager.getInstance();
     }
 
     // Public API
@@ -344,8 +346,8 @@ public class BidService {
      * Không tự rollback ở đây vì không sở hữu transaction.
      */
     private void handleWalletMovement(Connection conn, String itemId,
-            String bidderId, double bidPrice,
-            String prevBidderId, double prevBidPrice) throws Exception {
+                                      String bidderId, double bidPrice,
+                                      String prevBidderId, double prevBidPrice) throws Exception {
 
         double[] balances = walletRepository.getBalances(conn, bidderId);
         if (balances == null || balances.length == 0) {
@@ -400,8 +402,8 @@ public class BidService {
      * Ném Exception ra ngoài để caller rollback toàn bộ transaction.
      */
     private List<BidEvent> runAutoBiddingRounds(Connection conn, String itemId,
-            String leadingUserId, double currentPrice,
-            String currentBidTime) throws Exception {
+                                                String leadingUserId, double currentPrice,
+                                                String currentBidTime) throws Exception {
         String currentLeader = leadingUserId;
         double livePrice = currentPrice;
         int round = 0;
@@ -478,7 +480,7 @@ public class BidService {
     // Private — broadcast
 
     private void broadcastAllBidEvents(String itemId, List<BidEvent> events,
-            boolean isExtended, LocalDateTime newEndTime) {
+                                       boolean isExtended, LocalDateTime newEndTime) {
         try {
             for (BidEvent event : events) {
                 BidPayload payload = new BidPayload(
@@ -544,6 +546,7 @@ public class BidService {
                 throw new SQLException("Failed to extend end time for item: " + itemId);
             }
             LOGGER.info("Anti-snipe: gia hạn đến " + newEndTime);
+            auctionRoomManager.broadcastToRoom(itemId, SocketEventConstants.EVENT_UPDATE_TIME, newEndTime);
             return newEndTime;
         }
         return null;
