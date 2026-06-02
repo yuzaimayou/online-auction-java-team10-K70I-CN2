@@ -11,11 +11,6 @@ import com.auction.shared.model.item.Item;
 
 import java.util.function.Supplier;
 
-/**
- * 🎮 CONTROLLER COMPONENT (Sub-Controller)
- * Chịu trách nhiệm tiếp nhận tương tác người dùng từ View,
- * ra lệnh cập nhật trạng thái cho Model, và điều hướng View hiển thị lại.
- */
 public class AutoBidController {
 
     // Liên kết tới tầng Model
@@ -29,19 +24,11 @@ public class AutoBidController {
     private final Supplier<Item> itemSupplier;
     private final Supplier<Double> myLastBidSupplier;
 
-    // Liên kết tới tầng View nguyên bản (Đã bóc tách)
+    // Liên kết tới tầng View
     private final AutoBidView view;
 
-    public AutoBidController(
-            AutoBidService autoBidManager,
-            AutoBidValidationService autoBidValidator,
-            AuctionSocketClient network,
-            User user,
-            ItemStatusRendered statusService,
-            AutoBidView view, // Nhận đối tượng View đã gom nhóm
-            Supplier<Item> itemSupplier,
-            Supplier<Double> myLastBidSupplier
-    ) {
+    public AutoBidController(AutoBidService autoBidManager, AutoBidValidationService autoBidValidator, AuctionSocketClient network,
+            User user, ItemStatusRendered statusService, AutoBidView view, Supplier<Item> itemSupplier, Supplier<Double> myLastBidSupplier) {
         this.autoBidManager = autoBidManager;
         this.autoBidValidator = autoBidValidator;
         this.network = network;
@@ -63,22 +50,18 @@ public class AutoBidController {
             return;
         }
         try {
-            // [C] Lấy dữ liệu thô từ View thông qua giao tiếp phương thức công khai
             double max = Double.parseDouble(view.getMaxBidInput());
             double step = Double.parseDouble(view.getAutoBidStepInput());
 
-            // [M] Yêu cầu nghiệp vụ Model xác thực luật đấu giá
             AutoBidValidationService.ValidationResult result = autoBidValidator.validate(item, max, step);
             if (!result.ok()) {
                 view.showErrorMessage(result.errorMessage());
                 return;
             }
 
-            // [M] Thay đổi trạng thái dữ liệu trong Model & Phát tín hiệu qua tầng mạng
             autoBidManager.activate(max, step);
             network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
 
-            // [V] Điều khiển View kết xuất đồ họa trạng thái mới
             boolean isSeller = item.getSellerId().equals(user.getId());
             view.renderActiveState(true, isSeller);
             view.showSuccessMessage("Auto-Bid activated!");
@@ -105,11 +88,9 @@ public class AutoBidController {
     public void handleDecision(double serverPrice, String topBidderId) {
         Item item = itemSupplier.get();
 
-        // [M] Thực thi xử lý thuật toán cốt lõi bên trong nghiệp vụ của Model
         AutoBidDecision decision = autoBidManager.decideBid(
                 topBidderId, serverPrice, user.getId(), statusService.isOngoing(item));
 
-        // [C] Nhận tín hiệu quyết định từ Model và điều hướng View hiển thị tương ứng
         switch (decision.type()) {
             case AUCTION_ENDED -> stop();
             case INACTIVE -> { }
