@@ -1,52 +1,44 @@
-package com.auction.client.ui.auction;
+package com.auction.client.controller.auction;
 
 import com.auction.client.network.AuctionSocketClient;
 import com.auction.client.service.AutoBidService;
 import com.auction.client.service.AutoBidService.AutoBidDecision;
+import com.auction.client.ui.auction.AutoBidView;
 import com.auction.client.ui.item.ItemStatusRendered;
-import com.auction.client.ui.util.ToastUtil;
 import com.auction.client.validation.AutoBidValidationService;
 import com.auction.shared.model.account.User;
 import com.auction.shared.model.item.Item;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
 
 import java.util.function.Supplier;
 
-public class AutoBidUiHandler {
+/**
+ * 🎮 CONTROLLER COMPONENT (Sub-Controller)
+ * Chịu trách nhiệm tiếp nhận tương tác người dùng từ View,
+ * ra lệnh cập nhật trạng thái cho Model, và điều hướng View hiển thị lại.
+ */
+public class AutoBidController {
 
+    // Liên kết tới tầng Model
     private final AutoBidService autoBidManager;
-    private final AutoBidValidationService autoBidValidator; // Khai báo validator mới
+    private final AutoBidValidationService autoBidValidator;
     private final AuctionSocketClient network;
     private final User user;
     private final ItemStatusRendered statusService;
 
-    // UI refs
-    private final VBox autoBidForm;
-    private final VBox autoBidActiveStatus;
-    private final TextField maxBidField;
-    private final TextField autoBidStepField;
-    private final Label userCurrentBidLabel;
-    private final Button btnAutoBidToggle;
-    private final Button submitBid;
+    // Đồng bộ trạng thái dữ liệu động từ Controller tổng
     private final Supplier<Item> itemSupplier;
     private final Supplier<Double> myLastBidSupplier;
 
-    public AutoBidUiHandler(
+    // Liên kết tới tầng View nguyên bản (Đã bóc tách)
+    private final AutoBidView view;
+
+    public AutoBidController(
             AutoBidService autoBidManager,
-            AutoBidValidationService autoBidValidator, // Nhận validator từ Controller
+            AutoBidValidationService autoBidValidator,
             AuctionSocketClient network,
             User user,
             ItemStatusRendered statusService,
-            VBox autoBidForm,
-            VBox autoBidActiveStatus,
-            TextField maxBidField,
-            TextField autoBidStepField,
-            Label userCurrentBidLabel,
-            Button btnAutoBidToggle,
-            Button submitBid,
+            AutoBidView view, // Nhận đối tượng View đã gom nhóm
             Supplier<Item> itemSupplier,
             Supplier<Double> myLastBidSupplier
     ) {
@@ -55,51 +47,48 @@ public class AutoBidUiHandler {
         this.network = network;
         this.user = user;
         this.statusService = statusService;
-        this.autoBidForm = autoBidForm;
-        this.autoBidActiveStatus = autoBidActiveStatus;
-        this.maxBidField = maxBidField;
-        this.autoBidStepField = autoBidStepField;
-        this.userCurrentBidLabel = userCurrentBidLabel;
-        this.btnAutoBidToggle = btnAutoBidToggle;
-        this.submitBid = submitBid;
+        this.view = view;
         this.itemSupplier = itemSupplier;
         this.myLastBidSupplier = myLastBidSupplier;
     }
 
     public void toggleForm() {
-        boolean visible = autoBidForm.isVisible();
-        autoBidForm.setVisible(!visible);
-        autoBidForm.setManaged(!visible);
+        view.toggleFormVisibility();
     }
 
     public void start() {
         Item item = itemSupplier.get();
         if (!statusService.isOngoing(item)) {
-            ToastUtil.showError(maxBidField.getScene(), "Auction is not active.");
+            view.showErrorMessage("Auction is not active.");
             return;
         }
         try {
-            double max = Double.parseDouble(maxBidField.getText().trim());
-            double step = Double.parseDouble(autoBidStepField.getText().trim());
+            // [C] Lấy dữ liệu thô từ View thông qua giao tiếp phương thức công khai
+            double max = Double.parseDouble(view.getMaxBidInput());
+            double step = Double.parseDouble(view.getAutoBidStepInput());
 
-            // Thay đổi 1: Gọi hàm validate từ AutoBidValidationService
+            // [M] Yêu cầu nghiệp vụ Model xác thực luật đấu giá
             AutoBidValidationService.ValidationResult result = autoBidValidator.validate(item, max, step);
             if (!result.ok()) {
-                ToastUtil.showError(maxBidField.getScene(), result.errorMessage());
+                view.showErrorMessage(result.errorMessage());
                 return;
             }
 
+            // [M] Thay đổi trạng thái dữ liệu trong Model & Phát tín hiệu qua tầng mạng
             autoBidManager.activate(max, step);
             network.sendAutoBidRegister(item.getId(), user.getId(), max, step);
-            updateUi(true);
-            ToastUtil.showSuccess(maxBidField.getScene(), "Auto-Bid activated!");
+
+            // [V] Điều khiển View kết xuất đồ họa trạng thái mới
+            boolean isSeller = item.getSellerId().equals(user.getId());
+            view.renderActiveState(true, isSeller);
+            view.showSuccessMessage("Auto-Bid activated!");
 
             boolean isLeading = user.getId().equals(autoBidManager.getLastBidderId());
-            userCurrentBidLabel.setText(isLeading
+            view.updateStatusText(isLeading
                     ? String.format("Your current bid: $ %.0f (Leading)", item.getCurrentPrice())
                     : "Auto-bidding...");
         } catch (NumberFormatException e) {
-            ToastUtil.showError(maxBidField.getScene(), "Please enter valid numbers.");
+            view.showErrorMessage("Please enter valid numbers.");
         }
     }
 
@@ -109,31 +98,35 @@ public class AutoBidUiHandler {
         if (item != null) {
             network.sendCancelAutoBid(item.getId(), user.getId());
         }
-        updateUi(false);
+        boolean isSeller = item != null && item.getSellerId().equals(user.getId());
+        view.renderActiveState(false, isSeller);
     }
+
     public void handleDecision(double serverPrice, String topBidderId) {
         Item item = itemSupplier.get();
 
+        // [M] Thực thi xử lý thuật toán cốt lõi bên trong nghiệp vụ của Model
         AutoBidDecision decision = autoBidManager.decideBid(
                 topBidderId, serverPrice, user.getId(), statusService.isOngoing(item));
 
+        // [C] Nhận tín hiệu quyết định từ Model và điều hướng View hiển thị tương ứng
         switch (decision.type()) {
             case AUCTION_ENDED -> stop();
-            case INACTIVE -> {
-            }
+            case INACTIVE -> { }
             case LEADING -> {
                 if (autoBidManager.isActive()) {
-                    userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f", serverPrice));
+                    view.updateStatusText(String.format("Your current bid: $ %.0f", serverPrice));
                 }
             }
             case MAX_REACHED -> {
                 network.sendCancelAutoBid(item.getId(), user.getId());
-                updateUi(false);
-                ToastUtil.showInfo(userCurrentBidLabel.getScene(), "Auto-bid stopped: Max limit reached!");
+                boolean isSeller = item != null && item.getSellerId().equals(user.getId());
+                view.renderActiveState(false, isSeller);
+                view.showInfoMessage("Auto-bid stopped: Max limit reached!");
             }
             case OUTBID_AND_REBID -> {
                 double myLastBid = myLastBidSupplier.get();
-                userCurrentBidLabel.setText(myLastBid > 0
+                view.updateStatusText(myLastBid > 0
                         ? String.format("Your current bid: $ %.0f", myLastBid)
                         : "Your current bid: $ 0");
                 network.sendBid(item.getId(), user.getId(), decision.nextBidPrice(), "");
@@ -143,18 +136,13 @@ public class AutoBidUiHandler {
 
     public void updateUi(boolean active) {
         Item item = itemSupplier.get();
-        autoBidForm.setVisible(false);
-        autoBidForm.setManaged(false);
-        autoBidActiveStatus.setVisible(active);
-        autoBidActiveStatus.setManaged(active);
-        btnAutoBidToggle.setVisible(!active);
-        btnAutoBidToggle.setManaged(!active);
-        submitBid.setDisable(active || item.getSellerId().equals(user.getId()));
+        boolean isSeller = item != null && item.getSellerId().equals(user.getId());
+        view.renderActiveState(active, isSeller);
     }
 
     public void updateUIAutoBid(double maxBid, double step) {
         Item item = itemSupplier.get();
         double currentPrice = item != null ? item.getCurrentPrice() : 0;
-        userCurrentBidLabel.setText(String.format("Your current bid: $ %.0f", currentPrice));
+        view.updateStatusText(String.format("Your current bid: $ %.0f", currentPrice));
     }
 }

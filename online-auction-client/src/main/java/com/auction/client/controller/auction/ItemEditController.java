@@ -1,5 +1,6 @@
 package com.auction.client.controller.auction;
 
+import com.auction.client.controller.auction.AuctionFormController.FormData; // Tái sử dụng DTO FormData công khai
 import com.auction.client.service.ItemsService;
 import com.auction.client.ui.image.EditItemImageManager;
 import com.auction.client.util.NavigationUtil;
@@ -25,7 +26,6 @@ import java.util.List;
 
 public class ItemEditController {
 
-    // ── FXML Fields ───────────────────────────────────────────────────────────
     @FXML
     private TextField txtItemName;
     @FXML
@@ -36,7 +36,6 @@ public class ItemEditController {
     private TextField txtInitPrice;
     @FXML
     private TextField txtBidStep;
-
     @FXML
     private DatePicker startDateP;
     @FXML
@@ -45,36 +44,35 @@ public class ItemEditController {
     private DatePicker endDateP;
     @FXML
     private ComboBox<String> cbEndTime;
-
     @FXML
     private VBox dragDropArea;
     @FXML
     private HBox imagesPreviewContainer;
     @FXML
     private VBox smallAddBtn;
-
     @FXML
     private Label  lblMessage;
     @FXML
     private Button btnSave;
 
-    // ── State & Managers ──────────────────────────────────────────────────────
     private String currentItemId;
     private boolean isSaving = false;
     private EditItemImageManager imageManager;
-
     private final ItemsService itemsService = ItemsService.getInstance();
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         FormUtil.populateHalfHourSlots(cbStartTime, cbEndTime);
         FormUtil.autoGrowTextArea(txtItemDesc, 120);
+
         Platform.runLater(() -> this.imageManager = new EditItemImageManager(
                 dragDropArea, imagesPreviewContainer, smallAddBtn, btnSave.getScene()
         ));
     }
 
+    /**
+     * Nạp ID sản phẩm từ ngoài vào và kích hoạt luồng tải dữ liệu
+     */
     public void setItemId(String id) {
         this.currentItemId = id;
         itemsService.getItemById(id, "")
@@ -106,7 +104,6 @@ public class ItemEditController {
         }
     }
 
-    // ── Event Handlers ────────────────────────────────────────────────────────
     @FXML
     public void handleChooseImage() {
         if (imageManager != null) {
@@ -118,20 +115,13 @@ public class ItemEditController {
     public void handleSaveChanges(ActionEvent event) {
         if (isSaving || imageManager == null) return;
 
-        String itemName = txtItemName.getText().trim();
-        String itemDesc = txtItemDesc.getText().trim();
-        String category = getSelectedCategory();
-        LocalDate startDate = startDateP.getValue();
-        LocalDate endDate = endDateP.getValue();
-        String startTime = cbStartTime.getValue();
-        String endTime = cbEndTime.getValue();
-
+        FormData data = collectFormData();
         List<File> allImages = imageManager.getAllImagesAsFiles();
 
         AuctionFormValidator.Result result = AuctionFormValidator.validateUpdate(
-                itemName, itemDesc, category,
-                startDate, endDate, startTime, endTime,
-                txtInitPrice.getText().trim(), txtBidStep.getText().trim(), allImages
+                data.itemName, data.itemDesc, data.category,
+                data.startDate, data.endDate, data.startTime, data.endTime,
+                data.initPriceStr, data.bidStepStr, allImages
         );
 
         if (!result.isValid()) {
@@ -142,9 +132,7 @@ public class ItemEditController {
         setSaveState(true);
 
         itemsService.updateItem(
-                        itemName, itemDesc, category,
-                        startDate, endDate, startTime, endTime,
-                        txtInitPrice.getText().trim(), txtBidStep.getText().trim(),
+                        data,
                         imageManager.getExistingImagePaths(),
                         imageManager.getNewSelectedFiles(),
                         currentItemId
@@ -162,7 +150,6 @@ public class ItemEditController {
         }
     }
 
-    // ── Response Handlers (Async Callbacks) ───────────────────────────────────
     private void handleSaveResponse(ResponseMessage response) {
         Platform.runLater(() -> {
             setSaveState(false);
@@ -194,7 +181,24 @@ public class ItemEditController {
         return null;
     }
 
-    // ── Private UI Helpers ────────────────────────────────────────────────────
+
+    /**
+     * Gom dữ liệu thô từ các ô nhập liệu
+     */
+    private FormData collectFormData() {
+        return new FormData(
+                txtItemName.getText().trim(),
+                txtItemDesc.getText().trim(),
+                getSelectedCategory(),
+                startDateP.getValue(),
+                endDateP.getValue(),
+                cbStartTime.getValue(),
+                cbEndTime.getValue(),
+                txtInitPrice.getText().trim(),
+                txtBidStep.getText().trim()
+        );
+    }
+
     private String getSelectedCategory() {
         Toggle toggle = categoryGroup.getSelectedToggle();
         return toggle != null ? toggle.getUserData().toString() : null;
