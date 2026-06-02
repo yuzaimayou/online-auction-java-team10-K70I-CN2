@@ -243,13 +243,20 @@ public class ItemPageController {
             }
 
             public void onAutoBidState(AutoBidPayload data) {
-                if (data.getIsActive() == true) {
+                // THÊM: guard null và isActive null
+                boolean isActive = data != null && Boolean.TRUE.equals(data.getIsActive());
+
+                if (isActive) {
                     Platform.runLater(() -> {
+                        autoBidManager.activate(data.getMaxBid(), data.getIncrement());
                         autoBidHandler.updateUi(true);
                         autoBidHandler.updateUIAutoBid(data.getMaxBid(), data.getIncrement());
                     });
                 } else {
-                    Platform.runLater(() -> autoBidHandler.updateUi(false));
+                    Platform.runLater(() -> {
+                        autoBidManager.deactivate();
+                        autoBidHandler.updateUi(false);
+                    });
                 }
             }
         });
@@ -270,7 +277,7 @@ public class ItemPageController {
             this.myLastBid = bidPayload.getBidPrice();
         }
 
-        currentPriceLabel.setText(String.format("$ %.0f", item.getCurrentPrice()));
+        currentPriceLabel.setText(statusUiService.formatPrice(item.getCurrentPrice()));
         bidPanel.applyAuctionStatusView(item, user.getId());
         autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
         updateMinimumBidLabel();
