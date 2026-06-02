@@ -1,9 +1,13 @@
 package com.auction.server.service.auction;
 
+import com.auction.server.database.DatabaseManager;
 import com.auction.server.repository.ItemRepository;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,19 +48,59 @@ public class AuctionSchedulerService {
     }
 
     public void checkAndUpdateStatuses() {
-        List<String> updatedIds = itemRepository.updateStatus();
-        if (updatedIds != null) {
-            for (String id : updatedIds) {
-                try {
-                    Item item = itemRepository.findById(id);
-                    if (item != null && item.getStatus() == AuctionStatus.ENDED) {
-                        LOGGER.info("[Scheduler] Settle auction item: " + id);
-                        settlementService.settleAuction(id);
-                    }
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "[Scheduler] Error settling item " + id + ": " + e.getMessage(), e);
+        itemRepository.updateStatus();
+        List<String> expiredIds = itemRepository.findOngoingExpiredItemIds();
+        if (expiredIds != null) {
+            for (String id : expiredIds) {
+                if (markExpiredAuctionEnded(id)) {
+                    LOGGER.info("[Scheduler] Settle auction item: " + id);
+                    settlementService.settleAuction(id);
                 }
             }
+        }
+    }
+
+    private boolean markExpiredAuctionEnded(String itemId) {
+        synchronized (AuctionLockManager.getItemLock(itemId)) {
+            try (Connection conn = DatabaseManager.getConnection()) {
+                conn.setAutoCommit(false);
+                try {
+                    LocalDateTime now = LocalDateTime.now();
+                    Item item = itemRepository.findById(conn, itemId);
+                    if (item == null
+                            || item.getStoredStatus() != AuctionStatus.ONGOING
+                            || item.getEndTime().isAfter(now)) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    if (!itemRepository.markEndedIfStillExpired(conn, itemId, now)) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    conn.commit();
+                    return true;
+                } catch (Exception e) {
+                    rollbackQuietly(conn);
+                    LOGGER.log(Level.SEVERE, "[Scheduler] Error ending item " + itemId + ": " + e.getMessage(), e);
+                    return false;
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "[Scheduler] Failed to open DB connection for item " + itemId, e);
+                return false;
+            }
+        }
+    }
+
+    private void rollbackQuietly(Connection conn) {
+        if (conn == null) {
+            return;
+        }
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "[Scheduler] Rollback failed", e);
         }
     }
 }
