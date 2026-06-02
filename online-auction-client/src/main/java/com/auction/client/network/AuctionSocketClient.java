@@ -81,10 +81,16 @@ public class AuctionSocketClient {
                 String jsonRes;
                 while ((jsonRes = in.readLine()) != null) {
                     ResponseMessage response = gson.fromJson(jsonRes, ResponseMessage.class);
-                    if ("join_room_success".equals(response.getStatus())) {
+                    System.out.println("Client received message: " + response.getStatus() + " - " + response.getMessage() + " - " + response.getData());
+                    JsonObject jsonObject = gson.fromJson(jsonRes, JsonObject.class);
+                    AutoBidPayload autoBidPayload = gson.fromJson(jsonObject.get("data"), AutoBidPayload.class);
+                    if (SocketEventConstants.STATUS_JOIN_ROOM_SUCCESS.equals(response.getStatus())) {
                         System.out.println("Successfully joined the auction room");
+                        if (auctionRoomListener != null) {
+                            auctionRoomListener.onAutoBidState(autoBidPayload);
+                        }
                         continue;
-                    } else if ("join_room_fail".equals(response.getStatus())) {
+                    } else if (SocketEventConstants.STATUS_JOIN_ROOM_FAIL.equals(response.getStatus())) {
                         throw new IOException("Failed to join the auction room: " + response.getMessage());
                     }
                     if (auctionRoomListener != null) {
@@ -119,11 +125,11 @@ public class AuctionSocketClient {
 
     /**
      * Gửi yêu cầu đăng ký auto-bid lên server.
-     *
+     * <p>
      * [FIX #3] Trước đây có 2 overload sendAutoBidRegister:
-     *   - sendAutoBidRegister(String, String, double, double)   → dùng helper send()
-     *   - sendAutoBidRegister(String, String, Double, Double)   → code lặp, không nhất quán
-     *
+     * - sendAutoBidRegister(String, String, double, double)   → dùng helper send()
+     * - sendAutoBidRegister(String, String, Double, Double)   → code lặp, không nhất quán
+     * <p>
      * Gộp lại thành 1 method dùng double (primitive), loại bỏ overload thừa.
      * Gọi từ ItemPageController dùng double literals → không bị ảnh hưởng.
      */
@@ -171,6 +177,7 @@ public class AuctionSocketClient {
             listenerThread = null;
         }
     }
+
     private void dispatchToListener(ResponseMessage response, AuctionRoomListener listener) {
         String event = response.getMessage();
         switch (event) {
@@ -188,6 +195,16 @@ public class AuctionSocketClient {
                 JsonObject data = gson.fromJson(gson.toJsonTree(response.getData()), JsonObject.class);
                 if (data != null && data.has("itemId"))
                     listener.onItemBanned(data.get("itemId").getAsString());
+            }
+            case SocketEventConstants.EVENT_UPDATE_TIME -> {
+                try {
+                    LocalDateTime newEndTime = LocalDateTime.parse(response.getData().toString());
+                    listener.onAuctionExtended(newEndTime);
+                } catch (Exception e) {
+                    System.err.println("Failed to parse time update data: " + e.getMessage());
+                    System.out.println("[TIME UPDATE] Received time update with unparseable data: " + response.getData());
+                }
+
             }
         }
     }
