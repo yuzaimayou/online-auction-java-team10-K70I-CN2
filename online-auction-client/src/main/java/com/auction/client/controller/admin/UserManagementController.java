@@ -69,6 +69,7 @@ public class UserManagementController {
                     if (isSuccess) {
                         user.setStatus("Suspended");
                         user.setRole("banned_user");
+
                         userTable.refresh();
                         AlertUtil.showInfo("Thành công", "Tài khoản đã được khóa.");
                     } else {

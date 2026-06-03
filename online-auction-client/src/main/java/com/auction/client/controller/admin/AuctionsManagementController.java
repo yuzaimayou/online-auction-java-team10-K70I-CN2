@@ -39,6 +39,7 @@ public class AuctionsManagementController {
         colItem.setCellFactory(ItemTableFactory.itemCell(50, 50));
         colSeller.setCellFactory(ItemTableFactory.sellerCell());
         colCreatedAt.setCellFactory(ItemTableFactory.createdAtCell());
+
         colView.setCellFactory(ItemTableFactory.viewLinkCell(this::handleViewItem));
         colAction.setCellFactory(ItemTableFactory.adminActionCell(this::handleBanItem));
 
@@ -63,7 +64,7 @@ public class AuctionsManagementController {
         itemsService.banItem(item.getId())
                 .thenAccept(res -> Platform.runLater(() -> {
                     if ("success".equals(res.getStatus())) {
-                        auctionTable.getItems().remove(item); // Tối ưu không cần load lại toàn bộ bảng
+                        auctionTable.getItems().remove(item);
                         AlertUtil.showInfo("Success", "Item has been banned.");
                     } else {
                         AlertUtil.showError("Ban Failed", res.getMessage());
