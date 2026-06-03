@@ -113,17 +113,6 @@ public class BidRepository {
 
     // Auto-bid — upsert / deactivate
 
-    // Tạo hoặc cập nhật cấu hình auto-bid bằng connection riêng.
-    public boolean upsertAutoBid(String itemId, String userId,
-            double maxBid, double increment, String registeredAt) {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            return upsertAutoBid(conn, itemId, userId, maxBid, increment, registeredAt);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to upsert auto bid (standalone)", e);
-            return false;
-        }
-    }
-
     // Tạo hoặc cập nhật cấu hình auto-bid trong transaction hiện tại.
     public boolean upsertAutoBid(Connection conn, String itemId, String userId,
             double maxBid, double increment, String registeredAt) throws Exception {
@@ -145,16 +134,6 @@ public class BidRepository {
             stmt.setString(5, registeredAt);
             stmt.executeUpdate();
             return true;
-        }
-    }
-
-    // Tắt auto-bid của một user bằng connection riêng.
-    public boolean deactivateAutoBidIfPresent(String itemId, String userId) {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            return deactivateAutoBidIfPresent(conn, itemId, userId);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to deactivate auto bid if present (standalone)", e);
-            return false;
         }
     }
 
