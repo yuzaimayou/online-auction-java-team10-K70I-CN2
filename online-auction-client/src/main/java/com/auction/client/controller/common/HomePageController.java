@@ -7,6 +7,7 @@ import com.auction.client.util.NavigationUtil;
 import com.auction.client.ui.util.ToastUtil;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.ItemSummary;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +15,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,17 +50,18 @@ public class HomePageController {
 
 
     public HomePageController() {}
+    private final PauseTransition debounce = new PauseTransition(Duration.millis(100));
 
 
     @FXML
     public void initialize() {
         network.leaveRoom();
 
-        SearchStoreController.searchQueryProperty().addListener(
-                (obs, oldVal, newVal) -> fetchItemsFromServer()
-        );
+        SearchStoreController.searchQueryProperty().addListener((obs, oldVal, newVal) -> {
+            debounce.setOnFinished(event -> fetchItemsFromServer());
+            debounce.playFromStart();
+        });
 
-        // Đăng ký Listener tính toán độ rộng thích ứng động cho các FlowPane khi người dùng kéo giãn cửa sổ
         mainScrollPane.widthProperty().addListener((obs, oldVal, newVal) -> {
             double containerWidth = newVal.doubleValue() - 40;
             ongoingAuctionsContainer.setPrefWidth(containerWidth);
@@ -75,11 +78,15 @@ public class HomePageController {
      */
     private void fetchItemsFromServer() {
         String search = SearchStoreController.getSearchQuery();
+
         itemsService.getFilteredAndGroupedItems(search, currentCategory)
-                .thenAccept(this::processFetchResponse)
+                .thenAccept(groupedItems -> {
+                    if (search.equals(SearchStoreController.getSearchQuery())) {
+                        processFetchResponse(groupedItems);
+                    }
+                })
                 .exceptionally(this::processFetchException);
     }
-
     /**
      * Tiếp nhận kết quả Map dữ liệu và điều phối về Luồng giao diện.
      * @param groupedItems Bản đồ lưu trữ danh sách sản phẩm đã được phân nhóm theo trạng thái
@@ -168,6 +175,7 @@ public class HomePageController {
      * Làm mới lại danh sách sản phẩm bằng cách tải lại từ mạng.
      */
     public void refreshItems() {
+        itemsService.clearCache();
         fetchItemsFromServer();
     }
 
