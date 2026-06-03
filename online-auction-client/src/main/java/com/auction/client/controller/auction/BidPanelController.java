@@ -1,4 +1,4 @@
-package com.auction.client.controller.auction; // Hoặc package controller tùy bạn đặt
+package com.auction.client.controller.auction;
 
 import com.auction.client.service.AutoBidService;
 import com.auction.client.ui.auction.BidPanelView;
@@ -33,31 +33,27 @@ public class BidPanelController {
     public void refreshAndSync(Item item, String currentUserId) {
         if (item == null) return;
 
-        // 1. Cập nhật giao diện đồ họa thông qua View
-        if (item.getSellerId().equals(currentUserId)) {
-            view.showOwnerRestrictedState();
-            return;
-        }
-
+        boolean isOwner = item.getSellerId().equals(currentUserId);
         AuctionStatus status = statusService.resolveStatus(item);
-        switch (status) {
-            case ONGOING -> view.showOngoingState(autoBidManager.isActive());
-            case UPCOMING -> view.showUpcomingState();
-            case ENDED -> view.showEndedState();
-            case BANNED -> applyBannedStateView(item);
-        }
 
-        // 2. Tự động kích hoạt luồng đếm ngược thông minh
+        if (isOwner) {
+            view.showOwnerRestrictedState();
+        } else {
+            switch (status) {
+                case ONGOING -> view.showOngoingState(autoBidManager.isActive());
+                case UPCOMING -> view.showUpcomingState();
+                case ENDED -> view.showEndedState();
+                case BANNED -> applyBannedStateView(item);
+            }
+        }
         if (status == AuctionStatus.UPCOMING || status == AuctionStatus.ONGOING) {
             java.time.LocalDateTime target = (status == AuctionStatus.UPCOMING)
                     ? item.getStartTime()
                     : item.getEndTime();
 
-            // Khi hết giờ đếm ngược, hệ thống sẽ tự động gọi lại chính hàm này để đổi trạng thái giao diện sang ENDED
             countdownTimer.startFor(target, () -> Platform.runLater(() -> refreshAndSync(item, currentUserId)));
         }
     }
-
     public void applyBannedStateView(Item item) {
         countdownTimer.stop();
         autoBidManager.deactivate();
