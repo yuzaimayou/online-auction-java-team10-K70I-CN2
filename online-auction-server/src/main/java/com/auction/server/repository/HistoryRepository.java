@@ -17,6 +17,7 @@ public class HistoryRepository {
     private static final Logger LOGGER = Logger.getLogger(HistoryRepository.class.getName());
     private static volatile HistoryRepository instance;
 
+    // Lấy instance dùng chung của HistoryRepository.
     public static HistoryRepository getInstance() {
         if (instance == null) {
             synchronized (HistoryRepository.class) {
@@ -28,6 +29,7 @@ public class HistoryRepository {
         return instance;
     }
 
+    // Chuyển một dòng ResultSet thành DTO lịch sử bid.
     private BidHistoryItemDTO mapRowToBidDTO(ResultSet rs) throws SQLException {
         String itemId = rs.getString("item_id");
         String userName = rs.getString("username");
@@ -54,6 +56,7 @@ public class HistoryRepository {
         return new BidHistoryItemDTO(itemId, userName, bidPrice, bidTime);
     }
 
+    // Lấy lịch sử bid của một item theo thứ tự mới nhất trước.
     public List<BidHistoryItemDTO> getBidHistoryForItem(String itemId) {
         String sql = """
                 SELECT b.item_id, u.username, b.bid_price, b.bid_time

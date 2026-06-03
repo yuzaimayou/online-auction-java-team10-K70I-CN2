@@ -49,6 +49,7 @@ public class BidRepository {
         private final double increment;
         private final LocalDateTime registeredAt;
 
+        // Tạo snapshot cấu hình auto-bid từ dữ liệu đọc được.
         public AutoBidConfig(String userId, double maxBid, double increment, LocalDateTime registeredAt) {
             this.userId = userId;
             this.maxBid = maxBid;
@@ -56,41 +57,28 @@ public class BidRepository {
             this.registeredAt = registeredAt;
         }
 
+        // Lấy id của người dùng đăng ký auto-bid.
         public String getUserId() {
             return userId;
         }
 
+        // Lấy giá tối đa của cấu hình auto-bid.
         public double getMaxBid() {
             return maxBid;
         }
 
+        // Lấy bước tăng giá của cấu hình auto-bid.
         public double getIncrement() {
             return increment;
         }
 
+        // Lấy thời điểm đăng ký auto-bid.
         public LocalDateTime getRegisteredAt() {
             return registeredAt;
         }
     }
 
-    // Bid
-    /**
-     * Ghi một bid mới — dùng connection riêng (ngoài transaction).
-     * Chỉ dùng cho các luồng không cần transaction bao quanh.
-     */
-    public boolean createBid(String itemId, String userId, double bidPrice, String bidTime) {
-        try (Connection conn = DatabaseManager.getConnection()) {
-            return createBid(conn, itemId, userId, bidPrice, bidTime);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to create bid (standalone)", e);
-            return false;
-        }
-    }
-
-    /**
-     * Ghi một bid mới trong transaction của caller.
-     * Ném Exception ra ngoài để caller có thể rollback đúng cách.
-     */
+    // Ghi một bid mới trong transaction hiện tại.
     public boolean createBid(Connection conn, String itemId, String userId,
             double bidPrice, String bidTime) throws Exception {
         String sql = "INSERT INTO bids(item_id, user_id, bid_price, bid_time) VALUES(?, ?, ?, ?)";
@@ -103,13 +91,9 @@ public class BidRepository {
             stmt.executeUpdate();
             return true;
         }
-        // Không catch ở đây — để caller bắt và rollback
     }
 
-    /**
-     * Tìm user đặt bid gần nhất cho một item.
-     * Dùng trong transaction của caller để tránh dirty read.
-     */
+    // Tìm user đặt bid gần nhất cho item trong transaction hiện tại.
     public String findLastBidder(Connection conn, String itemId) throws Exception {
         String sql = """
                 SELECT user_id
@@ -129,9 +113,7 @@ public class BidRepository {
 
     // Auto-bid — upsert / deactivate
 
-    /**
-     * Upsert auto-bid config — dùng connection riêng.
-     */
+    // Tạo hoặc cập nhật cấu hình auto-bid bằng connection riêng.
     public boolean upsertAutoBid(String itemId, String userId,
             double maxBid, double increment, String registeredAt) {
         try (Connection conn = DatabaseManager.getConnection()) {
@@ -142,10 +124,7 @@ public class BidRepository {
         }
     }
 
-    /**
-     * Upsert auto-bid config trong transaction của caller.
-     * Ném Exception ra ngoài để caller rollback đúng cách.
-     */
+    // Tạo hoặc cập nhật cấu hình auto-bid trong transaction hiện tại.
     public boolean upsertAutoBid(Connection conn, String itemId, String userId,
             double maxBid, double increment, String registeredAt) throws Exception {
         String sql = """
@@ -169,10 +148,7 @@ public class BidRepository {
         }
     }
 
-    /**
-     * Deactivate auto-bid cho một user cụ thể — dùng connection riêng.
-     * Dùng cho luồng cancel độc lập (không cần transaction bao quanh).
-     */
+    // Tắt auto-bid của một user bằng connection riêng.
     public boolean deactivateAutoBidIfPresent(String itemId, String userId) {
         try (Connection conn = DatabaseManager.getConnection()) {
             return deactivateAutoBidIfPresent(conn, itemId, userId);
@@ -182,9 +158,7 @@ public class BidRepository {
         }
     }
 
-    /**
-     * Deactivate auto-bid cho một user trong transaction của caller.
-     */
+    // Tắt auto-bid của một user trong transaction hiện tại.
     public boolean deactivateAutoBidIfPresent(Connection conn, String itemId, String userId) throws Exception {
         String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND user_id = ? AND is_active = 1";
 
@@ -199,10 +173,7 @@ public class BidRepository {
         }
     }
 
-    /**
-     * Deactivate toàn bộ auto-bid của một item trong transaction của caller.
-     * Dùng khi auction kết thúc.
-     */
+    // Tắt toàn bộ auto-bid của một item trong transaction hiện tại.
     public boolean deactivateAllAutoBids(Connection conn, String itemId) throws Exception {
         String sql = "UPDATE auto_bids SET is_active = 0 WHERE item_id = ? AND is_active = 1";
 
@@ -216,10 +187,7 @@ public class BidRepository {
         }
     }
 
-    /**
-     * Deactivate toàn bộ auto-bid của một user trong transaction của caller.
-     * Dùng khi user bị ban.
-     */
+    // Tắt toàn bộ auto-bid của một user trong transaction hiện tại.
     public boolean deactivateAllAutoBidsForUser(Connection conn, String userId) throws Exception {
         String sql = "UPDATE auto_bids SET is_active = 0 WHERE user_id = ? AND is_active = 1";
 
@@ -234,12 +202,7 @@ public class BidRepository {
     }
 
     // Auto-bid — query
-    /**
-     * Lấy danh sách tất cả auto-bid đang active cho một item.
-     * Kết quả được sort theo registered_at ASC (người đăng sớm hơn được ưu tiên).
-     *
-     * Ném Exception ra ngoài — caller (BidService) sẽ rollback nếu cần.
-     */
+    // Lấy danh sách auto-bid đang active của một item.
     public List<AutoBidConfig> findActiveAutoBids(Connection conn, String itemId) throws Exception {
         List<AutoBidConfig> autoBids = new ArrayList<>();
 
@@ -285,10 +248,7 @@ public class BidRepository {
         return autoBids;
     }
 
-    /**
-     * Tìm auto-bid đang active của một user cho một item cụ thể.
-     * Dùng connection riêng — chỉ để query trạng thái, không cần transaction.
-     */
+    // Tìm auto-bid đang active của một user cho một item.
     public AutoBidPayload findActiveAutoBid(String itemId, String userId) {
         String sql = """
                 SELECT item_id, user_id, max_bid, increment, is_active
@@ -320,6 +280,7 @@ public class BidRepository {
         return null;
     }
 
+    // Lấy danh sách các item mà user đã từng đặt giá.
     public List<MyBidSummary> findMyBids(String userId) {
         String sql = """
                 SELECT
@@ -382,6 +343,7 @@ public class BidRepository {
 
     // Helper
 
+    // Lấy ảnh đầu tiên trong danh sách ảnh làm thumbnail.
     private String extractThumbnail(String imagesData) {
         if (imagesData == null || imagesData.isBlank()) {
             return null;
@@ -399,12 +361,7 @@ public class BidRepository {
         }
     }
 
-    /**
-     * Parse datetime string từ DB.
-     *
-     * FIX: Trả về null thay vì LocalDateTime.MIN khi parse thất bại.
-     * Caller sẽ bỏ qua record này thay vì cho nó lên đầu danh sách ưu tiên.
-     */
+    // Chuyển chuỗi thời gian trong database thành LocalDateTime.
     private LocalDateTime parseDateTime(String itemId, String userId, String rawValue) {
         if (rawValue == null || rawValue.isBlank()) {
             return null;

@@ -29,17 +29,18 @@ public class ItemRepository {
     private static final String COLUMN_CURRENT_PRICE = "current_price";
     private static final String COLUMN_SELLER_USERNAME = "seller_username";
 
-    // singleton
+    // Khởi tạo repository theo mẫu singleton.
     private ItemRepository() {
     }
 
+    // Lấy instance dùng chung của ItemRepository.
     public static ItemRepository getInstance() {
         return instance;
     }
 
     private Gson gson = GsonUtil.getInstance();
 
-    // cập nhật giá hiện tại và người trả giá hiện tại
+    // Cập nhật giá hiện tại và người đang giữ giá cao nhất của item.
     public boolean updateCurrentBidder(Connection conn, String itemId,
                                        double newPrice, String newBidderId) {
         String sql = """
@@ -59,7 +60,7 @@ public class ItemRepository {
         }
     }
 
-    // ánh xạ dữ liệu từ ResultSet sang ItemSummary
+    // Chuyển một dòng ResultSet thành ItemSummary.
     private ItemSummary mapRowToItemSummary(ResultSet rs) throws SQLException {
         String id = rs.getString(COLUMN_ID);
         String name = rs.getString(COLUMN_NAME);
@@ -91,6 +92,7 @@ public class ItemRepository {
 
     }
 
+    // Chuyển dữ liệu image_path thành danh sách đường dẫn ảnh.
     private List<String> parseImagePaths(String pathsData) {
         if (pathsData == null || pathsData.isBlank()) {
             return new ArrayList<>();
@@ -101,6 +103,7 @@ public class ItemRepository {
         return imagePaths == null ? new ArrayList<>() : imagePaths;
     }
 
+    // Lấy ảnh đầu tiên làm thumbnail của item.
     private String extractThumbnail(String imagesData) {
         if (imagesData == null || imagesData.isBlank()) {
             return null;
@@ -117,6 +120,7 @@ public class ItemRepository {
         }
     }
 
+    // Xác định trạng thái hiển thị của item từ database hoặc thời gian đấu giá.
     private AuctionStatus resolveSummaryStatus(ResultSet rs, LocalDateTime startTime, LocalDateTime endTime) {
         String dbStatus = readOptionalString(rs, COLUMN_STATUS);
         if (dbStatus != null && !dbStatus.isBlank()) {
@@ -129,6 +133,7 @@ public class ItemRepository {
         return AuctionStatus.compute(startTime, endTime);
     }
 
+    // Đọc chuỗi từ cột có thể không tồn tại trong ResultSet.
     private String readOptionalString(ResultSet rs, String columnName) {
         try {
             return rs.getString(columnName);
@@ -138,6 +143,7 @@ public class ItemRepository {
         }
     }
 
+    // Thực thi câu lệnh update và trả về true nếu có dòng bị thay đổi.
     private boolean executeBooleanUpdate(Connection conn, String sql, Object... params) {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
@@ -149,6 +155,7 @@ public class ItemRepository {
         }
     }
 
+    // Gán tham số cho PreparedStatement theo kiểu dữ liệu phù hợp.
     private void setUpdateParam(PreparedStatement stmt, int index, Object param) throws SQLException {
         if (param instanceof String value) {
             stmt.setString(index, value);
@@ -159,6 +166,7 @@ public class ItemRepository {
         }
     }
 
+    // Chạy query lấy danh sách ItemSummary với các tham số truyền vào.
     private List<ItemSummary> executeSummaryQuery(String sql, Object... params) {
         List<ItemSummary> summaries = new ArrayList<>();
 
@@ -182,6 +190,7 @@ public class ItemRepository {
         return summaries;
     }
 
+    // Tạo item mới trong bảng items.
     public boolean createItem(Item item) {
 
         String sql = """
@@ -233,6 +242,7 @@ public class ItemRepository {
         }
     }
 
+    // Cập nhật thông tin item theo id.
     public boolean updateItem(Item item, String itemId) {
         String sql = """
                 UPDATE items SET
@@ -277,6 +287,7 @@ public class ItemRepository {
         }
     }
 
+    // Xóa item khỏi database theo id.
     public boolean deleteItem(String id) {
         String sql = """
                 DELETE FROM items
@@ -296,6 +307,7 @@ public class ItemRepository {
         }
     }
 
+    // Tìm item theo id bằng connection riêng.
     public Item findById(String itemId) {
         String sql = "SELECT * FROM items WHERE id = ?";
         try (
@@ -313,6 +325,7 @@ public class ItemRepository {
         return null;
     }
 
+    // Tìm item theo id bằng connection có sẵn.
     public Item findById(Connection conn, String itemId) {
         String sql = "SELECT * FROM items WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -328,6 +341,7 @@ public class ItemRepository {
         return null;
     }
 
+    // Lấy id của người đang giữ giá cao nhất hiện tại.
     public String getCurrentBidderId(Connection conn, String itemId) throws SQLException {
         String sql = "SELECT current_bidder_id FROM items WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -341,6 +355,7 @@ public class ItemRepository {
         return null;
     }
 
+    // Tìm thông tin tóm tắt của item theo id.
     public ItemSummary findItemSummaryById(String itemId) {
         String sql = """
                 SELECT id,
@@ -371,6 +386,7 @@ public class ItemRepository {
         }
     }
 
+    // Lấy danh sách item của một người bán.
     public List<ItemSummary> findAllBySellerId(String sellerID) {
         String sql = """
                 SELECT id,
@@ -387,8 +403,7 @@ public class ItemRepository {
         return executeSummaryQuery(sql, sellerID);
     }
 
-
-    //Tra item cho homepage(khong co san pham bi ban)
+    // Lấy danh sách item cho homepage và bỏ qua item bị ban.
     public List<ItemSummary> findAllItems(String sortOrder, int offset, String category) {
         // Whitelist sort order để tránh SQL injection
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
@@ -424,14 +439,13 @@ public class ItemRepository {
         return executeSummaryQuery(sql, offset);
     }
 
-    // @deprecated Dùng {@link #findAllItems(String, int, String)} thay thế.
-
     @Deprecated
+    // Lấy danh sách item cho homepage không lọc category, giữ lại cho code cũ.
     public List<ItemSummary> findAllItems(String sortOrder, int offset) {
         return findAllItems(sortOrder, offset, null);
     }
 
-    // Tra item cho admin (co ca san pham bi ban)
+    // Lấy danh sách item cho admin, bao gồm cả item bị ban.
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
             case "start_time desc" -> "i.start_time DESC";
@@ -459,6 +473,7 @@ public class ItemRepository {
         return executeSummaryQuery(sql, offset);
     }
 
+    // Lấy danh sách tên hoặc đường dẫn ảnh của item.
     public List<String> getImgName(String itemId) {
         String sql = """
                 SELECT image_path
@@ -491,6 +506,7 @@ public class ItemRepository {
         return imagePaths;
     }
 
+    // Chuyển một dòng ResultSet thành đối tượng Item.
     private Item mapRow(ResultSet rs) throws Exception {
         String pathsData = rs.getString(COLUMN_IMAGE_PATH);
         List<String> imagePaths = new ArrayList<>();
@@ -521,7 +537,7 @@ public class ItemRepository {
         return item;
     }
 
-    // Đánh dấu item là ENDED (gọi khi thanh toán kết thúc đấu giá)
+    // Đánh dấu item là ENDED khi đấu giá kết thúc.
     public boolean markEnded(Connection conn, String itemId) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try {
@@ -533,6 +549,7 @@ public class ItemRepository {
     }
 
 
+    // Cập nhật giá hiện tại của item.
     public boolean updateCurrentPrice(Connection conn, String itemId, double newPrice) {
 
         String sql = "UPDATE items SET current_price = ? WHERE id = ?";
@@ -545,6 +562,7 @@ public class ItemRepository {
         }
     }
 
+    // Gia hạn thời gian kết thúc của item.
     public boolean extendEndTime(Connection conn, String itemId, LocalDateTime newEndTime) {
         String sql = "UPDATE items SET end_time = ? WHERE id = ?";
         try {
@@ -555,6 +573,7 @@ public class ItemRepository {
         }
     }
 
+    // Tìm các item đang diễn ra nhưng đã quá thời gian kết thúc.
     public List<String> findOngoingExpiredItemIds() {
         List<String> updatedId = new ArrayList<>();
 
@@ -576,6 +595,7 @@ public class ItemRepository {
         return updatedId;
     }
 
+    // Đánh dấu item là ENDED nếu item vẫn đang quá hạn.
     public boolean markEndedIfStillExpired(Connection conn, String itemId, LocalDateTime now) {
         String sql = """
                 UPDATE items
@@ -596,6 +616,7 @@ public class ItemRepository {
         }
     }
 
+    // Cập nhật các item UPCOMING sang ONGOING khi đến thời gian bắt đầu.
     public List<String> updateStatus() {
         List<String> updatedId = new ArrayList<>();
 
@@ -628,6 +649,7 @@ public class ItemRepository {
         return updatedId;
     }
 
+    // Lấy mức giá cao nhất mà một user đã bid cho một item.
     public double getUserLastBid(String itemId, String userId) {
         String sql = "SELECT MAX(bid_price) AS highest_bid FROM bids WHERE item_id = ? AND user_id = ?";
         try (
@@ -646,6 +668,7 @@ public class ItemRepository {
         return 0.0;
     }
 
+    // Cập nhật trạng thái của item trong transaction hiện tại.
     public boolean updateStatus(Connection conn, String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try {

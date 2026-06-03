@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 // Mọi hàm thay đổi dữ liệu đều yêu cầu Connection từ bên ngoài để dùng chung transaction.
 public class WalletRepository {
 
-    // Đọc [balance, frozen_balance] của auth
+    // Lấy balance và frozen_balance của người dùng.
     public double[] getBalances(Connection conn, String userId) throws Exception {
         String sql = "SELECT balance, frozen_balance FROM users WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -22,10 +22,7 @@ public class WalletRepository {
         }
     }
 
-    // Đóng băng tiền khi đặt giá:
-    // balance -= amount, frozen_balance += amount.
-    // Điều kiện WHERE balance >= amount ngăn số dư âm.
-    // Trả về false nếu số dư không đủ.
+    // Đóng băng tiền trong ví khi người dùng đặt giá.
     public boolean freezeAmount(Connection conn, String userId, double amount) throws Exception {
         String sql = """
                 UPDATE users
@@ -42,8 +39,7 @@ public class WalletRepository {
         }
     }
 
-    // Hoàn tiền cho người thua: frozen_balance -= amount, balance += amount.
-    // Trả về false nếu frozen_balance không đủ.
+    // Hoàn lại tiền đã đóng băng cho người dùng.
     public boolean unfreezeAmount(Connection conn, String userId, double amount) throws Exception {
         String sql = """
                 UPDATE users
@@ -60,7 +56,7 @@ public class WalletRepository {
         }
     }
 
-    // Trừ tiền thắng cuộc từ frozen_balance (khi kết thúc đấu giá).
+    // Trừ tiền từ frozen_balance của người thắng khi kết thúc đấu giá.
     public boolean deductFromFrozen(Connection conn, String userId, double amount) throws Exception {
         String sql = """
                 UPDATE users
@@ -75,7 +71,7 @@ public class WalletRepository {
         }
     }
 
-    // Cộng tiền vào balance của người bán sau khi đấu giá kết thúc.
+    // Cộng tiền vào balance của người bán.
     public boolean creditBalance(Connection conn, String userId, double amount) throws Exception {
         String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -85,7 +81,7 @@ public class WalletRepository {
         }
     }
 
-    // Nạp tiền vào tài khoản (top-up).
+    // Nạp tiền vào balance của người dùng.
     public boolean deposit(Connection conn, String userId, double amount) throws Exception {
         String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
