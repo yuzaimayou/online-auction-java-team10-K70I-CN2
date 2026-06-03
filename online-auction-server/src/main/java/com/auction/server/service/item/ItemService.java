@@ -8,7 +8,6 @@ import com.auction.server.repository.UserRepository;
 import com.auction.server.repository.WalletRepository;
 import com.auction.server.repository.WalletTransactionRepository;
 import com.auction.server.service.auction.AuctionLockManager;
-import com.auction.server.util.StringUtil;
 import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.item.ItemSummary;
@@ -20,10 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
@@ -93,16 +90,6 @@ public class ItemService {
             return itemRepository.findAllItemsForAdmin(sortOrder, page);
         }
 
-        // Lấy theo keyword + category (public)
-        if (query.contains("search=")) {
-            try {
-                String input = StringUtil.removeAccents(extractParam(query, "search"));
-
-                return getItemsByKeyword(input, category, page);
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Failed to search items", e);
-            }
-        }
 
         // Lấy theo sellerId
         if (query.contains("sellerId")) {
@@ -223,17 +210,6 @@ public class ItemService {
             }
         }
         return itemRepository.deleteItem(itemId);
-    }
-
-    private List<ItemSummary> getItemsByKeyword(String input, String category, int page) throws SQLException {
-        if (isBlank(input)) {
-            return null;
-        }
-        List<String> keywords = Arrays.stream(input.trim().toLowerCase().split("\\s+"))
-                .filter(word -> !word.isEmpty())
-                .collect(Collectors.toList());
-        int offset = page * 10;
-        return itemRepository.searchItems(keywords, category, offset);
     }
 
 

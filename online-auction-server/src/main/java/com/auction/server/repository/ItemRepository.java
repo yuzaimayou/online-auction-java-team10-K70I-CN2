@@ -41,7 +41,7 @@ public class ItemRepository {
 
     // cập nhật giá hiện tại và người trả giá hiện tại
     public boolean updateCurrentBidder(Connection conn, String itemId,
-            double newPrice, String newBidderId) {
+                                       double newPrice, String newBidderId) {
         String sql = """
                 UPDATE items
                 SET current_price     = ?,
@@ -387,61 +387,8 @@ public class ItemRepository {
         return executeSummaryQuery(sql, sellerID);
     }
 
-    public List<ItemSummary> searchItems(List<String> keywords, String category, int offset) throws SQLException {
-        List<ItemSummary> items = new ArrayList<>();
 
-        boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
-
-        StringBuilder sql = new StringBuilder(
-                "SELECT * FROM items WHERE status != '" + AuctionStatus.BANNED.name() + "' AND (");
-        for (int i = 0; i < keywords.size(); i++) {
-            sql.append("LOWER(search_name) LIKE ?");
-            if (i < keywords.size() - 1)
-                sql.append(" AND ");
-        }
-        sql.append(")");
-        if (filterCategory) {
-            sql.append(" AND LOWER(category) = LOWER(?)");
-        }
-        sql.append(" ORDER BY id DESC LIMIT 10 OFFSET ?");
-
-        LOGGER.fine(sql.toString());
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            int paramIndex = 1;
-            for (String keyword : keywords) {
-                stmt.setString(paramIndex++, "%" + keyword + "%");
-            }
-            if (filterCategory) {
-                stmt.setString(paramIndex++, category);
-            }
-            stmt.setInt(paramIndex, offset);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    items.add(mapRowToItemSummary(rs));
-                }
-            }
-        }
-        return items;
-    }
-
-    /**
-     * @deprecated Dùng {@link #searchItems(List, String, int)} thay thế.
-     */
-    @Deprecated
-    public List<ItemSummary> searchItems(List<String> keywords, int offset) throws SQLException {
-        return searchItems(keywords, null, offset);
-    }
-
-    /**
-     * Dành cho trang chủ / public: loại bỏ sản phẩm BANNED.
-     * [FIX] Áp dụng đúng sortOrder, offset, và category filter.
-     *
-     * @param category null hoặc "ALL" = không filter, chuỗi khác = filter theo
-     *                 category
-     */
+    //Tra item cho homepage(khong co san pham bi ban)
     public List<ItemSummary> findAllItems(String sortOrder, int offset, String category) {
         // Whitelist sort order để tránh SQL injection
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
@@ -454,19 +401,19 @@ public class ItemRepository {
         boolean filterCategory = category != null && !category.isBlank() && !category.equalsIgnoreCase("ALL");
 
         String sql = String.format("""
-                SELECT id,
-                       name,
-                       category,
-                       current_price,
-                       image_path,
-                       start_time,
-                       end_time
-                FROM items
-                WHERE status != '%s'
-                %s
-                ORDER BY %s
-                LIMIT 10 OFFSET ?
-                """,
+                        SELECT id,
+                               name,
+                               category,
+                               current_price,
+                               image_path,
+                               start_time,
+                               end_time
+                        FROM items
+                        WHERE status != '%s'
+                        %s
+                        ORDER BY %s
+                        LIMIT 10 OFFSET ?
+                        """,
                 AuctionStatus.BANNED.name(),
                 filterCategory ? "AND LOWER(category) = LOWER(?)" : "",
                 safeSort);
@@ -477,19 +424,14 @@ public class ItemRepository {
         return executeSummaryQuery(sql, offset);
     }
 
-    /**
-     * @deprecated Dùng {@link #findAllItems(String, int, String)} thay thế.
-     */
+    // @deprecated Dùng {@link #findAllItems(String, int, String)} thay thế.
+
     @Deprecated
     public List<ItemSummary> findAllItems(String sortOrder, int offset) {
         return findAllItems(sortOrder, offset, null);
     }
 
-    /**
-     * [NEW] Dành cho Admin panel: trả về TẤT CẢ sản phẩm kể cả BANNED
-     * để admin có thể xem và quản lý.
-     * Được gọi từ ItemService.getItems() khi caller = "ADMIN".
-     */
+    // Tra item cho admin (co ca san pham bi ban)
     public List<ItemSummary> findAllItemsForAdmin(String sortOrder, int offset) {
         String safeSort = switch (sortOrder == null ? "" : sortOrder.trim().toLowerCase()) {
             case "start_time desc" -> "i.start_time DESC";
@@ -526,7 +468,8 @@ public class ItemRepository {
         List<String> imagePaths = new ArrayList<>();
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);) {
+                PreparedStatement stmt = conn.prepareStatement(sql)
+        ) {
             stmt.setString(1, itemId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -540,11 +483,10 @@ public class ItemRepository {
                         }
                     }
                 }
-            } catch (SQLException e) {
-                LOGGER.log(java.util.logging.Level.SEVERE, "Failed to read image paths for item " + itemId, e);
             }
         } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to get image names", e);
+            LOGGER.log(java.util.logging.Level.SEVERE,
+                    "Failed to read image paths for item " + itemId, e);
         }
         return imagePaths;
     }
@@ -590,23 +532,6 @@ public class ItemRepository {
         }
     }
 
-    public void updateCurrentPrice(String itemId, double newPrice) {
-
-        String sql = "UPDATE items SET current_price = ? WHERE id = ?";
-
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setDouble(1, newPrice);
-            stmt.setString(2, itemId);
-
-            stmt.executeUpdate();
-
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update current price", e);
-        }
-    }
 
     public boolean updateCurrentPrice(Connection conn, String itemId, double newPrice) {
 
@@ -630,30 +555,56 @@ public class ItemRepository {
         }
     }
 
+    public List<String> findOngoingExpiredItemIds() {
+        List<String> updatedId = new ArrayList<>();
+
+        String selectAboutToEndSql =
+                "SELECT id FROM items WHERE status = ? AND datetime(end_time) <= datetime(?)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
+            ps.setString(1, AuctionStatus.ONGOING.name());
+            ps.setString(2, LocalDateTime.now().toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) updatedId.add(rs.getString("id"));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to find expired item statuses", e);
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unexpected error while finding expired item statuses", e);
+        }
+        return updatedId;
+    }
+
+    public boolean markEndedIfStillExpired(Connection conn, String itemId, LocalDateTime now) {
+        String sql = """
+                UPDATE items
+                SET status = ?
+                WHERE id = ?
+                  AND status = ?
+                  AND datetime(end_time) <= datetime(?)
+                """;
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, AuctionStatus.ENDED.name());
+            stmt.setString(2, itemId);
+            stmt.setString(3, AuctionStatus.ONGOING.name());
+            stmt.setString(4, now.toString());
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to mark ended if expired", e);
+            return false;
+        }
+    }
+
     public List<String> updateStatus() {
         List<String> updatedId = new ArrayList<>();
 
-        String selectAboutToEndSql = "SELECT id FROM items WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
-        String selectAboutToLiveSql = "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
-        String updateEndedSql = "UPDATE items SET status = ? WHERE status = ? AND datetime(end_time)   <= datetime('now','localtime')";
-        String updateOngoingSql = "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
+        String selectAboutToLiveSql =
+                "SELECT id FROM items WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
+        String updateOngoingSql =
+                "UPDATE items SET status = ? WHERE status = ? AND datetime(start_time) <= datetime('now','localtime') AND datetime(end_time) > datetime('now','localtime')";
 
         try (Connection conn = DatabaseManager.getConnection()) {
-
-            try (PreparedStatement ps = conn.prepareStatement(selectAboutToEndSql)) {
-                ps.setString(1, AuctionStatus.ONGOING.name());
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next())
-                        updatedId.add(rs.getString("id"));
-                }
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(updateEndedSql)) {
-                ps.setString(1, AuctionStatus.ENDED.name());
-                ps.setString(2, AuctionStatus.ONGOING.name());
-                int rows = ps.executeUpdate();
-                logStatusUpdate("ONGOING->ENDED", rows);
-            }
 
             try (PreparedStatement ps = conn.prepareStatement(selectAboutToLiveSql)) {
                 ps.setString(1, AuctionStatus.UPCOMING.name());
@@ -667,7 +618,6 @@ public class ItemRepository {
                 ps.setString(1, AuctionStatus.ONGOING.name());
                 ps.setString(2, AuctionStatus.UPCOMING.name());
                 int rows = ps.executeUpdate();
-                logStatusUpdate("UPCOMING->ONGOING", rows);
             }
 
         } catch (SQLException e) {
@@ -676,15 +626,6 @@ public class ItemRepository {
             LOGGER.log(java.util.logging.Level.SEVERE, "Unexpected error while updating item statuses", e);
         }
         return updatedId;
-    }
-
-    private void logStatusUpdate(String transition, int rows) {
-        String message = String.format("[updateStatus] %s: %d row(s) updated", transition, rows);
-        if (rows > 0) {
-            LOGGER.info(message);
-        } else {
-            LOGGER.fine(message);
-        }
     }
 
     public double getUserLastBid(String itemId, String userId) {
@@ -705,20 +646,6 @@ public class ItemRepository {
         return 0.0;
     }
 
-    public boolean updateStatus(String itemId, AuctionStatus status) {
-        String sql = "UPDATE items SET status = ? WHERE id = ?";
-        try (
-                Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, status.name());
-            stmt.setString(2, itemId);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Failed to update item status", e);
-            return false;
-        }
-    }
-
     public boolean updateStatus(Connection conn, String itemId, AuctionStatus status) {
         String sql = "UPDATE items SET status = ? WHERE id = ?";
         try {
@@ -728,5 +655,4 @@ public class ItemRepository {
             return false;
         }
     }
-
 }
