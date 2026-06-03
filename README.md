@@ -6,11 +6,11 @@
 ┌─────────────────────────────────────────────────────┐
 │                   MÁY CHỦ (SERVER)                  │
 │                                                     │
-│  ┌──────────┐   ┌─────────────┐   ┌─────────────┐  │
-│  │  Nginx   │   │ Java Server │   │  AI Server  │  │
-│  │ :80      │──▶│ HTTP  :8080 │   │ FastAPI:8000│  │
-│  │          │──▶│ Socket:9090 │   │             │  │
-│  └──────────┘   └─────────────┘   └─────────────┘  │
+│  ┌──────────┐    ┌─────────────┐   ┌─────────────┐  │
+│  │  Nginx   │    │ Java Server │   │  AI Server  │  │
+│  │ :80      │──▶ │ HTTP  :8080 │   │ FastAPI:8000│  │
+│  │          │──▶ │ Socket:9090 │   │             │  │
+│  └──────────┘    └─────────────┘   └─────────────┘  │
 └─────────────────────────────────────────────────────┘
           ▲
           │ HTTP / Socket
@@ -20,10 +20,10 @@
 └─────────────────┘
 ```
 
-| Thành phần  | Cổng | Giao thức | Mô tả                               |
-|-------------|------|-----------|-------------------------------------|
+| Thành phần  | Cổng | Giao thức | Mô tả                              |
+|-------------|------|-----------|------------------------------------|
 | Nginx       | 80   | HTTP      | Reverse proxy, phục vụ ảnh tĩnh    |
-| Java Server | 8080 | HTTP REST | API nghiệp vụ                       |
+| Java Server | 8080 | HTTP REST | API nghiệp vụ                      |
 | Java Server | 9090 | Socket    | Cập nhật đấu giá thời gian thực    |
 | AI Server   | 8000 | HTTP REST | Tìm kiếm ngữ nghĩa, gợi ý sản phẩm |
 
@@ -77,18 +77,21 @@ Phải khởi động **đúng thứ tự** sau:
 ### A1. Cài Đặt Nginx
 
 **Ubuntu / Debian**
+
 ```bash
 sudo apt update && sudo apt install nginx -y
 sudo systemctl enable nginx
 ```
 
 **Fedora / RHEL**
+
 ```bash
 sudo dnf install nginx -y
 sudo systemctl enable nginx
 ```
 
 **macOS**
+
 ```bash
 brew install nginx
 ```
@@ -136,6 +139,7 @@ server {
 ```
 
 Kiểm tra và áp dụng:
+
 ```bash
 sudo nginx -t          # Kiểm tra cú pháp
 sudo systemctl start nginx
@@ -159,6 +163,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Server sẵn sàng khi thấy:
+
 ```
 INFO:     Uvicorn running on http://0.0.0.0:8000
 ```
@@ -173,6 +178,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000
 Mở project → tìm `MainServer.java` → nhấn **Run**.
 
 **Cách 2 — Maven:**
+
 ```bash
 # Build từ thư mục gốc
 mvn clean package -DskipTests
@@ -183,6 +189,7 @@ java -cp online-auction-server/target/online-auction-server-1.0-jar-with-depende
 ```
 
 Server sẵn sàng khi thấy:
+
 ```
 INFO: HTTP server started on port 8080
 INFO: Socket server started on port 9090
@@ -201,9 +208,23 @@ public static final String ServerIp = "127.0.0.1";
 
 Chạy client:
 
-**IntelliJ IDEA:** tìm `MainClient.java` → **Run**.
+**Cách 1 — Fat JAR (khuyến nghị, không cần IDE):**
 
-**Maven:**
+Build một lần từ thư mục gốc:
+```bash
+mvn clean package -DskipTests -pl online-auction-shared,online-auction-client
+```
+
+Chạy:
+```bash
+java -jar online-auction-client/target/auction-client.jar
+```
+
+> File `auction-client.jar` (~27 MB) đã bao gồm toàn bộ thư viện và native JavaFX cho Linux/Windows/macOS. Chỉ cần Java 25 trên máy, không cần Maven hay IDE.
+
+**Cách 2 — IntelliJ IDEA:** tìm `MainClient.java` → **Run**.
+
+**Cách 3 — Maven:**
 ```bash
 cd online-auction-client
 mvn javafx:run
@@ -213,7 +234,8 @@ mvn javafx:run
 
 ## Kịch Bản B — Chạy LAN (nhiều máy dùng chung server)
 
-Trong kịch bản này, **một máy** cài đặt và chạy Nginx + Java Server + AI Server. Các máy khác trong cùng mạng chỉ cần chạy Client.
+Trong kịch bản này, **một máy** cài đặt và chạy Nginx + Java Server + AI Server. Các máy khác trong cùng mạng chỉ cần
+chạy Client.
 
 ### B1. Xác Định IP LAN Của Máy Chủ
 
@@ -267,12 +289,14 @@ server {
 ```
 
 Áp dụng:
+
 ```bash
 sudo nginx -t
 sudo systemctl start nginx    # hoặc reload nếu đang chạy
 ```
 
 Mở cổng firewall trên máy chủ:
+
 ```bash
 # Fedora / RHEL
 sudo firewall-cmd --permanent --add-port=80/tcp && sudo firewall-cmd --reload
@@ -299,11 +323,19 @@ Mở file `online-auction-client/src/main/java/com/auction/client/util/AppConfig
 public static final String ServerIp = "192.168.1.100";  // IP LAN của máy chủ
 ```
 
-**Quan trọng:** Phải **build lại** client sau khi sửa file này.
+**Quan trọng:** Phải **build lại** client sau khi sửa file này, rồi phân phối lại file JAR.
 
-Chạy client (như kịch bản A5).
+Build tại máy chủ (sau khi sửa `AppConfig.java`):
+```bash
+mvn clean package -DskipTests -pl online-auction-shared,online-auction-client
+```
 
-> Mỗi máy muốn sử dụng client cần có Java 25 và Maven, hoặc chạy file JAR đã build sẵn.
+Chép file `online-auction-client/target/auction-client.jar` sang các máy người dùng và chạy:
+```bash
+java -jar auction-client.jar
+```
+
+> Mỗi máy người dùng chỉ cần **Java 25** — không cần Maven, IDE, hay bất kỳ thư viện nào khác.
 
 ---
 
@@ -347,6 +379,7 @@ curl http://192.168.1.100/
 ## Xử Lý Sự Cố
 
 **Nginx không khởi động:**
+
 ```bash
 sudo nginx -t                      # Kiểm tra cú pháp config
 sudo journalctl -u nginx -n 50    # Xem log lỗi
@@ -354,12 +387,14 @@ sudo lsof -i :80                   # Kiểm tra cổng 80 có bị chiếm khôn
 ```
 
 **Client không kết nối được server:**
+
 - Kiểm tra `ServerIp` trong `AppConfig.java` đúng chưa và đã build lại chưa.
 - Kiểm tra Nginx: `sudo systemctl status nginx`
 - Kiểm tra Java server lắng nghe: `ss -tlnp | grep 8080`
 - Kịch bản LAN: đảm bảo hai máy cùng mạng và firewall đã mở cổng 80.
 
 **AI Server lỗi tải model:**
+
 - Kiểm tra kết nối internet (lần đầu tải model).
 - Kiểm tra RAM còn trống (cần ít nhất 4 GB).
 - Kiểm tra Python version: `python --version` (cần ≥ 3.10).
