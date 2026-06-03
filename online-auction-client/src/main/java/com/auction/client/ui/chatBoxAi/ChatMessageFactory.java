@@ -82,7 +82,7 @@ public class ChatMessageFactory {
     }
 
     /**
-     * Cards danh sách sản phẩm gợi ý (ItemSummary list)
+     * Cards danh sách sản phẩm gợi ý
      * Hiển thị dưới dạng VBox chứa các card nhỏ
      */
     public static Node createItemCards(List<ItemSummary> items) {
@@ -116,9 +116,6 @@ public class ChatMessageFactory {
         return row;
     }
 
-    /** * Tạo nút Bubble (icon nổi) ở góc màn hình
-     * @param onClickAction Hành động sẽ thực thi khi user click vào bubble
-     */
     public static StackPane createChatBubble(Runnable onClickAction) {
         Circle circle = new Circle(30, Color.web("#4485f4"));
         circle.setStroke(Color.WHITE);

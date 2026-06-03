@@ -202,7 +202,7 @@
     -fx-padding: 8 18 8 18;
     -fx-background-radius: 8;
     -fx-cursor: hand;
-    -fx-border-color: transparent; /* Đảm bảo không có viền */
+    -fx-border-color: transparent;
     -fx-alignment: CENTER;
 }
 

@@ -17,16 +17,13 @@ import javafx.scene.layout.VBox;
 import java.io.IOException;
 
 public class SettingController {
-    //Constants
+
     private static final String PATH_PROFILE = "/com.auction.client/fxml/setting/ProfilePage.fxml";
     private static final String PATH_MY_AUCTIONS = "/com.auction.client/fxml/setting/MyAuctionsPage.fxml";
-    private static final String PATH_HISTORY = "/com.auction.client/fxml/HistoryBidPage.fxml";
-
     private static final String PATH_USERS_MANAGEMENT = "/com.auction.client/fxml/setting/UserManagementPage.fxml";
     private static final String PATH_AUCTIONS_MANAGEMENT = "/com.auction.client/fxml/setting/AuctionsManagementPage.fxml";
     private static final String PATH_MY_BIDS = "/com.auction.client/fxml/setting/MyBids.fxml";
 
-    // State
     public static String targetTab = "ProfileInfo";
     private static volatile SettingController instance;
 
@@ -90,10 +87,6 @@ public class SettingController {
         }
         targetTab = "ProfileInfo";
     }
-
-    public void setDynamicContent(String fxmlPath) {
-        loadPage(fxmlPath);
-    }
     private void loadPage(String fxmlPath) {
 
         try {
@@ -133,9 +126,5 @@ public class SettingController {
     @FXML
     public void handleAuctionsManagement(ActionEvent actionEvent) {
         loadPage(PATH_AUCTIONS_MANAGEMENT);
-    }
-
-    public VBox getDynamicContent() {
-        return dynamicContent;
     }
 }

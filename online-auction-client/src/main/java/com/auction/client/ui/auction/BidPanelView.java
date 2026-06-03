@@ -6,8 +6,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /**
- * 🖼️ VIEW COMPONENT - BẢNG ĐIỀU KHIỂN ĐẤU GIÁ
- * Trách nhiệm duy nhất: Thao tác đồ họa hiển thị dựa trên chỉ thị từ Controller.
+ *  VIEW COMPONENT - BẢNG ĐIỀU KHIỂN ĐẤU GIÁ
  */
 public class BidPanelView {
 

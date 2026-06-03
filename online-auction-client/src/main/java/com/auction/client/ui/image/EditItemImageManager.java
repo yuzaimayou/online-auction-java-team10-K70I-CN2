@@ -85,7 +85,7 @@ public class EditItemImageManager {
         if (!hasImages) return;
         imagesPreviewContainer.getChildren().clear();
 
-        // 1. Render ảnh cũ từ server -> Đổi sang gọi ImageCardFactory
+        // Render ảnh cũ từ server -> Đổi sang gọi ImageCardFactory
         for (String imgPath : existingImagePaths) {
             imagesPreviewContainer.getChildren().add(
                     ImageCardFactory.createServerImageCard(imgPath, () -> {

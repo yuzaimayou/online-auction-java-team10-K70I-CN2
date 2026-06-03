@@ -69,8 +69,6 @@ public class AutoBidService {
 
     // Getters & Setters
     public boolean isActive() { return isActive; }
-    public double getMaxBidAmount() { return maxBidAmount;}
-    public double getAutoBidIncremental(){ return autoBidIncremental; }
     public String getLastBidderId() { return lastBidderId; }
     public void setLastBidderId(String id) { this.lastBidderId = id; }
 }

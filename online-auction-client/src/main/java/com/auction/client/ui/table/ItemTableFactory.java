@@ -161,9 +161,18 @@ public class ItemTableFactory {
                 viewBtn.setMinWidth(Region.USE_PREF_SIZE);
                 deleteBtn.setMinWidth(Region.USE_PREF_SIZE);
 
-                editBtn.setOnAction(e -> { if (onEdit != null && current != null) onEdit.accept(current); });
-                viewBtn.setOnAction(e -> { if (onView != null && current != null) onView.accept(current); });
-                deleteBtn.setOnAction(e -> { if (onDelete != null && current != null) onDelete.accept(current); });
+                editBtn.setOnAction(e -> {
+                    if (onEdit != null && current != null)
+                        onEdit.accept(current);
+                });
+                viewBtn.setOnAction(e -> {
+                    if (onView != null && current != null)
+                        onView.accept(current);
+                });
+                deleteBtn.setOnAction(e -> {
+                    if (onDelete != null && current != null)
+                        onDelete.accept(current);
+                });
             }
             @Override
             protected void updateItem(ItemSummary item, boolean empty) {

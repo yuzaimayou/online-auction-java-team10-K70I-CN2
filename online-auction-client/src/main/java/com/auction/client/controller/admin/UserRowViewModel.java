@@ -18,18 +18,17 @@ public class UserRowViewModel {
         this.role = new SimpleStringProperty(role);
     }
 
-    public String getId() {
-        return id.get();
-    }
-    public void setId(String id) {
-        this.id.set(id);
-    }
+    public StringProperty idProperty() { return id; }
+    public String getId() { return id.get(); }
+    public void setId(String id) { this.id.set(id); }
+
     public StringProperty userNameProperty() {
         return userName;
     }
     public String getUserName() {
         return userName.get();
     }
+
     public StringProperty emailProperty() {
         return email;
     }
@@ -39,6 +38,7 @@ public class UserRowViewModel {
     public void setEmail(String email) {
         this.email.set(email);
     }
+
     public StringProperty statusProperty() {
         return status;
     }
@@ -48,6 +48,7 @@ public class UserRowViewModel {
     public void setStatus(String status) {
         this.status.set(status);
     }
+
     public StringProperty roleProperty() {
         return role;
     }

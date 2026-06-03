@@ -18,10 +18,6 @@ import java.util.function.Consumer;
 
 public class NavigationUtil {
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // CACHE / STATE
-    // ═════════════════════════════════════════════════════════════════════════
-
     public static void switchScene(Event event, String fxmlPath, String title) {
         switchScene(event, fxmlPath, title, null);
     }
@@ -114,13 +110,13 @@ public class NavigationUtil {
                 );
                 Parent root = loader.load();
                 HomePageController ctrl = loader.getController();
-                PageCache.setHome(root, ctrl); // ← dùng biến local vừa load
+                PageCache.setHome(root, ctrl);
             } else {
-                PageCache.getHomeController().refreshNavBarInfo(); // ← lấy từ PageCache
+                PageCache.getHomeController().refreshNavBarInfo();
                 PageCache.getHomeController().refreshItems();
             }
 
-            Parent wrappedRoot = ChatBoxInjector.wrap(PageCache.getHomeRoot()); // ← lấy từ PageCache
+            Parent wrappedRoot = ChatBoxInjector.wrap(PageCache.getHomeRoot());
             Stage stage = (Stage) label.getScene().getWindow();
             stage.getScene().setRoot(wrappedRoot);
             stage.setTitle(AppConfig.getAppName() + " - Home");
