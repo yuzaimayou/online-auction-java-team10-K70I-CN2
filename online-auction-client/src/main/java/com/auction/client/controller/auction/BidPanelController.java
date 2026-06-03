@@ -1,4 +1,4 @@
-package com.auction.client.controller.auction; // Hoặc package controller tùy bạn đặt
+package com.auction.client.controller.auction;
 
 import com.auction.client.service.AutoBidService;
 import com.auction.client.ui.auction.BidPanelView;
