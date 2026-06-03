@@ -83,9 +83,10 @@ public class AuctionSocketClient {
                     ResponseMessage response = gson.fromJson(jsonRes, ResponseMessage.class);
                     System.out.println("Client received message: " + response.getStatus() + " - " + response.getMessage() + " - " + response.getData());
                     JsonObject jsonObject = gson.fromJson(jsonRes, JsonObject.class);
-                    AutoBidPayload autoBidPayload = gson.fromJson(jsonObject.get("data"), AutoBidPayload.class);
+
                     if (SocketEventConstants.STATUS_JOIN_ROOM_SUCCESS.equals(response.getStatus())) {
                         System.out.println("Successfully joined the auction room");
+                        AutoBidPayload autoBidPayload = gson.fromJson(jsonObject.get("data"), AutoBidPayload.class);
                         if (auctionRoomListener != null) {
                             auctionRoomListener.onAutoBidState(autoBidPayload);
                         }
@@ -198,6 +199,7 @@ public class AuctionSocketClient {
             }
             case SocketEventConstants.EVENT_UPDATE_TIME -> {
                 try {
+                    System.out.println("[TIME UPDATE] Received time update: " + response.getData());
                     LocalDateTime newEndTime = LocalDateTime.parse(response.getData().toString());
                     listener.onAuctionExtended(newEndTime);
                 } catch (Exception e) {

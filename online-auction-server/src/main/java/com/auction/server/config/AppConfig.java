@@ -8,7 +8,6 @@ public class AppConfig {
     private static final String AI_SERVER_URL = "http://127.0.0.1:8000";
 
     public static final String DB_PATH = getDbPath();
-    public static final String IMAGE_DIR = getImageDir();
 
     public static String getRootDir() {
         return System.getProperty("auth.dir") != null
