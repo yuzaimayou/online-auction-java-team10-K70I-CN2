@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.logging.Level;
@@ -94,6 +95,8 @@ public class ClientHandler implements Runnable {
                 }
 
             }
+        } catch (SocketTimeoutException e) {
+            LOGGER.info("Client idle timeout, closing connection: " + username);
         } catch (IOException e) {
             LOGGER.info("Client disconnected: " + username);
         } catch (RuntimeException e) {
