@@ -6,9 +6,18 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OtpService {
-    private static final OtpService instance = new OtpService();
-    private final EmailService emailService = EmailService.getInstance();
-    private final UserRepository userRepository = new UserRepository();
+    private static OtpService instance;
+    private final EmailService emailService;
+    private final UserRepository userRepository;
+
+    private OtpService() {
+        this(EmailService.getInstance(), new UserRepository());
+    }
+
+    OtpService(EmailService emailService, UserRepository userRepository) {
+        this.emailService = emailService;
+        this.userRepository = userRepository;
+    }
 
     private static class OtpInfo {
         private String otp;
@@ -28,7 +37,10 @@ public class OtpService {
         }
     }
 
-    public static OtpService getInstance() {
+    public static synchronized OtpService getInstance() {
+        if (instance == null) {
+            instance = new OtpService();
+        }
         return instance;
     }
 
