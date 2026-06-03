@@ -16,15 +16,21 @@ public class AuthService {
     }
 
     private final UserRepository userRepository;
-    private final EmailService emailService;
+    private final OtpService otpService;
 
     public AuthService() {
-        this(new UserRepository(), null);
+        this(new UserRepository(), OtpService.getInstance());
     }
 
     AuthService(UserRepository userRepository, EmailService emailService) {
+        this(userRepository, emailService == null
+                ? OtpService.getInstance()
+                : new OtpService(emailService, userRepository));
+    }
+
+    private AuthService(UserRepository userRepository, OtpService otpService) {
         this.userRepository = userRepository;
-        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     public RegisterResult register(String username, String password, String email) {
@@ -46,10 +52,13 @@ public class AuthService {
 
         // Gửi OTP async, không block register flow
         new Thread(() -> {
-            OtpService otpService = OtpService.getInstance();
-            otpService.sendOtpEmail(email);
-            LOGGER.info("Đã gửi email OTP tới: " + email);
-        }).start();
+            try {
+                otpService.sendOtpEmail(email);
+                LOGGER.info("Đã gửi email OTP tới: " + email);
+            } catch (RuntimeException e) {
+                LOGGER.warning("Failed to send OTP email to " + email + ": " + e.getMessage());
+            }
+        }, "otp-email-sender").start();
 
         LOGGER.info("Registered successfully: " + username);
         return RegisterResult.SUCCESS;

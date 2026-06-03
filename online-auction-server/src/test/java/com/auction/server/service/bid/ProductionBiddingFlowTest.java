@@ -348,13 +348,16 @@ class ProductionBiddingFlowTest {
             try {
                 assertTrue(bidService.placeBid(itemId, bidder, 15.0));
 
-                String bidMessage = clientReader.readLine();
-                String extensionMessage = clientReader.readLine();
+                List<String> messages = java.util.Arrays.asList(
+                        clientReader.readLine(),
+                        clientReader.readLine(),
+                        clientReader.readLine()
+                );
 
-                assertNotNull(bidMessage);
-                assertNotNull(extensionMessage);
-                assertTrue(bidMessage.contains(SocketEventConstants.EVENT_NEW_BID));
-                assertTrue(extensionMessage.contains(SocketEventConstants.EVENT_AUCTION_EXTENDED));
+                assertTrue(messages.stream().allMatch(java.util.Objects::nonNull));
+                assertTrue(messages.stream().anyMatch(message -> message.contains(SocketEventConstants.EVENT_UPDATE_TIME)));
+                assertTrue(messages.stream().anyMatch(message -> message.contains(SocketEventConstants.EVENT_NEW_BID)));
+                assertTrue(messages.stream().anyMatch(message -> message.contains(SocketEventConstants.EVENT_AUCTION_EXTENDED)));
                 assertEquals(15.0, currentPrice(itemId), EPSILON);
                 assertEquals(bidder, currentBidder(itemId));
                 assertTrue(endTime(itemId).isAfter(originalEnd));
