@@ -20,8 +20,7 @@ public class WalletTransactionRepository {
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """;
 
-    // Ghi một dòng log giao dịch ví.
-    // amount luôn là số dương; reference_id thường là item_id (có thể null với DEPOSIT).
+    // Ghi một bản ghi giao dịch ví vào bảng wallet_transactions.
     public void insert(Connection conn,
                        String userId,
                        String type,
@@ -46,33 +45,34 @@ public class WalletTransactionRepository {
         }
     }
 
-    // Log khi đóng băng tiền (người đặt giá mới)
+    // Ghi log khi đóng băng tiền cho lượt đặt giá.
     public void logFreeze(Connection conn, String userId, double amount,
                           double balanceBefore, double balanceAfter,
                           String itemId) throws Exception {
         insert(conn, userId, TYPE_FREEZE_BID, amount, balanceBefore, balanceAfter, itemId);
     }
 
-    // Log khi hoàn tiền (người thua cuộc trước đó)
+    // Ghi log khi hoàn lại tiền đã đóng băng.
     public void logUnfreeze(Connection conn, String userId, double amount,
                             double balanceBefore, double balanceAfter,
                             String itemId) throws Exception {
         insert(conn, userId, TYPE_UNFREEZE_BID, amount, balanceBefore, balanceAfter, itemId);
     }
 
-    // Log khi kết thúc đấu giá — trừ tiền người thắng / cộng tiền người bán
+    // Ghi log thanh toán khi đấu giá kết thúc.
     public void logAuctionPayment(Connection conn, String userId, double amount,
                                   double balanceBefore, double balanceAfter,
                                   String itemId) throws Exception {
         insert(conn, userId, TYPE_AUCTION_PAYMENT, amount, balanceBefore, balanceAfter, itemId);
     }
 
-    // Log khi nạp tiền
+    // Ghi log khi người dùng nạp tiền vào ví.
     public void logDeposit(Connection conn, String userId, double amount,
                            double balanceBefore, double balanceAfter) throws Exception {
         insert(conn, userId, TYPE_DEPOSIT, amount, balanceBefore, balanceAfter, null);
     }
 
+    // Kiểm tra item đã có giao dịch thanh toán đấu giá hay chưa.
     public boolean existsAuctionPayment(Connection conn, String itemId) throws Exception {
         String sql = "SELECT 1 FROM wallet_transactions WHERE type = ? AND reference_id = ? LIMIT 1";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
