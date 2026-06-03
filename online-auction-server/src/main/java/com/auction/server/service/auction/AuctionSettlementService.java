@@ -109,6 +109,7 @@ public class AuctionSettlementService {
                 if (result != null) {
                     try {
                         congratulationsService.sendCongratulationsEmail(winnerId, itemId);
+                        congratulationsService.sendSellerAuctionSuccessEmail(sellerId, winnerId, itemId, winningPrice);
                     } catch (Exception e) {
                         LOGGER.log(Level.WARNING, "Failed to send congratulations email for item " + itemId, e);
                     }
