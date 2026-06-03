@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-// Repository xử lý cột balance và frozen_balance trong bảng users.
 // Mọi hàm thay đổi dữ liệu đều yêu cầu Connection từ bên ngoài để dùng chung transaction.
 public class WalletRepository {
 
@@ -17,7 +16,7 @@ public class WalletRepository {
                 if (!rs.next()) {
                     throw new Exception("Không tìm thấy auth: " + userId);
                 }
-                return new double[]{rs.getDouble("balance"), rs.getDouble("frozen_balance")};
+                return new double[] { rs.getDouble("balance"), rs.getDouble("frozen_balance") };
             }
         }
     }
