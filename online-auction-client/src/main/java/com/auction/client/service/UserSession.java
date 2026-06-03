@@ -59,10 +59,6 @@ public class UserSession {
                 : null;
     }
 
-    public boolean isLoggedIn(){
-        return loggedInUser!=null;
-    }
-
     public boolean isAdmin(){
         return loggedInUser instanceof Admin;
     }

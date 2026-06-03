@@ -10,7 +10,7 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 
 /**
- * 🖼️ VIEW COMPONENT
+ * VIEW COMPONENT
  * Quản lý trực tiếp các đối tượng giao diện JavaFX và thực hiện các hành vi render đồ họa.
  */
 public class BidHistoryPanel {
@@ -33,10 +33,7 @@ public class BidHistoryPanel {
     }
 
     public void render(List<BidHistoryItemDTO> bids, String currentUsername) {
-        // Vẽ đồ thị biểu đồ giá thông qua Renderer Helper
         BidHistoryRowFactory.renderChart(bids, bidPriceSeries);
-
-        // Làm sạch container cũ để tránh Memory Leak (Rò rỉ bộ nhớ)
         historyBidContainer.getChildren().clear();
 
         if (bids == null || bids.isEmpty()) {

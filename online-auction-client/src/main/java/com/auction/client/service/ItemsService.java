@@ -35,34 +35,52 @@ public class ItemsService {
     }
 
     private final ItemApiClient apiDb = ItemApiClient.getInstance();
+    private List<ItemSummary> cachedItems = new ArrayList<>();
 
     private ItemsService() {}
 
     public CompletableFuture<Map<AuctionStatus, List<ItemSummary>>> getFilteredAndGroupedItems(String search, String category) {
-        return getItems(search, category).thenApply(itemsFromServer -> {
-            Map<AuctionStatus, List<ItemSummary>> groupedMap = new EnumMap<>(AuctionStatus.class);
-            groupedMap.put(AuctionStatus.ONGOING, new ArrayList<>());
-            groupedMap.put(AuctionStatus.UPCOMING, new ArrayList<>());
-            groupedMap.put(AuctionStatus.ENDED, new ArrayList<>());
-
-            if (itemsFromServer == null || itemsFromServer.isEmpty()) {
-                return groupedMap;
-            }
-
-            for (ItemSummary item : itemsFromServer) {
-                if (item.getStatus() == AuctionStatus.BANNED) {
-                    continue;
-                }
-                AuctionStatus computedStatus = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
-                if (groupedMap.containsKey(computedStatus)) {
-                    groupedMap.get(computedStatus).add(item);
-                }
-            }
-            return groupedMap;
-        });
+        if (!cachedItems.isEmpty()) {
+            return CompletableFuture.completedFuture(groupItems(filterItems(cachedItems, search, category))
+            );
+        }
+        return getItems("", "ALL")
+                .thenApply(items -> {
+                    cachedItems.clear();
+                    if (items != null) {
+                        cachedItems.addAll(items);
+                    }
+                    return groupItems( filterItems(cachedItems, search, category)
+                    );
+                });
     }
+    private List<ItemSummary> filterItems(List<ItemSummary> items, String search, String category) {
+        String keyword = search == null ? "" : search.toLowerCase().trim();
+        return items.stream().filter(item -> {
+            boolean matchSearch = keyword.isBlank() || item.getName()
+                                    .toLowerCase()
+                                    .contains(keyword);
+                    boolean matchCategory = category.equalsIgnoreCase("ALL")
+                                    || item.getCategory().equalsIgnoreCase(category);
+                    return matchSearch && matchCategory;
+                }).toList();
+    }
+    private Map<AuctionStatus, List<ItemSummary>> groupItems(List<ItemSummary> items) {
+        Map<AuctionStatus, List<ItemSummary>> groupedMap = new EnumMap<>(AuctionStatus.class);
 
-    // ─── ĐIỀU HƯỚNG THẲNG XUỐNG TẦNG MẠNG ───
+        groupedMap.put(AuctionStatus.ONGOING, new ArrayList<>());
+        groupedMap.put(AuctionStatus.UPCOMING, new ArrayList<>());
+        groupedMap.put(AuctionStatus.ENDED, new ArrayList<>());
+
+        for (ItemSummary item : items) {
+            if (item.getStatus() == AuctionStatus.BANNED) {
+                continue;
+            }
+            AuctionStatus status = AuctionStatus.compute(item.getStartTime(), item.getEndTime());
+            groupedMap.get(status).add(item);
+        }
+        return groupedMap;
+    }
     public CompletableFuture<Item> getItemById(String itemId, String userId) {
         return apiDb.getItemById(itemId, userId);
     }
@@ -92,12 +110,8 @@ public class ItemsService {
         return apiDb.getMyBids(userId);
     }
 
-    // =====================================================================================
-    // NEW OVERLOADED METHOD: DÀNH RIÊNG CHO AUCTION FORM CONTROLLER REFACTOR
-    // =====================================================================================
     /**
      * Phương thức nạp chồng mới giúp trừu tượng hóa tối đa tầng Controller.
-     * Tiếp nhận trực tiếp thực thể đóng gói dữ liệu dạng DTO (FormData).
      */
     public CompletableFuture<ResponseMessage> createItem(AuctionFormController.FormData data, List<File> selectedFiles) {
         return createItem(
@@ -109,9 +123,6 @@ public class ItemsService {
         );
     }
 
-    // =====================================================================================
-    // GỐC: PHƯƠNG THỨC ĐƯỢC GIỮ NGUYÊN VẸN TOÀN BỘ (KHÔNG LÀM LỖI CODE CŨ)
-    // =====================================================================================
 
     public CompletableFuture<ResponseMessage> updateItem(
             AuctionFormController.FormData data,
@@ -193,5 +204,9 @@ public class ItemsService {
             failed.completeExceptionally(e);
             return failed;
         }
+    }
+
+    public void clearCache() {
+        cachedItems.clear();
     }
 }

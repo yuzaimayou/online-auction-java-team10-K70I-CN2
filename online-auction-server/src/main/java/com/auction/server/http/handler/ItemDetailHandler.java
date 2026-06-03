@@ -33,7 +33,7 @@ public class ItemDetailHandler implements HttpHandler {
     }
 
     @Override
-    public void handle(com.sun.net.httpserver.HttpExchange exchange) throws java.io.IOException {
+    public void handle(HttpExchange exchange) throws IOException {
         try {
             String method = exchange.getRequestMethod();
             String path = exchange.getRequestURI().getPath();

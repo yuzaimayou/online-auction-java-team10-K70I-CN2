@@ -34,16 +34,6 @@ public class ClientImageUtil {
     }
 
     /**
-     * Load ảnh + apply responsive cover layout cùng lúc.
-     */
-    public static void displayImageCover(String imageName, String source,
-                                         ImageView imageView, Region container,
-                                         double arcRadius) {
-        displayImage(imageName, source, imageView);
-        ImageUtil.makeResponsiveCover(imageView, container, arcRadius);
-    }
-
-    /**
      * Load ảnh có hint kích thước (requestedWidth/Height) để JavaFX
      * decode đúng resolution, tránh load ảnh quá lớn vào bộ nhớ.
      * Cache key vẫn là URL, nên cùng URL sẽ dùng lại ảnh đã load.
@@ -52,7 +42,6 @@ public class ClientImageUtil {
                                     ImageView imageView,
                                     double requestedWidth, double requestedHeight) {
         String imageUrl = buildUrl(source, imageName);
-        // Cache với key bao gồm kích thước để tránh dùng chung ảnh decode khác size
         String cacheKey = imageUrl + "@" + (int) requestedWidth + "x" + (int) requestedHeight;
         Image fxImage = imageCache.computeIfAbsent(cacheKey, key -> {
             try {
@@ -71,7 +60,7 @@ public class ClientImageUtil {
      * giữ tỉ lệ, không stretch. Cần gọi lại mỗi khi Image thay đổi.
      *
      * @param imageView  view cần crop
-     * @param image      ảnh đã load (không null)
+     * @param image      ảnh đã load
      * @param viewWidth  chiều rộng hiển thị mục tiêu (px)
      * @param viewHeight chiều cao hiển thị mục tiêu (px)
      */
@@ -84,7 +73,7 @@ public class ClientImageUtil {
 
         double scaleX = viewWidth  / imgW;
         double scaleY = viewHeight / imgH;
-        double scale  = Math.max(scaleX, scaleY); // cover: lấy scale lớn hơn
+        double scale  = Math.max(scaleX, scaleY);
 
         double visibleW = viewWidth  / scale;
         double visibleH = viewHeight / scale;
@@ -106,11 +95,6 @@ public class ClientImageUtil {
         ImageUtil.makeResponsiveCover(imageView, container, arcRadius);
     }
 
-    public static void clearCache() {
-        imageCache.clear();
-    }
-
-    // ── private ──────────────────────────────────────────────────────────────
 
     private static String buildUrl(String source, String imageName) {
         return String.format("%s/%s/%s", AppConfig.getStaticUrl(), source, imageName);

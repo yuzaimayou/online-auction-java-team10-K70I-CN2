@@ -1,3 +1,6 @@
+/* ==========================================================================
+   PAGE ROOT & LAYOUT
+   ========================================================================== */
 .page-root {
     -fx-font-family: "Arial";
 }
@@ -20,66 +23,73 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 12, 0.15, 0, 2);
 }
 
-
-/* Nút Quay lại phẳng (Flat design) */
+/* ==========================================================================
+   HEADER & TITLES
+   ========================================================================== */
 .back-btn {
-    -fx-background-color: #f1f3f4;
-    -fx-border-color: transparent;
-    -fx-background-radius: 20;
     -fx-padding: 8 16;
+    -fx-background-color: #f1f3f4;
+    -fx-background-radius: 20;
+    -fx-border-color: transparent;
     -fx-text-fill: #3c4043;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-cursor: hand;
 }
+
 .back-btn:hover {
     -fx-background-color: #e8eaed;
     -fx-text-fill: #1a73e8;
 }
 
-/* Khu vực tiêu đề */
 .title-icon {
     -fx-font-size: 26px;
 }
+
 .main-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #1a73e8;
 }
+
 .sub-description {
-    -fx-text-fill: #5f6368;
     -fx-font-size: 14px;
-}
-.custom-separator {
-    -fx-opacity: 0.4;
-    -fx-padding: 5 0;
+    -fx-text-fill: #5f6368;
 }
 
-/* Tiêu đề các bước */
+.custom-separator {
+    -fx-padding: 5 0;
+    -fx-opacity: 0.4;
+}
+
 .step-label {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-text-fill: #202124;
 }
 
-/* Các nút chọn nhanh số tiền (Toggle Buttons) */
+/* ==========================================================================
+   INPUTS & AMOUNT SELECTION
+   ========================================================================== */
 .amount-btn {
+    -fx-padding: 12 20;
+    -fx-min-width: 105;
+    -fx-alignment: center;
     -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
     -fx-border-color: #dadce0;
     -fx-border-radius: 8;
-    -fx-background-radius: 8;
-    -fx-padding: 12 20;
     -fx-text-fill: #3c4043;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-min-width: 105;
-    -fx-alignment: center;
 }
+
 .amount-btn:hover {
     -fx-background-color: #f8f9fa;
     -fx-border-color: #bcc1c6;
 }
+
 .amount-btn:selected {
     -fx-background-color: #e8f0fe;
     -fx-border-color: #1a73e8;
@@ -87,36 +97,39 @@
     -fx-text-fill: #1a73e8;
 }
 
-/* Ô nhập số tiền tùy chỉnh */
 .input-amount-field {
+    -fx-padding: 10 15;
     -fx-background-color: #f8f9fa;
+    -fx-background-radius: 8;
     -fx-border-color: #dadce0;
     -fx-border-radius: 8;
-    -fx-background-radius: 8;
-    -fx-padding: 10 15;
     -fx-font-size: 14px;
     -fx-text-fill: #202124;
 }
+
 .input-amount-field:focused {
     -fx-background-color: #ffffff;
     -fx-border-color: #1a73e8;
     -fx-border-width: 1.5;
 }
 
-/* Thẻ chọn Phương thức thanh toán */
+/* ==========================================================================
+   PAYMENT METHODS
+   ========================================================================== */
 .payment-card {
+    -fx-padding: 16;
     -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
     -fx-border-color: #dadce0;
     -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-padding: 16;
     -fx-cursor: hand;
 }
+
 .payment-card:hover {
     -fx-background-color: #f8f9fa;
     -fx-border-color: #bcc1c6;
 }
-/* Class này áp dụng động khi người dùng click chọn thẻ ngân hàng/ví */
+
 .selected-card {
     -fx-background-color: #e8f0fe;
     -fx-border-color: #1a73e8;
@@ -126,29 +139,35 @@
 .payment-icon-emoji {
     -fx-font-size: 22px;
 }
+
 .payment-name {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
     -fx-text-fill: #202124;
 }
+
 .payment-desc {
     -fx-font-size: 13px;
     -fx-text-fill: #5f6368;
 }
 
-/* Nút Xác nhận nạp tiền lớn ở dưới cùng */
+/* ==========================================================================
+   CONFIRMATION BUTTON
+   ========================================================================== */
 .btn-confirm-main {
+    -fx-padding: 12 35;
     -fx-background-color: #1a73e8;
+    -fx-background-radius: 8;
     -fx-text-fill: #ffffff;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-padding: 12 35;
-    -fx-background-radius: 8;
     -fx-cursor: hand;
 }
+
 .btn-confirm-main:hover {
     -fx-background-color: #1557b0;
 }
+
 .btn-confirm-main:pressed {
     -fx-background-color: #114692;
 }

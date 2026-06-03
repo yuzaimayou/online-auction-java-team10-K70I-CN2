@@ -26,23 +26,18 @@ public class AuctionFormValidator {
     public static final class Result {
 
         private final Error error;
-
         private Result(Error error){
             this.error=error;
         }
-
         public static Result ok(){
             return new Result(null);
         }
-
         public static Result fail(Error e){
             return new Result(e);
         }
-
         public boolean isValid(){
             return error==null;
         }
-
         public Error getError(){
             return error;
         }
@@ -142,51 +137,28 @@ public class AuctionFormValidator {
         if(bidStep>initPrice)
             return Result.fail(Error.BID_STEP_EXCEEDS_PRICE);
 
-        LocalDateTime start=
-                LocalDateTime.of(
-                        startDate,
-                        LocalTime.parse(startTime)
-                );
+        LocalDateTime start= LocalDateTime.of(startDate, LocalTime.parse(startTime));
 
-        LocalDateTime end=
-                LocalDateTime.of(
-                        endDate,
-                        LocalTime.parse(endTime)
-                );
+        LocalDateTime end= LocalDateTime.of(endDate, LocalTime.parse(endTime));
 
-        if(validateCurrentTime &&
-                !start.isAfter(LocalDateTime.now())) {
-
-            return Result.fail(
-                    Error.START_TIME_IN_PAST
+        if(validateCurrentTime && !start.isAfter(LocalDateTime.now())) {
+            return Result.fail(Error.START_TIME_IN_PAST
             );
         }
 
         if(!end.isAfter(start)) {
-            return Result.fail(
-                    Error.END_TIME_BEFORE_START
-            );
+            return Result.fail(Error.END_TIME_BEFORE_START);
         }
-
         return Result.ok();
     }
 
     public static Double parsePositive(String s){
-
         if(s==null||s.isBlank())
             return null;
-
         try{
-
-            double value=
-                    Double.parseDouble(s);
-
-            return value>0
-                    ? value
-                    : null;
-
+            double value= Double.parseDouble(s);
+            return value>0 ? value : null;
         }catch(Exception e){
-
             return null;
         }
     }

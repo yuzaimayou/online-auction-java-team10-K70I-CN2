@@ -31,6 +31,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -142,7 +143,7 @@ public class ItemPageController {
         ClientImageUtil.makeResponsiveCover(itemImage, mainImageContainer, 16);
         countdownTimer = new CountdownTimerUtil(daysLabel, hoursLabel, minsLabel, secsLabel);
 
-        // 🎯 KHỐI 1: Khởi tạo cụm PANEL ĐẤU GIÁ (Đồng hồ & Trạng thái đóng/mở phòng)
+        // KHỐI 1: Khởi tạo cụm PANEL ĐẤU GIÁ
         BidPanelView bidPanelView = new BidPanelView(
                 statusMessageLabel, bidControlsContainer, statusOverlay, btnAutoBidToggle, submitBid
         );
@@ -154,7 +155,7 @@ public class ItemPageController {
             bidPriceChart.setAnimated(false);
         }
 
-        // 🎯 KHỐI 2: Khởi tạo cụm TỰ ĐỘNG ĐẤU GIÁ (Auto-Bid Component)
+        // KHỐI 2: Khởi tạo cụm TỰ ĐỘNG ĐẤU GIÁ
         AutoBidPaneWrapper autoBidPaneWrapper = new AutoBidPaneWrapper(
                 autoBidForm, autoBidActiveStatus, maxBidField, autoBidStepField,
                 userCurrentBidLabel, btnAutoBidToggle, submitBid
@@ -164,11 +165,23 @@ public class ItemPageController {
                 autoBidPaneWrapper, () -> item, () -> myLastBid
         );
 
-        // 🎯 KHỐI 3: Khởi tạo cụm LỊCH SỬ ĐẤU GIÁ (History Component)
+        // KHỐI 3: Khởi tạo cụm LỊCH SỬ ĐẤU GIÁ
         BidHistoryPanel bidHistoryPanel = new BidHistoryPanel(
                 historyBidContainer, historyScrollPane, totalBidsLabel, bidPriceSeries
         );
         historyController = new BidHistoryController(bidHistoryApiClient, user, bidHistoryPanel);
+
+        itemImage.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.setOnKeyPressed(event -> {
+                    if (event.getCode() == KeyCode.F5) {
+                        if (itemId != null) {
+                            setItemId(itemId); // reload lại toàn bộ item data
+                        }
+                    }
+                });
+            }
+        });
     }
 
     public void dispose() {
