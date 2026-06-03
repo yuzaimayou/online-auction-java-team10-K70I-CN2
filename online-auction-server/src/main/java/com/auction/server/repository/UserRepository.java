@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 public class UserRepository {
     private static final Logger LOGGER = Logger.getLogger(UserRepository.class.getName());
 
-    // tạo tài khoản
+    // Tạo tài khoản người dùng mới trong bảng users.
     public boolean createUser(String username, String password, String role, String email) {
         String sql = """
                 INSERT INTO users(
@@ -47,7 +47,7 @@ public class UserRepository {
         }
     }
 
-    //
+    // Xác thực tài khoản người dùng theo email.
     public boolean enableUser(String email) {
 
         String sql = "UPDATE users SET isVerify = true WHERE email = ?";
@@ -67,7 +67,7 @@ public class UserRepository {
         }
     }
 
-    // Tìm auth theo id (dùng trong transaction ví)
+    // Tìm người dùng theo id bằng connection có sẵn.
     public User findById(Connection conn, String userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -83,6 +83,7 @@ public class UserRepository {
         return null;
     }
 
+    // Tìm người dùng theo id bằng connection riêng.
     public User findById(String id) {
         String sql = "SELECT * FROM users WHERE id=?";
         try (
@@ -100,6 +101,7 @@ public class UserRepository {
         return null;
     }
 
+    // Tìm người dùng theo email.
     public User findByEmail(String email) {
         String sql = "SELECT * FROM users WHERE email = ?";
         try (
@@ -117,6 +119,7 @@ public class UserRepository {
         return null;
     }
 
+    // Tìm người dùng theo username.
     public User findByUsername(String username) {
         String sql = "SELECT * FROM users WHERE username = ?";
         try (
@@ -134,6 +137,7 @@ public class UserRepository {
         return null;
     }
 
+    // Chuyển một dòng ResultSet thành đối tượng User hoặc Admin.
     private User mapRow(ResultSet rs) throws Exception {
         String role = rs.getString("role");
 
@@ -172,6 +176,7 @@ public class UserRepository {
         return user;
     }
 
+    // Cập nhật role của người dùng bằng connection riêng.
     public boolean updateRole(String userId, String newRole) {
         String sql = "UPDATE users SET role = ? WHERE id = ?";
         try (
@@ -186,7 +191,7 @@ public class UserRepository {
         }
     }
 
-    // THÊM method này ngay bên dưới
+    // Cập nhật role của người dùng trong transaction hiện tại.
     public boolean updateRole(Connection conn, String userId, String newRole) throws Exception {
         String sql = "UPDATE users SET role = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -196,6 +201,7 @@ public class UserRepository {
         }
     }
 
+    // Cập nhật trạng thái của người dùng trong transaction hiện tại.
     public boolean updateStatus(Connection conn, String userId, String newStatus) throws Exception {
         String sql = "UPDATE users SET status = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
