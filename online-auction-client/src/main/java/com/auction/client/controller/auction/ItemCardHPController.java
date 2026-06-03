@@ -83,13 +83,11 @@ public class ItemCardHPController {
         }
     }
 
-    // ── Timer Logic ───────────────────────────────────────────────────────────
     private void startCountdown() {
         stopCountdown();
 
         lastStatus = itemStatusRendered.resolveStatus(currentItem);
 
-        // VÁ LỖI: Nếu phiên đã kết thúc hoặc bị cấm ngay từ đầu, không kích hoạt Timer làm gì
         if (lastStatus == AuctionStatus.ENDED || lastStatus == AuctionStatus.BANNED) {
             return;
         }
@@ -99,16 +97,11 @@ public class ItemCardHPController {
         timeline.play();
     }
 
-    /**
-     * TỐI ƯU HIỆU NĂNG: Hàm chạy mỗi giây 1 lần.
-     * Chỉ cập nhật chuỗi đếm ngược thời gian, không ép JavaFX phải render lại toàn bộ CSS tĩnh.
-     */
     private void tickCountdown() {
         if (currentItem == null) return;
 
         AuctionStatus currentStatus = itemStatusRendered.resolveStatus(currentItem);
 
-        // Trường hợp 1: Trạng thái không đổi -> Chỉ cập nhật lại phần text đếm ngược thời gian thực
         if (currentStatus == lastStatus) {
             LocalDateTime now = LocalDateTime.now();
             if (currentStatus == AuctionStatus.UPCOMING) {
@@ -118,16 +111,12 @@ public class ItemCardHPController {
             }
             return;
         }
-
-        // Trường hợp 2: Có sự chuyển cảnh trạng thái (ví dụ từ UPCOMING -> ONGOING hoặc bị BANNED)
         lastStatus = currentStatus;
 
-        // Vẽ lại toàn bộ UI (Màu sắc, Tiêu đề giá) để khớp với trạng thái mới
         itemStatusRendered.updateCardUi(
                 currentItem, statusLabel, priceTitleLabel, priceLabel, endTimeLabel, timeTitleLabel
         );
 
-        // VÁ LỖI: Dừng triệt để bộ đếm nếu trạng thái mới là kết thúc hoặc bị khóa
         if (currentStatus == AuctionStatus.ENDED || currentStatus == AuctionStatus.BANNED) {
             stopCountdown();
         }
@@ -140,12 +129,10 @@ public class ItemCardHPController {
         }
     }
 
-    // ── Event Handlers ────────────────────────────────────────────────────────
     @FXML
     public void handleSwitchToItemPage(MouseEvent event) {
         if (currentItem == null) return;
-
-        stopCountdown(); // Giải phóng tài nguyên trước khi chuyển màn hình
+        stopCountdown();
 
         NavigationUtil.switchToItemPage(
                 event,
