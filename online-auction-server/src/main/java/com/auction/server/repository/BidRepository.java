@@ -22,9 +22,9 @@ import java.util.logging.Logger;
  * KHÔNG chứa business logic, KHÔNG validate dữ liệu nghiệp vụ.
  *
  * Nguyên tắc sử dụng Connection:
- *  - Các method nhận Connection từ ngoài vào → nằm trong transaction của caller.
- *  - Các method KHÔNG nhận Connection → tự mở/đóng connection riêng,
- *    CHỈ dùng cho các thao tác đứng độc lập (query trạng thái, cancel...).
+ * - Các method nhận Connection từ ngoài vào → nằm trong transaction của caller.
+ * - Các method KHÔNG nhận Connection → tự mở/đóng connection riêng,
+ * CHỈ dùng cho các thao tác đứng độc lập (query trạng thái, cancel...).
  */
 public class BidRepository {
 
@@ -37,8 +37,6 @@ public class BidRepository {
     private static final String COLUMN_END_TIME = "end_time";
     private static final String COLUMN_CURRENT_PRICE = "current_price";
     private final Gson gson = GsonUtil.getInstance();
-
-    // Inner class
 
     /**
      * Snapshot cấu hình auto-bid được đọc từ DB.
@@ -58,10 +56,21 @@ public class BidRepository {
             this.registeredAt = registeredAt;
         }
 
-        public String getUserId()  { return userId; }
-        public double getMaxBid() { return maxBid; }
-        public double getIncrement() { return increment; }
-        public LocalDateTime getRegisteredAt(){ return registeredAt; }
+        public String getUserId() {
+            return userId;
+        }
+
+        public double getMaxBid() {
+            return maxBid;
+        }
+
+        public double getIncrement() {
+            return increment;
+        }
+
+        public LocalDateTime getRegisteredAt() {
+            return registeredAt;
+        }
     }
 
     // Bid
@@ -83,7 +92,7 @@ public class BidRepository {
      * Ném Exception ra ngoài để caller có thể rollback đúng cách.
      */
     public boolean createBid(Connection conn, String itemId, String userId,
-                             double bidPrice, String bidTime) throws Exception {
+            double bidPrice, String bidTime) throws Exception {
         String sql = "INSERT INTO bids(item_id, user_id, bid_price, bid_time) VALUES(?, ?, ?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -124,7 +133,7 @@ public class BidRepository {
      * Upsert auto-bid config — dùng connection riêng.
      */
     public boolean upsertAutoBid(String itemId, String userId,
-                                 double maxBid, double increment, String registeredAt) {
+            double maxBid, double increment, String registeredAt) {
         try (Connection conn = DatabaseManager.getConnection()) {
             return upsertAutoBid(conn, itemId, userId, maxBid, increment, registeredAt);
         } catch (Exception e) {
@@ -138,7 +147,7 @@ public class BidRepository {
      * Ném Exception ra ngoài để caller rollback đúng cách.
      */
     public boolean upsertAutoBid(Connection conn, String itemId, String userId,
-                                 double maxBid, double increment, String registeredAt) throws Exception {
+            double maxBid, double increment, String registeredAt) throws Exception {
         String sql = """
                 INSERT INTO auto_bids(item_id, user_id, max_bid, increment, registered_at, is_active)
                 VALUES(?, ?, ?, ?, ?, 1)
@@ -223,6 +232,7 @@ public class BidRepository {
             return true;
         }
     }
+
     // Auto-bid — query
     /**
      * Lấy danh sách tất cả auto-bid đang active cho một item.
@@ -260,8 +270,7 @@ public class BidRepository {
                             rs.getString("user_id"),
                             rs.getDouble("max_bid"),
                             rs.getDouble("increment"),
-                            registeredAt
-                    ));
+                            registeredAt));
                 }
             }
 
@@ -290,8 +299,7 @@ public class BidRepository {
 
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, itemId);
             stmt.setString(2, userId);
 
@@ -302,8 +310,7 @@ public class BidRepository {
                             rs.getString("user_id"),
                             rs.getDouble("max_bid"),
                             rs.getDouble("increment"),
-                            rs.getInt("is_active") == 1
-                    );
+                            rs.getInt("is_active") == 1);
                 }
             }
         } catch (Exception e) {
@@ -315,28 +322,27 @@ public class BidRepository {
 
     public List<MyBidSummary> findMyBids(String userId) {
         String sql = """
-        SELECT
-            i.id,
-            i.name,
-            i.image_path,
-            i.current_price,
-            i.status,
-            i.start_time,
-            i.end_time,
-            MAX(b.bid_price)              AS my_highest_bid,
-            (i.current_bidder_id = ?)     AS is_winner
-        FROM bids b
-        JOIN items i ON b.item_id = i.id
-        WHERE b.user_id = ?
-        GROUP BY i.id
-        ORDER BY i.end_time DESC
-        """;
+                SELECT
+                    i.id,
+                    i.name,
+                    i.image_path,
+                    i.current_price,
+                    i.status,
+                    i.start_time,
+                    i.end_time,
+                    MAX(b.bid_price)              AS my_highest_bid,
+                    (i.current_bidder_id = ?)     AS is_winner
+                FROM bids b
+                JOIN items i ON b.item_id = i.id
+                WHERE b.user_id = ?
+                GROUP BY i.id
+                ORDER BY i.end_time DESC
+                """;
 
         List<MyBidSummary> result = new ArrayList<>();
         try (
                 Connection conn = DatabaseManager.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, userId);
             stmt.setString(2, userId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -346,11 +352,13 @@ public class BidRepository {
                     AuctionStatus status = null;
                     try {
                         String dbStatus = rs.getString(COLUMN_STATUS);
-                        if (dbStatus != null) status = AuctionStatus.valueOf(dbStatus.toUpperCase());
-                    } catch (Exception ignored) {}
+                        if (dbStatus != null)
+                            status = AuctionStatus.valueOf(dbStatus.toUpperCase());
+                    } catch (Exception ignored) {
+                    }
 
                     LocalDateTime startTime = LocalDateTime.parse(rs.getString(COLUMN_START_TIME));
-                    LocalDateTime endTime   = LocalDateTime.parse(rs.getString(COLUMN_END_TIME));
+                    LocalDateTime endTime = LocalDateTime.parse(rs.getString(COLUMN_END_TIME));
                     if (status == null) {
                         status = AuctionStatus.compute(startTime, endTime);
                     }
@@ -363,8 +371,7 @@ public class BidRepository {
                             rs.getDouble("my_highest_bid"),
                             rs.getInt("is_winner") == 1,
                             status,
-                            endTime
-                    ));
+                            endTime));
                 }
             }
         } catch (Exception e) {

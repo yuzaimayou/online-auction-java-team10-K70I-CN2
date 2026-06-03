@@ -13,14 +13,29 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MainServer {
     private static final Logger LOGGER = Logger.getLogger(MainServer.class.getName());
+    private static final int SOCKET_WORKERS = 100;
+    private static final int SOCKET_QUEUE_SIZE = 200;
+    private static final ExecutorService socketExecutor =
+            new ThreadPoolExecutor(
+                    SOCKET_WORKERS,
+                    SOCKET_WORKERS,
+                    0L,
+                    TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(SOCKET_QUEUE_SIZE),
+                    new ThreadPoolExecutor.AbortPolicy()
+            );
     public static final List<ClientHandler> activeClients = new CopyOnWriteArrayList<>();
 
     public static void main(String[] agrs) {
@@ -32,6 +47,7 @@ public class MainServer {
         auctionScheduler.start();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             auctionScheduler.shutdown();
+            socketExecutor.shutdown();
             DatabaseManager.shutdown();
         }));
         LOGGER.info("Auction scheduler started.");
@@ -60,13 +76,23 @@ public class MainServer {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                clientSocket.setSoTimeout(300_000);
                 LOGGER.info(String.format("Client has connected with IP: %s", clientSocket.getInetAddress().getHostAddress()));
 
                 ClientHandler handler = new ClientHandler(clientSocket);
                 activeClients.add(handler);
 
-                Thread clientThread = new Thread(handler);
-                clientThread.start();
+                try {
+                    socketExecutor.submit(handler);
+                } catch (RejectedExecutionException e) {
+                    LOGGER.warning("Socket server overloaded. Rejecting client: " + clientSocket.getRemoteSocketAddress());
+                    activeClients.remove(handler);
+                    try {
+                        clientSocket.close();
+                    } catch (Exception closeException) {
+                        LOGGER.log(Level.WARNING, "Error closing rejected client socket", closeException);
+                    }
+                }
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to start Socket server: " + e.getMessage(), e);
