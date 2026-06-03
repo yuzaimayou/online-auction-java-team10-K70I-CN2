@@ -24,7 +24,10 @@ import java.util.concurrent.CompletableFuture;
 public class ItemApiClient {
 
     private static final ItemApiClient instance = new ItemApiClient();
-    public static ItemApiClient getInstance() { return instance; }
+
+    public static ItemApiClient getInstance() {
+        return instance;
+    }
 
     private final HttpClient httpClient;
     private final Gson gson;
@@ -60,22 +63,26 @@ public class ItemApiClient {
     // ─── CÁC API READ (ĐÃ ĐƯỢC RÚT GỌN CỰC SẠCH) ───
     public CompletableFuture<Item> getItemById(String itemId, String userId) {
         String url = String.format("%s/api/items/%s?userId=%s", AppConfig.getHttpUrl(), itemId, userId);
+
         return executeGet(url, Item.class);
     }
 
     public CompletableFuture<List<ItemSummary>> getAllFromSeller(String sellerId) {
         String url = String.format("%s/api/items?sellerId=%s", AppConfig.getHttpUrl(), sellerId);
-        return executeGet(url, new TypeToken<List<ItemSummary>>(){}.getType());
+        return executeGet(url, new TypeToken<List<ItemSummary>>() {
+        }.getType());
     }
 
     public CompletableFuture<List<ItemSummary>> getItemsForAdmin() {
         String url = String.format("%s/api/items?caller=ADMIN", AppConfig.getHttpUrl());
-        return executeGet(url, new TypeToken<List<ItemSummary>>(){}.getType());
+        return executeGet(url, new TypeToken<List<ItemSummary>>() {
+        }.getType());
     }
 
     public CompletableFuture<List<MyBidSummary>> getMyBids(String userId) {
         String url = AppConfig.getHttpUrl() + "/api/mybids?userId=" + userId;
-        return executeGet(url, new TypeToken<List<MyBidSummary>>(){}.getType());
+        return executeGet(url, new TypeToken<List<MyBidSummary>>() {
+        }.getType());
     }
 
     public CompletableFuture<List<ItemSummary>> getItems(String search, String category) {
@@ -92,7 +99,8 @@ public class ItemApiClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return executeGet(url.toString(), new TypeToken<List<ItemSummary>>(){}.getType());
+        return executeGet(url.toString(), new TypeToken<List<ItemSummary>>() {
+        }.getType());
     }
 
     // ─── CÁC API MUTATE (WRITE / DELETE) ───

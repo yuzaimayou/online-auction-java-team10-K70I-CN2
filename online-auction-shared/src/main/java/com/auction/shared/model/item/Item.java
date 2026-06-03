@@ -135,6 +135,10 @@ public class Item extends Entity {
         return sellerId;
     }
 
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
+
     public String getCategory() {
         return category;
     }
@@ -190,9 +194,13 @@ public class Item extends Entity {
         return create_at;
     }
 
-    public double getMyLastBid() { return myLastBid; }
+    public double getMyLastBid() {
+        return myLastBid;
+    }
 
-    public void setMyLastBid(double myLastBid) { this.myLastBid = myLastBid; }
+    public void setMyLastBid(double myLastBid) {
+        this.myLastBid = myLastBid;
+    }
 
     public void printItemDetails() {
         System.out.println("Item ID: " + getId());

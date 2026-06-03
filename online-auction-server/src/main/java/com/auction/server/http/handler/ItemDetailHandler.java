@@ -1,7 +1,7 @@
 package com.auction.server.http.handler;
 
-import com.auction.server.service.item.ItemService;
 import com.auction.server.http.response.HttpResponseUtil;
+import com.auction.server.service.item.ItemService;
 import com.auction.shared.message.ResponseMessage;
 import com.auction.shared.model.item.Item;
 import com.auction.shared.model.payloads.ItemPayload;
@@ -66,6 +66,9 @@ public class ItemDetailHandler implements HttpHandler {
 
     private void getItem(HttpExchange exchange, String itemId, ResponseMessage responseMessage) throws IOException {
         Item item = itemService.getItem(itemId);
+
+
+        System.out.println("Item: " + item.getSellerId());
         if (item != null) {
             String query = exchange.getRequestURI().getQuery();
             if (query != null) {

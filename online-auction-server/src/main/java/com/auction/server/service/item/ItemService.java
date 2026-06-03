@@ -169,7 +169,11 @@ public class ItemService {
     }
 
     public Item getItem(String id) {
-        return itemRepository.findById(id);
+        Item item = itemRepository.findById(id);
+        String sellerId = item.getSellerId();
+        String sellerName = (new UserRepository()).findById(sellerId).getUsername();
+        item.setSellerId(sellerName);
+        return item;
     }
 
     public boolean updateItem(ItemPayload itemData, String itemId) {
