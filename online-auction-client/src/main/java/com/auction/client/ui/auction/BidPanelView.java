@@ -59,15 +59,16 @@ public class BidPanelView {
     public void showOwnerRestrictedState(String sellerId) {
         toggleInteractiveControlMode(true);
 
-        // Vô hiệu hóa tính năng đặt giá
         submitBid.setDisable(true);
         btnAutoBidToggle.setDisable(true);
         if (bidControlsContainer != null) {
             bidControlsContainer.setDisable(true);
         }
+
         statusMessageLabel.setText("👤 This item is owned by " + sellerId);
         clearStatusStyles();
         statusMessageLabel.getStyleClass().add("status-upcoming");
+    }
 
     private void toggleInteractiveControlMode(boolean enable) {
         bidControlsContainer.setVisible(enable);

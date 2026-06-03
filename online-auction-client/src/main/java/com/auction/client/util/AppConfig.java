@@ -3,8 +3,8 @@ package com.auction.client.util;
 public class AppConfig {
     //server ip: 206.189.155.57
     //local server: 127.0.0.1
-    //local ducanh:10.11.191.239
-    public static final String ServerIp = "10.11.191.118";
+    //local ducanh:10.11.191.239. 10.11.191.118
+    public static final String ServerIp = "127.0.0.1";
 
     public static final int SocketPort = 9090;
     public static final int HttpPort = 8080;
