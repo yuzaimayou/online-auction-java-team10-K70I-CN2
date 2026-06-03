@@ -28,7 +28,6 @@ public class ChatBotApiClient {
 
     /**
      * Gửi message lên server, trả về CompletableFuture<AIResponseData>
-     * Body là plain text (server dùng Scanner đọc raw body)
      */
     public CompletableFuture<AIResponseData> sendMessage(String userMessage) {
         HttpRequest request = HttpRequest.newBuilder()

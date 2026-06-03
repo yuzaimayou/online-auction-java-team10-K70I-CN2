@@ -17,11 +17,7 @@ public class ImageCardFactory {
     private static final double CARD_HEIGHT = 120.0;
     private static final double CARD_ARC    = 20.0;
 
-    /**
-     * Dựng Card hiển thị ảnh Local vừa chọn từ máy người dùng
-     */
     public static StackPane createLocalImageCard(File file, Runnable onRemove) {
-        // Khởi tạo Image với cấu hình load ngầm để tránh đứng giao diện
         ImageView iv = new ImageView(new Image(file.toURI().toString(), true));
         return buildBaseThumbCard(iv, onRemove, CARD_WIDTH, CARD_HEIGHT);
     }
@@ -91,7 +87,6 @@ public class ImageCardFactory {
         imageContainer.setMinSize(width, height);
         imageContainer.setMaxSize(width, height);
 
-        // Áp dụng thuật toán co giãn cover động cực mượt đã tối ưu ở Util
         ClientImageUtil.makeResponsiveCover(iv, imageContainer, CARD_ARC);
         imageContainer.getChildren().add(iv);
 

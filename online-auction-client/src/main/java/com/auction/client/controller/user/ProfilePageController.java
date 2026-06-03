@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -24,8 +25,6 @@ public class ProfilePageController {
     private TextField userNameField;
     @FXML
     private TextField roleUserField;
-
-    // Sidebar
     @FXML
     private ToggleButton profileInfoBtn;
     // Wallet
@@ -65,7 +64,6 @@ public class ProfilePageController {
                 userNameField.setText(currentUser.getUsername());
             }
 
-            // FIX: Thay vì check hardcode username "admin", ta dùng thuộc tính Role từ Object User
             if (roleUserField != null) {
                 boolean isAdmin = currentUser.getRole() != null
                         && currentUser.getRole().equalsIgnoreCase("admin");
@@ -86,11 +84,9 @@ public class ProfilePageController {
         }
     }
 
-    // ── Wallet ─────────────────────────────────────────────────────────────────
 
     /**
      * Cập nhật dữ liệu ví lên giao diện.
-     * Hàm này dùng chung cho cả việc load nội bộ lẫn nạp dữ liệu từ WalletService bên ngoài.
      */
     public void loadWalletData(double available, double frozen, double total) {
         if (availableBalanceLabel != null)
@@ -112,14 +108,12 @@ public class ProfilePageController {
             displayWalletPlaceholder();
         }
     }
-    /** Hiển thị trạng thái loading khi chờ WalletService cập nhật. */
     private void displayWalletPlaceholder() {
         if (availableBalanceLabel != null) availableBalanceLabel.setText("Loading...");
         if (frozenBalanceLabel != null) frozenBalanceLabel.setText("Loading...");
         if (totalBalanceLabel != null) totalBalanceLabel.setText("Loading...");
     }
 
-    // ── Actions ────────────────────────────────────────────────────────────────
 
     @FXML
     private void handleDepositAction(ActionEvent event) {
@@ -134,7 +128,7 @@ public class ProfilePageController {
             stage.setTitle("Nạp tiền vào tài khoản");
             stage.setScene(new javafx.scene.Scene(wrapperPane));
 
-            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();

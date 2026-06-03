@@ -3,6 +3,7 @@ package com.auction.server.http.handler;
 import com.auction.server.MainServer;
 import com.auction.server.service.item.ItemService;
 import com.auction.server.http.response.HttpResponseUtil;
+import com.auction.server.socket.handler.ClientHandler;
 import com.auction.shared.message.ResponseMessage;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -48,7 +49,7 @@ public class BanItemHandler implements HttpHandler {
                     itemId
             );
 
-            for (com.auction.server.socket.handler.ClientHandler client : MainServer.activeClients) {
+            for (ClientHandler client : MainServer.activeClients) {
                 try {
                     client.sendMessage(banPayload);
                 } catch (Exception e) {
