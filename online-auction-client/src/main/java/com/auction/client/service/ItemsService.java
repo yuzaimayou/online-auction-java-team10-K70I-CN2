@@ -62,7 +62,6 @@ public class ItemsService {
         });
     }
 
-    // ─── ĐIỀU HƯỚNG THẲNG XUỐNG TẦNG MẠNG ───
     public CompletableFuture<Item> getItemById(String itemId, String userId) {
         return apiDb.getItemById(itemId, userId);
     }
@@ -92,12 +91,8 @@ public class ItemsService {
         return apiDb.getMyBids(userId);
     }
 
-    // =====================================================================================
-    // NEW OVERLOADED METHOD: DÀNH RIÊNG CHO AUCTION FORM CONTROLLER REFACTOR
-    // =====================================================================================
     /**
      * Phương thức nạp chồng mới giúp trừu tượng hóa tối đa tầng Controller.
-     * Tiếp nhận trực tiếp thực thể đóng gói dữ liệu dạng DTO (FormData).
      */
     public CompletableFuture<ResponseMessage> createItem(AuctionFormController.FormData data, List<File> selectedFiles) {
         return createItem(
@@ -109,9 +104,6 @@ public class ItemsService {
         );
     }
 
-    // =====================================================================================
-    // GỐC: PHƯƠNG THỨC ĐƯỢC GIỮ NGUYÊN VẸN TOÀN BỘ (KHÔNG LÀM LỖI CODE CŨ)
-    // =====================================================================================
 
     public CompletableFuture<ResponseMessage> updateItem(
             AuctionFormController.FormData data,

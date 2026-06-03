@@ -24,14 +24,22 @@ import static com.auction.client.ui.table.ItemTableFactory.disableSorting;
 
 public class MyBidsController {
 
-    @FXML private TableView<MyBidSummary> bidsTable;
-    @FXML private TableColumn<MyBidSummary, MyBidSummary> itemCol;
-    @FXML private TableColumn<MyBidSummary, Double> currentBidCol; // Đổi sang Double
-    @FXML private TableColumn<MyBidSummary, Double> yourBidCol;    // Đổi sang Double
-    @FXML private TableColumn<MyBidSummary, String> statusCol;
-    @FXML private TableColumn<MyBidSummary, LocalDateTime> endTimeCol;
-    @FXML private TableColumn<MyBidSummary, MyBidSummary> actionCol;
-    @FXML private TextField searchField;
+    @FXML
+    private TableView<MyBidSummary> bidsTable;
+    @FXML
+    private TableColumn<MyBidSummary, MyBidSummary> itemCol;
+    @FXML
+    private TableColumn<MyBidSummary, Double> currentBidCol;
+    @FXML
+    private TableColumn<MyBidSummary, Double> yourBidCol;
+    @FXML
+    private TableColumn<MyBidSummary, String> statusCol;
+    @FXML
+    private TableColumn<MyBidSummary, LocalDateTime> endTimeCol;
+    @FXML
+    private TableColumn<MyBidSummary, MyBidSummary> actionCol;
+    @FXML
+    private TextField searchField;
 
     private final ItemsService itemsService = ItemsService.getInstance();
     private final User loggedInUser = UserSession.getInstance().getLoggedInUser();
@@ -57,14 +65,12 @@ public class MyBidsController {
         itemCol.setCellValueFactory(p -> new SimpleObjectProperty<>(p.getValue()));
         itemCol.setCellFactory(BidTableFactory.itemCell(50, 50));
 
-        // Đẩy giá trị Double thuần, định dạng chuỗi tiền tệ do Factory phụ trách
         currentBidCol.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getCurrentPrice()));
         currentBidCol.setCellFactory(BidTableFactory.priceFormattedCell());
 
         yourBidCol.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getMyHighestBid()));
         yourBidCol.setCellFactory(BidTableFactory.priceFormattedCell());
 
-        // Logic tính toán trạng thái (Bussiness Logic) giữ nguyên ở Controller
         statusCol.setCellValueFactory(d -> {
             MyBidSummary item = d.getValue();
             if (item.isWinner()) {

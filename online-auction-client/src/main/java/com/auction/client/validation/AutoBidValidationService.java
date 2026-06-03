@@ -10,7 +10,7 @@ public class AutoBidValidationService {
     }
 
     /**
-     * Kiểm tra logic nghiệp vụ trước khi kích hoạt Auto-Bid
+     * Kiểm tra trước khi kích hoạt Auto-Bid
      */
     public ValidationResult validate(Item item, double max, double step) {
         if (step <= 0) {

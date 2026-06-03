@@ -7,7 +7,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 /**
- * 🖼️ VIEW COMPONENT
+ * VIEW COMPONENT
  * Chịu trách nhiệm duy nhất là quản lý, thay đổi trạng thái hiển thị
  * và thu thập dữ liệu thô từ các thành phần giao diện JavaFX đồ họa.
  */

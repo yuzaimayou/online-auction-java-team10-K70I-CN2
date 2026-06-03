@@ -60,7 +60,6 @@ public class NewItemImageManager {
             imagesPreviewContainer.getChildren().removeIf(n -> n != smallAddBtn);
             int idx = imagesPreviewContainer.getChildren().indexOf(smallAddBtn);
             for (File f : selectedFiles) {
-                // Sửa đổi ở đây: Gọi thông qua Factory chuyên biệt của UI
                 StackPane card = ImageCardFactory.createLocalImageCard(f, () -> {
                     selectedFiles.remove(f);
                     refreshImagePreview();
