@@ -329,7 +329,7 @@ public class ItemPageController {
 
         currentPriceLabel.setText(statusUiService.formatPrice(item.getCurrentPrice()));
 
-        // 🎯 ĐỒNG BỘ: Gọi refreshAndSync để làm mới giao diện đấu giá và tính toán lại luồng đếm
+        //  ĐỒNG BỘ: Gọi refreshAndSync để làm mới giao diện đấu giá và tính toán lại luồng đếm
         bidPanel.refreshAndSync(item, user.getId());
 
         autoBidHandler.handleDecision(bidPayload.getBidPrice(), bidPayload.getUserId());
@@ -343,7 +343,7 @@ public class ItemPageController {
         item.setEndTime(newEndTime);
         endTimeLabel.setText(DateTimeUtil.format(newEndTime));
 
-        // 🎯 ĐỒNG BỘ: Gọi refreshAndSync khi có sự mở rộng gia hạn thời gian
+        // ĐỒNG BỘ: Gọi refreshAndSync khi có sự mở rộng gia hạn thời gian
         bidPanel.refreshAndSync(item, user.getId());
     }
 
@@ -351,7 +351,7 @@ public class ItemPageController {
         network.setAuctionRoomListener(null);
         autoBidHandler.updateUi(false);
 
-        // 🎯 ĐỒNG BỘ: Đẩy thẳng lệnh khóa phiên đấu giá sang cho Sub-Controller xử lý dứt điểm
+        // ĐỒNG BỘ: Đẩy thẳng lệnh khóa phiên đấu giá sang cho Sub-Controller xử lý dứt điểm
         bidPanel.applyBannedStateView(item);
     }
 
@@ -385,9 +385,6 @@ public class ItemPageController {
         if (btnSuggestStep2 != null) {
             btnSuggestStep2.setText(String.format("$ %.0f", currentItem.getBidStep() * 2));
         }
-
-        // ❌ ĐÃ XÓA đoạn code kiểm tra `AuctionStatus.BANNED` thủ công và lệnh `startCountdown` cũ ở đây
-        // Tránh xung đột trùng lặp gây ra lỗi Dead Code phương thức không được dùng.
 
         updateMinimumBidLabel();
     }

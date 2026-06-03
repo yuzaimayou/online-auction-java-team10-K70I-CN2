@@ -8,6 +8,8 @@ import com.auction.shared.model.enums.AuctionStatus;
 import com.auction.shared.model.item.Item;
 import javafx.application.Platform;
 
+import java.time.LocalDateTime;
+
 public class BidPanelController {
 
     private final CountdownTimerUtil countdownTimer;
@@ -37,7 +39,7 @@ public class BidPanelController {
         AuctionStatus status = statusService.resolveStatus(item);
 
         if (isOwner) {
-            view.showOwnerRestrictedState();
+            view.showOwnerRestrictedState(item.getSellerId());
         } else {
             switch (status) {
                 case ONGOING -> view.showOngoingState(autoBidManager.isActive());
@@ -46,12 +48,16 @@ public class BidPanelController {
                 case BANNED -> applyBannedStateView(item);
             }
         }
+
+
         if (status == AuctionStatus.UPCOMING || status == AuctionStatus.ONGOING) {
-            java.time.LocalDateTime target = (status == AuctionStatus.UPCOMING)
+            LocalDateTime target = (status == AuctionStatus.UPCOMING)
                     ? item.getStartTime()
                     : item.getEndTime();
 
             countdownTimer.startFor(target, () -> Platform.runLater(() -> refreshAndSync(item, currentUserId)));
+        } else {
+            countdownTimer.stop();
         }
     }
     public void applyBannedStateView(Item item) {

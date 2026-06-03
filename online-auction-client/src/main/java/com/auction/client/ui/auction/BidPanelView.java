@@ -56,12 +56,18 @@ public class BidPanelView {
         statusMessageLabel.setText("⛔ Auction suspended by Admin");
     }
 
-    public void showOwnerRestrictedState() {
-        bidControlsContainer.setDisable(true);
+    public void showOwnerRestrictedState(String sellerId) {
+        toggleInteractiveControlMode(true);
+
+        // Vô hiệu hóa tính năng đặt giá
+        submitBid.setDisable(true);
         btnAutoBidToggle.setDisable(true);
-        toggleInteractiveControlMode(false);
-        statusMessageLabel.setText("👤 You are the owner of this item");
-    }
+        if (bidControlsContainer != null) {
+            bidControlsContainer.setDisable(true);
+        }
+        statusMessageLabel.setText("👤 This item is owned by " + sellerId);
+        clearStatusStyles();
+        statusMessageLabel.getStyleClass().add("status-upcoming");
 
     private void toggleInteractiveControlMode(boolean enable) {
         bidControlsContainer.setVisible(enable);
